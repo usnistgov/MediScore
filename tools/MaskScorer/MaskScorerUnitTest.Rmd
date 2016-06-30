@@ -1,0 +1,140 @@
+---
+title: "MEDIFOR Mask Metrics Unit Test Markdown"
+output: html_document
+---
+
+##Structure
+The structure of the Unit test is divided into five cases:
+
+###Case 1: No change
+The reference image is randomized and the system image set equal to the reference image. The black pixels of the 100 pixel x 100 pixel reference image are randomized according to an exponential distribution of rate 1. After rounding, all pixels of value 1 or higher are set to 1.
+
+```{r fig.height=2.5,echo=FALSE}
+  #source("https://bioconductor.org/biocLite.R")
+  #biocLite("EBImage")
+  require (EBImage)
+  rImg = round(matrix(rexp(10000,rate=1),ncol=100),digits=0) #exponentially random 0s and 1s.
+  rImg[rImg > 0] = 1
+  rImg[rImg == 0] = 0
+  display(rImg)
+```
+
+**Figure 1**: A sample test image for Case 1.
+
+The measures are then tested: the FPR must be exactly 0, the other figures (TPR, ACC, MCC) must be exactly 1. The hamming loss is tested to be exactly 0, the weightedL1 and hingeL1 (with epsilon (e in the input) set at 0) must both be 0. This also means that the hingeL1 must be 0 for any value of epsilon. (Negative values of epsilon are set to 0 by default.) No seed is set so that the randomized image can be different at every iteration; regardless, the output of the metrics should be the same.
+
+In the case where generateWeightMetrics deals with a brush size of 0, every pixel will be weighted by 1.
+
+###Case 2: Erode only
+
+The case is tested where the system image is the reference image eroded. Erosion by a small amount to be forgiven and a large amount for which a difference is noticeable are tested.
+
+```{r fig.height=2.5,echo=FALSE}
+require (EBImage)
+library(grid)
+par(mfrow=c(1,2))
+rImg = matrix(rep(1,10000),ncol=100)
+rImg[61:80,31:45] = 0 #small 20 x 15 square
+rImg_bd = matrix(rep(0,10404),ncol=102)
+rImg_bd[2:101,2:101] <- rImg
+kern <- makeBrush(5, shape='box')
+sImg <- erode(1-rImg, kern) #result of an erosion
+sImg <- 1-sImg
+sImg_bd = matrix(rep(0,10404),ncol=102)
+sImg_bd[2:101,2:101] <- sImg
+display(rImg_bd)
+display(sImg_bd)
+```
+
+**Figure 2**: The reference (left) and system (right) images. The system image here is the reference image eroded by a 5-pixel box kernel.
+
+Other exceptions are also tested; mainly matrix mismatch for weighted L1 and hinge L1 measures.
+
+###Case 3: Dilate only
+
+The case is tested where the system image is the reference image dilated. Dilation by a small amount to be forgiven and a large amount for which a difference is noticeable are tested.
+
+```{r fig.height=2.5,echo=FALSE}
+require (EBImage)
+library(grid)
+par(mfrow=c(1,2))
+rImg = matrix(rep(1,10000),ncol=100)
+rImg[61:80,31:45] = 0 #small 20 x 15 square
+rImg_bd = matrix(rep(0,10404),ncol=102)
+rImg_bd[2:101,2:101] <- rImg
+kern <- makeBrush(5, shape='box')
+sImg <- dilate(1-rImg, kern) #result of an erosion
+sImg <- 1-sImg
+sImg_bd = matrix(rep(0,10404),ncol=102)
+sImg_bd[2:101,2:101] <- sImg
+display(rImg_bd)
+display(sImg_bd)
+```
+
+**Figure 3**: The reference (left) and system (right) images. The system image here is the reference image dilated by a 5-pixel box kernel.
+
+###Case 4: Erode and Dilate
+
+```{r fig.height=2.5,echo=FALSE}
+require (EBImage)
+library(grid)
+par(mfrow=c(1,2))
+rImg = matrix(rep(1,10000),ncol=100)
+rImg[61:80,31:45] = 0 #small 20 x 15 square
+rImg_bd = matrix(rep(0,10404),ncol=102)
+rImg_bd[2:101,2:101] <- rImg
+kern <- makeBrush(9, shape='Gaussian')
+sImg <- erode(1-rImg, kern)
+sImg <- dilate(sImg, kern)
+sImg <- 1-sImg
+sImg_bd = matrix(rep(0,10404),ncol=102)
+sImg_bd[2:101,2:101] <- sImg
+display(rImg_bd)
+display(sImg_bd)
+```
+
+**Figure 4**: The reference (left) and system (right) images. The system image here is the reference image eroded and then dilated with a 9-pixel Gaussian kernel. Notice how there is almost no difference.
+
+The case is tested where the system image is the reference image eroded and dilated. Dilation by a small amount, medium amount, and large amount, all of which should be forgiven, are tested.
+
+```{r fig.height=2.5,echo=FALSE}
+require (EBImage)
+library(grid)
+par(mfrow=c(1,2))
+rImg = matrix(rep(1,10000),ncol=100)
+rImg[61:80,31:45] = 0 #small 20 x 15 square
+rImg_bd = matrix(rep(0,10404),ncol=102)
+rImg_bd[2:101,2:101] <- rImg
+kern <- makeBrush(21, shape='Gaussian')
+sImg <- erode(1-rImg, kern)
+sImg <- dilate(sImg, kern)
+sImg <- 1-sImg
+sImg_bd = matrix(rep(0,10404),ncol=102)
+sImg_bd[2:101,2:101] <- sImg
+display(rImg_bd)
+display(sImg_bd)
+```
+
+**Figure 5**: The reference (left) and system (right) images. The system image here is the reference image eroded and then dilated with a 21-pixel Gaussian kernel. Notice how the mask is completely absent.
+
+
+###Case 5: Move
+
+The case is tested where the system image is a translate of the reference image. Translation by a small amount to be forgiven, a larger amount for which a difference is noticeable, and a very large amount for which a difference is explicit are tested.
+
+```{r fig.height=2.5,echo=FALSE}
+require (EBImage)
+library(grid)
+par(mfrow=c(1,2))
+rImg = matrix(rep(1,10000),ncol=100)
+rImg[61:80,31:45] = 0 #small 20 x 15 square
+rImg_bd = matrix(rep(0,10404),ncol=102)
+rImg_bd[2:101,2:101] <- rImg
+sImg[51:70,36:50] = 0 #translate a small 20 x 15 square
+sImg_bd = matrix(rep(0,10404),ncol=102)
+sImg_bd[2:101,2:101] <- sImg
+display(rImg_bd)
+display(sImg_bd)
+```
+
+**Figure 6**: The reference (left) and system (right) images. The system image here is a translate of the reference image upward by 10 pixels and right by 5.

@@ -1,0 +1,5 @@
+TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight|DonorFileID|DonorFileName|DonorWidth|DonorHeight
+"Splice"|"NC2016_1893"|"probe/NC2016_1893.jpg"|"4032"|"3024"|"NC2016_1993"|"probe/NC2016_1993.jpg"|"640"|"480"
+"Splice"|"NC2016_4281"|"probe/NC2016_4281.jpg"|"5616"|"3744"|"NC2016_4282"|"probe/NC2016_4282.jpg"|"2736"|"2736"
+"Splice"|"NC2016_5847"|"probe/NC2016_5847.jpg"|"4032"|"3024"|"NC2016_6847"|"probe/NC2016_6847.jpg"|"640"|"480"
+"Splice"|"NC2016_7432"|"probe/NC2016_7432.jpg"|"5616"|"3744"|"NC2016_7442"|"probe/NC2016_7442.jpg"|"640"|"480"

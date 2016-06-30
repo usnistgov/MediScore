@@ -1,0 +1,5 @@
+"runID","TaskID","Collection","PostProcessed","NMM","MCC","HAM","WL1","HL1"
+1,"manipulation","Nimble-WEB","rescale",-0.94192,0.01709,0.58134,0.58219,0.57434
+2,"manipulation","Nimble-WEB","none",-0.62197,0.24678,0.51412,0.51437,0.50687
+3,"manipulation","Nimble-SCI","rescale",-0.98302,0.00363,0.4783,0.47818,0.47074
+4,"manipulation","Nimble-SCI","none",-0.82584,0.10766,0.68337,0.68387,0.67656

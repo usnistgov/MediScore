@@ -1,0 +1,8 @@
+ProbeFileID|ConfidenceScore|ProbeOutputMaskFName
+F18|0.034|mask/F18-mask.png
+F166|0.021|mask/F166-mask.png
+F165|0.021|mask/F165-mask.png
+F86|0.016|mask/F86-mask.png
+F87|0.016|mask/F87-mask.png
+F88|0.016|mask/F88-mask.png
+F172|0.015|mask/F172-mask.png

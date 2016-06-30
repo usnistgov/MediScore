@@ -1,0 +1,2 @@
+TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|DonorFileID|DonorFileName|DonorMaskFileName|IsTarget|ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|IsManipulationTypeSplice|IsManipulationTypeCopyClone|Collection|BaseFileName|Lighting|IsControl|CorrespondingControlFileName|SemanticConsistency
+"Removal"|foo|foo.jpg|ref1.png||||"Y"|"none"|"none"|""|True|False|False|"Nimble-SCI"|bar.jpg|"same"|False|baz.jpg|""

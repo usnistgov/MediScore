@@ -1,0 +1,148 @@
+---
+title: "Detection Scorer (SSD and DSD)"
+output: html_document
+---
+
+***
+
+<!-- more -->
+
+### Description
+
+* Date: 06/04/2016
+* Author: Yooyoung Lee
+
+* This script calculates performance measures (ROC, AUC, and EER) 
+on system outputs (confidence scores) and returns a report table along with ROC curves 
+
+* Disclaimer: this software was developed at the National Institute of Standards 
+and Technology (NIST) by employees of the Federal Government in the
+course of their official duties. Pursuant to Title 17 Section 105 
+of the United States Code, this software is not subject to copyright 
+protection and is in the public domain. NIST assumes no responsibility 
+whatsoever for use by other parties of its source code or open source 
+server, and makes no guarantees, expressed or implied, about its quality, 
+reliability, or any other characteristic.
+
+<!-- more -->
+
+
+### Command-line Options
+
+(Note that the long dash is a double dash)
+
+Example:
+
+% Rscript DetectionScorer.r -i file -t manipulation -d /NC2016_Test0601
+-r reference/manipulation/NC2016-manipulation-ref.csv -x indexes/NC2016-manipulation-index.csv 
+-s /SystemOutputs/results.csv -m all -o myreport.csv --whichplot roc -p myroc.pdf 
+--title Manipulation_alg1 -l dashed --size 1.5 --bySet y --byPost y
+
+
+The command-line options for detection scorer can be categorized as follows:
+
+
+#### Input Type Options:
+
+-i inType [file, DAPR]
+
+  * Define file types to manage input files and output files.
+    For example, “file” option will manually allow csv files as input/output,
+    while “DAPR” will use arguments for querying the database.
+    The DAPR type is work-in-progress at this point.
+
+#### Task Type Options:
+
+-t task [manipulation, removal, splice]
+
+  * Define task types for evaluation
+
+#### Reference data path option
+
+-d ncDir
+
+  * Define the data path (e.g., /NC2016_Test0601)
+
+#### Input Options:
+
+-r inRef
+
+  * Define the reference csv file that contains the ground-truth information
+
+-s inSys
+
+  * Define the system output csv file formatted to NC2016 specification
+
+-x inIndex
+
+  * Define the index csv file for the detection task
+
+#### Output Options:
+
+-o out
+
+  * Define the report output csv file (e.g., myreport.csv)
+
+-p plot
+
+  * Define the plot output file name (e.g., myroc.pdf)
+
+#### Plot Options:
+
+-title
+
+  * Input plot title (e.g., splice_task)
+    
+-l linetype ['solid', 'dotted', 'dashed', 'longdash']
+
+  * Define the line type for the plot curve
+
+-size
+
+  * Input plot line width size (less than 5.0)
+
+#### Metric Options:
+
+-m metric [all, auc, pauc, eer, roc]
+
+  * options
+    + all: perform and show results for all metrics
+    + auc: Area Under roc Curve (AUC)
+    + pauc: partial auc value
+    + eer: Equal Error Rate (EER)
+    + roc: ROC points for FPR and TPR
+    
+#### Report Options - Separated by Factors
+
+--bySet [y, n]
+
+  * Divide the reports by DatasetID (e.g., NIMBLE-Sci, NIMBLE-Web)
+
+--byPost [y, n]
+  
+  * Divide the reports by PostProcessing (only available “Y” or “N” for now)
+    
+***
+Below are some report examples using the DCT baseline algorithm.
+
+##### CSV Report
+
+```{r, echo=FALSE}
+
+d <- read.csv("../../doc/results/dct_report.csv", header = TRUE, row.names = NULL)
+print(d[,1:7])
+```
+
+
+***
+
+##### ROC curve
+
+<img src="../../doc/results/dct_roc.png" width = 800 height="800" alt="roc">
+
+<!-- more -->
+
+
+##### DET curve
+
+<img src="../../doc/results/dct_det.png" width = 800 height="800" alt="det">

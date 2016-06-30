@@ -1,0 +1,56 @@
+(Rscript ValidateDSDTest.r)
+BASIC FUNCTIONALITY validation of DSDValidator.r beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.
+
+CASE 0: Validating behavior when files don't exist.
+ERROR: I can't find your system output emptydir_NC2016_Splice_ImgOnly_p-baseline_1/emptydir_NC2016_Splice_ImgOnly_p-baseline_1.csv! Where is it? 
+ERROR: I can't find your index file NC2016_Test0516_dfz/indexes/NC2016-splice-index0.csv! Where is it? 
+CASE 0 validated.
+
+CASE 1: Validating behavior when detecting consecutive underscores ('_') in name...
+ERROR: What kind of task is NC2016? It should be Splice! 
+The name of the file is not valid. Please review the requirements. 
+CASE 1 validated.
+
+CASE 2: Validating behavior when detecting excessive underscores elsewhere...
+ERROR: What kind of task is NC2016? It should be Splice! 
+The name of the file is not valid. Please review the requirements. 
+CASE 2 validated.
+
+CASE 3: Validating behavior when detecting '+' in file name and an unrecogized task...
+ERROR: The team name must not include characters + or _ 
+ERROR: What kind of task is Removal? It should be Splice! 
+The name of the file is not valid. Please review the requirements. 
+CASE 3 validated. Validating syntactic content of system output.
+
+CASE 4: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...
+ERROR: Your header(s) FileID, ProbeOutputMaskFName, DonorOutputMaskFName should be ProbeFileID, ProbeOutputMaskFileName, DonorOutputMaskFileName respectively. 
+ERROR: Your system output contains duplicate rows for pairs: (NC2016_4281,NC2016_4282) at row(s): 5 after the header. I recommended you delete these row(s). 
+ERROR: The number of rows in the system output does not match the number of rows in the index file. 
+The contents of your file are not valid! 
+CASE 4 validated.
+
+Case 5: Validating behavior when the number of columns in the system output is not equal to 5.
+ERROR: The number of columns of the system output file must be equal to 5. Are you using '|' to separate your columns? 
+CASE 5 validated.
+
+CASE 6: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...
+ERROR: Probe mask image ipsum_NC2016_Splice_ImgOnly_p-baseline_1/mask/NC2016_1893.jpg for pair (NC2016_1893,NC2016_1993) at row 1 is not a png. Make it into a png! 
+Dimensions for ProbeImg of pair (NC2016_4281,NC2016_4282): 3744,5616 
+Dimensions of probe mask ipsum_NC2016_Splice_ImgOnly_p-baseline_1/mask/NC2016_4281-mask.png: 2736,2736 
+ERROR: The mask image's length and width do not seem to be the same as the base image's. 
+ERROR: Probe mask image ipsum_NC2016_Splice_ImgOnly_p-baseline_1/mask/NC2016_4281-mask.png of pair (NC2016_4281,NC2016_4282) should be single-channel. 
+ERROR: Probe mask image ipsum_NC2016_Splice_ImgOnly_p-baseline_1/mask/NC2016_6847-mask.jpg for pair (NC2016_5847,NC2016_6847) at row 3 is not a png. Make it into a png! 
+The contents of your file are not valid! 
+CASE 6 validated.
+
+CASE 7: Validating behavior when mask file is not present...
+ERROR: lorem_NC2016_Splice_ImgOnly_p-baseline_3/mask/NC2016_1994.png does not exist! Did you name it wrong? 
+ERROR: lorem_NC2016_Splice_ImgOnly_p-baseline_3/mask/NC2016_4280-mask.png does not exist! Did you name it wrong? 
+ERROR: lorem_NC2016_Splice_ImgOnly_p-baseline_3/mask/NC2016_6847.png does not exist! Did you name it wrong? 
+The contents of your file are not valid! 
+CASE 7 validated.
+
+All validation runs complete.

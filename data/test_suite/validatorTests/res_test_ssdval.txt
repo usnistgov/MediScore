@@ -1,0 +1,55 @@
+(Rscript ValidateSSDTest.r)
+BASIC FUNCTIONALITY validation of SSDValidator.r beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.
+CASE 0: Validating behavior when files don't exist.
+ERROR: I can't find your system output emptydir_NC2016_Splice_ImgOnly_p-baseline_1/foo__NC2016_Manipulation_ImgOnly_p-baseline_1.csv! Where is it? 
+CASE 0 validated.
+
+CASE 1: Validating behavior when detecting consecutive underscores ('_') in name...
+ERROR: What kind of task is NC2016? It should be Manipulation or Removal! 
+The name of the file is not valid. Please review the requirements. 
+CASE 1 validated.
+
+CASE 2: Validating behavior when detecting excessive underscores elsewhere...
+ERROR: What kind of task is NC2016? It should be Manipulation or Removal! 
+The name of the file is not valid. Please review the requirements. 
+CASE 2 validated.
+
+CASE 3: Validating behavior when detecting '+' in file name and an unrecognized task...
+ERROR: The team name must not include characters + or _ 
+ERROR: What kind of task is Manip? It should be Manipulation or Removal! 
+The name of the file is not valid. Please review the requirements. 
+CASE 3 validated. Validating syntactic content of system output.
+
+CASE 4: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...
+ERROR: Your header(s) Fileid, OutputMaskFName should be ProbeFileID, ProbeOutputMaskFileName respectively. 
+ERROR: Your system output contains duplicate rows for ProbeFileID's: NC2016_5847 at row(s): 5 after the header. I recommended you delete these row(s). 
+ERROR: The number of rows in the system output does not match the number of rows in the index file. 
+The contents of your file are not valid! 
+CASE 4 validated.
+
+CASE 5: Validating behavior when mask is not a png...
+ERROR: Mask image bar_NC2016_Removal_ImgOnly_p-baseline_1/mask/foo.jpg for FileID NC2016_7432 is not a png. Make it into a png! 
+ERROR: The contents of your file are not valid! 
+CASE 5 validated.
+
+CASE 6: Validating behavior when mask is not single channel and when mask does not have the same dimensions.
+Dimensions for ProbeImg of ProbeFileID NC2016_7432: 3744,5616 
+Dimensions of mask baz_NC2016_Manipulation_ImgOnly_p-baseline_1/mask/bar.png: 480,640 
+ERROR: The mask image's length and width do not seem to be the same as the base image's. 
+ERROR: Mask image baz_NC2016_Manipulation_ImgOnly_p-baseline_1/mask/bar.png of ProbeFileID NC2016_7432 should be single-channel. 
+ERROR: The contents of your file are not valid! 
+CASE 6 validated.
+
+CASE 7: Validating behavior when system output column number is not equal to 3.
+ERROR: The number of columns of the system output file must be equal to 3. Are you using '|' to separate your columns? 
+CASE 7 validated.
+
+CASE 8: Validating behavior when mask file is not present.
+ERROR: foo_NC2016_Manipulation_ImgOnly_p-baseline_4/mask/foo.png does not exist! Did you name it wrong? 
+ERROR: The contents of your file are not valid! 
+CASE 8 validated.
+
+All validation runs complete.
