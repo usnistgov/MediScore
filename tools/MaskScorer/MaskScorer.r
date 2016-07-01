@@ -208,8 +208,8 @@ getMetrics <- function(refImgName, sysImgName, erodeKernSize, dilateKernSize, th
       cat("Hinge Loss L1: ", hL1, "\n")
     }
     
-    #return(list(R = imageData(rImg), S = imageData(sImg), W = w$wimg, E= w$eimg, D = w$dimg, NMM=nmm, MCC=mcc, HAM=ham, WL1=wL1, HL1= hL1))
-    return(list(R = rImgData, S = imageData(sImg), W = w$wimg, E= w$eimg, D = w$dimg, NMM=nmm, MCC=mcc, HAM=ham, WL1=wL1, HL1= hL1))
+    return(list(R = imageData(rImg), S = imageData(sImg), W = w$wimg, E= w$eimg, D = w$dimg, NMM=nmm, MCC=mcc, HAM=ham, WL1=wL1, HL1= hL1))
+    #return(list(R = rImgData, S = imageData(sImg), W = w$wimg, E= w$eimg, D = w$dimg, NMM=nmm, MCC=mcc, HAM=ham, WL1=wL1, HL1= hL1))
   }
 }
 
