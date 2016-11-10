@@ -89,26 +89,6 @@ verbose=args.verbose
 
 #wrapper print function for print message suppression
 if verbose:
-parser.add_argument('--th',type=int,default=0,
-help="threshold value [0,255] for grayscale, [default=0]", metavar="integer")
-#parser.add_argument('--avgOver',type=str,default='',
-#help="A collection of features to average reports over, separated by commas.", metavar="character")
-parser.add_argument('-v','--verbose',type=int,default=None,
-help="Control print output. Select 1 to print all non-error print output and 0 to suppress all print output (bar argument-parsing errors).",metavar='0 or 1')
-parser.add_argument('--precision',type=int,default=5,
-help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=5].",metavar='positive integer')
-parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
-
-# loading scoring and reporting libraries
-lib_path = "../../lib"
-execfile(os.path.join(lib_path,"masks.py")) #EDIT: find better way to import?
-execfile('maskreport.py')
-
-args = parser.parse_args()
-verbose=args.verbose
-
-#wrapper print function for print message suppression
-if verbose:
     def printq(string):
         print(string)
 else:
