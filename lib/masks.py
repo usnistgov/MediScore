@@ -191,6 +191,21 @@ class mask:
     def dimcheck(self,img):
         return self.get_dims() == img.shape
 
+    #overlays the mask on top of the grayscale image. If you want a color mask, reread the image in as a color mask.
+    def overlay(self,imgName):
+        mymat = np.copy(self.matrix)
+        gImg = cv2.imread(imgName,0)
+        gImg = np.dstack(gImg,gImg,gImg) 
+        if len(self.matrix.shape)==2:
+            mymat = np.dstack(mymat,mymat,mymat)
+        elif len(self.matrix.shape)==4:
+            print("{} cannot account for alpha channels yet.".format(self.name))
+            return 1
+
+        alpha=0.7
+        overmat = cv2.addWeighted(mymat,alpha,gImg,1-alpha,0)
+        return overmat
+
     def binarize3Channel(self,RThresh,GThresh,BThresh,v,g):
         if len(self.matrix.shape)==2:
             mymat = np.copy(self.matrix)
