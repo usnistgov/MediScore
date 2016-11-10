@@ -4,7 +4,6 @@
 MAKE=make
 
 check:
-	(cd tools/SSDValidator; make check)
-	(cd tools/DSDValidator; make check)
-	(cd tools/DetectionScorer; make check)
+	(cd tools/Validator; python2 -m unittest validator)
 	(cd tools/MaskScorer; make check)
+	(cd tools/DetectionScorer; make check)

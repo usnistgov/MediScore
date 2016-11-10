@@ -1,0 +1,2 @@
+ProbeFileID|DonorFileID|ConfidenceScore|ProbeOutputMaskFileName|DonorOutputMaskFileName
+gullflower|flower|1|mask/gull-mask.png|mask/flower-splice-mask.png

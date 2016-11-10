@@ -1,0 +1,2 @@
+Query,auc,fpr_stop,eer,auc_ci_lower,auc_ci_upper
+"Collection==['Nimble-SCI','Nimble-WEB']",0.517917299899,1,0.516900962513,0.492906285718,0.543279529006

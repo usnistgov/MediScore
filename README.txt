@@ -1,8 +1,8 @@
 File: README.txt
-Date: June 17, 2016
+Date: Oct. 28, 2016
 MediScore Version: 1.0.0
 
-PYTHON
+NEW Python
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -10,17 +10,16 @@ example data for the following tools:
 
   SSDValidate      V1.0 - Single Source Detection Validator
   DSDValidate      V1.0 - Double Source Detection Validator
-  DetectionScorer  V1.0 - Single/Double Source Detection Evaaluation
+  DetectionScorer  V1.0 - Single/Double Source Detection Evaluation
                           Scorer
   MaskScorer       V1.0 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
 
-This distribution consists of a set of R scripts intended to be run
+This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
 following versions of Ubuntu Linux and OS X.
 
-  Mac OS X 10.9.5
-  Ubuntu 14.04
+  Mac OS X 10.11.6
 
 
 INSTALLATION
@@ -28,34 +27,25 @@ INSTALLATION
 
 (Lines starting with % are command lines)
 
-1) Install the latest R version from https://cran.r-project.org/.
-   (This software was developed and tested using R version 3.2.4.
-    Our recommendation is to use R version greater than 3.2.x)
+1) Install Python 2.7 (tested in Python == 2.7.12).
 
-2) Using R console (% R) ..
-
-  * Install required packages
-  % install.packages(c("optparse", "jsonlite", "scales", "ggplot2", "useful", "png", "RUnit", "RMySQL", "data.table"))
-
-  * Note: If prompted you may need to select a 'CRAN mirror' prior to
-  installing the aforementioned packages.  This can be done from
-  within the R console by running ..
-
-  % chooseCRANmirror(graphics=FALSE)
-
-  * EBImage package installation
-  % source('http://bioconductor.org/biocLite.R')
-  % biocLite('EBImage') # please update all when prompted
-  * Note: For Ubuntu, you may need to install “sudo apt-get install libfftw3-dev” prior to
-  	installing the EBImage package above.
+2) Required packages:
+  Prior to running the Scorer, the following packages need to be installed :
+  - opencv (tested in the version 2.4.13)
+  - numpy  (tested in the version 1.11.1)
+  - pandas (tested in the version 0.18.1)
+  - matplotlib (tested in the version 1.5.1)
+  - scipy (tested in the version 0.18.0)
+  - scikit-learn (tested in the version 0.17.1)
+  - unittest
 
 3) To test your installation, run MediScore's "make check" in the MediScore directory.
    You should expect to see ERROR messages pop up as we test the behavior of the functions.
-   If you see the following messages, your make check completes succesfully.
-   - ALL SSD VALIDATION TESTS SUCCESSFULLY PASSED
+   If you see the following messages, your make check completes successfully.
    - ALL DSD VALIDATION TESTS SUCCESSFULLY PASSED
-   - DETECTION SCORER TESTS SUCCESSFULLY PASSED
+   - ALL SSD VALIDATION TESTS SUCCESSFULLY PASSED
    - MASK SCORER TESTS SUCCESSFULLY PASSED
+   - DETECTION SCORER TESTS SUCCESSFULLY PASSED
 
 
 USAGE
@@ -64,45 +54,46 @@ USAGE
 Usage text for each script can be seen by executing the script with
 the option '--help'.  For example:
 
-  % cd MediScore/tools/DetectionScorer
-  % Rscript DetectionScorer.r --help
+  $ cd MediScore/tools/DetectionScorer
+  $ python2 DetectionScorer.py --help
 
 Both DetectionScorer and MaskScorer scripts have additional
-'ReadMe.html' files with more detailed information on their usage.
+HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more detailed information on their usage.
 
 To try some command lines with data files, go to the testing
 directories in 'MediScore/tools/DetectionScorer', and run the command
 lines below.
-  % Rscript DetectionScorer.r -i file -t manipulation -d ../../data/test_suite/detectionScorerTests \
-  -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
-  -s ../../data/test_suite/detectionScorerTests/D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv \
-  -o ../../data/test_suite/detectionScorerTests/temp_detreport.csv -p plot.pdf
+  $ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample \
+  -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample \
+  -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_01 --display
 
-To validate the system output, cd to the directory of the relevant
-validator (e.g. MediScore/tools/SSDValidator) and execute the relevant
-script with the index file after the -x option and your system output
-after the -s option. For example:
+To validate the system output, cd to the tools directory and execute the
+following script with the index file after the -x option, your system output
+after the -s option, and the validation task after the -vt option. For example:
 
-   % Rscript SSDValidate.r -x ../../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv \
-     -s ../../data/test_suite/validatorTests/foo_NC2016_Manipulation_ImgOnly_p-whole_1/foo_NC2016_Manipulation_ImgOnly_p-whole_1.csv
-   % Rscript DSDValidate.r -x ../../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv \
-     -s ../../data/test_suite/validatorTests/lorem_NC2016_Splice_ImgOnly_p-whole_1/lorem_NC2016_Splice_ImgOnly_p-whole_1.csv
+   $ python2 validator.py -x ../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv \
+     -s ../../data/test_suite/validatorTests/foo_NC2016_Manipulation_ImgOnly_p-whole_1/foo_NC2016_Manipulation_ImgOnly_p-whole_1.csv \
+     -vt SSD
+   $ python2 validator.py -x ../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv \
+     -s ../../data/test_suite/validatorTests/lorem_NC2016_Splice_ImgOnly_p-whole_1/lorem_NC2016_Splice_ImgOnly_p-whole_1.csv \
+     -vt DSD
 
-You may also quiet printout with the -q option. Add -q 1 to suppress all but
-error printout and -q 0 to suppress all printout. For example:
+You may also control printout with the -v option. Add -v 1 for more detailed print output and -v 0 to suppress all printout. For example:
 
-   % Rscript SSDValidate.r -q 1 -x ../../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv \
-     -s ../../data/test_suite/validatorTests/foo_NC2016_Manipulation_ImgOnly_p-whole_1/foo_NC2016_Manipulation_ImgOnly_p-whole_1.csv
+   $ python2 validator.py -x ../data/test_suite/validatorTests/NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv \
+     -s ../../data/test_suite/validatorTests/foo_NC2016_Manipulation_ImgOnly_p-whole_1/foo_NC2016_Manipulation_ImgOnly_p-whole_1.csv \
+     -vt SSD \
+     -v 1
 
-will allow the SSD Validator to print only error messages when validating the designated output.
+will generate more detailed information for the SSD Validator than if -v is not selected.
 
 
 HISTORY
 -------
 
-  June 17, 2016 - MediScore Version 1.0.0:
+  Oct. 28, 2016 - MediScore Version 1.0.0:
 
-    - Initial release
+    - Python release
 
 
 CONTACT
@@ -137,7 +128,8 @@ might help us.  Thank you for helping us improve MEDIFOR system.
 AUTHORS
 -------
 Jonathan G. Fiscus (PI)
-Andrew P Delgado
+Andrew Delgado
+Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
 

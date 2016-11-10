@@ -1,0 +1,2 @@
+Query,auc,fpr_stop,eer,auc_ci_lower,auc_ci_upper
+Collection==['Nimble-WEB'] & 300 <= ProbeWidth,0.556041666667,1,0.479197530864,0.523204845729,0.592780894499

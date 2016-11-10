@@ -1,4 +1,0 @@
-1  - Length of sub.df:  7 
-Starting a report: 
-AUC:  0.3333 , partialAUC:  0.1667 , EER:  0.7083 
- ROCpoints:  {"fpr":[0,0.6667,1,1],"tpr":[0.25,0.25,0.75,1]} 

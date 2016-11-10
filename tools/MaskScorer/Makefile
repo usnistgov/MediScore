@@ -1,11 +1,8 @@
-################# Makefile for MaskScorer.r ##########################
+################# Makefile for MaskScorer.py ##########################
 
 #### Creation Date: June 9, 2016 
 MAKE=make
 
 check:
-	(Rscript MaskScorerUnitTest.r)
-	(./maskcompcheckfiles.sh)
-
-makecompcheckfiles:
+	(cd ../../lib; python2 -m unittest masks)
 	(./maskcompcheckfiles.sh)

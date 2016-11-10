@@ -1,0 +1,8 @@
+TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|DonorFileID|DonorFileName|DonorMaskFileName|IsTarget|ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|IsManipulationTypeSplice|IsManipulationTypeCopyClone|Collection|BaseFileName|Lighting|IsControl|CorrespondingControlFileName|SemanticConsistency
+Splice|F18|F18.jpg|F18-mask.png|F166|F166.jpg|F166-mask.png|Y|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F18.jpg|same|FALSE|F18.jpg|
+Splice|F166|F166.jpg|F166-mask.png|F165|F165.jpg|F165-mask.png|N|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F166.jpg|same|FALSE|F166.jpg|
+Splice|F165|F165.jpg|F165-mask.png|F86|F86.jpg|F86-mask.png|N|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F165.jpg|same|FALSE|F165.jpg|
+Splice|F86|F86.jpg|F86-mask.png|F87|F87.jpg|F87-mask.png|Y|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F86.jpg|same|FALSE|F86.jpg|
+Splice|F87|F87.jpg|F87-mask.png|F88|F88.jpg|F88-mask.png|N|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F87.jpg|same|FALSE|F87.jpg|
+Splice|F88|F88.jpg|F88-mask.png|F172|F172.jpg|F172-mask.png|Y|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F88.jpg|same|FALSE|F88.jpg|
+Splice|F172|F172.jpg|F172-mask.png|F18|F18.jpg|F18-mask.png|Y|none|none||FALSE|FALSE|FALSE|Nimble-SCI|F172.jpg|same|FALSE|F172.jpg|

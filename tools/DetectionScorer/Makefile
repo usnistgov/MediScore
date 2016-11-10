@@ -4,7 +4,7 @@
 MAKE=make
 
 check:
-	(Rscript DetectionScorerUnitTest.r)
+	(python2 -m unittest DetectionScorerUnitTest)
 	(./detcompcheckfiles.sh)
 
 makecompcheckfiles:
