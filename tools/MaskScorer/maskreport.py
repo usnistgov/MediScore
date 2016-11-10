@@ -39,6 +39,8 @@ def scores_4_mask_pairs(refMaskFName,
                         maniImageFName,
                         refDir,
                         sysDir,
+                        rbin,
+                        sbin,
                         erodeKernSize,
                         dilateKernSize,
                         thres,
@@ -56,6 +58,8 @@ def scores_4_mask_pairs(refMaskFName,
        *maniImageFName: list of manipulated image file names
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
+       *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
+       *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
        *thres: threshold input[0,255] for grayscale mask
@@ -86,6 +90,10 @@ def scores_4_mask_pairs(refMaskFName,
         else:
             rImg = refmask(refMaskName)
             sImg = mask(sysMaskName)
+            if rbin >= 0:
+                rImg.matrix = rImg.bw(rbin)
+            if sbin >= 0:
+                sImg.matrix = sImg.bw(sbin)
 
             metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=thres,popt=verbose)
             for met in ['NMM','MCC','HAM','WL1','HL1']:
@@ -291,7 +299,7 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
 
     return df_avg
     
-def createReportSSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
+def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for single source detection
      *Description: this function calls each metric function and 
@@ -302,6 +310,8 @@ def createReportSSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
        *index: index dataframe
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
+       *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
+       *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
        *thres: threshold input[0,255] for grayscale mask
@@ -332,6 +342,8 @@ def createReportSSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
                              m_df['ProbeFileName'],
                              refDir,
                              sysDir,
+                             rbin,
+                             sbin,
                              erodeKernSize,
                              dilateKernSize,
                              thres,
@@ -364,7 +376,7 @@ def createReportSSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
 
     return merged_df
 
-def createReportDSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
+def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for double source detection
      *Description: this function calls each metric function and 
@@ -375,6 +387,8 @@ def createReportDSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
        *index: index dataframe
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
+       *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
+       *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
        *thres: threshold input[0,255] for grayscale mask
@@ -403,6 +417,8 @@ def createReportDSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
                                    m_df['ProbeFileName'],
                                    refDir,
                                    sysDir,
+                                   rbin,
+                                   sbin,
                                    erodeKernSize,
                                    dilateKernSize,
                                    thres,
@@ -417,8 +433,27 @@ def createReportDSD(ref, sys, index, refDir, sysDir, erodeKernSize, dilateKernSi
                                        "ColMaskFileName":"ProbeColMaskFileName",
                                        "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
 
-    donor_df = scores_4_mask_pairs(m_df['DonorMaskFileName'], m_df['DonorOutputMaskFileName'], m_df['DonorFileName'], refDir, sysDir, erodeKernSize, dilateKernSize, thres, outputRoot,html,precision=precision)
-    donor_df.rename(index=str,columns={"ProbeOutputMaskFileName":"DonorOutputMaskFileName","NMM":"dNMM","MCC":"dMCC","HAM":"dHAM","WL1":"dWL1","HL1":"dHL1", "ColMaskFileName":"DonorColMaskFileName","AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
+    donor_df = scores_4_mask_pairs(m_df['DonorMaskFileName'],
+                                   m_df['DonorOutputMaskFileName'],
+                                   m_df['DonorFileName'],
+                                   refDir,
+                                   sysDir,
+                                   rbin,
+                                   sbin,
+                                   erodeKernSize,
+                                   dilateKernSize,
+                                   thres,
+                                   outputRoot,
+                                   html,
+                                   precision=precision)
+    donor_df.rename(index=str,columns={"ProbeOutputMaskFileName":"DonorOutputMaskFileName",
+                                       "NMM":"dNMM",
+                                       "MCC":"dMCC",
+                                       "HAM":"dHAM",
+                                       "WL1":"dWL1",
+                                       "HL1":"dHL1",
+                                       "ColMaskFileName":"DonorColMaskFileName",
+                                       "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
 
     pd_df = pd.concat([probe_df,donor_df],axis=1)
     merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeOutputMaskFileName','DonorOutputMaskFileName'])

@@ -65,6 +65,30 @@ parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('--dks',type=int,default=9,
 help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
+parser.add_argument('--rbin',type=int,default=254,
+help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
+parser.add_argument('--sbin',type=int,default=-1,
+help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
+parser.add_argument('--th',type=int,default=0,
+help="threshold value [0,255] for grayscale, [default=0]", metavar="integer")
+#parser.add_argument('--avgOver',type=str,default='',
+#help="A collection of features to average reports over, separated by commas.", metavar="character")
+parser.add_argument('-v','--verbose',type=int,default=None,
+help="Control print output. Select 1 to print all non-error print output and 0 to suppress all print output (bar argument-parsing errors).",metavar='0 or 1')
+parser.add_argument('--precision',type=int,default=5,
+help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=5].",metavar='positive integer')
+parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
+
+# loading scoring and reporting libraries
+lib_path = "../../lib"
+execfile(os.path.join(lib_path,"masks.py")) #EDIT: find better way to import?
+execfile('maskreport.py')
+
+args = parser.parse_args()
+verbose=args.verbose
+
+#wrapper print function for print message suppression
+if verbose:
 parser.add_argument('--th',type=int,default=0,
 help="threshold value [0,255] for grayscale, [default=0]", metavar="integer")
 #parser.add_argument('--avgOver',type=str,default='',
@@ -156,10 +180,10 @@ if args.precision < 1:
     args.precision=5
 
 if args.task in ['manipulation','removal','clone']:
-    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 elif args.task == 'splice':
-    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
 
 precision = args.precision
