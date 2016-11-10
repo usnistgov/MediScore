@@ -4,7 +4,7 @@
 MAKE=make
 
 check:
-	(python2 -m unittest DetectionScorerUnitTest)
+	(python2 -m unittest DetectionScorer)
 	(./detcompcheckfiles.sh)
 
 makecompcheckfiles:
