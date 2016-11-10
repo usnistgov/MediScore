@@ -20,6 +20,7 @@ from a command line.  These scripts have been tested under the
 following versions of Ubuntu Linux and OS X.
 
   Mac OS X 10.11.6
+  Ubuntu Linux 14.04.4
 
 
 INSTALLATION
@@ -31,17 +32,17 @@ INSTALLATION
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
-  - opencv (tested in the version 2.4.13)
-  - numpy  (tested in the version 1.11.1)
-  - pandas (tested in the version 0.18.1)
-  - matplotlib (tested in the version 1.5.1)
-  - scipy (tested in the version 0.18.0)
-  - scikit-learn (tested in the version 0.17.1)
+  - opencv (tested in version 2.4.13)
+  - numpy  (tested in version 1.11.1)
+  - pandas (tested in version 0.18.1)
+  - matplotlib (tested in version 1.5.1)
+  - scipy (tested in version 0.18.0)
+  - scikit-learn (tested in version 0.17.1)
   - unittest
 
 3) To test your installation, run MediScore's "make check" in the MediScore directory.
    You should expect to see ERROR messages pop up as we test the behavior of the functions.
-   If you see the following messages, your make check completes successfully.
+   If you see the following messages, your make check completed successfully.
    - ALL DSD VALIDATION TESTS SUCCESSFULLY PASSED
    - ALL SSD VALIDATION TESTS SUCCESSFULLY PASSED
    - MASK SCORER TESTS SUCCESSFULLY PASSED

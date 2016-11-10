@@ -117,7 +117,7 @@ class detMetrics:
         data = OrderedDict([('AUC',self.auc),('FAR_STOP',self.fpr_stop),('EER',self.eer),('AUC_CI_LOWER',self.ci_lower), ('AUC_CI_UPPER',self.ci_upper)])
         my_table = DataFrame(data,index=['0'])
 
-        return my_table
+        return my_table.round(6)
         #my_table.to_csv(file_name, index = False)
 
     def get_eer(self):
@@ -220,4 +220,3 @@ class Metrics:
         ci_tpr = 0 #TODO: after calculating CI for each TPR
         #print("Confidence interval for AUC: [{:0.5f} - {:0.5f}]".format(ci_lower, ci_upper))
         return ci_lower, ci_upper, ci_tpr
-
