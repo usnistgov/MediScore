@@ -19,9 +19,9 @@
  reliability, or any other characteristic."
 """
 
+import cv
 import cv2
 import math
-import masks
 import copy
 import numpy as np
 import unittest as ut
@@ -29,6 +29,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import random
+from masks import *
 from decimal import Decimal
 
 class TestImageMethods(ut.TestCase):
