@@ -333,6 +333,11 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     # merge the ref+index file with the system csv file
     m_df = pd.merge(idx_df,sub_sys,how='left',on='ProbeFileID')
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
+    
+    # if the confidence score are 'nan', replace the values with the mininum score
+    mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
     df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                              m_df['ProbeOutputMaskFileName'],
