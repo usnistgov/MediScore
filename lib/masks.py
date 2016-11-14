@@ -662,7 +662,7 @@ class refmask(mask):
         mydims = self.get_dims()
         mycolor = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
 
-        #flip all because black is 0 and is GT. Use the regions to determine where to color.
+        #flip all because black is 0 by default. Use the regions to determine where to color.
         b_sImg = 1-sData/255
         b_wImg = 1-wData
         b_eImg = 1-eData/255
@@ -680,10 +680,10 @@ class refmask(mask):
         #yellow to system mask intersect with GT
         #black to true negatives
 
-        mycolor[(mImg==1) | (mImg==2)] = [0,0,255]
-        mycolor[mImg==4] = [255,51,51]
-        mycolor[mImg==5] = [255,51,255]
-        mycolor[mImg==3] = [0,255,255]
+        mycolor[(mImg==1) | (mImg==2)] = [0,0,255] #either only system (FP) or only erode image (FN)
+        mycolor[mImg==4] = [255,51,51] #no-score zone
+        mycolor[mImg==5] = [255,51,255] #system intersecting with no-score zone
+        mycolor[mImg==3] = [0,255,255] #system and erode image coincide (TP)
 
         #return path to mask
         outputMaskName = sysImgName.split('/')[-1]
