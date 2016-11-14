@@ -3,11 +3,11 @@
 * File: MaskScorer.py
 * Date: 08/30/2016
 * Translated by Daniel Zhou
-* Original implemented by Yooyoung Lee 
-* Status: Complete 
+* Original implemented by Yooyoung Lee
+* Status: Complete
 
-* Description: This calculates performance scores for localizing mainpulated area 
-                between reference mask and system output mask 
+* Description: This calculates performance scores for localizing mainpulated area
+                between reference mask and system output mask
 
 * Requirements: This code requires the following packages:
 
@@ -16,14 +16,14 @@
 
   The rest are available on your system
 
-* Disclaimer: 
-This software was developed at the National Institute of Standards 
+* Disclaimer:
+This software was developed at the National Institute of Standards
 and Technology (NIST) by employees of the Federal Government in the
-course of their official duties. Pursuant to Title 17 Section 105 
-of the United States Code, this software is not subject to copyright 
-protection and is in the public domain. NIST assumes no responsibility 
-whatsoever for use by other parties of its source code or open source 
-server, and makes no guarantees, expressed or implied, about its quality, 
+course of their official duties. Pursuant to Title 17 Section 105
+of the United States Code, this software is not subject to copyright
+protection and is in the public domain. NIST assumes no responsibility
+whatsoever for use by other parties of its source code or open source
+server, and makes no guarantees, expressed or implied, about its quality,
 reliability, or any other characteristic."
 """
 
@@ -34,6 +34,7 @@ import os
 import cv2
 import pandas as pd
 import argparse
+import numpy as np
 
 ########### Command line interface ########################################################
 
@@ -108,12 +109,12 @@ if args.task not in [None,'manipulation','removal','clone','splice']:
 if args.refDir is None:
     printerr("ERROR: NC2016_Test directory path must be supplied.")
 
-myRefDir = args.refDir 
+myRefDir = args.refDir
 
 if args.inRef is None:
     printerr("ERROR: Input file name for reference must be supplied.")
 
-if args.inSys is None: 
+if args.inSys is None:
     printerr("ERROR: Input file name for system output must be supplied.")
 
 if args.inIndex is None:
@@ -170,11 +171,11 @@ mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
-
-# if the confidence score are 'nan', replace the values with the mininum score
-mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
-# convert to the str type to the float type for computations
-mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
+#
+## if the confidence score are 'nan', replace the values with the mininum score
+#mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+## convert to the str type to the float type for computations
+#mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
 reportq = 0
 if args.verbose:
@@ -183,12 +184,27 @@ if args.verbose:
 if args.precision < 1:
     printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 5 digits.")
     args.precision=5
+## fixed by LEE
 
+sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
+
+# Merge the reference and system output for SSD/DSD reports
 if args.task in ['manipulation','removal','clone']:
-    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
+    # if the confidence score are 'nan', replace the values with the mininum score
+    m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
+
 elif args.task == 'splice':
-    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
+        # if the confidence score are 'nan', replace the values with the mininum score
+    m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
 
 precision = args.precision

@@ -2,8 +2,8 @@
 * File: maskreport.py
 * Date: 08/30/2016
 * Translated by Daniel Zhou
-* Original implemented by Yooyoung Lee 
-* Status: Complete 
+* Original implemented by Yooyoung Lee
+* Status: Complete
 
 * Description: This code contains the reporting functions used by
                MaskScorer.py.
@@ -16,14 +16,14 @@
 
   The other packages should be available on your system by default.
 
-* Disclaimer: 
-This software was developed at the National Institute of Standards 
+* Disclaimer:
+This software was developed at the National Institute of Standards
 and Technology (NIST) by employees of the Federal Government in the
-course of their official duties. Pursuant to Title 17 Section 105 
-of the United States Code, this software is not subject to copyright 
-protection and is in the public domain. NIST assumes no responsibility 
-whatsoever for use by other parties of its source code or open source 
-server, and makes no guarantees, expressed or implied, about its quality, 
+course of their official duties. Pursuant to Title 17 Section 105
+of the United States Code, this software is not subject to copyright
+protection and is in the public domain. NIST assumes no responsibility
+whatsoever for use by other parties of its source code or open source
+server, and makes no guarantees, expressed or implied, about its quality,
 reliability, or any other characteristic."
 """
 
@@ -51,7 +51,7 @@ def scores_4_mask_pairs(refMaskFName,
      Mask performance per image pair
      *Description: this function calculates metrics for a pair of mask images
      *Inputs
-       *numOfRows: the number of pair images 
+       *numOfRows: the number of pair images
        *refMaskFName: list of reference mask file names
        *sysMaskFName: list of system output mask file names
        *maniImageFName: list of manipulated image file names
@@ -103,7 +103,7 @@ def scores_4_mask_pairs(refMaskFName,
 
                 maniImgName = os.path.join(refDir,maniImageFName[i])
                 colordirs = rImg.coloredMask_opt1(sysMaskName, maniImgName, metric['mask'], metric['wimg'], metric['eImg'], metric['dImg'], outputRoot)
-               
+
                 mywts = np.uint8(255*metric['wimg'])
                 sysBase = sysMaskFName[i].split('/')[-1][:-4]
                 weightFName = sysBase + '-weights.png'
@@ -220,7 +220,7 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
                            'HAM' : np.empty(num_runs),
                            'WL1' : np.empty(num_runs),
                            'HL1' : np.empty(num_runs)})
- 
+
     sub_d = df.copy()
 
     outeridx = 0
@@ -238,7 +238,7 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
     else:
         df_avg.set_value(0,'runID',0)
         store_avg(sub_d,metrics,df_avg,0,precision)
-        
+
     return df_avg
 
 def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'],precision=5):
@@ -276,7 +276,7 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
                            'dHAM' : np.empty(num_runs),
                            'dWL1' : np.empty(num_runs),
                            'dHL1' : np.empty(num_runs)})
- 
+
     sub_d = df.copy()
 
     outeridx = 0
@@ -296,11 +296,11 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
         store_avg(sub_d,metrics,df_avg,0,precision)
 
     return df_avg
-    
-def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
+
+def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for single source detection
-     *Description: this function calls each metric function and 
+     *Description: this function calls each metric function and
                    return the metric value and the colored mask output as a report
      *Inputs
        *ref: reference dataframe
@@ -317,22 +317,11 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
        *verbose: permit printout from metrics
      *Outputs
        *report dataframe
-    
+
        *bySet: the reports will be seperated by DatasetID(e.g., y/n, default: n)
        *byPost: the reports will be seperated by PostProcessingID(e.g., y/n, default: n)
     """
-    sub_ref = ref[ref['IsTarget']=="Y"].copy() # grep only the target class
-    index = index[['ProbeFileID','ProbeWidth','ProbeHeight']] #due to ProbeFileName duplication
 
-    #finds rows in index and sys which correspond to target reference
-    sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
-    sub_sys = sys[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
-
-    # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,sub_index,how='left',on='ProbeFileID')
-    # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sub_sys,how='left',on='ProbeFileID')
-    #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
 
     df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                              m_df['ProbeOutputMaskFileName'],
@@ -372,10 +361,10 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
 
     return merged_df
 
-def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
+def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for double source detection
-     *Description: this function calls each metric function and 
+     *Description: this function calls each metric function and
                                  return the metric value and the colored mask output as a report
      *Inputs
        *ref: reference dataframe
@@ -393,19 +382,6 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
      *Outputs
        *report dataframe
     """
-
-    sub_ref = ref[ref['IsTarget']=="Y"].copy()  #grep only the target class
-    index = index[['ProbeFileID','DonorFileID','ProbeWidth','ProbeHeight','DonorWidth','DonorHeight']] #due to ProbeFileName/DonorFileName duplication
-
-    #finds rows in index and sys which correspond to target reference 
-    sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
-    sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
-
-    # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,sub_index,how='left',on=['ProbeFileID','DonorFileID'])
-    # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sub_sys,how='left',on=['ProbeFileID','DonorFileID'])
-    #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
 
     probe_df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                                    m_df['ProbeOutputMaskFileName'],
@@ -471,4 +447,4 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
         myf.close()
 
     return merged_df
-     
+
