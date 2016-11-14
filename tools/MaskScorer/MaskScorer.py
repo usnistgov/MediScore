@@ -69,8 +69,6 @@ parser.add_argument('--rbin',type=int,default=254,
 help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
 parser.add_argument('--sbin',type=int,default=-1,
 help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
-parser.add_argument('--th',type=int,default=0,
-help="threshold value [0,255] for grayscale, [default=0]", metavar="integer")
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
 parser.add_argument('-v','--verbose',type=int,default=None,
@@ -121,9 +119,6 @@ if args.inSys is None:
 if args.inIndex is None:
     printerr("ERROR: Input file name for index files must be supplied.")
 
-if (args.th < 0) or (args.th > 255):
-    printerr("ERROR: Threshold for grayscale must be range [0,255].")
-
 #create the folder and save the mask outputs
 #set.seed(1)
 
@@ -143,13 +138,43 @@ avglist = ['']  #TODO: temporary fix until the averaging by factors procedure is
 if avglist == ['']:
     avglist = []
 
-myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='\|',header=0,engine='python')
+if args.task in ['manipulation','removal','clone']:
+    index_dtype = {'TaskID':str,
+             'ProbeFileID':str,
+             'ProbeFileName':str,
+             'ProbeWidth':np.int64,
+             'ProbeHeight':np.int64}
+    sys_dtype = {'ProbeFileID':str,
+             'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+             'ProbeOutputMaskFileName':str}
+elif args.task == 'splice':
+    index_dtype = {'TaskID':str,
+             'ProbeFileID':str,
+             'ProbeFileName':str,
+             'ProbeWidth':np.int64,
+             'ProbeHeight':np.int64,
+             'DonorFileID':str,
+             'DonorFileName':str,
+             'DonorWidth':np.int64,
+             'DonorHeight':np.int64}
+    sys_dtype = {'ProbeFileID':str,
+             'DonorFileID':str,
+             'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+             'ProbeOutputMaskFileName':str,
+             'DonorOutputMaskFileName':str}
+
 mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
-mySys = pd.read_csv(mySysFile,sep='\|',header=0,engine='python')
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='\|',header=0,engine='python')
+myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='\|',header=0,engine='python')
+mySys = pd.read_csv(mySysFile,sep='\|',header=0,engine='python',dtype=sys_dtype)
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='\|',header=0,engine='python',dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
+
+# if the confidence score are 'nan', replace the values with the mininum score
+mySys[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+# convert to the str type to the float type for computations
+mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
 reportq = 0
 if args.verbose:
@@ -160,10 +185,10 @@ if args.precision < 1:
     args.precision=5
 
 if args.task in ['manipulation','removal','clone']:
-    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 elif args.task == 'splice':
-    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
 
 precision = args.precision

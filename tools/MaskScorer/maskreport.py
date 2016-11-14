@@ -43,7 +43,6 @@ def scores_4_mask_pairs(refMaskFName,
                         sbin,
                         erodeKernSize,
                         dilateKernSize,
-                        thres,
                         outputRoot,
                         html=False,
                         verbose=0,
@@ -62,7 +61,6 @@ def scores_4_mask_pairs(refMaskFName,
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
-       *thres: threshold input[0,255] for grayscale mask
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: option to permit printout from metrics
@@ -95,7 +93,7 @@ def scores_4_mask_pairs(refMaskFName,
             if sbin >= 0:
                 sImg.matrix = sImg.bw(sbin)
 
-            metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=thres,popt=verbose)
+            metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=sbin,popt=verbose)
             for met in ['NMM','MCC','HAM','WL1','HL1']:
                 df.set_value(i,met,round(metric[met],precision))
 
@@ -299,7 +297,7 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
 
     return df_avg
     
-def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
+def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for single source detection
      *Description: this function calls each metric function and 
@@ -314,7 +312,6 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
-       *thres: threshold input[0,255] for grayscale mask
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: permit printout from metrics
@@ -346,7 +343,6 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
                              sbin,
                              erodeKernSize,
                              dilateKernSize,
-                             thres,
                              outputRoot,
                              html,
                              verbose,
@@ -376,7 +372,7 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
 
     return merged_df
 
-def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, thres, outputRoot,html,verbose,precision=5):
+def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for double source detection
      *Description: this function calls each metric function and 
@@ -391,7 +387,6 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
-       *thres: threshold input[0,255] for grayscale mask
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: permit printout from metrics
@@ -421,7 +416,6 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
                                    sbin,
                                    erodeKernSize,
                                    dilateKernSize,
-                                   thres,
                                    outputRoot,
                                    html,
                                    precision=precision)
@@ -442,7 +436,6 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
                                    sbin,
                                    erodeKernSize,
                                    dilateKernSize,
-                                   thres,
                                    outputRoot,
                                    html,
                                    precision=precision)

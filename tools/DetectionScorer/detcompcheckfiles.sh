@@ -54,6 +54,7 @@ if [ $flag == 0 -a $flag_ci == 0 -a $flag2 == 0 ] ; then
 	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED."
 	echo
 else
+	rm -rf testcases
 	echo
 	echo "    !!!!! DETECTION SCORER TESTS FAILED !!!!!"
 	echo
