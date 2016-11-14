@@ -325,19 +325,19 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     index = index[['ProbeFileID','ProbeWidth','ProbeHeight']] #due to ProbeFileName duplication
 
     #finds rows in index and sys which correspond to target reference
-    sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
-    sub_sys = sys[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
+    #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
+    #sub_sys = sys[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
 
     # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,sub_index,how='left',on='ProbeFileID')
+    idx_df = pd.merge(sub_ref,index,how='left',on='ProbeFileID')
     # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sub_sys,how='left',on='ProbeFileID')
+    m_df = pd.merge(idx_df,sys,how='left',on='ProbeFileID')
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
     
     # if the confidence score are 'nan', replace the values with the mininum score
-    mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+    m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
-    mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                              m_df['ProbeOutputMaskFileName'],
@@ -403,14 +403,19 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     index = index[['ProbeFileID','DonorFileID','ProbeWidth','ProbeHeight','DonorWidth','DonorHeight']] #due to ProbeFileName/DonorFileName duplication
 
     #finds rows in index and sys which correspond to target reference 
-    sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
-    sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
+    #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
+    #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
 
     # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,sub_index,how='left',on=['ProbeFileID','DonorFileID'])
+    idx_df = pd.merge(sub_ref,index,how='left',on=['ProbeFileID','DonorFileID'])
     # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sub_sys,how='left',on=['ProbeFileID','DonorFileID'])
+    m_df = pd.merge(idx_df,sys,how='left',on=['ProbeFileID','DonorFileID'])
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
+
+    # if the confidence score are 'nan', replace the values with the mininum score
+    m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     probe_df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                                    m_df['ProbeOutputMaskFileName'],
