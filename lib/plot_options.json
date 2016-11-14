@@ -1,9 +1,0 @@
-{"title": "Running Thresholds",
- "plot_type": "Running Thresholds",
- "title_fontsize": 15,
- "xticks_size": "medium",
- "yticks_size": "medium",
- "xlabel": "Thresholds",
- "xlabel_fontsize": 12,
- "ylabel": "Metric values",
- "ylabel_fontsize": 12}

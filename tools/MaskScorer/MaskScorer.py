@@ -165,14 +165,14 @@ elif args.task == 'splice':
 
 mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
-myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='\|',header=0,engine='python')
-mySys = pd.read_csv(mySysFile,sep='\|',header=0,engine='python',dtype=sys_dtype)
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='\|',header=0,engine='python',dtype=index_dtype)
+myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
+mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
 
 # if the confidence score are 'nan', replace the values with the mininum score
-mySys[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
 # convert to the str type to the float type for computations
 mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 

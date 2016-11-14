@@ -654,7 +654,7 @@ class refmask(mask):
             else:
                 print("Hinge Loss L1: %0.9f" % hL1)
 
-        return {'mask':smat,'wimg':w,'eImg':eImg,'dImg':dImg,'NMM':nmm,'MCC':mcc,'HAM':ham,'WL1':wL1,'HL1':hL1}
+        return {'mask':sys.matrix,'wimg':w,'eImg':eImg,'dImg':dImg,'NMM':nmm,'MCC':mcc,'HAM':ham,'WL1':wL1,'HL1':hL1}
 
     #prints out the aggregate mask, reference and other data
     def coloredMask_opt1(self,sysImgName, maniImgName, sData, wData, eData, dData, outputMaskPath):
