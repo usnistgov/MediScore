@@ -11769,8 +11769,17 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script validates the content of the index and system output files as specified in the NC2016 Evaluation Plan, as well as the basic format and features of the mask files (i.e. same dimensions as the original image as described in the index file and single-channel grayscale).</p>
-<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it). In this directory should also be a <b>mask</b> directory containing the system output masks.</p>
+<p>This script validates the name and content of the index and system output files as specified in the NC2016 Evaluation Plan, as well as the basic format and features of the mask files (i.e. same dimensions as the original image as described in the index file and single-channel grayscale).</p>
+<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it), which should follow the following naming specification:</p>
+<p>[Team Name]_[Evaluation ID]_[Task ID]_[Condition]_[Sys]_[Version]</p>
+<ul>
+<li>Evaluation ID refers to the name of the evaluation (i.e. NC2017)</li>
+<li>Task ID refers to the name of the task (i.e. Manipulation, Removal, Clone, or Splice)</li>
+<li>Condition refers to the type of evaluation being considered (e.g. ImgOnly)</li>
+<li>Sys refers to the System ID used for the algorithm generating the output</li>
+<li>Version refers to the version of the above algorithm</li>
+</ul>
+<p>In this directory should also be a <b>mask</b> directory containing the system output masks.</p>
 <p>All csv files passed to the Validator must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the csv should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this on the csv: foo||bar, although this won't be checked).</p>
 <p>Both the index and system output files must have their columns in the specified order described under Input Options and no other column. The index and system output files must have the same number of rows; further, the system output must not have duplicate rows.</p>
 <p>All masks for the validator will be checked for conformity to the dimensions specified in the index file and for being png's. However, mask fields with blank entries can be skipped over without the validator throwing an error (for the DSD validator, either Probe or Donor mask file name being blank will cause that row to be skipped).</p>
