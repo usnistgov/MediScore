@@ -80,7 +80,6 @@ def scores_4_mask_pairs(refMaskFName,
                      'AggMaskFileName':['']*numOfRows})
 
     for i,row in df.iterrows():
-        print(refMaskFName[i])
         refMaskName = os.path.join(refDir,refMaskFName[i])
         sysMaskName = os.path.join(sysDir,sysMaskFName[i])
 
@@ -336,6 +335,10 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     m_df = pd.merge(idx_df,sys,how='left',on='ProbeFileID')
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
     
+    #TODO: some ProbeMaskFileNames are read as infs. Get rid of them.
+    # get rid of inf values from the merge and entries for which there is nothing to work with.
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName','ProbeOutputMaskFileName','ProbeFileName'])
+
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
@@ -414,6 +417,13 @@ def createReportDSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     m_df = pd.merge(idx_df,sys,how='left',on=['ProbeFileID','DonorFileID'])
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
 
+    # get rid of inf values from the merge
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
+                                                                'ProbeOutputMaskFileName',
+                                                                'ProbeFileName',
+                                                                'DonorMaskFileName',
+                                                                'DonorOutputMaskFileName',
+                                                                'DonorFileName'])
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
