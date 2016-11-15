@@ -558,3 +558,7 @@ if __name__ == '__main__':
                 fig.savefig(outRoot + '_' + plotType + '_' + str(i) + '.pdf')
         else:
             myfigure.savefig(outRoot + '_' + plotType + '_all.pdf')
+<<<<<<< HEAD
+=======
+
+>>>>>>> 98b73d67829527a9670348d57cb225872b98f35a

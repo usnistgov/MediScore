@@ -171,11 +171,14 @@ mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
+<<<<<<< HEAD
 #
 ## if the confidence score are 'nan', replace the values with the mininum score
 #mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
 ## convert to the str type to the float type for computations
 #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
+=======
+>>>>>>> 98b73d67829527a9670348d57cb225872b98f35a
 
 reportq = 0
 if args.verbose:

@@ -780,6 +780,7 @@ if __name__ == '__main__':
     help='required validator type',metavar='character')
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
+    #TODO: add option to turn off namechecking
 
     if (len(sys.argv) > 1):
 
