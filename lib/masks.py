@@ -232,7 +232,7 @@ class mask:
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(compression)
-        cv2.imwrite(fname,self.matrix,compression)
+        cv2.imwrite(fname,self.matrix,params)
 
 class refmask(mask):
 
