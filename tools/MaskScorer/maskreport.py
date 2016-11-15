@@ -80,6 +80,7 @@ def scores_4_mask_pairs(refMaskFName,
                      'AggMaskFileName':['']*numOfRows})
 
     for i,row in df.iterrows():
+        print(refMaskFName[i])
         refMaskName = os.path.join(refDir,refMaskFName[i])
         sysMaskName = os.path.join(sysDir,sysMaskFName[i])
 
