@@ -277,7 +277,7 @@ class refmask(mask):
         y = 1+np.copy(x)
         y[~((x<=0) & (r==0))]=0 #set all values that don't fulfill criteria to 0
         y = np.multiply(w,y)
-        tp = np.sum(abs(y)) #sum_same_values + sum_neg_values
+        tp = np.sum(y) #sum_same_values + sum_neg_values
  
         y = np.copy(x)
         y[~((x > 0) & (r==255))]=0 #set all values that don't fulfill criteria to 0
