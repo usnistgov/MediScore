@@ -335,7 +335,6 @@ def createReportSSD(ref, sys, index, refDir, sysDir, rbin, sbin, erodeKernSize, 
     m_df = pd.merge(idx_df,sys,how='left',on='ProbeFileID')
     #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
     
-    #TODO: some ProbeMaskFileNames are read as infs. Get rid of them.
     # get rid of inf values from the merge and entries for which there is nothing to work with.
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName','ProbeOutputMaskFileName','ProbeFileName'])
 
