@@ -304,9 +304,7 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
      *Description: this function calls each metric function and
                    return the metric value and the colored mask output as a report
      *Inputs
-       *ref: reference dataframe
-       *sys: system output dataframe
-       *index: index dataframe
+       *m_df: reference dataframe merged with system output dataframe
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
        *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
@@ -323,26 +321,10 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
        *byPost: the reports will be seperated by PostProcessingID(e.g., y/n, default: n)
     """
 
-<<<<<<< HEAD
-=======
-    #finds rows in index and sys which correspond to target reference
-    #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
-    #sub_sys = sys[sub_ref['ProbeFileID'].isin(index['ProbeFileID'])]
-
-    # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,index,how='left',on='ProbeFileID')
-    # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sys,how='left',on='ProbeFileID')
-    #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
-    
-    # get rid of inf values from the merge and entries for which there is nothing to work with.
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName','ProbeOutputMaskFileName','ProbeFileName'])
-
     # if the confidence score are 'nan', replace the values with the mininum score
-    m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
+    #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
-    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
->>>>>>> 98b73d67829527a9670348d57cb225872b98f35a
+    #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                              m_df['ProbeOutputMaskFileName'],
@@ -388,9 +370,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
      *Description: this function calls each metric function and
                                  return the metric value and the colored mask output as a report
      *Inputs
-       *ref: reference dataframe
-       *sys: system output dataframe
-       *index: index dataframe
+       *m_df: reference dataframe merged with system output dataframe
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
        *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
@@ -404,34 +384,15 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
        *report dataframe
     """
 
-<<<<<<< HEAD
-=======
-    sub_ref = ref[ref['IsTarget']=="Y"].copy()  #grep only the target class
-    index = index[['ProbeFileID','DonorFileID','ProbeWidth','ProbeHeight','DonorWidth','DonorHeight']] #due to ProbeFileName/DonorFileName duplication
-
     #finds rows in index and sys which correspond to target reference 
     #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
     #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
 
-    # merge the ref csv with the index csv (indicated col names due to the duplicated col names between ref and index csv files)    
-    idx_df = pd.merge(sub_ref,index,how='left',on=['ProbeFileID','DonorFileID'])
-    # merge the ref+index file with the system csv file
-    m_df = pd.merge(idx_df,sys,how='left',on=['ProbeFileID','DonorFileID'])
-    #f_df <- m_df[!(m_df$ProbeMaskFileName=="" | is.na(m_df$ProbeMaskFileName)),]
-
-    # get rid of inf values from the merge
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
-                                                                'ProbeOutputMaskFileName',
-                                                                'ProbeFileName',
-                                                                'DonorMaskFileName',
-                                                                'DonorOutputMaskFileName',
-                                                                'DonorFileName'])
     # if the confidence score are 'nan', replace the values with the mininum score
-    m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
+    #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
-    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
->>>>>>> 98b73d67829527a9670348d57cb225872b98f35a
     probe_df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                                    m_df['ProbeOutputMaskFileName'],
                                    m_df['ProbeFileName'],

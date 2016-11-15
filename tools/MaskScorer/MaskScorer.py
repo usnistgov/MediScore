@@ -171,14 +171,11 @@ mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
-<<<<<<< HEAD
 #
 ## if the confidence score are 'nan', replace the values with the mininum score
 #mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
 ## convert to the str type to the float type for computations
 #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
-=======
->>>>>>> 98b73d67829527a9670348d57cb225872b98f35a
 
 reportq = 0
 if args.verbose:
@@ -187,13 +184,15 @@ if args.verbose:
 if args.precision < 1:
     printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 5 digits.")
     args.precision=5
-## fixed by LEE
 
 sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 
 # Merge the reference and system output for SSD/DSD reports
 if args.task in ['manipulation','removal','clone']:
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
+    # get rid of inf values from the merge and entries for which there is nothing to work with.
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName','ProbeOutputMaskFileName','ProbeFileName'])
+
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
@@ -203,7 +202,15 @@ if args.task in ['manipulation','removal','clone']:
 
 elif args.task == 'splice':
     m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
-        # if the confidence score are 'nan', replace the values with the mininum score
+
+    # get rid of inf values from the merge
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
+                                                                'ProbeOutputMaskFileName',
+                                                                'ProbeFileName',
+                                                                'DonorMaskFileName',
+                                                                'DonorOutputMaskFileName',
+                                                                'DonorFileName'])
+    # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
