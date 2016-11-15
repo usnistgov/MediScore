@@ -82,6 +82,7 @@ def scores_4_mask_pairs(refMaskFName,
     for i,row in df.iterrows():
         refMaskName = os.path.join(refDir,refMaskFName[i])
         sysMaskName = os.path.join(sysDir,sysMaskFName[i])
+
         if sysMaskName in [None,'']:
             print("Empty mask file at index %d" % i)
             continue
