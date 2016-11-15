@@ -9,7 +9,7 @@
 
  *Description: this code contains the image object for the ground truth image.
  The image object contains methods for evaluating the scores for the ground
- truth image.  
+ truth image.
 
 
  *Disclaimer:
@@ -37,7 +37,7 @@ from decimal import Decimal
 def getKern(opt,size):
     if (size % 2 == 0):
         raise Exception('ERROR: One of your kernel sizes is not an odd integer.')
-    
+
     opt=opt.lower()
     if opt=='box':
         kern=cv2.getStructuringElement(cv2.MORPH_RECT,(size,size))
@@ -194,7 +194,7 @@ class mask:
     def overlay(self,imgName):
         mymat = np.copy(self.matrix)
         gImg = cv2.imread(imgName,0)
-        gImg = np.dstack(gImg,gImg,gImg) 
+        gImg = np.dstack(gImg,gImg,gImg)
         if len(self.matrix.shape)==2:
             mymat = np.dstack(mymat,mymat,mymat)
         elif len(self.matrix.shape)==4:
@@ -223,7 +223,7 @@ class mask:
             bimg[upthresh] = v
             bimg[~upthresh] = g
             return bimg
-            
+
     #save mask to file
     def save(self,fname,compression=0):
         if fname[-4:] != '.png':
@@ -241,7 +241,7 @@ class refmask(mask):
             dims = self.get_dims()
             weight = np.ones(dims,dtype=np.uint8)
             return {'rimg':self.matrix,'wimg':weight}
-    
+
         opt = opt.lower()
         eKern=getKern(opt,erodeKernSize)
         dKern=getKern(opt,dilateKernSize)
@@ -252,20 +252,20 @@ class refmask(mask):
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
-    
+
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
-            
+
     def confusion_measures(self,sys,w):
         """
         *Metric: confusion_measures
         *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
                                      between the reference mask and the system output mask,
                                      accommodating the no score zone
-        
+
         *Inputs
         * sys: system output mask object, with binary or grayscale matrix data
         * w: binary data from weighted table generated from this mask
-        
+
         *Outputs
         * MET: list of the TP, TN, FP, and FN area, and N (total score region)
         """
@@ -273,16 +273,16 @@ class refmask(mask):
         s=sys.matrix.astype(int)
         x=np.multiply(w,(r-s)/255.) #entrywise product of w and difference between masks
 
-        #white is 1, black is 0 
+        #white is 1, black is 0
         y = 1+np.copy(x)
         y[~((x<=0) & (r==0))]=0 #set all values that don't fulfill criteria to 0
         y = np.multiply(w,y)
         tp = np.sum(y) #sum_same_values + sum_neg_values
- 
+
         y = np.copy(x)
         y[~((x > 0) & (r==255))]=0 #set all values that don't fulfill criteria to 0
         fp = np.sum(y)
-    
+
         fn = np.sum(np.multiply((r==0),w)) - tp
         tn = np.sum(np.multiply((r==255),w)) - fp
 
@@ -290,9 +290,33 @@ class refmask(mask):
         n = mydims[0]*mydims[1] - np.sum(1-w[w<1])
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
-    
+
+    def confusion_measures_lee(self,sys,w):
+        """
+        *Metric: confusion_measures
+        *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
+                                     between the reference mask and the system output mask,
+                                     accommodating the no score zone
+
+        *Inputs
+        * sys: system output mask object, with binary or grayscale matrix data
+        * w: binary data from weighted table generated from this mask
+
+        *Outputs
+        * MET: list of the TP, TN, FP, and FN area, and N (total score region)
+        """
+        r = self.matrix.astype(int) #otherwise, negative values won't be recorded
+        s = sys.matrix.astype(int)
+        x = np.multiply(w,(r+s)/255.)
+        tp = np.sum(x[x==0])
+        fp = np.sum[x[x==1 & r==0]]
+        fn = np.sum(r[(r==0) & (w==1)]) - tp
+        tn = np.sum(r[(r==255) & (w==1)) - fp
+        n = np.sum(w[w==1])
+
+        return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
     #add mask scoring, with this as the GT. img is assumed to be a numpy matrix for flexibility of implementation.
-    
+
     def NimbleMaskMetric(self,sys,w,c=-1):
         """
         *Metric: NMM
@@ -315,7 +339,7 @@ class refmask(mask):
         return max(c,(tp-fn-fp)/Rgt)
 
     def matthews(self,sys,w):
-        """ 
+        """
         *Metric: MCC (Matthews correlation coefficient)
         *Description: this function calculates the system mask score
                                      based on the MCC function
@@ -340,15 +364,15 @@ class refmask(mask):
             score=Decimal(tp*tn-fp*fn)/Decimal((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)).sqrt()
             score = float(score)
         return score
-    
+
     def hamming(self,sys):
         """
         *Description: this function calculates Hamming distance
                                      between the reference mask and the system output mask
-        
+
         *Inputs
         *     sys: system output mask object, with binary or grayscale matrix data
-        
+
         * Outputs
             * Hamming distance value
         """
@@ -358,20 +382,20 @@ class refmask(mask):
         ham = np.sum(abs(rmat - smat))/255./(rmat.shape[0]*rmat.shape[1])
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
-    
+
     def weightedL1(self,sys,w):
         """
         *Description: this function calculates Weighted L1 loss
                                      and normalize the value with the no score zone
-        
+
         * Inputs
         *     sys: system output mask object, with binary or grayscale matrix data
         *     w: binary data from weighted table generated from reference mask
-        
+
         * Outputs
             * Normalized WL1 value
         """
-        
+
         rmat = self.matrix
         smat = sys.matrix
 
@@ -381,17 +405,17 @@ class refmask(mask):
         n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         norm_wL1=wL1/n
         return norm_wL1
-    
+
     def hingeL1(self,sys,w,e=0.1):
         """
          *Description: this function calculates Hinge L1 loss
                                      and normalize the value with the no score zone
-        
+
         * Inputs
         *     sys: system output mask object, with binary or grayscale matrix data
         *     w: binary data from weighted table generated from reference mask
         *     e: epsilon (default = 0.1)
-        
+
         * Outputs
             * Normalized HL1 value"
         """
@@ -405,7 +429,7 @@ class refmask(mask):
         wL1=np.multiply(w,(rmat-smat))
         wL1=np.sum(abs(wL1))/255.
         rArea=np.sum(rmat==0) #mask area
-        hL1=max(0,wL1-e*rArea)    
+        hL1=max(0,wL1-e*rArea)
         n=np.sum(w)
         norm_hL1=hL1/n
         return norm_hL1
@@ -474,18 +498,18 @@ class refmask(mask):
                 thresMets.set_value(rownum,'HL1',self.hingeL1(tmask,w))
                 rownum=rownum+1
         return thresMets
- 
-#    def getPlot(self,thresMets,metric='all',display=True,multi_fig=False): 
+
+#    def getPlot(self,thresMets,metric='all',display=True,multi_fig=False):
 #        """
 #        *Description: this function plots a curve of the running threshold values
 #			obtained from the above runningThreshold function
-#        
+#
 #        *Inputs
 #            * thresMets: the DataFrame of metrics computed in the runningThreshold function
 #            * metric: a string denoting the metrics to trace out on the plot. Default: 'all'
 #            * display: whether or not to display the plot in a window. Default: True
 #            * multi_fig: whether or not to save the plots for each metric on separate images. Default: False
-#        
+#
 #        * Outputs
 #            * path where the plots for the function are saved
 #        """
@@ -547,14 +571,14 @@ class refmask(mask):
 #        #a function defined to serve as the main plotter for getPlot. Put as separate function rather than nested?
 #        def plot_fig(metvals,fig_number,opts_list,plot_opts,display, multi_fig=False):
 #            fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
-#    
+#
 #            xtick_labels = range(0,256,15)
 #            xtick = xtick_labels
 #            x_tick_labels = [str(x) for x in xtick_labels]
 #            ytick_labels = np.linspace(metvals.min(),metvals.max(),17)
 #            ytick = ytick_labels
 #            y_tick_labels = [str(y) for y in ytick_labels]
-#    
+#
 #            #TODO: faulty curve function. Get help.
 #            print(len(opts_list))
 #            print(len(metvals))
@@ -563,10 +587,10 @@ class refmask(mask):
 #            else:
 #                for i in range(len(metvals)):
 #                    plt.plot(thresholds, metvals[i], **opts_list[i])
-#    
+#
 #            plt.plot((0, 1), '--', lw=0.5) # plot bisector
 #            plt.xlim([0, 255])
-# 
+#
 #            #plot formatting options.
 #            plt.xticks(xtick, x_tick_labels, size=plot_opts['xticks_size'])
 #            plt.yticks(ytick, y_tick_labels, size=plot_opts['yticks_size'])
@@ -574,22 +598,22 @@ class refmask(mask):
 #            plt.xlabel(plot_opts['xlabel'], fontsize=plot_opts['xlabel_fontsize'])
 #            plt.ylabel(plot_opts['ylabel'], fontsize=plot_opts['ylabel_fontsize'])
 #            plt.grid()
-#    
+#
 #    #        plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
 #    #        fig.tight_layout(pad=7)
-#    
+#
 #            if opts_list[0]['label'] != None:
 #                plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
 #                # Put a nicer background color on the legend.
 #                #legend.get_frame().set_facecolor('#00FFCC')
 #                #plt.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
 #                fig.tight_layout(pad=7)
-#    
+#
 #            if display:
 #                plt.show()
-#    
+#
 #            return fig
-#        
+#
 #        #different plotting options depending on multi_fig
 #        if multi_fig:
 #            fig_list = list()
@@ -711,4 +735,3 @@ class refmask(mask):
         cv2.imwrite(compositePath,myagg)
 
         return {'mask':path,'agg':compositePath}
-
