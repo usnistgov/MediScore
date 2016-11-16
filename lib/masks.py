@@ -353,7 +353,7 @@ class refmask(mask):
                                            'MCC':[-1024.],
                                            'WL1':[-1024.]})
                 mets = self.getMetrics(sys,erodeKernSize,dilateKernSize,kern=kern,popt=popt)
-                for m in ['NMM','MCC','HAM','WL1','HL1']:
+                for m in ['NMM','MCC','WL1']:
                     thresMets.set_value(0,m,mets[m])
             else:
                 #assess for both cases where we treat as all black or all white
