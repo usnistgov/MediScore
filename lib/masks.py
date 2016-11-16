@@ -66,7 +66,6 @@ def getKern(opt,size):
     return kern
 
 #erode and dilate take in numpy matrix representations.
-#TODO: v2: scikit image this?
 def erode(img,kern):
     if kern.dtype == np.float64:
         #convolve with image first and take the min
@@ -255,7 +254,7 @@ class refmask(mask):
 
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
 
-    def confusion_measures(self,sys,w):
+    def confusion_measures_gs(self,sys,w):
         """
         *Metric: confusion_measures
         *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
@@ -291,7 +290,7 @@ class refmask(mask):
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def confusion_measures_lee(self,sys,w):
+    def confusion_measures(self,sys,w):
         """
         *Metric: confusion_measures
         *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
@@ -307,12 +306,12 @@ class refmask(mask):
         """
         r = self.matrix.astype(int) #otherwise, negative values won't be recorded
         s = sys.matrix.astype(int)
-        x = np.multiply(w,(r+s)/255.)
-        tp = np.sum(x[x==0])
-        fp = np.sum[x[x==1 & r==0]]
-        fn = np.sum(r[(r==0) & (w==1)]) - tp
-        tn = np.sum(r[(r==255) & (w==1)) - fp
-        n = np.sum(w[w==1])
+        x = (r+s)/255.
+        tp = np.float64(np.sum((x==0) & (w==1)))
+        fp = np.float64(np.sum((x==1) & (r==0) & (w==1)))
+        fn = np.float64(np.sum((r==0) & (w==1)) - tp)
+        tn = np.float64(np.sum((r==255) & (w==1)) - fp)
+        n = np.sum(w==1)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
     #add mask scoring, with this as the GT. img is assumed to be a numpy matrix for flexibility of implementation.
