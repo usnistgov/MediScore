@@ -191,7 +191,7 @@ sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 if args.task in ['manipulation','removal','clone']:
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName','ProbeOutputMaskFileName','ProbeFileName'])
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
@@ -205,11 +205,7 @@ elif args.task == 'splice':
 
     # get rid of inf values from the merge
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
-                                                                'ProbeOutputMaskFileName',
-                                                                'ProbeFileName',
-                                                                'DonorMaskFileName',
-                                                                'DonorOutputMaskFileName',
-                                                                'DonorFileName'])
+                                                                'DonorMaskFileName'])
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations

@@ -213,7 +213,7 @@ class refmask(mask):
         *Outputs
         * MET: list of the TP, TN, FP, and FN area, and N (total score region)
         """
-        r = self.matrix.astype(int) #otherwise, negative values won't be recorded
+        r = self.matrix.astype(int)
         s = sys.matrix.astype(int)
         x = (r+s)/255.
         tp = np.float64(np.sum((x==0) & (w==1)))
@@ -258,6 +258,7 @@ class refmask(mask):
         fp = confmeasures['FP']
         tn = confmeasures['TN']
         fn = confmeasures['FN']
+        print(confmeasures) #TODO: debug
 
         mydims = self.get_dims()
         n = mydims[0]*mydims[1]

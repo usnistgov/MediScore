@@ -72,20 +72,20 @@ def scores_4_mask_pairs(refMaskFName,
     numOfRows = len(refMaskFName)
     # Create a dataframe
     df=pd.DataFrame({'ProbeOutputMaskFileName':sysMaskFName,
-                     'NMM':[-999.]*numOfRows,
-                     'MCC':-999.,
-                     'WL1':-999.,
+                     'NMM':[-1.]*numOfRows,
+                     'MCC': 0.,
+                     'WL1': 1.,
                      'ColMaskFileName':['']*numOfRows,
                      'AggMaskFileName':['']*numOfRows})
 
     for i,row in df.iterrows():
-        refMaskName = os.path.join(refDir,refMaskFName[i])
-        sysMaskName = os.path.join(sysDir,sysMaskFName[i])
-
-        if sysMaskName in [None,'']:
+        if sysMaskFName[i] in [None,'',np.nan]:
             print("Empty mask file at index %d" % i)
             continue
         else:
+            refMaskName = os.path.join(refDir,refMaskFName[i])
+            sysMaskName = os.path.join(sysDir,sysMaskFName[i])
+
             rImg = refmask(refMaskName)
             sImg = mask(sysMaskName)
             if rbin >= 0:
@@ -97,7 +97,7 @@ def scores_4_mask_pairs(refMaskFName,
             for met in ['NMM','MCC','WL1']:
                 df.set_value(i,met,round(metric[met],precision))
 
-            if (html):
+            if html:
                 if (not os.path.isdir(outputRoot)):
                     os.system('mkdir ' + outputRoot)
 
@@ -291,9 +291,6 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
        *verbose: permit printout from metrics
      *Outputs
        *report dataframe
-
-       *bySet: the reports will be seperated by DatasetID(e.g., y/n, default: n)
-       *byPost: the reports will be seperated by PostProcessingID(e.g., y/n, default: n)
     """
 
     # if the confidence score are 'nan', replace the values with the mininum score
@@ -318,7 +315,7 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     merged_df = pd.merge(m_df,df,how='left',on='ProbeOutputMaskFileName')
 
     #generate HTML table report
-    if (html):
+    if html:
         html_out = merged_df.copy()
 
         #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
@@ -408,7 +405,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     pd_df = pd.concat([probe_df,donor_df],axis=1)
     merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeOutputMaskFileName','DonorOutputMaskFileName'])
 
-    if (html):
+    if html:
         html_out = merged_df.copy()
 
         #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
