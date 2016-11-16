@@ -366,8 +366,9 @@ class refmask(mask):
 
     def hamming(self,sys):
         """
-        *Description: this function calculates Hamming distance
+        *Description: this function calculates the Hamming distance
                                      between the reference mask and the system output mask
+                      This metric is no longer called when 'all' is selected in getMetrics.
 
         *Inputs
         *     sys: system output mask object, with binary or grayscale matrix data
@@ -409,6 +410,7 @@ class refmask(mask):
         """
          *Description: this function calculates Hinge L1 loss
                                      and normalize the value with the no score zone
+                      This metric is no longer called when 'all' is selected in getMetrics.
 
         * Inputs
         *     sys: system output mask object, with binary or grayscale matrix data
@@ -425,12 +427,10 @@ class refmask(mask):
             e=0
         rmat = self.matrix.astype(np.float64)
         smat = sys.matrix.astype(np.float64)
-        wL1=np.multiply(w,(rmat-smat))
-        wL1=np.sum(abs(wL1))/255.
         rArea=np.sum(rmat==0) #mask area
-        hL1=max(0,wL1-e*rArea)
+        wL1 = self.weightedL1(sys,w)
         n=np.sum(w)
-        norm_hL1=hL1/n
+        hL1=max(0,wL1-e*rArea/n)
         return norm_hL1
 
     #computes metrics running over the set of thresholds
@@ -630,9 +630,9 @@ class refmask(mask):
         #preset values
         nmm = -999
         mcc = -999
-        ham = -999
+        #ham = -999
         wL1 = -999
-        hL1 = -999
+        #hL1 = -999
 
         if thres > 0:
             if popt==1:
@@ -657,26 +657,26 @@ class refmask(mask):
                 print("MCC: %d" % mcc)
             else:
                 print("MCC (Matthews correlation coeff.): %0.9f" % mcc)
-        ham = self.hamming(sys)
-        if popt==1:
-            if (ham==1) or (ham==0):
-                print("HAM: %d" % ham)
-            else:
-                print("Hamming Loss: %0.9f" % ham)
+#        ham = self.hamming(sys)
+#        if popt==1:
+#            if (ham==1) or (ham==0):
+#                print("HAM: %d" % ham)
+#            else:
+#                print("Hamming Loss: %0.9f" % ham)
         wL1 = self.weightedL1(sys,w)
         if popt==1:
             if (wL1==1) or (wL1==0):
                 print("WL1: %d" % mcc)
             else:
                 print("Weighted L1: %0.9f" % wL1)
-        hL1 = self.hingeL1(sys,w)
-        if popt==1:
-            if (hL1==1) or (hL1==0):
-                print("MCC: %d" % mcc)
-            else:
-                print("Hinge Loss L1: %0.9f" % hL1)
+#        hL1 = self.hingeL1(sys,w)
+#        if popt==1:
+#            if (hL1==1) or (hL1==0):
+#                print("MCC: %d" % mcc)
+#            else:
+#                print("Hinge Loss L1: %0.9f" % hL1)
 
-        return {'mask':sys.matrix,'wimg':w,'eImg':eImg,'dImg':dImg,'NMM':nmm,'MCC':mcc,'HAM':ham,'WL1':wL1,'HL1':hL1}
+        return {'mask':sys.matrix,'wimg':w,'eImg':eImg,'dImg':dImg,'NMM':nmm,'MCC':mcc,'WL1':wL1}
 
     #prints out the aggregate mask, reference and other data
     def coloredMask_opt1(self,sysImgName, maniImgName, sData, wData, eData, dData, outputMaskPath):

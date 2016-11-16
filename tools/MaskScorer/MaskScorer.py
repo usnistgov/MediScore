@@ -219,28 +219,22 @@ elif args.task == 'splice':
 
 precision = args.precision
 if args.task in ['manipulation','removal','clone']:
-    myavgs = [a_df[mets][0] for mets in ['NMM','MCC','HAM','WL1','HL1']]
+    myavgs = [a_df[mets][0] for mets in ['NMM','MCC','WL1']]
 
-    allmets = "Avg NMM: {}, Avg MCC: {}, Avg HAM: {}, Avg WL1: {}, Avg HL1: {}".format(round(myavgs[0],precision),
-                                                                                       round(myavgs[1],precision),
-                                                                                       round(myavgs[2],precision),
-                                                                                       round(myavgs[3],precision),
-                                                                                       round(myavgs[4],precision))
+    allmets = "Avg NMM: {}, Avg MCC: {}, Avg WL1: {}".format(round(myavgs[0],precision),
+                                                             round(myavgs[1],precision),
+                                                             round(myavgs[2],precision))
     printq(allmets)
 
 elif args.task == 'splice':
-    pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pHAM','pWL1','pHL1']]
-    davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dHAM','dWL1','dHL1']]
-    pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pHAM: {}, Avg pWL1: {}, Avg pHL1: {}".format(round(pavgs[0],precision),
-                                                                                             round(pavgs[1],precision),
-                                                                                             round(pavgs[2],precision),
-                                                                                             round(pavgs[3],precision),
-                                                                                             round(pavgs[4],precision))
-    dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dHAM: {}, Avg dWL1: {}, Avg dHL1: {}".format(round(davgs[0],precision),
-                                                                                             round(davgs[1],precision),
-                                                                                             round(davgs[2],precision),
-                                                                                             round(davgs[3],precision),
-                                                                                             round(davgs[4],precision))
+    pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pWL1']]
+    davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dWL1']]
+    pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pWL1: {}".format(round(pavgs[0],precision),
+                                                                 round(pavgs[1],precision),
+                                                                 round(pavgs[2],precision))
+    dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dWL1: {}".format(round(davgs[0],precision),
+                                                                 round(davgs[1],precision),
+                                                                 round(davgs[2],precision))
     printq(pallmets)
     printq(dallmets)
 else:

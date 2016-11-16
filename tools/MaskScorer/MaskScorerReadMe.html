@@ -11787,16 +11787,9 @@ NMM(GT,sys,weights,c)=\max{\left(\frac{TP - FN - FP}{\Sigma_{px\in GT}weights(px
 <h3 id="Matthews-Correlation-Coefficient-(MCC)">Matthews Correlation Coefficient (MCC)<a class="anchor-link" href="#Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
 MCC(GT,sys) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
 \end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation. The MCC does not rely on the weights.</p>
-<h3 id="Hamming-Distance-(HAM)">Hamming Distance (HAM)<a class="anchor-link" href="#Hamming-Distance-(HAM)">&#182;</a></h3>\begin{equation*}
-HAM(GT,sys) = \frac{FP + FN}{Total}
-\end{equation*}<p>The Hamming Distance is the total mismatched pixels scaled by the total number of pixels. Neither weighting nor thresholding is applied.  $Total$ refers to the total number of pixels in $GT$ and $sys$.</p>
-<p>A Hamming Distance of 0 denotes a perfect match; a Hamming distance of 1 denotes perfect mismatch.</p>
 <h3 id="Weighted-L1-Loss-(WL1)">Weighted L1 Loss (WL1)<a class="anchor-link" href="#Weighted-L1-Loss-(WL1)">&#182;</a></h3>\begin{equation*}
 WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 \end{equation*}<p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
-<h3 id="Hinge-L1-Loss-(HL1)">Hinge L1 Loss (HL1)<a class="anchor-link" href="#Hinge-L1-Loss-(HL1)">&#182;</a></h3>\begin{equation*}
-HL1(GT,sys,weights,\epsilon)=\max{\left(WL1(GT,sys,weights)-\epsilon*GT,0\right)}
-\end{equation*}<p>The Hinge L1 Loss subtracts a small $\epsilon$ (default 0.1) multiple of the reference mask's ground truth manipulated area to further excuse inaccuracies to the data to a certain level. $0$ denotes perfect or near perfect match with a small loss excused; $1 - \epsilon*GT$ denotes perfect mismatch. For larger pictures, it is important to pick $\epsilon$ smaller so that significant losses aren't excused by the hinge.</p>
 
 </div>
 </div>

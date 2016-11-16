@@ -73,9 +73,7 @@ def scores_4_mask_pairs(refMaskFName,
     df=pd.DataFrame({'ProbeOutputMaskFileName':sysMaskFName,
                      'NMM':[-999.]*numOfRows,
                      'MCC':-999.,
-                     'HAM':-999.,
                      'WL1':-999.,
-                     'HL1':-999.,
                      'ColMaskFileName':['']*numOfRows,
                      'AggMaskFileName':['']*numOfRows})
 
@@ -95,7 +93,7 @@ def scores_4_mask_pairs(refMaskFName,
                 sImg.matrix = sImg.bw(sbin)
 
             metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=sbin,popt=verbose)
-            for met in ['NMM','MCC','HAM','WL1','HL1']:
+            for met in ['NMM','MCC','WL1']:
                 df.set_value(i,met,round(metric[met],precision))
 
             if (html):
@@ -218,14 +216,12 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
                            'PostProcessed' : [None]*num_runs,
                            'NMM' : np.empty(num_runs),
                            'MCC' : np.empty(num_runs),
-                           'HAM' : np.empty(num_runs),
-                           'WL1' : np.empty(num_runs),
-                           'HL1' : np.empty(num_runs)})
+                           'WL1' : np.empty(num_runs)})
 
     sub_d = df.copy()
 
     outeridx = 0
-    metrics = ['NMM','MCC','HAM','WL1','HL1']
+    metrics = ['NMM','MCC','WL1']
     if (byCols != []):
         grouped = df.groupby(byCols,sort=False)
         for g in grouped.groups:
@@ -269,19 +265,15 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
                            'PostProcessed' : [None]*num_runs,
                            'pNMM' : np.empty(num_runs),
                            'pMCC' : np.empty(num_runs),
-                           'pHAM' : np.empty(num_runs),
                            'pWL1' : np.empty(num_runs),
-                           'pHL1' : np.empty(num_runs),
                            'dNMM' : np.empty(num_runs),
                            'dMCC' : np.empty(num_runs),
-                           'dHAM' : np.empty(num_runs),
-                           'dWL1' : np.empty(num_runs),
-                           'dHL1' : np.empty(num_runs)})
+                           'dWL1' : np.empty(num_runs)})
 
     sub_d = df.copy()
 
     outeridx = 0
-    metrics=['pNMM','pMCC','pHAM','pWL1','pHL1','dNMM','dMCC','dHAM','dWL1','dHL1']
+    metrics=['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
     if (byCols != []):
         grouped = df.groupby(byCols,sort=False)
         for g in grouped.groups:
@@ -407,9 +399,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
                                    precision=precision)
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",
-                                       "HAM":"pHAM",
                                        "WL1":"pWL1",
-                                       "HL1":"pHL1",
                                        "ColMaskFileName":"ProbeColMaskFileName",
                                        "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
 
@@ -428,9 +418,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     donor_df.rename(index=str,columns={"ProbeOutputMaskFileName":"DonorOutputMaskFileName",
                                        "NMM":"dNMM",
                                        "MCC":"dMCC",
-                                       "HAM":"dHAM",
                                        "WL1":"dWL1",
-                                       "HL1":"dHL1",
                                        "ColMaskFileName":"DonorColMaskFileName",
                                        "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
 
