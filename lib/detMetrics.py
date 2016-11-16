@@ -43,6 +43,7 @@ class detMetrics:
 #                     np.array_equal(self.thres, thres2)))
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
+        #print ("fpr_stop test:".format(fpr_stop))
 
         self.ci_lower = 0
         self.ci_upper = 0

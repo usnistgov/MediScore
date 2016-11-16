@@ -208,6 +208,7 @@ if __name__ == '__main__':
 
         # if the confidence score are 'nan', replace the values with the mininum score
         m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+        #m_df[pd.isnull(m_df['ConfidenceScore'])] = 0
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
@@ -243,7 +244,7 @@ if __name__ == '__main__':
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=1, isCI=args.ci)
+            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=args.farStop, isCI=args.ci)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -258,7 +259,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = 1, isCI=args.ci)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI=args.ci)
 
             DM_List = [DM]
             table_df = DM.render_table()
