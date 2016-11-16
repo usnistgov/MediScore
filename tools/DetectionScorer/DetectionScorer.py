@@ -364,68 +364,74 @@ if __name__ == '__main__':
 
         # Loading the reference file
         try:
+            #ref_dtype = {'TaskID':str,
+#                     'ProbeFileID':str,
+#                     'ProbeFileName':str,
+#                     'ProbeMaskFileName':str,
+#                     'ProbeMaskFileName':str,
+#                     'DonorFileID':str,
+#                     'DonorFileName':str,
+#                     'DonorMaskFileName':str,
+#                     'IsTarget':str,
+#                     'ProbePostProcessed':str,
+#                     'DonorPostProcessed':str,
+#                     'ManipulationQuality':str,
+#                     'IsManipulationTypeRemoval':str,
+#                     'IsManipulationTypeSplice':str,
+#                     'IsManipulationTypeCopyClone':str,
+#                     'Collection':str,
+#                     'BaseFileName':str,
+#                     'Lighting':str,
+#                     'IsControl':str,
+#                     'CorrespondingControlFileName':str,
+#                     'SemanticConsistency':str}
             myRefFname = myRefDir + "/" + refFname
-            ref_dtype = {'TaskID':str,
-                     'ProbeFileID':str,
-                     'ProbeFileName':str,
-                     'ProbeMaskFileName':str,
-                     'ProbeMaskFileName':str,
-                     'DonorFileID':str,
-                     'DonorFileName':str,
-                     'DonorMaskFileName':str,
-                     'IsTarget':str,
-                     'ProbePostProcessed':str,
-                     'DonorPostProcessed':str,
-                     'ManipulationQuality':str,
-                     'IsManipulationTypeRemoval':str,
-                     'IsManipulationTypeSplice':str,
-                     'IsManipulationTypeCopyClone':str,
-                     'Collection':str,
-                     'BaseFileName':str,
-                     'Lighting':str,
-                     'IsControl':str,
-                     'CorrespondingControlFileName':str,
-                     'SemanticConsistency':str}
-            myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
+            #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
+            myRef = pd.read_csv(myRefFname, sep='|')
         except IOError:
             print("ERROR: There was an error opening the reference file")
             exit(1)
 
-        # Loading Index file and system output for SSD and DSD
-        # different columns between SSD and DSD
-        if task in ['manipulation','removal','clone']:
-            index_dtype = {'TaskID':str,
-                     'ProbeFileID':str,
-                     'ProbeFileName':str,
-                     'ProbeWidth':np.int64,
-                     'ProbeHeight':np.int64}
-            sys_dtype = {'ProbeFileID':str,
-                     'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
-                     'ProbeOutputMaskFileName':str}
-        elif task == 'splice':
-            index_dtype = {'TaskID':str,
-                     'ProbeFileID':str,
-                     'ProbeFileName':str,
-                     'ProbeWidth':np.int64,
-                     'ProbeHeight':np.int64,
-                     'DonorFileID':str,
-                     'DonorFileName':str,
-                     'DonorWidth':np.int64,
-                     'DonorHeight':np.int64}
-            sys_dtype = {'ProbeFileID':str,
-                     'DonorFileID':str,
-                     'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
-                     'ProbeOutputMaskFileName':str,
-                     'DonorOutputMaskFileName':str}
 
         try:
+            # Loading index file for SSD and DSD
+            # different columns between SSD and DSD
+#            if task in ['manipulation','removal','clone']:
+#                index_dtype = {'TaskID':str,
+#                         'ProbeFileID':str,
+#                         'ProbeFileName':str,
+#                         'ProbeWidth':np.int64,
+#                         'ProbeHeight':np.int64}
+#            elif task == 'splice':
+#                index_dtype = {'TaskID':str,
+#                         'ProbeFileID':str,
+#                         'ProbeFileName':str,
+#                         'ProbeWidth':np.int64,
+#                         'ProbeHeight':np.int64,
+#                         'DonorFileID':str,
+#                         'DonorFileName':str,
+#                         'DonorWidth':np.int64,
+#                         'DonorHeight':np.int64}
             myIndexFname = myRefDir + "/" + indexFname
-            myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
+            #myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
+            myIndex = pd.read_csv(myIndexFname, sep='|')
         except IOError:
             print("ERROR: There was an error opening the index file")
             exit(1)
 
         try:
+            # Loading system output for SSD and DSD
+            # different columns between SSD and DSD
+            if task in ['manipulation','removal','clone']:
+                sys_dtype = {'ProbeFileID':str,
+                         'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+                         'ProbeOutputMaskFileName':str}
+            elif task == 'splice':
+                sys_dtype = {'ProbeFileID':str,
+                         'DonorFileID':str,
+                         'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+                         'ProbeOutputMaskFileName':str,
+                         'DonorOutputMaskFileName':str}
             mySys = pd.read_csv(sysFname, sep='|', dtype = sys_dtype)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
             mySysDir = os.path.dirname(sysFname)
