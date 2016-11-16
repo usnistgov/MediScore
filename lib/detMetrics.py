@@ -60,7 +60,7 @@ class detMetrics:
         return "DetMetrics: eer({}), auc({}), ci_lower({}), ci_upper({}), ci_tpr({})".format(self.eer, self.auc, self.ci_lower,self.ci_upper,self.ci_tpr)
 
     #TODO: optimize the speed (maybe vertorization?)
-    def compute_points_donotuse(self, score, gt):
+    def compute_points_donotuse(self, score, gt): # do not match with R results
         """ computes false positive rate (FPR) and false negative rate (FNR)
         given trial scores and their ground-truth.
         """

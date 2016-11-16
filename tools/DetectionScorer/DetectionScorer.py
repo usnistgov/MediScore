@@ -208,7 +208,6 @@ if __name__ == '__main__':
 
         # if the confidence score are 'nan', replace the values with the mininum score
         m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
-        #m_df[pd.isnull(m_df['ConfidenceScore'])] = 0
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
