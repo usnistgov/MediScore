@@ -79,13 +79,13 @@ def scores_4_mask_pairs(refMaskFName,
                      'AggMaskFileName':['']*numOfRows})
 
     for i,row in df.iterrows():
-        refMaskName = os.path.join(refDir,refMaskFName[i])
-        sysMaskName = os.path.join(sysDir,sysMaskFName[i])
-
-        if sysMaskName in [None,'',np.nan]:
+        if sysMaskFName[i] in [None,'',np.nan]:
             print("Empty mask file at index %d" % i)
             continue
         else:
+            refMaskName = os.path.join(refDir,refMaskFName[i])
+            sysMaskName = os.path.join(sysDir,sysMaskFName[i])
+
             rImg = refmask(refMaskName)
             sImg = mask(sysMaskName)
             if rbin >= 0:
@@ -97,7 +97,7 @@ def scores_4_mask_pairs(refMaskFName,
             for met in ['NMM','MCC','WL1']:
                 df.set_value(i,met,round(metric[met],precision))
 
-            if (html):
+            if html:
                 if (not os.path.isdir(outputRoot)):
                     os.system('mkdir ' + outputRoot)
 
