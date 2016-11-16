@@ -32,6 +32,7 @@ import pandas as pd
 import numpy as np
 import os
 import numbers
+from string import Template
 execfile('../../lib/masks.py')
 
 def scores_4_mask_pairs(refMaskFName,
@@ -128,41 +129,23 @@ def scores_4_mask_pairs(refMaskFName,
                 os.system('cp ' + refMaskName + ' ' + outputRoot)
                 os.system('cp ' + sysMaskName + ' ' + outputRoot)
                 allshapes=min(rImg.get_dims()[1],640) #limit on width for readability of the report
-#TODO: python template the below
-                htmlstr=u"""<h2>Manipulated Image: {}</h2><br />
-<img src="{}" alt="manipulated image" style="width:{}px;">
-<br />
-<h3>Composite with Color Mask: {}</h3>
-<img src="{}" alt="manip image plus mask" style="width:{}px;">
-<br />
-<table border="1">
-  <tbody>
-    <tr>
-      <td><img src="{}" alt="reference mask" style="width:{}px;"><br /><b>Reference Mask</b></td>
-      <td><img src="{}" alt="system output mask" style="width:{}px;"><br /><b>System Output Mask</b></td>
-    </tr>
-    <tr>
-      <td><img src="{}" alt="no-score zone" style="width:{}px;"><br /><b>No-Score Zone</b></td>
-      <td><img src="{}" alt="color mask" style="width:{}px;"><br /><b>Mask Scoring Example</b></td>
-    </tr>
-    <tr>
-      <td>NIMBLE Mask Metric (NMM): {}</td>
-      <td><b>Total Pixels</b>: {}<br />
-<b>False Positives (FP)</b>: {}<br />
-<b>False Negatives (FN)</b>: {}<br />
-<b>True Positives (TP)</b>: {}<br />
-<b>No Score Zone (NS)</b>: {}<br /></td>
-    </tr>
-  </tbody>
-</table>""".format(maniImageFName[i],maniImageFName[i],allshapes,
-aggImgName.split('/')[-1],aggImgName.split('/')[-1],allshapes,
-refMaskFName[i],allshapes,
-sysMaskFName[i].split('/')[-1],allshapes,
-weightFName,allshapes,
-colMaskName.split('/')[-1],allshapes,
-metric['NMM'],rImg.get_dims()[1]*rImg.get_dims()[0],mymeas['FP'],mymeas['FN'],mymeas['TP'],sum(sum(mywts==0))
-)
-
+                # generate HTML files
+                with open("html_template.txt", 'r') as f:
+                    htmlstr = Template(f.read())
+                htmlstr = htmlstr.substitute({'probeFname': maniImageFName[i],
+                                    'width': allshapes,
+                                    'aggMask' : aggImgName.split('/')[-1],
+                                    'refMask' : refMaskFName[i],
+                                    'sysMask' : sysMaskFName[i].split('/')[-1],
+                                    'noScoreZone' : weightFName,
+                                    'colorMask' : colMaskName.split('/')[-1],
+                                    'nmm' : metric['NMM'],
+                                    'totalPixels' : rImg.get_dims()[1]*rImg.get_dims()[0],
+                                    'fp' : mymeas['FP'],
+                                    'fn' : mymeas['FN'],
+                                    'tp' : mymeas['TP'],
+                                    'ns' : np.sum(mywts==0)})
+                #print htmlstr
                 fprefix=maniImageFName[i].split('/')[-1]
                 fprefix=fprefix.split('.')[0]
                 fname=os.path.join(outputRoot,fprefix + '.html')
@@ -376,7 +359,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
        *report dataframe
     """
 
-    #finds rows in index and sys which correspond to target reference 
+    #finds rows in index and sys which correspond to target reference
     #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
     #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
 

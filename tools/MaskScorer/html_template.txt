@@ -1,0 +1,26 @@
+<h2>Manipulated Image: $probeFname </h2><br/>
+<img src="$probeFname" alt="manipulated image" style="width:${width}px;">
+<br/>
+<h3>Composite with Color Mask: $aggMask </h3>
+<img src="$aggMask" alt="manip image plus mask" style="width:${width}px;">
+<br/>
+<table border="1">
+  <tbody>
+    <tr>
+      <td><img src="$refMask" alt="reference mask" style="width:${width}px;"><br/><b>Reference Mask</b></td>
+      <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>System Output Mask</b></td>
+    </tr>
+    <tr>
+      <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone</b></td>
+      <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Mask Scoring Example</b></td>
+    </tr>
+    <tr>
+      <td>NIMBLE Mask Metric (NMM): $nmm </td>
+      <td><b>Total Pixels</b>: $totalPixels <br/>
+<b>False Positives (FP)</b>: $fp <br/>
+<b>False Negatives (FN)</b>: $fn <br/>
+<b>True Positives (TP)</b>: $tp <br/>
+<b>No Score Zone (NS)</b>: $ns <br/></td>
+    </tr>
+  </tbody>
+</table>
