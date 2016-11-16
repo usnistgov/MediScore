@@ -129,8 +129,8 @@ class TestImageMethods(ut.TestCase):
             self.assertEqual(r.weightedL1(s,w),0)
             #self.assertEqual(r.hingeL1(s,m1w,0),0)
             #self.assertEqual(r.hingeL1(s,m1w,-1),0)
-            self.assertTrue(abs(r.matthews(s,w) - 1) < eps)
-            self.assertEqual(r.NimbleMaskMetric(s,w),1)
+            self.assertTrue(abs(r.matthews(m1img,w) - 1) < eps)
+            self.assertEqual(r.NimbleMaskMetric(m1img,w),1)
 
         absoluteEquality(rImg,sImg)
 
@@ -224,7 +224,7 @@ class TestImageMethods(ut.TestCase):
         wts = wtlist['wimg'].astype(np.uint8)
         eKern=getKern('disc',3)
         sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
-        sImg.matrix=255-erode(255-rImg.matrix,eKern)
+        sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
         self.assertEqual(rImg.weightedL1(sImg,wts),0)
         self.assertEqual(rImg.hingeL1(sImg,wts,0),0)
@@ -235,7 +235,7 @@ class TestImageMethods(ut.TestCase):
         wts = wtlist['wimg']
         eKern=getKern('box',5)
         sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
-        sImg.matrix=255-erode(255-rImg.matrix,eKern)
+        sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
         #should throw exception on differently-sized image
         errImg = copy.deepcopy(sImg)
@@ -267,7 +267,7 @@ class TestImageMethods(ut.TestCase):
         wts = wtlist['wimg']
         dKern=getKern('disc',3)
         sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
-        sImg.matrix=255-dilate(255-rImg.matrix,dKern)
+        sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
         #dilate by small amount so that we still get 0
         self.assertEqual(rImg.weightedL1(sImg,wts),0)
@@ -277,7 +277,7 @@ class TestImageMethods(ut.TestCase):
         wtlist = rImg.noScoreZone(3,3,'box')
         wts = wtlist['wimg']
         dKern=getKern('box',5)
-        sImg.matrix=255-dilate(255-rImg.matrix,dKern)
+        sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
         #want both to be greater than 0
         if (rImg.weightedL1(sImg,wts) == 0):
@@ -289,7 +289,7 @@ class TestImageMethods(ut.TestCase):
 
         #dilate by small amount so that we still get 0
         dKern=getKern('diamond',3)
-        sImg.matrix=255-dilate(255-rImg.matrix,dKern)
+        sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
         wtlist = rImg.noScoreZone(3,3,'diamond')
         wts = wtlist['wimg']
         self.assertEqual(rImg.weightedL1(sImg,wts),0)
@@ -297,7 +297,7 @@ class TestImageMethods(ut.TestCase):
 
         #dilate by a larger amount
         dKern=getKern('box',5)
-        sImg.matrix=255-dilate(255-rImg.matrix,dKern)
+        sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
         wtlist = rImg.noScoreZone(3,3,'diamond')
         wts = wtlist['wimg']
 
@@ -314,26 +314,26 @@ class TestImageMethods(ut.TestCase):
         ##### CASE 4: Erode + dilate. ###################################
         print("CASE 4: Testing for resulting mask having been eroded and then dilated...")
         kern = getKern('gaussian',3)
-        sImg.matrix=erode(255-rImg.matrix,kern)
-        sImg.matrix=dilate(sImg.matrix,kern)
+        sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
+        sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
         wtlist=rImg.noScoreZone(3,3,'gaussian')
         wts=wtlist['wimg']
 
         self.assertEqual(rImg.weightedL1(sImg,wts),0)
-        self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
+        #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
         
         #erode and dilate by larger amount
         kern = getKern('gaussian',9)
-        sImg.matrix=erode(255-rImg.matrix,kern)
-        sImg.matrix=dilate(sImg.matrix,kern)
+        sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
+        sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
         self.assertEqual(rImg.weightedL1(sImg,wts),0)
 
         #erode and dilate by very large amount
         kern = getKern('gaussian',21)
-        sImg.matrix = erode(255-rImg.matrix,kern)
-        sImg.matrix = dilate(sImg.matrix,kern)
+        sImg.matrix = cv2.erode(255-rImg.matrix,kern,iterations=1)
+        sImg.matrix = cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix = 255-sImg.matrix
         #want both to be greater than 0
         if (rImg.weightedL1(sImg,wts) == 0):

@@ -58,105 +58,14 @@ def getKern(opt,size):
         xsq=np.square(x)
         z=np.exp(-(xsq+xsq.transpose())/(2*sigma**2))
         kern=z/np.sum(z) #final normalization
+        kern[kern > 0] = 1
+        kern = np.uint8(kern)
     elif opt=='line':
         #45 degree line, or identity matrix
         kern=np.eye(erodeKernSize,dtype=np.uint8)
     else:
         print("I don't recognize your kernel. Please enter a valid kernel.")
     return kern
-
-#erode and dilate take in numpy matrix representations.
-def erode(img,kern):
-    if kern.dtype == np.float64:
-        #convolve with image first and take the min
-        kCenter = (kern.shape[0]-1)/2 #always assume odd kernel
-        eImg = np.zeros(img.shape)
-        xlen = img.shape[0]
-        ylen = img.shape[1]
-        xkern = kern.shape[0]
-        ykern = kern.shape[1]
-        #EDIT: any way to simplify this loop?
-        for j in range(0,ylen):
-            for i in range(0,xlen):
-                if (i < kCenter):
-                    if (j < kCenter):
-                        subkern=kern[(kCenter-i):xkern,(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[(kCenter-i):xkern,0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern[(kCenter-i):xkern,:]
-                elif (i > xlen - 1 - kCenter):
-                    if (j < kCenter):
-                        subkern=kern[0:(xlen - i + kCenter),(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[0:(xlen - i + kCenter),0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern[0:(xlen - i + kCenter),:]
-                else:
-                    if (j < kCenter):
-                        subkern=kern[:,(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[:,0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern
-                #Hadamard product kern with the img subset, subsetting both matrices as necessary
-                smallimg=img[max(0,i-kCenter):min(xlen,i+kCenter+1),max(0,j-kCenter):min(ylen,j+kCenter+1)]
-                #if smallimg is uniform (e.g. all white or all black) set pixel and skip multiplication stage.
-                if (np.array_equal(smallimg[0,0]*np.ones(subkern.shape),smallimg)):
-                    eImg[i,j] = smallimg[0,0]
-                    continue
-                hdprod=np.multiply(smallimg,subkern)
-                eImg[i,j]=smallimg[smallimg==smallimg.flatten()[hdprod.argmin()]].min()
-        eImg=eImg.astype(np.uint8)
-    else:
-        eImg=cv2.erode(img,kern,iterations=1)
-    return eImg
-
-def dilate(img,kern):
-    if kern.dtype == np.float64:
-        #convolve with image first and take the min
-        kCenter = (kern.shape[0]-1)/2 #always assume odd kernel
-        dImg = np.zeros(img.shape)
-        xlen = img.shape[0]
-        ylen = img.shape[1]
-        xkern = kern.shape[0]
-        ykern = kern.shape[1]
-        #EDIT: any way to simplify this loop?
-        for j in range(0,ylen):
-            for i in range(0,xlen):
-                if (i < kCenter):
-                    if (j < kCenter):
-                        subkern=kern[(kCenter-i):xkern,(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[(kCenter-i):xkern,0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern[(kCenter-i):xkern,:]
-                elif (i > xlen - 1 - kCenter):
-                    if (j < kCenter):
-                        subkern=kern[0:(xlen - i + kCenter),(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[0:(xlen - i + kCenter),0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern[0:(xlen - i + kCenter),:]
-                else:
-                    if (j < kCenter):
-                        subkern=kern[:,(kCenter-j):ykern]
-                    elif (j > ylen - 1 - kCenter):
-                        subkern=kern[:,0:(ylen - j + kCenter)]
-                    else:
-                        subkern=kern
-                #Hadamard product kern with the img subset, subsetting both matrices as necessary
-                smallimg=img[max(0,i-kCenter):min(xlen,i+kCenter+1),max(0,j-kCenter):min(ylen,j+kCenter+1)]
-                if (np.array_equal(smallimg[0,0]*np.ones(subkern.shape),smallimg)):
-                    dImg[i,j] = smallimg[0,0]
-                    continue
-                hdprod=np.multiply(smallimg,subkern)
-                dImg[i,j]=smallimg[smallimg==smallimg.flatten()[hdprod.argmax()]].max()
-
-        dImg=dImg.astype(np.uint8)
-    else:
-        dImg=cv2.dilate(img,kern,iterations=1)
-    return dImg
 
 class mask:
     #set readopt=1 to read in as RGB, readopt=-1 to include possibility of alpha channels. Default 0.
@@ -246,8 +155,8 @@ class refmask(mask):
         dKern=getKern(opt,dilateKernSize)
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
-        eImg=255-erode(255-self.matrix,eKern)
-        dImg=255-dilate(255-self.matrix,dKern)
+        eImg=255-cv2.erode(255-self.matrix,eKern,iterations=1)
+        dImg=255-cv2.dilate(255-self.matrix,dKern,iterations=1)
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
@@ -316,47 +225,45 @@ class refmask(mask):
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
     #add mask scoring, with this as the GT. img is assumed to be a numpy matrix for flexibility of implementation.
 
-    def NimbleMaskMetric(self,sys,w,c=-1):
+    def NimbleMaskMetric(self,confmeasures,w,c=-1):
         """
         *Metric: NMM
         *Description: this function calculates the system mask score
                                      based on the confusion_measures function
         * Inputs
-        *     mask: system output mask with grayscale data
+        *     confmeasures: the dictionary of confusion measures obtained from the confusion_measures method above
         *     w: binary data from weighted table generated from reference mask
         *     c: forgiveness value
         * Outputs
         *     Score range [c, 1]
         """
-        met = self.confusion_measures(sys,w)
-        tp = met['TP']
-        fn = met['FN']
-        fp = met['FP']
-        rmat = self.matrix
-
-        Rgt=np.sum((rmat==0) & (w==1))
+        tp = confmeasures['TP']
+        fp = confmeasures['FP']
+        fn = confmeasures['FN']
+        Rgt=np.sum((self.matrix==0) & (w==1))
         return max(c,(tp-fn-fp)/Rgt)
 
-    def matthews(self,sys,w):
+    def matthews(self,confmeasures,w):
         """
         *Metric: MCC (Matthews correlation coefficient)
         *Description: this function calculates the system mask score
                                      based on the MCC function
         * Inputs
-        *     sys: system output mask object, with binary or grayscale matrix data
+        *     confmeasures: the dictionary of confusion measures obtained from the confusion_measures method above
         *     w: binary data from weighted table generated from reference mask
         * Outputs
         *     Score range [0, 1]
         """
-        met = self.confusion_measures(sys,w)
-        tp = met['TP']
-        tn = met['TN']
-        fn = met['FN']
-        fp = met['FP']
-        n = met['N']
+        tp = confmeasures['TP']
+        fp = confmeasures['FP']
+        tn = confmeasures['TN']
+        fn = confmeasures['FN']
 
-        s=(tp+fn)/n
-        p=(tp+fp)/n
+        mydims = self.get_dims()
+        n = mydims[0]*mydims[1]
+
+        s=np.float64(tp+fn)/n
+        p=np.float64(tp+fp)/n
         if ((s==1) or (p==1) or (s==0) or (p==0)):
             score=0.0
         else:
@@ -396,11 +303,11 @@ class refmask(mask):
             * Normalized WL1 value
         """
 
-        rmat = self.matrix
-        smat = sys.matrix
+        rmat = self.matrix.astype(np.float64)
+        smat = sys.matrix.astype(np.float64)
 
-        wL1=np.multiply(w,abs(rmat-smat))
-        wL1=np.sum(wL1)/255.
+        wL1=np.multiply(w,abs(rmat-smat)/255.)
+        wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
         n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         norm_wL1=wL1/n
@@ -425,13 +332,12 @@ class refmask(mask):
         if (e < 0):
             print("Your chosen epsilon is negative. Setting to 0.")
             e=0
-        rmat = self.matrix.astype(np.float64)
-        smat = sys.matrix.astype(np.float64)
+        rmat = self.matrix
         rArea=np.sum(rmat==0) #mask area
         wL1 = self.weightedL1(sys,w)
         n=np.sum(w)
         hL1=max(0,wL1-e*rArea/n)
-        return norm_hL1
+        return hL1
 
     #computes metrics running over the set of thresholds
     def runningThresholds(self,sys,erodeKernSize,dilateKernSize,kern='box',popt=0):
@@ -445,9 +351,7 @@ class refmask(mask):
                                            'Threshold':127.,
                                            'NMM':[-1024.],
                                            'MCC':[-1024.],
-                                           'HAM':[-1024.],
-                                           'WL1':[-1024.],
-                                           'HL1':[-1024.]})
+                                           'WL1':[-1024.]})
                 mets = self.getMetrics(sys,erodeKernSize,dilateKernSize,kern=kern,popt=popt)
                 for m in ['NMM','MCC','HAM','WL1','HL1']:
                     thresMets.set_value(0,m,mets[m])
@@ -458,19 +362,16 @@ class refmask(mask):
                                            'Threshold':127.,
                                            'NMM':[-1024.]*2,
                                            'MCC':[-1024.]*2,
-                                           'HAM':[-1024.]*2,
-                                           'WL1':[-1024.]*2,
-                                           'HL1':[-1024.]*2})
+                                           'WL1':[-1024.]*2})
                 rownum=0
                 for th in [uniques[0]-1,uniques[0]+1]:
                     tmask = sys.get_copy()
                     tmask.matrix = tmask.bw(th)
+                    mets = self.confusion_measures(tmask,w)
                     thresMets.set_value(rownum,'Threshold',th)
-                    thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(tmask,w))
-                    thresMets.set_value(rownum,'MCC',self.matthews(tmask,w))
-                    thresMets.set_value(rownum,'HAM',self.hamming(tmask))
+                    thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(mets,w))
+                    thresMets.set_value(rownum,'MCC',self.matthews(mets,w))
                     thresMets.set_value(rownum,'WL1',self.weightedL1(tmask,w))
-                    thresMets.set_value(rownum,'HL1',self.hingeL1(tmask,w))
                     rownum=rownum+1
         else:
             thresholds=map(lambda x,y: (x+y)/2.,uniques[:-1],uniques[1:]) #list of thresholds
@@ -479,9 +380,7 @@ class refmask(mask):
                                        'Threshold':127.,
                                        'NMM':[-1024.]*len(thresholds),
                                        'MCC':[-1024.]*len(thresholds),
-                                       'HAM':[-1024.]*len(thresholds),
-                                       'WL1':[-1024.]*len(thresholds),
-                                       'HL1':[-1024.]*len(thresholds)})
+                                       'WL1':[-1024.]*len(thresholds)})
             #for all thresholds
             noScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)
             w = noScore['wimg']
@@ -489,12 +388,11 @@ class refmask(mask):
             for th in thresholds:
                 tmask = sys.get_copy()
                 tmask.matrix = tmask.bw(th)
+                mets = self.confusion_measures(tmask,w)
                 thresMets.set_value(rownum,'Threshold',th)
-                thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(tmask,w))
-                thresMets.set_value(rownum,'MCC',self.matthews(tmask,w))
-                thresMets.set_value(rownum,'HAM',self.hamming(tmask))
+                thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(mets,w))
+                thresMets.set_value(rownum,'MCC',self.matthews(mets,w))
                 thresMets.set_value(rownum,'WL1',self.weightedL1(tmask,w))
-                thresMets.set_value(rownum,'HL1',self.hingeL1(tmask,w))
                 rownum=rownum+1
         return thresMets
 
@@ -644,14 +542,15 @@ class refmask(mask):
         dImg = noScore['dimg']
         w = noScore['wimg']
 
-        nmm = self.NimbleMaskMetric(sys,w)
+        mets = self.confusion_measures(sys,w)
+        nmm = self.NimbleMaskMetric(mets,w)
         if popt==1:
             #for nicer printout
             if (nmm==1) or (nmm==-1):
                 print("NMM: %d" % nmm)
             else:
                 print("NMM: %0.9f" % nmm)
-        mcc = self.matthews(sys,w)
+        mcc = self.matthews(mets,w)
         if popt==1:
             if (mcc==1) or (mcc==-1):
                 print("MCC: %d" % mcc)

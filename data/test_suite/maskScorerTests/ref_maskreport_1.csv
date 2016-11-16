@@ -1,2 +1,2 @@
-Collection,PostProcessed,TaskID,dHAM,dHL1,dMCC,dNMM,dWL1,pHAM,pHL1,pMCC,pNMM,pWL1,runID
-,,splice,0.40276,0.1552,0.63878,0.13132,0.38211,0.1244,0.02838,0.80857,0.53286,0.11727,0
+Collection,PostProcessed,TaskID,dMCC,dNMM,dWL1,pMCC,pNMM,pWL1,runID
+,,splice,0.0,-1.0,0.17855,0.0,-1.0,0.03718,0
