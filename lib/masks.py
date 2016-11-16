@@ -217,9 +217,9 @@ class refmask(mask):
         s = sys.matrix.astype(int)
         x = (r+s)/255.
         tp = np.float64(np.sum((x==0) & (w==1)))
-        fp = np.float64(np.sum((x==1) & (r==0) & (w==1)))
-        fn = np.float64(np.sum((r==0) & (w==1)) - tp)
-        tn = np.float64(np.sum((r==255) & (w==1)) - fp)
+        fp = np.float64(np.sum((x==1) & (r==1) & (w==1)))
+        fn = np.float64(np.sum((x==1) & (w==1)) - fp)
+        tn = np.float64(np.sum((x==2) & (w==1)))
         n = np.sum(w==1)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
@@ -258,7 +258,6 @@ class refmask(mask):
         fp = confmeasures['FP']
         tn = confmeasures['TN']
         fn = confmeasures['FN']
-        print(confmeasures) #TODO: debug
 
         mydims = self.get_dims()
         n = mydims[0]*mydims[1]

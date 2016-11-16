@@ -325,6 +325,7 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
         #TODO: save in directory and manually create subdirectory instead?
         subdir = outputRoot.split('/')[-1]
         #set links around the system output data frame files
+        #TODO: do this for donor images that are not NaN
         html_out['ProbeFileName'] = '<a href="' + subdir + '/' + html_out['ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
         #write to index.html
         tempRoot = outputRoot + '.csv'
@@ -414,6 +415,7 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
 
         subdir = outputRoot.split('/')[-1]
         #set links around the system output data frame files
+        #TODO: do this for donor images that are not NaN
         html_out['ProbeFileName'] = '<a href="' + subdir + '/' + html_out['ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
         html_out['DonorFileName'] = '<a href="' + subdir + '/' + html_out['DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
         #write to index.html

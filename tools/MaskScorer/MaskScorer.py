@@ -194,7 +194,7 @@ if args.task in ['manipulation','removal','clone']:
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
 
     # if the confidence score are 'nan', replace the values with the mininum score
-    m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
