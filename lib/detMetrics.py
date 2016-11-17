@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
+
 import numpy as np
-import scipy.stats as st
-import time
+#import scipy.stats as st
+#import sys
+#import time
 
 class detMetrics:
     """Class representing a set of trials and containing:
@@ -12,9 +13,9 @@ class detMetrics:
        - FPR array
        - TPR array
        - EER metric
-       - AUC metric"""
-
-#    dm_id = 0
+       - AUC metric
+       - Confidence Interval for AUC
+    """
 
     def __init__(self, score, gt, fpr_stop = 1, isCI=False):
         """Constructor"""
@@ -43,6 +44,7 @@ class detMetrics:
 #                     np.array_equal(self.thres, thres2)))
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
+        #print ("fpr_stop test:".format(fpr_stop))
 
         self.ci_lower = 0
         self.ci_upper = 0
@@ -59,9 +61,11 @@ class detMetrics:
         return "DetMetrics: eer({}), auc({}), ci_lower({}), ci_upper({}), ci_tpr({})".format(self.eer, self.auc, self.ci_lower,self.ci_upper,self.ci_tpr)
 
     #TODO: optimize the speed (maybe vertorization?)
-    def compute_points_donotuse(self, score, gt):
+    def compute_points_donotuse(self, score, gt): # do not match with R results
         """ computes false positive rate (FPR) and false negative rate (FNR)
         given trial scores and their ground-truth.
+        score: system output scores
+        gt: ground-truth for given trials
         """
         from collections import Counter
         score_sorted = np.sort(score)
@@ -94,6 +98,8 @@ class detMetrics:
     def compute_points_sk(self, score, gt):
         """ computes false positive rate (FPR) and false negative rate (FNR)
         given trial scores and their ground-truth using the sklearn package.
+        score: system output scores
+        gt: ground-truth for given trials
         """
         from sklearn.metrics import roc_curve
 #        label = np.zeros(len(gt))
@@ -106,12 +112,18 @@ class detMetrics:
         return fpr, tpr, fnr, thres
 
     def write(self, file_name):
+        """ Save the Dump files (formatted in a binary) that contains
+        a list of FAR, FPR, TPR, threshold, AUC, and EER values.
+        file_name: Dump file name
+        """
         import pickle
         dmFile = open(file_name, 'wb')
         pickle.dump(self, dmFile)
         dmFile.close()
 
     def render_table(self):
+        """ Render CSV table using Pandas Data Frame
+        """
         from collections import OrderedDict
         from pandas import DataFrame
         data = OrderedDict([('AUC',self.auc),('FAR_STOP',self.fpr_stop),('EER',self.eer),('AUC_CI_LOWER',self.ci_lower), ('AUC_CI_UPPER',self.ci_upper)])
@@ -142,6 +154,9 @@ class detMetrics:
 
 
 def load_dm_file(path):
+    """ Load Dump (DM) files
+        path: the DM file name along with the path
+    """
     import pickle
     file = open(path, 'rb')
     myObject = pickle.load(file)
@@ -153,7 +168,10 @@ class Metrics:
 
     @staticmethod
     def compute_auc(fpr, tpr, fpr_stop=1):
-        """ computes the under area curve (AUC) given FPR and TPR values """
+        """ Computes the under area curve (AUC) given FPR and TPR values
+        fpr: false positive rates
+        tpr: true positive rates
+        fpr_stop: fpr value for calculating partial AUC"""
         width = [x - fpr[i] for i, x in enumerate(fpr[1:]) if fpr[i+1] <= fpr_stop]
         height = [(x+tpr[i])/2 for i, x in enumerate(tpr[1:])]
         p_height = height[0:len(width)]
@@ -162,7 +180,9 @@ class Metrics:
 
     @staticmethod
     def compute_eer(fpr, fnr):
-        """ computes the equal error rate (EER) given FNR and FPR values """
+        """ computes the equal error rate (EER) given FNR and FPR values
+        fpr: false positive rates
+        fnr: false negative rates"""
         errdif = [abs(fpr[j] - fnr[j]) for j in range(0, len(fpr))]
         idx = errdif.index(min(errdif))
         eer = np.mean([fpr[idx], fnr[idx]])
@@ -171,7 +191,11 @@ class Metrics:
     # TODO: need to validate this
     @staticmethod
     def compute_ci(score, gt, lower_bound =0.05, upper_bound=0.95):
-        """ compute the confidence interval for AUC"""
+        """ compute the confidence interval for AUC
+        score: system output scores
+        gt: ground-truth for given trials
+        lower_bound: lower bound percentile
+        upper_bound: upper bound percentile"""
         from sklearn.metrics import roc_auc_score
 #        from sklearn.metrics import roc_curve
 #        score = score.astype(np.float64)
@@ -215,8 +239,6 @@ class Metrics:
         ci_lower = sorted_aucs[int(lower_bound * len(sorted_aucs))]
         ci_upper = sorted_aucs[int(upper_bound * len(sorted_aucs))]
 
-#        ci_lower = 0
-#        ci_upper = 0
         ci_tpr = 0 #TODO: after calculating CI for each TPR
         #print("Confidence interval for AUC: [{:0.5f} - {:0.5f}]".format(ci_lower, ci_upper))
         return ci_lower, ci_upper, ci_tpr
