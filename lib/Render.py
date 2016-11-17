@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 class Render:
-    """Class implementing a renderer for DET and PLOT curves:
+    """Class implementing a renderer for DET and ROC curves:
     """
 
     def __init__(self,setRender):
@@ -15,7 +15,11 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self,display=True, multi_fig=False):
+    def plot_curve(self, display=True, multi_fig=False):
+        """ Return single figure or a list of figures depending on the multi_fig option
+        display: to display the figure from command-line
+        multi_fig: generate a single curve plot per partition
+        """
         if multi_fig is True:
             fig_list = list()
             for i,dm in enumerate(self.DM_list):
@@ -26,8 +30,13 @@ class Render:
             fig = self.plot_fig(self.DM_list,1,display)
             return fig
 
-    def plot_fig(self,dm_list,fig_number,display, multi_fig=False):
-
+    def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False):
+        """Generate plot with the specified options
+        dm_list: a list of detection metrics for partitions
+        fig_number: a number of plot figures
+        display: to display the figure from command-line
+        multi_fig: generate a single curve plot per partition
+        """
         fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
         # DET curve settings
@@ -127,9 +136,9 @@ class Render:
 
 
 def gen_default_plot_options(path='./plot_options.json',plot_type='DET'):
-    """
-
-    """
+    """ This function generates JSON file to customize the plot.
+        path: JSON file name along with the path
+        plot_type: either DET or ROC"""
     from collections import OrderedDict
     mon_dict = OrderedDict([
         ('title', plot_type),
@@ -146,6 +155,7 @@ def gen_default_plot_options(path='./plot_options.json',plot_type='DET'):
 
 
 def load_plot_options(path='./plot_options.json'):
+    """ Load JSON file for plot options"""
     with open(path, 'r') as f:
         opt_dict = json.load(f)
     return opt_dict

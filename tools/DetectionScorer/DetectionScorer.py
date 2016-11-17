@@ -1,12 +1,20 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-Date: 10/20/2016
-Authors: Yooyoung Lee and Timothee Kheyrkhah
+* Date: 10/20/2016
+* Authors: Yooyoung Lee and Timothee Kheyrkhah
 
-Description: this code calculates performance measures (for points, AUC, and EER)
+* Description: this code calculates performance measures (for points, AUC, and EER)
 on system outputs (confidence scores) and return report plot(s) and table(s).
+
+* Disclaimer:
+This software was developed at the National Institute of Standards
+and Technology (NIST) by employees of the Federal Government in the
+course of their official duties. Pursuant to Title 17 Section 105
+of the United States Code, this software is not subject to copyright
+protection and is in the public domain. NIST assumes no responsibility
+whatsoever for use by other parties of its source code or open source
+server, and makes no guarantees, expressed or implied, about its quality,
+reliability, or any other characteristic."
+
 """
 
 import argparse
@@ -19,14 +27,12 @@ from matplotlib.pyplot import cm
 from collections import OrderedDict
 from itertools import cycle
 
-#import time
-#from sklearn.metrics import roc_auc_score
-
 lib_path = "../../lib"
 sys.path.append(lib_path)
 import Render as p
 import detMetrics as dm
 import Partition as f
+#import time
 
 
 
@@ -60,8 +66,6 @@ if __name__ == '__main__':
         parser.add_argument('-s','--inSys',default="",
         help='System output csv file name: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
 
-#        parser.add_argument('-m','--metric',default='all',
-#        help="Metric option: [all], [auc], [eer], or [rate] (default: %(default)s)",metavar='character')
         def restricted_float(x):
             x = float(x)
             if x < 0.0 or x > 1.0:
@@ -195,23 +199,22 @@ if __name__ == '__main__':
             v_print("Sys File Name {}".format(mySysFname))
             mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
-            #mySysDir = os.path.dirname(sysFname)
         except IOError:
             print("ERROR: There was an error opening the reference file")
             exit(1)
 
-        # Merge the reference and system output for SSD/DSD reports
+        # merge the reference and system output for SSD/DSD reports
         if args.task in ['manipulation','removal','clone']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
         elif args.task == 'splice':
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
-        # if the confidence score are 'nan', replace the values with the mininum score
+        # if the confidence scores are 'nan', replace the values with the mininum score
         m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-        # the performant result directory
+        # the performers' result directory
         if '/' not in args.outRoot:
             root_path = '.'
             file_suffix = args.outRoot
@@ -232,7 +235,6 @@ if __name__ == '__main__':
             elif args.task == 'splice':
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
-
 
             if args.factor:
                 factor_mode = 'f'
@@ -273,14 +275,11 @@ if __name__ == '__main__':
             print("Report table:\n{}".format(table_df))
 
 
-        # Generation automatic of a default plot_options json config file
+        # Generating a default plot_options json config file
         p_json_path = "./plotJsonFiles"
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
-
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-
-         # Generating the default_plot_options json config file
         p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
 
         # Loading of the plot_options json config file
@@ -316,9 +315,8 @@ if __name__ == '__main__':
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
 
-
         # Renaming the curves for the legend
-        if args.factor or args.factorp: #added by LEE
+        if args.factor or args.factorp:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
