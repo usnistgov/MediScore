@@ -165,9 +165,9 @@ class refmask(mask):
 
     def confusion_measures_gs(self,sys,w):
         """
-        *Metric: confusion_measures
+        *Metric: confusion_measures_gs
         *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
-                                     between the reference mask and the system output mask,
+                                     between the reference mask and a grayscale system output mask,
                                      accommodating the no score zone
 
         *Inputs
@@ -203,7 +203,7 @@ class refmask(mask):
         """
         *Metric: confusion_measures
         *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
-                                     between the reference mask and the system output mask,
+                                     between the reference mask and a black and white system output mask,
                                      accommodating the no score zone
 
         *Inputs
@@ -217,7 +217,7 @@ class refmask(mask):
         s = sys.matrix.astype(int)
         x = (r+s)/255.
         tp = np.float64(np.sum((x==0) & (w==1)))
-        fp = np.float64(np.sum((x==1) & (r==1) & (w==1)))
+        fp = np.float64(np.sum((x==1) & (r==255) & (w==1)))
         fn = np.float64(np.sum((x==1) & (w==1)) - fp)
         tn = np.float64(np.sum((x==2) & (w==1)))
         n = np.sum(w==1)
@@ -532,17 +532,21 @@ class refmask(mask):
         wL1 = -999
         #hL1 = -999
 
-        if thres > 0:
-            if popt==1:
-                print("Converting mask to binary with threshold %0.2f" % thres)
-            sys.matrix=sys.bw(thres)
-
         noScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)
         eImg = noScore['eimg']
         dImg = noScore['dimg']
         w = noScore['wimg']
 
-        mets = self.confusion_measures(sys,w)
+        if thres > 0:
+            if popt==1:
+                print("Converting mask to binary with threshold %0.2f" % thres)
+            sys.matrix=sys.bw(thres)
+            mets = self.confusion_measures(sys,w)
+        else:
+            if popt==1:
+                print("No valid threshold detected. Proceeding with grayscale evaluation.")
+            mets = self.confusion_measures_gs(sys,w)
+
         nmm = self.NimbleMaskMetric(mets,w)
         if popt==1:
             #for nicer printout

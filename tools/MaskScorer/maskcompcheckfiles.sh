@@ -2,9 +2,9 @@
 clean=TRUE
 
 #produce the output files
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r NC2016-splice-ref.csv -x NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_1
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Manipulation_ImgOnly_c-me2_1/B_NC2016_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_2
-python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests -r NC2016-removal-ref.csv -x NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_3
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r NC2016-splice-ref.csv -x NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_1 --sbin 127
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Manipulation_ImgOnly_c-me2_1/B_NC2016_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_2 --sbin 127
+python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests -r NC2016-removal-ref.csv -x NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_3 --sbin 127
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/temp_maskreport_1.csv ../../data/test_suite/maskScorerTests/ref_maskreport_1.csv > comp_maskreport_1.txt

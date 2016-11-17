@@ -77,7 +77,6 @@ def scores_4_mask_pairs(refMaskFName,
                      'WL1': 1.,
                      'ColMaskFileName':['']*numOfRows,
                      'AggMaskFileName':['']*numOfRows})
-
     for i,row in df.iterrows():
         if sysMaskFName[i] in [None,'',np.nan]:
             print("Empty mask file at index %d" % i)
@@ -88,10 +87,23 @@ def scores_4_mask_pairs(refMaskFName,
 
             rImg = refmask(refMaskName)
             sImg = mask(sysMaskName)
-            if rbin >= 0:
-                rImg.matrix = rImg.bw(rbin)
-            if sbin >= 0:
-                sImg.matrix = sImg.bw(sbin)
+            #save the image separately for html and further review. Use that in the html report
+            r_altered = False
+            s_altered = False
+            if rbin > 0:
+                rtemp = rImg.bw(rbin)
+                if ~np.array_equal(rtemp,rImg.matrix):
+                    r_altered = True
+                    rImg.matrix = rtemp
+                    rImg.name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+                    rImg.save(rImg.name)
+            if sbin > 0:
+                stemp = sImg.bw(sbin)
+                if ~np.array_equal(stemp,sImg.matrix):
+                    s_altered = True
+                    sImg.matrix = stemp 
+                    sImg.name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    sImg.save(sImg.name)
 
             metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=sbin,popt=verbose)
             for met in ['NMM','MCC','WL1']:
@@ -102,7 +114,7 @@ def scores_4_mask_pairs(refMaskFName,
                     os.system('mkdir ' + outputRoot)
 
                 maniImgName = os.path.join(refDir,maniImageFName[i])
-                colordirs = rImg.coloredMask_opt1(sysMaskName, maniImgName, metric['mask'], metric['wimg'], metric['eImg'], metric['dImg'], outputRoot)
+                colordirs = rImg.coloredMask_opt1(sImg.name, maniImgName, metric['mask'], metric['wimg'], metric['eImg'], metric['dImg'], outputRoot)
 
                 mywts = np.uint8(255*metric['wimg'])
                 sysBase = sysMaskFName[i].split('/')[-1][:-4]
@@ -115,7 +127,10 @@ def scores_4_mask_pairs(refMaskFName,
                 df.set_value(i,'ColMaskFileName',colMaskName)
                 df.set_value(i,'AggMaskFileName',aggImgName)
 
-                mymeas = rImg.confusion_measures(sImg,metric['wimg'])
+                if sbin > 0:
+                    mymeas = rImg.confusion_measures(sImg,metric['wimg'])
+                else:
+                    mymeas = rImg.confusion_measures_gs(sImg,metric['wimg'])
                 #html page for mask.
                 #include, with headers: original image
                 #color mask composite with grayscale manipulated image
@@ -125,9 +140,12 @@ def scores_4_mask_pairs(refMaskFName,
                 #NMM figure, and pixel area for FP,FN,TP,NS,Total area colored
                 mPath = os.path.join(refDir,maniImageFName[i])
                 #copy all to same directory for report
+                #TODO: map to original images in path instead. Much less costly.
                 os.system('cp ' + mPath + ' ' + outputRoot)
-                os.system('cp ' + refMaskName + ' ' + outputRoot)
-                os.system('cp ' + sysMaskName + ' ' + outputRoot)
+                if ~r_altered:
+                    os.system('cp ' + refMaskName + ' ' + outputRoot)
+                if ~s_altered:
+                    os.system('cp ' + sysMaskName + ' ' + outputRoot)
                 allshapes=min(rImg.get_dims()[1],640) #limit on width for readability of the report
                 # generate HTML files
                 with open("html_template.txt", 'r') as f:
@@ -135,8 +153,8 @@ def scores_4_mask_pairs(refMaskFName,
                 htmlstr = htmlstr.substitute({'probeFname': maniImageFName[i],
                                     'width': allshapes,
                                     'aggMask' : aggImgName.split('/')[-1],
-                                    'refMask' : refMaskFName[i],
-                                    'sysMask' : sysMaskFName[i].split('/')[-1],
+                                    'refMask' : rImg.name.split('/')[-1],
+                                    'sysMask' : sImg.name.split('/')[-1],
                                     'noScoreZone' : weightFName,
                                     'colorMask' : colMaskName.split('/')[-1],
                                     'nmm' : metric['NMM'],
@@ -324,9 +342,8 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
 
         #TODO: save in directory and manually create subdirectory instead?
         subdir = outputRoot.split('/')[-1]
-        #set links around the system output data frame files
-        #TODO: do this for donor images that are not NaN
-        html_out['ProbeFileName'] = '<a href="' + subdir + '/' + html_out['ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+        #set links around the system output data frame files for images that are not NaN
+        html_out.ix[~pd.isnull(html_out['ProbeOutputMaskFileName']),'ProbeFileName'] = '<a href="' + subdir + '/' + html_out.ix[~pd.isnull(html_out['ProbeOutputMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
         #write to index.html
         tempRoot = outputRoot + '.csv'
         tempRoot = os.path.dirname(tempRoot)
@@ -365,7 +382,6 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-
     probe_df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
                                    m_df['ProbeOutputMaskFileName'],
                                    m_df['ProbeFileName'],
@@ -414,10 +430,9 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
             outputRoot = outputRoot[:-1]
 
         subdir = outputRoot.split('/')[-1]
-        #set links around the system output data frame files
-        #TODO: do this for donor images that are not NaN
-        html_out['ProbeFileName'] = '<a href="' + subdir + '/' + html_out['ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-        html_out['DonorFileName'] = '<a href="' + subdir + '/' + html_out['DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
+        #set links around the system output data frame files for images that are not NaN
+        html_out.ix[~pd.isnull(html_out['ProbeOutputMaskFileName']),'ProbeFileName'] = '<a href="' + subdir + '/' + html_out.ix[~pd.isnull(html_out['ProbeOutputMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+        html_out.ix[~pd.isnull(html_out['DonorOutputMaskFileName']),'DonorFileName'] = '<a href="' + subdir + '/' + html_out.ix[~pd.isnull(html_out['DonorOutputMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
         #write to index.html
         tempRoot = outputRoot + '.csv'
         tempRoot = os.path.dirname(tempRoot)
