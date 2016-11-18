@@ -54,12 +54,10 @@ class TestImageMethods(ut.TestCase):
         #randomize a threshold. Should behave the same for any threshold.
         th=np.random.uniform(0,1)*255
         mytestbw=mytest.bw(th)
-        mytestflat=mytest.flatten()
 
         #test if total number of 0 and 255 pixels total to pixel number
         totalpix=10000
         self.assertEqual(np.sum(mytestbw==255)+np.sum(mytestbw==0),totalpix)
-        self.assertEqual(np.sum(mytestflat==255)+np.sum(mytestflat==0),totalpix)
 
     def test_color(self):
         #Set existing image. Safer test.
