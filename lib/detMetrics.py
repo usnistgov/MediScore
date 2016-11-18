@@ -66,6 +66,7 @@ class detMetrics:
         given trial scores and their ground-truth.
         score: system output scores
         gt: ground-truth for given trials
+        output:
         """
         from collections import Counter
         score_sorted = np.sort(score)
