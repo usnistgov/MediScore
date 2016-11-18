@@ -256,11 +256,11 @@ class refmask(mask):
         fn = confmeasures['FN']
 
         mydims = self.get_dims()
-        n = mydims[0]*mydims[1]
+        n = confmeasures['N']
 
         s=np.float64(tp+fn)/n
         p=np.float64(tp+fp)/n
-        if ((s==1) or (p==1) or (s==0) or (p==0)):
+        if (s==1) or (p==1) or (s==0) or (p==0):
             score=0.0
         else:
             score=Decimal(tp*tn-fp*fn)/Decimal((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)).sqrt()

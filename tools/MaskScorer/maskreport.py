@@ -79,7 +79,7 @@ def scores_4_mask_pairs(refMaskFName,
                      'AggMaskFileName':['']*numOfRows})
     for i,row in df.iterrows():
         if sysMaskFName[i] in [None,'',np.nan]:
-            print("Empty mask file at index %d" % i)
+            print("Empty system mask file at index %d" % i)
             continue
         else:
             refMaskName = os.path.join(refDir,refMaskFName[i])
@@ -87,6 +87,14 @@ def scores_4_mask_pairs(refMaskFName,
 
             rImg = refmask(refMaskName)
             sImg = mask(sysMaskName)
+
+            if (rImg.matrix is None):
+                print("Reference mask file %s at index %d is unreadable" % (rImg.name,i))
+                continue
+            if (sImg.matrix is None):
+                print("System mask file %s at index %d is unreadable" % (sImg.name,i))
+                continue
+
             #save the image separately for html and further review. Use that in the html report
             r_altered = False
             s_altered = False
