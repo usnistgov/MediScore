@@ -158,4 +158,4 @@ if __name__ == '__main__':
         df2fnr = [1-df2tpr[i] for i in range(0,len(df2tpr))]
         np.testing.assert_allclose(dm.Metrics.compute_eer(df2fpr,df2fnr), df2eer)
 
-        print("All detection scorer unit test successfully complete.\n")
+        print("All detection scorer unit tests successfully complete.\n")
