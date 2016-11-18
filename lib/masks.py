@@ -114,23 +114,20 @@ class mask:
         return overmat
 
     def binarize3Channel(self,RThresh,GThresh,BThresh,v,g):
+        dims = self.get_dims()
+        bimg = np.zeros((dims[0],dims[1]))
+        reds,greens,blues=cv2.split(self.matrix)
+        upthresh = (reds <= RThresh) | (greens <= GThresh) | (blues <= BThresh)
+        bimg[upthresh] = v
+        bimg[~upthresh] = g
+        return bimg
+
+    #general binarize
+    def binarize(self,threshold):
         if len(self.matrix.shape)==2:
-            mymat = np.copy(self.matrix)
-            th=min(RThresh,GThresh,BThresh)
-            mymat[mymat <= th] = v
-            mymat[mymat > th] = g
-            return mymat
-        elif len(self.matrix.shape)==4:
-            print("{} cannot binarize a file with an alpha channel.".format(self.name))
-            return 1
+            return self.bw(threshold)
         else:
-            dims = self.get_dims()
-            bimg = np.zeros((dims[0],dims[1]))
-            reds,greens,blues=cv2.split(self.matrix)
-            upthresh = (reds <= RThresh) | (greens <= GThresh) | (blues <= BThresh)
-            bimg[upthresh] = v
-            bimg[~upthresh] = g
-            return bimg
+            return self.binarize3Channel(threshold,threshold,threshold,0,255)
 
     #save mask to file
     def save(self,fname,compression=0):

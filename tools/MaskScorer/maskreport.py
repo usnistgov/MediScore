@@ -90,15 +90,15 @@ def scores_4_mask_pairs(refMaskFName,
             #save the image separately for html and further review. Use that in the html report
             r_altered = False
             s_altered = False
-            if rbin > 0:
-                rtemp = rImg.bw(rbin)
+            if rbin >= 0:
+                rtemp = rImg.binarize(rbin)
                 if ~np.array_equal(rtemp,rImg.matrix):
                     r_altered = True
                     rImg.matrix = rtemp
                     rImg.name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
                     rImg.save(rImg.name)
-            if sbin > 0:
-                stemp = sImg.bw(sbin)
+            if sbin >= 0:
+                stemp = sImg.binarize(sbin)
                 if ~np.array_equal(stemp,sImg.matrix):
                     s_altered = True
                     sImg.matrix = stemp 

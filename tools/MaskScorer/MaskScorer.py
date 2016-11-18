@@ -69,7 +69,7 @@ help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
 parser.add_argument('--rbin',type=int,default=254,
 help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
 parser.add_argument('--sbin',type=int,default=-1,
-help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
+help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=-1]",metavar='integer')
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
 parser.add_argument('-v','--verbose',type=int,default=None,
@@ -104,7 +104,7 @@ else:
             print(string)
             exit(exitcode)
 
-if args.task not in [None,'manipulation','removal','clone','splice']:
+if args.task not in ['manipulation','removal','clone','splice']:
     printerr("ERROR: Task type must be supplied.")
 if args.refDir is None:
     printerr("ERROR: NC2016_Test directory path must be supplied.")
