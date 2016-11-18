@@ -67,10 +67,17 @@ class TestImageMethods(ut.TestCase):
 
         #create an image and save it as color
         testimg_bins = np.round(np.random.uniform(0,1,(100,100)))
-        testimg_color = np.zeros(100,100,3) #RGB
-        testimg_color[testimg_bins[:,:33]==1] = [0,0,255]
-        testimg_color[testimg_bins[:,33:67]==1] = [255,0,0]
-        testimg_color[testimg_bins[:,67:]==1] = [0,255,0]
+        testimg_color = 255*np.ones((100,100,3)) #RGB
+        tbins = np.copy(testimg_bins)
+        tbins[:,33:] = 1
+        testimg_color[tbins==0] = [0,0,255]
+        tbins = np.copy(testimg_bins)
+        tbins[:,:33] = 1
+        tbins[:,67:] = 1
+        testimg_color[tbins==0] = [255,0,0]
+        tbins = np.copy(testimg_bins)
+        tbins[:,:67] = 1
+        testimg_color[tbins==0] = [0,255,0]
         testimg_color = testimg_color.astype(np.uint8)
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
@@ -80,11 +87,11 @@ class TestImageMethods(ut.TestCase):
         #read it back in as a color mask image
         mytest_color=refmask('testImg_color.png',1)
         self.assertEqual(len(mytest_color.matrix.shape),3) #test if image is color
-        mytest_color.matrix = mytest_color.binarize(127) #fully binarize the mask for some threshold
+        mytest_color.matrix = mytest_color.binarize(254) #fully binarize the mask for some threshold
 
         mytest_bw=refmask('testImg_color.png')
         self.assertEqual(len(mytest_bw.matrix.shape),2) #test if image is grayscale
-        mytest_bw.matrix = mytest_bw.bw(127)
+        mytest_bw.matrix = mytest_bw.binarize(254)
 
         self.assertTrue(np.array_equal(mytest_color.matrix,mytest_bw.matrix)) #test if the two matrices are equal.
 
