@@ -1,3 +1,3 @@
 TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|DonorFileID|DonorFileName|DonorMaskFileName|IsTarget|ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|IsManipulationTypeSplice|IsManipulationTypeCopyClone|Collection|BaseFileName|Lighting|IsControl|CorrespondingControlFileName|SemanticConsistency
-Manipulation|morelight|morelight.jpg|light-mask.png||||Y|none|none||True|False|False|Nimble-WEB|bar.jpg|same|False|baz.jpg|
-Manipulation|foo|foo.jpg|foo-mask.png||||N|none|none||True|False|False|Nimble-WEB|bar2.jpg|same|False|baz2.jpg|
+Manipulation|morelight|probe/morelight.jpg|reference/manipulation/mask/light-mask.png||||Y|none|none||True|False|False|Nimble-WEB|bar.jpg|same|False|baz.jpg|
+Manipulation|foo|probe/foo.jpg|reference/manipulation/mask/foo-mask.png||||N|none|none||True|False|False|Nimble-WEB|bar2.jpg|same|False|baz2.jpg|
