@@ -153,7 +153,7 @@ if __name__ == '__main__':
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
         except IOError:
-            print("ERROR: There was an error opening the reference file")
+            print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
         try:
@@ -180,7 +180,7 @@ if __name__ == '__main__':
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
             myIndex = pd.read_csv(myIndexFname, sep='|')
         except IOError:
-            print("ERROR: There was an error opening the index file")
+            print("ERROR: There was an error opening the index csv file")
             exit(1)
 
         try:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
             mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
         except IOError:
-            print("ERROR: There was an error opening the reference file")
+            print("ERROR: There was an error opening the system output csv file")
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
