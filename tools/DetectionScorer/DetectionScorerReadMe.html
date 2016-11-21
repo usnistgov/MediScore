@@ -12094,9 +12094,9 @@ The following figure illustrates the data query option along with corresponding 
 <li>Syntax : -f "query1" "query2" "query3" ... 
 <pre><code>- The syntax is the same with Pandas query syntax. Please see the detailed query rule in the website: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query.
 Examples:
-% -f "Collection=['Nimble-SCI']" =&gt; 1 query
-% -f "Collection=['Nimble-SCI'] and PostProcessing=['rescale']" =&gt; 1 query
-% -f "Collection=['Nimble-SCI','Nimble-WEB']" "PostProcessing=['rescale']" "200&lt;ProbeWidth&lt;=3000" =&gt; 3 queries</code></pre>
+% -f "Collection==['Nimble-SCI']" =&gt; 1 query
+% -f "Collection==['Nimble-SCI'] and PostProcessing=['rescale']" =&gt; 1 query
+% -f "Collection==['Nimble-SCI','Nimble-WEB']" "PostProcessing=['rescale']" "200&lt;ProbeWidth&lt;=3000" =&gt; 3 queries</code></pre>
 </li>
 <li>Output: 
 <pre><code>- CSV report: NIST_001_f_query0.csv, NIST_001_f_query1.csv, ...
@@ -12121,9 +12121,9 @@ Examples:
 <li>Syntax : -f "query"
 <pre><code>- The query syntax only allows the three operators "==[]", "&lt;", and "&lt;=".
 Examples: 
-% -fp "Collection=['Nimble-SCI']" =&gt; 1 partition
-% -fp "Collection=['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale']" =&gt; 2 partitions
-% -fp "Collection=['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale','noise']" =&gt; 4 partitions</code></pre>
+% -fp "Collection==['Nimble-SCI']" =&gt; 1 partition
+% -fp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale']" =&gt; 2 partitions
+% -fp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale','noise']" =&gt; 4 partitions</code></pre>
 </li>
 <li>Output: 
 <pre><code>- CSV report: NIST_001_fp_query.csv
@@ -12186,7 +12186,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="k">as</span> <span class="nn">di</span>
@@ -12213,7 +12213,7 @@ Examples:
 
 </div>
 
-<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[1]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12285,7 +12285,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
@@ -12300,7 +12300,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[2]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12351,7 +12351,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
@@ -12366,7 +12366,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12405,7 +12405,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
@@ -12420,7 +12420,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12471,7 +12471,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
@@ -12486,7 +12486,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12541,7 +12541,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
@@ -12556,7 +12556,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12657,7 +12657,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
@@ -12672,7 +12672,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[9]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12712,10 +12712,82 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Manipulation-task-example-with-NC2017-dataset">Manipulation task example with NC2017 dataset<a class="anchor-link" href="#Manipulation-task-example-with-NC2017-dataset">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Disclaimer</li>
+<li>An example:
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_001 --ci --display</code></pre>
+<img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
 </ul>
-<p>This software was developed at the National Institute of Standards
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
+<span class="n">df7</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.679533</td>
+      <td>1</td>
+      <td>0.328889</td>
+      <td>0.620826</td>
+      <td>0.735491</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Disclaimer">Disclaimer<a class="anchor-link" href="#Disclaimer">&#182;</a></h3><p>This software was developed at the National Institute of Standards
 and Technology (NIST) by employees of the Federal Government in the
 course of their official duties. Pursuant to Title 17 Section 105
 of the United States Code, this software is not subject to copyright
