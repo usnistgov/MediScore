@@ -156,7 +156,7 @@ class detMetrics:
 
 def load_dm_file(path):
     """ Load Dump (DM) files
-        path: the DM file name along with the path
+        path: DM file name along with the path
     """
     import pickle
     file = open(path, 'rb')
