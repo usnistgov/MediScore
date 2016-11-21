@@ -39,6 +39,14 @@ INSTALLATION
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
   - unittest
+* Installation example for Linux:
+  - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
+    1) https://repo.continuum.io/archive/Anaconda2-4.2.0-Linux-x86_64.sh
+    2) $ bash Anaconda2-4.2.0-Linux-x86_64.sh
+  - Install opencv using conda:
+    $ conda install -c https://conda.binstar.org/menpo opencv
+  - Check the required packages using "conda list"
+  - Install missing packages using "conda install"
 
 3) To test your installation, run MediScore's "make check" in the MediScore directory.
    You should expect to see ERROR messages pop up as we test the behavior of the functions.

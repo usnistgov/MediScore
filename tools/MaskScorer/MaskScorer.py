@@ -3,11 +3,11 @@
 * File: MaskScorer.py
 * Date: 08/30/2016
 * Translated by Daniel Zhou
-* Original implemented by Yooyoung Lee 
-* Status: Complete 
+* Original implemented by Yooyoung Lee
+* Status: Complete
 
-* Description: This calculates performance scores for localizing mainpulated area 
-                between reference mask and system output mask 
+* Description: This calculates performance scores for localizing mainpulated area
+                between reference mask and system output mask
 
 * Requirements: This code requires the following packages:
 
@@ -16,14 +16,14 @@
 
   The rest are available on your system
 
-* Disclaimer: 
-This software was developed at the National Institute of Standards 
+* Disclaimer:
+This software was developed at the National Institute of Standards
 and Technology (NIST) by employees of the Federal Government in the
-course of their official duties. Pursuant to Title 17 Section 105 
-of the United States Code, this software is not subject to copyright 
-protection and is in the public domain. NIST assumes no responsibility 
-whatsoever for use by other parties of its source code or open source 
-server, and makes no guarantees, expressed or implied, about its quality, 
+course of their official duties. Pursuant to Title 17 Section 105
+of the United States Code, this software is not subject to copyright
+protection and is in the public domain. NIST assumes no responsibility
+whatsoever for use by other parties of its source code or open source
+server, and makes no guarantees, expressed or implied, about its quality,
 reliability, or any other characteristic."
 """
 
@@ -34,6 +34,7 @@ import os
 import cv2
 import pandas as pd
 import argparse
+import numpy as np
 
 ########### Command line interface ########################################################
 
@@ -65,8 +66,10 @@ parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('--dks',type=int,default=9,
 help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
-parser.add_argument('--th',type=int,default=0,
-help="threshold value [0,255] for grayscale, [default=0]", metavar="integer")
+parser.add_argument('--rbin',type=int,default=254,
+help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
+parser.add_argument('--sbin',type=int,default=-1,
+help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=-1]",metavar='integer')
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
 parser.add_argument('-v','--verbose',type=int,default=None,
@@ -101,24 +104,21 @@ else:
             print(string)
             exit(exitcode)
 
-if args.task not in [None,'manipulation','removal','clone','splice']:
+if args.task not in ['manipulation','removal','clone','splice']:
     printerr("ERROR: Task type must be supplied.")
 if args.refDir is None:
     printerr("ERROR: NC2016_Test directory path must be supplied.")
 
-myRefDir = args.refDir 
+myRefDir = args.refDir
 
 if args.inRef is None:
     printerr("ERROR: Input file name for reference must be supplied.")
 
-if args.inSys is None: 
+if args.inSys is None:
     printerr("ERROR: Input file name for system output must be supplied.")
 
 if args.inIndex is None:
     printerr("ERROR: Input file name for index files must be supplied.")
-
-if (args.th < 0) or (args.th > 255):
-    printerr("ERROR: Threshold for grayscale must be range [0,255].")
 
 #create the folder and save the mask outputs
 #set.seed(1)
@@ -139,13 +139,43 @@ avglist = ['']  #TODO: temporary fix until the averaging by factors procedure is
 if avglist == ['']:
     avglist = []
 
-myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='\|',header=0,engine='python')
+if args.task in ['manipulation','removal','clone']:
+    index_dtype = {'TaskID':str,
+             'ProbeFileID':str,
+             'ProbeFileName':str,
+             'ProbeWidth':np.int64,
+             'ProbeHeight':np.int64}
+    sys_dtype = {'ProbeFileID':str,
+             'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+             'ProbeOutputMaskFileName':str}
+elif args.task == 'splice':
+    index_dtype = {'TaskID':str,
+             'ProbeFileID':str,
+             'ProbeFileName':str,
+             'ProbeWidth':np.int64,
+             'ProbeHeight':np.int64,
+             'DonorFileID':str,
+             'DonorFileName':str,
+             'DonorWidth':np.int64,
+             'DonorHeight':np.int64}
+    sys_dtype = {'ProbeFileID':str,
+             'DonorFileID':str,
+             'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
+             'ProbeOutputMaskFileName':str,
+             'DonorOutputMaskFileName':str}
+
 mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
-mySys = pd.read_csv(mySysFile,sep='\|',header=0,engine='python')
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='\|',header=0,engine='python')
+myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
+mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 #TODO: Validate Index and Sys here?
+#
+## if the confidence score are 'nan', replace the values with the mininum score
+#mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
+## convert to the str type to the float type for computations
+#mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
 reportq = 0
 if args.verbose:
@@ -155,37 +185,52 @@ if args.precision < 1:
     printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 5 digits.")
     args.precision=5
 
+sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
+
+# Merge the reference and system output for SSD/DSD reports
 if args.task in ['manipulation','removal','clone']:
-    r_df = createReportSSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
+    # get rid of inf values from the merge and entries for which there is nothing to work with.
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
+
+    # if the confidence score are 'nan', replace the values with the mininum score
+    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
+
 elif args.task == 'splice':
-    r_df = createReportDSD(myRef, mySys, myIndex, myRefDir, mySysDir,args.eks, args.dks, args.th, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
+
+    # get rid of inf values from the merge
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
+                                                                'DonorMaskFileName'])
+    # if the confidence score are 'nan', replace the values with the mininum score
+    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+    # convert to the str type to the float type for computations
+    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
     a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
 
 precision = args.precision
 if args.task in ['manipulation','removal','clone']:
-    myavgs = [a_df[mets][0] for mets in ['NMM','MCC','HAM','WL1','HL1']]
+    myavgs = [a_df[mets][0] for mets in ['NMM','MCC','WL1']]
 
-    allmets = "Avg NMM: {}, Avg MCC: {}, Avg HAM: {}, Avg WL1: {}, Avg HL1: {}".format(round(myavgs[0],precision),
-                                                                                       round(myavgs[1],precision),
-                                                                                       round(myavgs[2],precision),
-                                                                                       round(myavgs[3],precision),
-                                                                                       round(myavgs[4],precision))
+    allmets = "Avg NMM: {}, Avg MCC: {}, Avg WL1: {}".format(round(myavgs[0],precision),
+                                                             round(myavgs[1],precision),
+                                                             round(myavgs[2],precision))
     printq(allmets)
 
 elif args.task == 'splice':
-    pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pHAM','pWL1','pHL1']]
-    davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dHAM','dWL1','dHL1']]
-    pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pHAM: {}, Avg pWL1: {}, Avg pHL1: {}".format(round(pavgs[0],precision),
-                                                                                             round(pavgs[1],precision),
-                                                                                             round(pavgs[2],precision),
-                                                                                             round(pavgs[3],precision),
-                                                                                             round(pavgs[4],precision))
-    dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dHAM: {}, Avg dWL1: {}, Avg dHL1: {}".format(round(davgs[0],precision),
-                                                                                             round(davgs[1],precision),
-                                                                                             round(davgs[2],precision),
-                                                                                             round(davgs[3],precision),
-                                                                                             round(davgs[4],precision))
+    pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pWL1']]
+    davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dWL1']]
+    pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pWL1: {}".format(round(pavgs[0],precision),
+                                                                 round(pavgs[1],precision),
+                                                                 round(pavgs[2],precision))
+    dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dWL1: {}".format(round(davgs[0],precision),
+                                                                 round(davgs[1],precision),
+                                                                 round(davgs[2],precision))
     printq(pallmets)
     printq(dallmets)
 else:

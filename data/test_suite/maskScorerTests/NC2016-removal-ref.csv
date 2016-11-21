@@ -1,3 +1,0 @@
-TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|DonorFileID|DonorFileName|DonorMaskFileName|IsTarget|ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|IsManipulationTypeSplice|IsManipulationTypeCopyClone|Collection|BaseFileName|Lighting|IsControl|CorrespondingControlFileName|SemanticConsistency
-Removal|boatfill|boatfill.jpg|boat-mask.png||||Y|none|none||True|False|False|Nimble-WEB1|bar.jpg|same|False|baz.jpg|
-Removal|nb-notext|nb-notext.jpg|nb-mask.png||||Y|none|none||True|False|False|Nimble-WEB2|bar2.jpg|same|False|baz2.jpg|
