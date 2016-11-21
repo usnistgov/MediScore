@@ -18,6 +18,13 @@ flag=1
 flag_ci=1
 flag2=1
 
+if ([ ! -e comp_detreport.txt -o ! -e comp_detreport_ci.txt -o ! -e comp_detreport2.txt ]); then
+  echo
+  echo "    !!!!! DETECTION SCORER TESTS FAILED !!!!!    "
+  echo
+  exit
+fi
+
 if test "`eval $filter`" = "" ; then
         flag=0
 	if [ $clean = "TRUE" ] ; then

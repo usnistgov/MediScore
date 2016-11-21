@@ -11769,7 +11769,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script calculates performance scores for determining the manipulated area between the reference mask and the system output mask. The script generates CSV report tables, one containing scores for each mask and another containing an average of the scores in the first CSV. Given the option, the script will generate a detailed HTML index file for the mask region performance results.</p>
+<p>This script calculates performance scores that measure the accuracy of a system output mask to a reference mask. The script generates CSV report tables, one containing scores for each mask and another containing an average of the scores in the first CSV. Given the option, the script will generate a detailed HTML index file for the mask region performance results.</p>
 <p>In the following metrics, the following terminology is used:</p>
 <ul>
 <li>$GT$ refers to the ground truth mask</li>
@@ -11786,7 +11786,7 @@ NMM(GT,sys,weights,c)=\max{\left(\frac{TP - FN - FP}{\Sigma_{px\in GT}weights(px
 \end{equation*}<p>$\Sigma_{px \in GT}$ refers to the sum over the pixels in the ground truth that are marked black. $c$ denotes a minimum cutoff value for the scoring to have any meaning; by default, $c=-1$.</p>
 <h3 id="Matthews-Correlation-Coefficient-(MCC)">Matthews Correlation Coefficient (MCC)<a class="anchor-link" href="#Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
 MCC(GT,sys) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
-\end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation. The MCC does not rely on the weights.</p>
+\end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation.</p>
 <h3 id="Weighted-L1-Loss-(WL1)">Weighted L1 Loss (WL1)<a class="anchor-link" href="#Weighted-L1-Loss-(WL1)">&#182;</a></h3>\begin{equation*}
 WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 \end{equation*}<p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
@@ -11810,8 +11810,8 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Example:</p>
 
-<pre><code>python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests/ -r NC2016-removal-ref.csv -x NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR maskoutputs/sample -html</code></pre>
-<p>Running this code would produce, under the maskoutputs directory, an aggregate report of the computed mask scores titled sample.csv and a per-image score report titled sample-perimage.csv. The -html flag is also set, allowing the code to generate an HTML per-image index file with the scores and metadata containing links to individual detailed reports of each image (described in the Sample HTML Output at the bottom of the page).</p>
+<pre><code>python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests/ -r reference/removal/NC2016-removal-ref.csv -x index/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR maskoutputs/sample -html</code></pre>
+<p>Running this code would produce, under the maskoutputs directory, an aggregate report of the computed mask scores titled sample.csv and a per-image score report titled sample-perimage.csv for the removal task. The -html flag is also set, allowing the code to generate an HTML per-image index file with the scores and metadata containing links to individual detailed reports of each image (described in the Sample HTML Output at the bottom of the page).</p>
 
 </div>
 </div>
@@ -11853,7 +11853,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Input-Options">Input Options<a class="anchor-link" href="#Input-Options">&#182;</a></h3><p>All csv files passed to the Mask Scorer must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the csv should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this on the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
+<h3 id="Input-Options">Input Options<a class="anchor-link" href="#Input-Options">&#182;</a></h3><p>All CSV files passed to the Mask Scorer must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the CSV should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this in the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
 
 </div>
 </div>
@@ -11865,7 +11865,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--refDir</p>
 <ul>
-<li>Specify the reference and index data path (e.g. "/NC2016_Test0601") (default = '.')</li>
+<li>Specify the reference and index data path (e.g. "/NC2016_Test0601") (default = .)</li>
 </ul>
 
 </div>
@@ -11878,7 +11878,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-r --inRef</p>
 <ul>
-<li>Specify the reference csv file within refDir that contains the ground-truth information and metadata about each image. Key fields are the TaskID, ProbeFileID, ProbeFileName, and ProbeMaskFileName, and if scoring on the 'splice' task, the DonorFileID, DonorFileName, and DonorMaskFileName as well. Often the FileID's for the Probe and Donor will be the same as the FileNames, minus the extension. Additional fields, especially metadata pertaining to the ground-truth manipulation, may be included.</li>
+<li>Specify the reference CSV file within refDir that contains the ground-truth information and metadata about each image. Key fields are TaskID, ProbeFileID, ProbeFileName, and ProbeMaskFileName, and if scoring on the 'splice' task, DonorFileID, DonorFileName, and DonorMaskFileName as well. Often the File ID's for the Probe and Donor will be the same as the file names, minus the extension. Additional fields, especially metadata pertaining to the ground-truth manipulation, may be included.</li>
 </ul>
 
 </div>
@@ -11891,7 +11891,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-x --inIndex</p>
 <ul>
-<li>Define the index csv file within refDir. The index file contains the TaskID, ProbeFileID, ProbeFileName, ProbeWidth, and ProbeHeight fields, and if scoring on the splice task, the DonorFileID, DonorFileName, DonorWidth, and DonorHeight fields as well. No additional fields are permitted for the index file.</li>
+<li>Define the index CSV file within refDir. The index file contains the TaskID, ProbeFileID, ProbeFileName, ProbeWidth, and ProbeHeight fields, and if scoring on the splice task, the DonorFileID, DonorFileName, DonorWidth, and DonorHeight fields as well. No additional fields are permitted for the index file.</li>
 </ul>
 
 </div>
@@ -12017,7 +12017,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </ul>
 <p>--precision</p>
 <ul>
-<li>The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=5].</li>
+<li>The number of digits to round computed scores, (e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5), (default = 5).</li>
 </ul>
 <p>-html</p>
 <ul>
