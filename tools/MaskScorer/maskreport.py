@@ -118,7 +118,7 @@ def scores_4_mask_pairs(refMaskFName,
                 df.set_value(i,met,round(metric[met],precision))
 
             if html:
-                if (not os.path.isdir(outputRoot)):
+                if ~os.path.isdir(outputRoot):
                     os.system('mkdir ' + outputRoot)
 
                 maniImgName = os.path.join(refDir,maniImageFName[i])
@@ -139,34 +139,21 @@ def scores_4_mask_pairs(refMaskFName,
                     mymeas = rImg.confusion_measures(sImg,metric['wimg'])
                 else:
                     mymeas = rImg.confusion_measures_gs(sImg,metric['wimg'])
-                #html page for mask.
-                #include, with headers: original image
-                #color mask composite with grayscale manipulated image
-                #in table
-                #reference mask, system output mask
-                #no score zone, color mask
-                #NMM figure, and pixel area for FP,FN,TP,NS,Total area colored
+
                 mPath = os.path.join(refDir,maniImageFName[i])
-                #copy all to same directory for report
-                #TODO: map to original images in path instead. Much less costly.
-                os.system('cp ' + mPath + ' ' + outputRoot)
-                if ~r_altered:
-                    os.system('cp ' + refMaskName + ' ' + outputRoot)
-                if ~s_altered:
-                    os.system('cp ' + sysMaskName + ' ' + outputRoot)
                 allshapes=min(rImg.get_dims()[1],640) #limit on width for readability of the report
                 # generate HTML files
                 with open("html_template.txt", 'r') as f:
                     htmlstr = Template(f.read())
-                htmlstr = htmlstr.substitute({'probeFname': maniImageFName[i],
+                htmlstr = htmlstr.substitute({'probeFname': os.path.abspath(mPath),
                                     'width': allshapes,
-                                    'aggMask' : aggImgName.split('/')[-1],
-                                    'refMask' : rImg.name.split('/')[-1],
-                                    'sysMask' : sImg.name.split('/')[-1],
+                                    'aggMask' : os.path.abspath(aggImgName),
+                                    'refMask' : os.path.abspath(rImg.name),
+                                    'sysMask' : os.path.abspath(sImg.name),
                                     'noScoreZone' : weightFName,
-                                    'colorMask' : colMaskName.split('/')[-1],
-                                    'nmm' : metric['NMM'],
-                                    'totalPixels' : rImg.get_dims()[1]*rImg.get_dims()[0],
+                                    'colorMask' : os.path.abspath(colMaskName),
+				    'nmm' : metric['NMM'],
+                                    'totalPixels' : np.sum(mywts==255),
                                     'fp' : mymeas['FP'],
                                     'fn' : mymeas['FN'],
                                     'tp' : mymeas['TP'],
