@@ -140,7 +140,15 @@ class mask:
 class refmask(mask):
 
     def noScoreZone(self,erodeKernSize,dilateKernSize,opt):
-        if ((erodeKernSize==0) and (dilateKernSize==0)):
+        """
+        *Description: this function calculates and generates the no score zone of the mask,
+                             as well as the eroded and dilated masks for additional reference
+        *Inputs
+        * erodeKernSize: total length of the erosion kernel matrix
+        * dilateKernSize: total length of the dilation kernel matrix
+        * opt: kernel shape to be used 
+        """
+        if (erodeKernSize==0) and (dilateKernSize==0):
             dims = self.get_dims()
             weight = np.ones(dims,dtype=np.uint8)
             return {'rimg':self.matrix,'wimg':weight}
@@ -157,6 +165,42 @@ class refmask(mask):
         wFlip=1-weight
 
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
+
+    def distractionNoScoreZone(self,dilateKernSize,color_str,opt):
+        """
+        *Description: this function calculates the no score zone of the mask regions counted as distractors.
+                            The resulting mask is meant to be paired with the no score zone function above as
+                            
+                            It parses the BGR color codes to determine the color corresponding to the
+                            type of manipulation
+        *Inputs
+        * dilateKernSize: total length of the dilation kernel matrix
+        * color_str: the string of the color of the region of the manipulation to be considered, in RGB format and separated by spaces (e.g. '0 0 255')
+        * opt: kernel shape to be used 
+        """
+
+        mymat = self.matrix
+        dims = self.get_dims()
+        if dilateKernSize==0:
+            weight = np.ones(dims,dtype=np.uint8)
+            return {'rimg':mymat,'wimg':weight}
+
+        opt = opt.lower()
+        dKern=getKern(opt,dilateKernSize)
+
+        #parse color
+        color = color_str.replace(' ','')
+        color.reverse() #flip to suit BGR format
+
+        #set equal to colors
+        mybin = ~((mymat[:,:,0]==color[0]) & (mymat[:,:,1]==color[1]) & (mymat[:,:,2]==color[2])) #equality of pixels across all three channels
+        mybin = mybin.astype(np.uint8)
+
+        #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
+        dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+        weights=dImg.astype(np.uint8)
+
+        return weights
 
     def confusion_measures_gs(self,sys,w):
         """
@@ -617,13 +661,15 @@ class refmask(mask):
         maniImg = mask(maniImgName)
         mData = maniImg.matrix
         myagg = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
-        m3chan = np.reshape(np.kron(mData,np.uint8([1,1,1])),(mData.shape[0],mData.shape[1],3))
+        m3chan = np.stack((mData,mData,mData),axis=2)
+        #np.reshape(np.kron(mData,np.uint8([1,1,1])),(mData.shape[0],mData.shape[1],3))
         myagg[mImg==0]=m3chan[mImg==0]
 
         #for modified images, weighted sum the colored mask with the grayscale
         alpha=0.7
-        mData = np.kron(mData,np.uint8([1,1,1]))
-        mData.shape=(mydims[0],mydims[1],3)
+        mData = np.stack((mData,mData,mData),axis=2)
+        #np.kron(mData,np.uint8([1,1,1]))
+        #mData.shape=(mydims[0],mydims[1],3)
         modified = cv2.addWeighted(mycolor,alpha,mData,1-alpha,0)
         myagg[mImg!=0]=modified[mImg!=0]
 

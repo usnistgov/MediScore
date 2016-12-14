@@ -47,6 +47,7 @@ sysFname = data_path + "/SystemOutputs/dct0608/dct02.csv"
 ## command-line arguments for "file"
 #################################################
 
+#TODO: additional options
 parser = argparse.ArgumentParser(description='Compute scores for the masks and generate a report.')
 parser.add_argument('-t','--task',type=str,default='manipulation',
 help='Three different types of tasks: [manipulation],[removal],[clone], and [splice]',metavar='character')

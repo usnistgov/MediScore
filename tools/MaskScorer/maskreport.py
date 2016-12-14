@@ -113,6 +113,7 @@ def scores_4_mask_pairs(refMaskFName,
                     sImg.name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sImg.name)
 
+            #TODO: edit getMetrics to incorporate the distractionNoScoreZone
             metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=sbin,popt=verbose)
             for met in ['NMM','MCC','WL1']:
                 df.set_value(i,met,round(metric[met],precision))
