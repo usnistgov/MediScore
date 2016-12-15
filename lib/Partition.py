@@ -6,8 +6,30 @@ from collections import OrderedDict
 import pandas as pd
 
 class Partition:
-
+    """This class represents a set of partitions for a single panda's dataframe,
+       using one or several queries.
+       It generates and stores each dataframe and their corresponding
+       DetMetric objects.
+    """
     def __init__(self,dataframe,query,factor_mode,fpr_stop=1, isCI=False):
+        """Constructor
+        Attributes:
+        - factor_mode : 'f' = single query
+                        'fp' = cartesian product of the factors
+        - factors_names : list of the dataframe's columns names
+        - index_factor : Dictionnary {'factor_name': index_of_the_column}
+        - n_partitions : number of partitions generated
+        - factor_dict : Dictionnary associating each query's conditions to its factor
+        - factors_order : List used to keep track of the factor's order in the query
+        - part_query_list : List containing the single query in 'f' mode or
+                                 containing each query generated query in 'fp' mode
+                                 base on the cartesian product
+        - part_values_list : List of the values' conditions for each factor for
+                             each partitions
+        - part_df_list : List of each partition's dataframe generated
+        - part_dm_list : List of each partition's DetMetric object generated
+        """
+
         self.factor_mode = factor_mode
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
@@ -30,12 +52,28 @@ class Partition:
 
 
     def gen_index_factor(self,list_factors):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            Generate the dictionnary which make the association between
+            each factor name and its column's index in the dataframe.
+        """
         index_factor = dict()
         for i,factor in enumerate(list_factors):
             index_factor[factor] = i
         return index_factor
 
     def gen_factors_dict(self):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            Parse the query and store it as a dictionnary.
+            {'factor_name': condition}
+            The numerical factors are separeted from the general ones
+            in a second dictionnary associated to the key 'Numerical_factors'
+            For each numerical factors, the entire string (name+condition)
+            is appended to a list associated to the key 'Numericals_factors_conditions'
+        """
         L_factors = re.split('&|and',self.query)
         L_order = list()
         D_factors = OrderedDict()
@@ -58,6 +96,14 @@ class Partition:
         return D_factors,L_order
 
     def gen_part_values_list(self):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            This function computes the cartesian product of all the
+            factors conditions, based on the factors dictionnary
+            It returns a list of lists. Each list contains the list
+            of factors' conditions for one partition.
+        """
         d = OrderedDict(self.factors_dict)
         L_values = list()
         L_num = d['Numericals_factors_conditions']
@@ -70,18 +116,36 @@ class Partition:
         return L_product
 
     def gen_part_query_list(self):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            This function generates the query associated the each
+            factor's conditions list in the part_value_list.
+        """
         List_part_query = list()
         for part_list in self.part_values_list:
             List_part_query.append(''.join([x+' & ' for x in part_list])[:-3])
         return List_part_query
 
     def gen_part_df_list(self,df):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            This function computes and store each partition's dataframe
+            generated according to its query in part_query_list.
+        """
         df_list = list()
         for query in self.part_query_list:
             df_list.append(df.query(query))
         return df_list
 
     def gen_part_dm_list(self, fpr_stop, isCI):
+        """ Function used only in the constructor,
+            should'nt be called outside of the class.
+
+            This function creates and store each partition's detMetric
+            object according to its dataframe in part_df_list.
+        """
         dm_list = list()
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
@@ -92,12 +156,20 @@ class Partition:
         return dm_list
 
     def get_query(self):
+        """ Getter for the query attributes, return a formatted version
+            for the query string.
+        """
         return self.query.replace('&',' & ')\
                          .replace('and',' and ')\
                          .replace('==',' == ')\
                          .replace('<',' < ')
 
     def render_table(self):
+        """ This function compute a table (as a dataframe) for each partitions
+            containing the informations stored in the corresponding DetMetric object.
+            It returns a list of dataframe in 'f' mode and
+            one dataframe listing all the partitions in 'fp' mode
+        """
 
         def find_factor_list_pos(List, factor):
             i = 0
@@ -149,6 +221,8 @@ class Partition:
             return df
 
     def __repr__(self):
+        """Representation method
+        """
         return "Partition :\nQuery = {}\nList partitions values =\n{}\nList partitions queries =\n{}\n"\
                 .format(self.get_query(),self.part_values_list,self.part_query_list)
 
@@ -157,6 +231,9 @@ class Partition:
 if __name__ == '__main__':
 
     def gen_dataframe(n_rows):
+        """Test function that generates a random dataframe of n_rows rows,
+           containing various datatypes (strings, integers, floats, boolean)
+        """
         import numpy as np
         import pandas as pd
         set_f1 = 'Uppercase_4'
@@ -183,7 +260,7 @@ if __name__ == '__main__':
                 data_dict['factor_' + str(i)] = np.random.rand(n_rows)
         return pd.DataFrame(data_dict)
 
-    #path = "/Users/tnk12/Documents/ProjetD/MyProject/"
+    #path = "./"
     query = "factor_0 == ['A','C'] & factor_1 == ['a','b'] & 2<=factor_2<=4 & factor_4<10000"
     df = gen_dataframe(100)
     mypart = Partition(df,query)
