@@ -41,15 +41,15 @@ import Partition as f
 if __name__ == '__main__':
 
     # Boolean for disabling the command line
-    debug_mode_ide = False
+    debug_mode_ide = True
 
     # Command-line mode
     if not debug_mode_ide:
 
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
-        parser.add_argument('-t','--task', default='manipulation', choices=['manipulation', 'removal', 'splice', 'clone'],
-        help='Four different types of tasks: [manipulation], [removal], [splice], or [clone] (default: %(default)s)',metavar='character')
+        parser.add_argument('-t','--task', default='manipulation', choices=['manipulation','splice','provenancefiltering', 'provenance'],
+        help='Four different types of tasks: [manipulation], [splice], [provenancefiltering] or [provenance] (default: %(default)s)',metavar='character')
 
         parser.add_argument('--refDir',default='.',
         help='Reference and index file path: [e.g., ../NC2016_Test] (default: %(default)s)',metavar='character')
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
         # Verbosity option
         if args.verbose:
-            def _v_print(*args):
+            def _print(*args):
                 for arg in args:
                    print (arg),
                 print
@@ -128,27 +128,7 @@ if __name__ == '__main__':
 
         # Loading the reference file
         try:
-#           ref_dtype = {'TaskID':str,
-#                     'ProbeFileID':str,
-#                     'ProbeFileName':str,
-#                     'ProbeMaskFileName':str,
-#                     'ProbeMaskFileName':str,
-#                     'DonorFileID':str,
-#                     'DonorFileName':str,
-#                     'DonorMaskFileName':str,
-#                     'IsTarget':str,
-#                     'ProbePostProcessed':str,
-#                     'DonorPostProcessed':str,
-#                     'ManipulationQuality':str,
-#                     'IsManipulationTypeRemoval':str,
-#                     'IsManipulationTypeSplice':str,
-#                     'IsManipulationTypeCopyClone':str,
-#                     'Collection':str,
-#                     'BaseFileName':str,
-#                     'Lighting':str,
-#                     'IsControl':str,
-#                     'CorrespondingControlFileName':str,
-#                     'SemanticConsistency':str}
+
             myRefFname = args.refDir + "/" + args.inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
@@ -157,24 +137,6 @@ if __name__ == '__main__':
             exit(1)
 
         try:
-#             # Loading Index file for SSD and DSD due to different columns between SSD and DSD
-#            if args.task in ['manipulation','removal','clone']:
-#                index_dtype = {'TaskID':str,
-#                         'ProbeFileID':str,
-#                         'ProbeFileName':str,
-#                         'ProbeWidth':np.int64,
-#                         'ProbeHeight':np.int64}
-#
-#            elif args.task == 'splice':
-#                index_dtype = {'TaskID':str,
-#                         'ProbeFileID':str,
-#                         'ProbeFileName':str,
-#                         'ProbeWidth':np.int64,
-#                         'ProbeHeight':np.int64,
-#                         'DonorFileID':str,
-#                         'DonorFileName':str,
-#                         'DonorWidth':np.int64,
-#                         'DonorHeight':np.int64}
 
             myIndexFname = args.refDir + "/" + args.inIndex
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
@@ -185,11 +147,11 @@ if __name__ == '__main__':
 
         try:
             # Loading system output for SSD and DSD due to different columns between SSD and DSD
-            if args.task in ['manipulation','removal','clone']:
+            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
-            elif args.task == 'splice':
+            elif args.task in ['splice']:
                 sys_dtype = {'ProbeFileID':str,
                          'DonorFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
@@ -204,9 +166,9 @@ if __name__ == '__main__':
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
-        if args.task in ['manipulation','removal','clone']:
+        if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
-        elif args.task == 'splice':
+        elif args.task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
         # if the confidence scores are 'nan', replace the values with the mininum score
@@ -225,14 +187,14 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if args.factor or args.factorp:
+        if args.factor or args.factorp: # add or args.targetManiTypeSet or args.nontargetManiTypeSet
             v_print("Partition Mode \n")
             partition_mode = True
 
-            if args.task in ['manipulation','removal','clone']:
+            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-            elif args.task == 'splice':
+            elif args.task in ['splice']:
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
@@ -340,167 +302,185 @@ if __name__ == '__main__':
 
         print('Starting debug mode ...\n')
 
-        data_path = "../../data"
-        nc_path = "NC2016_Test0613"
-        myRefDir = data_path + "/" + nc_path
+        refDir = '/Users/yunglee/YYL/MEDIFOR/data'
+        sysDir = '../../data/test_suite/detectionScorerTests'
         task = 'manipulation'
         outRoot = './test/sys_01'
-        plotType = 'det'
+        farStop = 1
+        ci = False
+        plotType = 'roc'
         display = True
         multiFigs = False
-        dump = True
+        dump = False
+        verbose = False
+        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
+#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"
         #fQuery = None
-        fpQuery = None
+
         #fQuery = "Collection==['Nimble-SCI','Nimble-WEB']" "300 <= ProbeWidth"
         #fQuery = "Collection==['Nimble-SCI', 'Nimble-WEB']"
-        fQuery = "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"
+        #factor = "Purpose ==['remove']"
+        #factorp = None
 
+        if (not factor) and (not factorp) and (multiFigs is True):
+            print("ERROR: The multiFigs option is not available without factors options.")
+            exit(1)
+
+#        if task == 'manipulation':
+#            refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
+#            indexFname = "indexes/NC2016-manipulation-index.csv"
+#            sysFname = "../../data/SystemOutputs/results/dct02.csv"
+#        if task == 'splice':
+#            refFname = "reference/splice/NC2016-splice-ref.csv"
+#            indexFname = "indexes/NC2016-splice-index.csv"
+#            sysFname = "../../data/SystemOutputs/splice0608/results.csv"
 
         if task == 'manipulation':
-            refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
-            indexFname = "indexes/NC2016-manipulation-index.csv"
-            sysFname = "../../data/SystemOutputs/results/dct02.csv"
-        if task == 'splice':
-            refFname = "reference/splice/NC2016-splice-ref.csv"
-            indexFname = "indexes/NC2016-splice-index.csv"
-            sysFname = "../../data/SystemOutputs/splice0608/results.csv"
+            inRef = "NC2017-1215/NC2017-manipulation-ref.csv"
+            inIndex = "NC2017-1215/NC2017-manipulation-index.csv"
+            inJTJoin = "NC2017-1215/NC2017-manipulation-ref-probejournaljoin.csv"
+            inJTMask = "NC2017-1215/NC2017-manipulation-ref-journalmask.csv"
+            inSys = "baseline/NC17_copymove01.csv"
+
 
         # Loading the reference file
         try:
-            #ref_dtype = {'TaskID':str,
-#                     'ProbeFileID':str,
-#                     'ProbeFileName':str,
-#                     'ProbeMaskFileName':str,
-#                     'ProbeMaskFileName':str,
-#                     'DonorFileID':str,
-#                     'DonorFileName':str,
-#                     'DonorMaskFileName':str,
-#                     'IsTarget':str,
-#                     'ProbePostProcessed':str,
-#                     'DonorPostProcessed':str,
-#                     'ManipulationQuality':str,
-#                     'IsManipulationTypeRemoval':str,
-#                     'IsManipulationTypeSplice':str,
-#                     'IsManipulationTypeCopyClone':str,
-#                     'Collection':str,
-#                     'BaseFileName':str,
-#                     'Lighting':str,
-#                     'IsControl':str,
-#                     'CorrespondingControlFileName':str,
-#                     'SemanticConsistency':str}
-            myRefFname = myRefDir + "/" + refFname
+
+            myRefFname = refDir + "/" + inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
         except IOError:
-            print("ERROR: There was an error opening the reference file")
+            print("ERROR: There was an error opening the reference csv file")
+            exit(1)
+
+        try:
+
+            myJTJoinFname = refDir + "/" + inJTJoin
+            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
+        except IOError:
+            print("ERROR: There was an error opening the JournalJoin csv file")
+            exit(1)
+
+        try:
+
+            myJTMaskFname = refDir + "/" + inJTMask
+            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+        except IOError:
+            print("ERROR: There was an error opening the JournalMask csv file")
             exit(1)
 
 
         try:
-            # Loading index file for SSD and DSD
-            # different columns between SSD and DSD
-#            if task in ['manipulation','removal','clone']:
-#                index_dtype = {'TaskID':str,
-#                         'ProbeFileID':str,
-#                         'ProbeFileName':str,
-#                         'ProbeWidth':np.int64,
-#                         'ProbeHeight':np.int64}
-#            elif task == 'splice':
-#                index_dtype = {'TaskID':str,
-#                         'ProbeFileID':str,
-#                         'ProbeFileName':str,
-#                         'ProbeWidth':np.int64,
-#                         'ProbeHeight':np.int64,
-#                         'DonorFileID':str,
-#                         'DonorFileName':str,
-#                         'DonorWidth':np.int64,
-#                         'DonorHeight':np.int64}
-            myIndexFname = myRefDir + "/" + indexFname
-            #myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
+
+            myIndexFname = refDir + "/" + inIndex
+           # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
             myIndex = pd.read_csv(myIndexFname, sep='|')
         except IOError:
-            print("ERROR: There was an error opening the index file")
+            print("ERROR: There was an error opening the index csv file")
             exit(1)
 
         try:
-            # Loading system output for SSD and DSD
-            # different columns between SSD and DSD
-            if task in ['manipulation','removal','clone']:
+            # Loading system output for SSD and DSD due to different columns between SSD and DSD
+            if task in ['manipulation', 'provenancefiltering', 'provenance']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
-            elif task == 'splice':
+            elif task in ['splice']:
                 sys_dtype = {'ProbeFileID':str,
                          'DonorFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str,
                          'DonorOutputMaskFileName':str}
-            mySys = pd.read_csv(sysFname, sep='|', dtype = sys_dtype)
+            mySysFname = sysDir + "/" + inSys
+            print("Sys File Name {}".format(mySysFname))
+            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
-            mySysDir = os.path.dirname(sysFname)
         except IOError:
-            print("ERROR: There was an error opening the reference file")
+            print("ERROR: There was an error opening the system output csv file")
             exit(1)
 
-        # Create SSD/DSD reports
-        if task in ['manipulation','removal','clone']:
+        # merge the reference and system output for SSD/DSD reports
+        if task in ['manipulation', 'provenancefiltering', 'provenance']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
-        elif task== 'splice':
+        elif task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
-        # if the values are 'nan', replace the values with the mininum score
+         # if the confidence scores are 'nan', replace the values with the mininum score
         m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-        root_path, file_suffix = outRoot.rsplit('/', 1)
+        # the performers' result directory
+        if '/' not in outRoot:
+            root_path = '.'
+            file_suffix = outRoot
+        else:
+            root_path, file_suffix = outRoot.rsplit('/', 1)
+
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
 
-        #TODO: add Error message if both f and fp are specified.
         # Partition Mode
-        if fQuery or fpQuery:
-            print("Partition Mode")
+        if factor or factorp or targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
+            print("Partition Mode \n")
             partition_mode = True
 
-            if task in ['manipulation','removal','clone']:
-                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # ubset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-            elif task == 'splice':
-                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # ubset the columns due to duplications
+            if task in ['manipulation', 'provenancefiltering', 'provenance']:
+                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
+                #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                #TODO: merging multiple dataframes
+                # merge the reference and index csv
+                df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                # merge the JournalJoinTable and the JournalMaskTable
+                df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                # merge the dataframes above
+                fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+#                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+                #fm_df.sort(['ProbeFileID', 'Purpose'], inplace=True) #TODO: not necesary, but for testing, Purpose columns should be variable
+                chosenField = [x.strip() for x in targetFilter.split('==')]
+                pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+
+            elif task in ['splice']: #TBD
+                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
-            if fQuery:
+            if factor:
                 factor_mode = 'f'
-                query = [fQuery]
-            elif fpQuery:
+                query = [factor] #TODO: double-check
+            elif factorp:
                 factor_mode = 'fp'
-                query = fpQuery
+                query = factorp
+            if targetFilter: #TODO: testcases
+                factor_mode = 'f'
+                query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
+                print("targetQuery {}".format(query))
 
-            print("Query : {}".format(query))
-            print("Creating partitions...")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=1, isCI=True)
+            print("Query : {}\n".format(query))
+            print("Creating partitions...\n")
+            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=farStop, isCI=ci)
             DM_List = selection.part_dm_list
-            print("Number of partitions generated = {}".format(len(DM_List)))
-            print("Rendering csv tables...")
+            print("Number of partitions generated = {}\n".format(len(DM_List)))
+            print("Rendering csv tables...\n")
             table_df = selection.render_table()
             if isinstance(table_df,list):
-                print("Number of table DataFrame generated = {}".format(len(table_df)))
-            if fQuery:
+                print("Number of table DataFrame generated = {}\n".format(len(table_df)))
+            if factor:
                 for i,df in enumerate(table_df):
                     df.to_csv(outRoot + '_f_query_' + str(i) + '.csv', index = False)
-            elif fpQuery:
+            elif factorp:
                 table_df.to_csv(outRoot + '_fp_query.csv')
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = 1, isCI=True)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci)
+
             DM_List = [DM]
             table_df = DM.render_table()
             table_df.to_csv(outRoot + '_all.csv', index = False)
 
         if isinstance(table_df,list):
-            print("\nReport tables...")
+            print("\nReport tables...\n")
             for i, table in enumerate (table_df):
                 print("\nPartition {}:".format(i))
                 print(table)
@@ -508,14 +488,11 @@ if __name__ == '__main__':
             print("Report table:\n{}".format(table_df))
 
 
-        # Generation automatic of a default plot_options json config file
+        # Generating a default plot_options json config file
         p_json_path = "./plotJsonFiles"
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
-
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-
-         # Generating the default_plot_options json config file
         p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
 
         # Loading of the plot_options json config file
@@ -524,7 +501,7 @@ if __name__ == '__main__':
         # Dumping DetMetrics objects
         if dump:
             for i,DM in enumerate(DM_List):
-                DM.write(outRoot + '_query_' + str(i) + '.dm')
+                DM.write(root_path + '/' + file_suffix + '_query_' + str(i) + '.dm')
 
         # Creation of defaults plot curve options dictionnary (line style opts)
         Curve_opt = OrderedDict([('color', 'red'),
@@ -532,6 +509,7 @@ if __name__ == '__main__':
                                  ('marker', '.'),
                                  ('markersize', 8),
                                  ('markerfacecolor', 'red'),
+                                 ('label',None),
                                  ('antialiased', 'False')])
 
         # Creating the list of curves options dictionnaries (will be automatic)
@@ -539,9 +517,9 @@ if __name__ == '__main__':
         colors = ['red','blue','green','cyan','magenta','yellow','black']
         linestyles = ['solid','dashed','dashdot','dotted']
         # Give a random rainbow color to each curve
-        color = iter(cm.rainbow(np.linspace(0,1,len(DM_List))))
+        #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
+        color = cycle(colors)
         lty = cycle(linestyles)
-#        color = cycle(colors)
         for i in range(len(DM_List)):
             new_curve_option = OrderedDict(Curve_opt)
             col = next(color)
@@ -551,8 +529,10 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        for curve_opts,query in zip(opts_list,selection.part_query_list):
-            curve_opts["label"] = query
+        if factor or factorp:
+            for curve_opts,query in zip(opts_list,selection.part_query_list):
+                curve_opts["label"] = query
+
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
