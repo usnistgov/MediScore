@@ -313,12 +313,15 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
+        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
+#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"
         #fQuery = None
 
         #fQuery = "Collection==['Nimble-SCI','Nimble-WEB']" "300 <= ProbeWidth"
         #fQuery = "Collection==['Nimble-SCI', 'Nimble-WEB']"
-        factor = ""
-        factorp = None
+        #factor = "Purpose ==['remove']"
+        #factorp = None
 
         if (not factor) and (not factorp) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without factors options.")
@@ -419,7 +422,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if factor or factorp: # add or targetManiTypeSet or nontargetManiTypeSet
+        if factor or factorp or targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
 
@@ -427,9 +430,16 @@ if __name__ == '__main__':
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
                 #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                 #TODO: merging multiple dataframes
+                # merge the reference and index csv
                 df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                # merge the JournalJoinTable and the JournalMaskTable
                 df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
-                pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+                # merge the dataframes above
+                fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+#                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+                #fm_df.sort(['ProbeFileID', 'Purpose'], inplace=True) #TODO: not necesary, but for testing, Purpose columns should be variable
+                chosenField = [x.strip() for x in targetFilter.split('==')]
+                pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
@@ -437,10 +447,14 @@ if __name__ == '__main__':
 
             if factor:
                 factor_mode = 'f'
-                query = factor
+                query = [factor] #TODO: double-check
             elif factorp:
                 factor_mode = 'fp'
                 query = factorp
+            if targetFilter: #TODO: testcases
+                factor_mode = 'f'
+                query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
+                print("targetQuery {}".format(query))
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
