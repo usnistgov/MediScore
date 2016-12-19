@@ -41,7 +41,7 @@ import Partition as f
 if __name__ == '__main__':
 
     # Boolean for disabling the command line
-    debug_mode_ide = True
+    debug_mode_ide = False
 
     # Command-line mode
     if not debug_mode_ide:
@@ -104,6 +104,12 @@ if __name__ == '__main__':
         parser.add_argument('--ci', action='store_true',
         help="Calculate Confidence Interval for AUC")
 
+        parser.add_argument('-tf', '--targetFilter',
+        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials)", metavar='character')
+
+        parser.add_argument('-nf', '--nontargetFilter',
+        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
+
         args = parser.parse_args()
 
         # Verbosity option
@@ -123,7 +129,8 @@ if __name__ == '__main__':
             print("ERROR: The multiFigs option is not available without factors options.")
             exit(1)
 
-       # print("Namespace :\n{}\n".format(args))
+        #print("Namespace :\n{}\n".format(args))
+        print("targetFilter format {}".format(str(args.targetFilter)))
 
 
         # Loading the reference file
@@ -132,8 +139,28 @@ if __name__ == '__main__':
             myRefFname = args.refDir + "/" + args.inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
+            myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
             print("ERROR: There was an error opening the reference csv file")
+            exit(1)
+
+
+        try:
+            inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+            myJTJoinFname = myRefDir + "/" + inJTJoin
+            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
+
+        except IOError:
+            print("ERROR: There was an error opening the JournalJoin csv file")
+            exit(1)
+
+        try:
+            inJTMask = "NC2017-manipulation-ref-journalmask.csv"
+            myJTMaskFname = myRefDir + "/" + inJTMask
+            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+
+        except IOError:
+            print("ERROR: There was an error opening the JournalMask csv file")
             exit(1)
 
         try:
@@ -186,24 +213,59 @@ if __name__ == '__main__':
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
 
-        # Partition Mode
-        if args.factor or args.factorp: # add or args.targetManiTypeSet or args.nontargetManiTypeSet
-            v_print("Partition Mode \n")
+#        # Partition Mode
+#        if args.factor or args.factorp: # add or args.targetManiTypeSet or args.nontargetManiTypeSet
+#            v_print("Partition Mode \n")
+#            partition_mode = True
+#
+#            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
+#                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
+#                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+#            elif args.task in ['splice']:
+#                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
+#                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+#
+#            if args.factor:
+#                factor_mode = 'f'
+#                query = args.factor
+#            elif args.factorp:
+#                factor_mode = 'fp'
+#                query = args.factorp
+
+
+         # Partition Mode
+        if args.factor or args.factorp or args.targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
+            print("Partition Mode \n")
             partition_mode = True
 
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-            elif args.task in ['splice']:
+                #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                # merge the reference and index csv
+                df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                # merge the JournalJoinTable and the JournalMaskTable
+                df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                # merge the dataframes above
+                fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+#                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+                chosenField = [x.strip() for x in args.targetFilter.split('==')]
+                #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+                pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+
+            elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
             if args.factor:
                 factor_mode = 'f'
-                query = args.factor
+                query = args.factor #TODO: double-check
             elif args.factorp:
                 factor_mode = 'fp'
                 query = args.factorp
+            elif args.targetFilter: #TODO: testcases
+                factor_mode = 'f'
+                query = ["("+args.targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
+                #print("targetQuery {}".format(query))
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
@@ -219,6 +281,7 @@ if __name__ == '__main__':
                     df.to_csv(args.outRoot + '_f_query_' + str(i) + '.csv', index = False)
             elif args.factorp:
                 table_df.to_csv(args.outRoot + '_fp_query.csv')
+
 
         # No partitions
         else:
@@ -316,12 +379,9 @@ if __name__ == '__main__':
         targetFilter = "Purpose ==['remove', 'splice', 'add']"
 #        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"
-        #fQuery = None
 
-        #fQuery = "Collection==['Nimble-SCI','Nimble-WEB']" "300 <= ProbeWidth"
-        #fQuery = "Collection==['Nimble-SCI', 'Nimble-WEB']"
-        #factor = "Purpose ==['remove']"
-        #factorp = None
+        factor = None
+        factorp = None
 
         if (not factor) and (not factorp) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without factors options.")
@@ -339,8 +399,8 @@ if __name__ == '__main__':
         if task == 'manipulation':
             inRef = "NC2017-1215/NC2017-manipulation-ref.csv"
             inIndex = "NC2017-1215/NC2017-manipulation-index.csv"
-            inJTJoin = "NC2017-1215/NC2017-manipulation-ref-probejournaljoin.csv"
-            inJTMask = "NC2017-1215/NC2017-manipulation-ref-journalmask.csv"
+            inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+            inJTMask = "NC2017-manipulation-ref-journalmask.csv"
             inSys = "baseline/NC17_copymove01.csv"
 
 
@@ -350,13 +410,15 @@ if __name__ == '__main__':
             myRefFname = refDir + "/" + inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
+            myRefDir =  os.path.dirname(myRefFname)
+            #print ("Ref path {}".format(myRefDir))
         except IOError:
             print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
         try:
 
-            myJTJoinFname = refDir + "/" + inJTJoin
+            myJTJoinFname = myRefDir + "/" + inJTJoin
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
         except IOError:
             print("ERROR: There was an error opening the JournalJoin csv file")
@@ -364,7 +426,7 @@ if __name__ == '__main__':
 
         try:
 
-            myJTMaskFname = refDir + "/" + inJTMask
+            myJTMaskFname = myRefDir + "/" + inJTMask
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
         except IOError:
             print("ERROR: There was an error opening the JournalMask csv file")
@@ -429,7 +491,6 @@ if __name__ == '__main__':
             if task in ['manipulation', 'provenancefiltering', 'provenance']:
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
                 #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                #TODO: merging multiple dataframes
                 # merge the reference and index csv
                 df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                 # merge the JournalJoinTable and the JournalMaskTable
@@ -437,8 +498,8 @@ if __name__ == '__main__':
                 # merge the dataframes above
                 fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
 #                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                #fm_df.sort(['ProbeFileID', 'Purpose'], inplace=True) #TODO: not necesary, but for testing, Purpose columns should be variable
                 chosenField = [x.strip() for x in targetFilter.split('==')]
+                #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
                 pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif task in ['splice']: #TBD
@@ -454,7 +515,7 @@ if __name__ == '__main__':
             if targetFilter: #TODO: testcases
                 factor_mode = 'f'
                 query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
-                print("targetQuery {}".format(query))
+                #print("targetQuery {}".format(query))
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
