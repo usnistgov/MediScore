@@ -246,11 +246,12 @@ if __name__ == '__main__':
                 # merge the JournalJoinTable and the JournalMaskTable
                 df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
                 # merge the dataframes above
-                fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-#                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                chosenField = [x.strip() for x in args.targetFilter.split('==')]
-                #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-                pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+                pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+#               # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+                if args.targetFilter
+                    chosenField = [x.strip() for x in args.targetFilter.split('==')]
+                    #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+                    pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
