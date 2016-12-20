@@ -248,7 +248,7 @@ if __name__ == '__main__':
                 # merge the dataframes above
                 pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
 #               # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                if args.targetFilter
+                if args.targetFilter:
                     chosenField = [x.strip() for x in args.targetFilter.split('==')]
                     #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
                     pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
