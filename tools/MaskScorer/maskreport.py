@@ -33,17 +33,21 @@ import numpy as np
 import os
 import numbers
 from string import Template
-execfile('../../lib/masks.py')
+lib_path='../../lib'
+sys.path.append(lib_path)
+import masks
 
-def scores_4_mask_pairs(refMaskFName,
-                        sysMaskFName,
-                        maniImageFName,
+def scores_4_mask_pairs(m_df
+                        journalMask,
                         refDir,
                         sysDir,
                         rbin,
                         sbin,
+                        targetManiType,
+                        otherArea,
                         erodeKernSize,
                         dilateKernSize,
+                        kern='box',
                         outputRoot,
                         html=False,
                         verbose=0,
@@ -52,16 +56,17 @@ def scores_4_mask_pairs(refMaskFName,
      Mask performance per image pair
      *Description: this function calculates metrics for a pair of mask images
      *Inputs
-       *numOfRows: the number of pair images
-       *refMaskFName: list of reference mask file names
-       *sysMaskFName: list of system output mask file names
-       *maniImageFName: list of manipulated image file names
+       *m_df: the merged data frame containing the reference mask file names, system output mask file names, list of manipulated image file names, and other information
+       *journalMask: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
        *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
+       *targetManiType: target manipulation types to be scored
+       *otherArea: whether or not to set the area of other regions not of interest as no-score zones
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
+       *kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: option to permit printout from metrics
@@ -69,8 +74,13 @@ def scores_4_mask_pairs(refMaskFName,
      *Outputs
        * report dataframe
     """
-    numOfRows = len(refMaskFName)
-    # Create a dataframe
+
+    numOfRows = len(m_df)
+
+    refMaskFName = m_df['ProbeMaskFileName']
+    sysMaskFName = m_df['ProbeOutputMaskFileName']
+    maniImageFileName = m_df['ProbeFileName']
+
     df=pd.DataFrame({'ProbeOutputMaskFileName':sysMaskFName,
                      'NMM':[-1.]*numOfRows,
                      'MCC': 0.,
@@ -85,47 +95,74 @@ def scores_4_mask_pairs(refMaskFName,
             refMaskName = os.path.join(refDir,refMaskFName[i])
             sysMaskName = os.path.join(sysDir,sysMaskFName[i])
 
-            rImg = refmask(refMaskName)
-            sImg = mask(sysMaskName)
+            if rbin >= 0:
+                rImg = masks.refmask(refMaskName)
+            elif rbin == -1:
+                journalID = m_df.query('ProbeMaskFileName=={}'.format(refMaskFName[i]))['JournalID'].iloc[0]
+                colorlist = list(journalMask.query('JournalID=={}')['Color'])
+                purposes = list(journalMask.query('JournalID=={}')['Purpose'])
+                purposes_unique = []
+                [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+                rImg = masks.refmask(refMaskName,readopt=1,cs=colorlist,tmt=purposes_unique)
 
-            if (rImg.matrix is None):
-                print("Reference mask file %s at index %d is unreadable" % (rImg.name,i))
-                continue
-            if (sImg.matrix is None):
-                print("System mask file %s at index %d is unreadable" % (sImg.name,i))
+            sImg = masks.mask(sysMaskName)
+
+            if (rImg.matrix is None) or (sImg.matrix is None):
+                print("The index is at %d." % i)
                 continue
 
             #save the image separately for html and further review. Use that in the html report
             r_altered = False
-            s_altered = False
             if rbin >= 0:
-                rtemp = rImg.binarize(rbin)
-                if ~np.array_equal(rtemp,rImg.matrix):
+                rImg.binarize(rbin)
+                if ~np.array_equal(rImg.bwmat,rImg.matrix):
                     r_altered = True
-                    rImg.matrix = rtemp
-                    rImg.name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
-                    rImg.save(rImg.name)
-            if sbin >= 0:
-                stemp = sImg.binarize(sbin)
-                if ~np.array_equal(stemp,sImg.matrix):
-                    s_altered = True
-                    sImg.matrix = stemp 
-                    sImg.name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                    sImg.save(sImg.name)
+                    rtemp_name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+                    rImg.save(rtemp_name)
 
-            #TODO: edit getMetrics to incorporate the distractionNoScoreZone
-            metric = rImg.getMetrics(sImg,erodeKernSize,dilateKernSize,thres=sbin,popt=verbose)
+            wts = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,kern)
+            eData = 0
+            metrics = 0
+            s_altered = False
+            if sbin >= 0:
+                sImg.binarize(sbin)
+                stemp = sImg.get_copy()
+                if ~np.array_equal(sImg.bwmat,sImg.matrix):
+                    s_altered = True
+                    stemp.matrix = stemp.bwmat
+                    stemp.name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    stemp.save(stemp.name)
+                #just get scores here
+                metrics = masks.maskMetrics(rImg,stemp,wts)
+                mets = metrics.getMetrics(erodeKernSize,dilateKernSize,kern=kern,popt=verbose)
+                mymeas = metrics.conf
+                eData = mets['eImg']
+
+            elif sbin == -1:
+                #binarize sbin according to the max threshold.
+                metrics = masks.maskMetrics(rImg,sImg,wts)
+                thresMets,threshold = metrics.runningThresholds(sImg,erodeKernSize,dilateKernSize,kern=kern,popt=verbose)
+                thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
+                mets = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
+                stemp = sImg.get_copy()
+                stemp.matrix = stemp.bw(threshold)
+                metrics = masks.maskMetrics(rImg,stemp,wts)
+                mymeas = metrics.conf
+
+                eKern = masks.getKern(kern,erodeKernSize)
+                eData = 255 - cv2.erode(255 - rImg.bwmat,eKern,iterations=1)
+
             for met in ['NMM','MCC','WL1']:
-                df.set_value(i,met,round(metric[met],precision))
+                df.set_value(i,met,round(mets[met],precision))
 
             if html:
                 if ~os.path.isdir(outputRoot):
                     os.system('mkdir ' + outputRoot)
 
                 maniImgName = os.path.join(refDir,maniImageFName[i])
-                colordirs = rImg.coloredMask_opt1(sImg.name, maniImgName, metric['mask'], metric['wimg'], metric['eImg'], metric['dImg'], outputRoot)
+                colordirs = metrics.aggregateColorMask(maniImgName,eData,outputRoot)
 
-                mywts = np.uint8(255*metric['wimg'])
+                mywts = np.uint8(255*metrics.weights)
                 sysBase = sysMaskFName[i].split('/')[-1][:-4]
                 weightFName = sysBase + '-weights.png'
                 weightpath = os.path.join(outputRoot,weightFName)
@@ -135,11 +172,6 @@ def scores_4_mask_pairs(refMaskFName,
                 aggImgName=colordirs['agg']
                 df.set_value(i,'ColMaskFileName',colMaskName)
                 df.set_value(i,'AggMaskFileName',aggImgName)
-
-                if sbin > 0:
-                    mymeas = rImg.confusion_measures(sImg,metric['wimg'])
-                else:
-                    mymeas = rImg.confusion_measures_gs(sImg,metric['wimg'])
 
                 mPath = os.path.join(refDir,maniImageFName[i])
                 allshapes=min(rImg.get_dims()[1],640) #limit on width for readability of the report
@@ -191,7 +223,7 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
      *Description: this function returns a CSV report with the average mask performance by a factor
      *Inputs
        *df: the dataframe with the scored system output
-       *taskType: [manipulation, removal, splice]
+       *taskType: [manipulation, removal, clone]
        *byCols: the average will be computed over this set of columns
        *precision: number of digits to round figures to
      *Outputs
@@ -206,7 +238,6 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
         len_ids[j] = len(ids[j])
     num_runs = int(np.product(len_ids))
 
-    #TODO: Partition later
     df_avg = pd.DataFrame({'runID' : [None]*num_runs,
                            'TaskID' : [taskType]*num_runs,
                            'Collection' : [None]*num_runs,
@@ -227,7 +258,7 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
             df_avg.set_value(outeridx,'runID',outeridx)
             store_avg(sub_d,metrics,df_avg,outeridx,precision)
             outeridx = outeridx + 1
-            #TODO: revise to query the mean by unique values. Incorporate Partition and stuff from DetectionScorer subpackage.
+            #TODO: revise to query the mean by unique values.
 
     else:
         df_avg.set_value(0,'runID',0)
@@ -241,7 +272,7 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
      *Description: this function returns a CSV report with the average mask performance by a factor
      *Inputs
        *df: the dataframe with the scored system output
-       *taskType: [manipulation, removal, splice]
+       *taskType: [splice]
        *byCols: the average will be computed over this set of columns
        *precision: number of digits to round figures to
      *Outputs
@@ -287,19 +318,23 @@ def avg_scores_by_factors_DSD(df, taskType, byCols=['Collection','PostProcessed'
 
     return df_avg
 
-def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
+def createReportSSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiType, otherArea, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for single source detection
      *Description: this function calls each metric function and
                    return the metric value and the colored mask output as a report
      *Inputs
        *m_df: reference dataframe merged with system output dataframe
+       *journalMask: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
        *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
+       *targetManiType: target manipulation types to be scored
+       *otherArea: whether or not to set the area of other regions not of interest as no-score zones.
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
+       *kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: permit printout from metrics
@@ -312,15 +347,17 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
-                             m_df['ProbeOutputMaskFileName'],
-                             m_df['ProbeFileName'],
+    df = scores_4_mask_pairs(m_df
+                             journalMask,
                              refDir,
                              sysDir,
                              rbin,
                              sbin,
+                             targetManiType,
+                             otherArea,
                              erodeKernSize,
                              dilateKernSize,
+                             kern,
                              outputRoot,
                              html,
                              verbose,
@@ -350,19 +387,25 @@ def createReportSSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
 
     return merged_df
 
-def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, outputRoot,html,verbose,precision=5):
+#TODO: what to do here?
+
+def createReportDSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiType, otherArea, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision=5):
     """
      Create a CSV report for double source detection
      *Description: this function calls each metric function and
                                  return the metric value and the colored mask output as a report
      *Inputs
        *m_df: reference dataframe merged with system output dataframe
+       *journalMask: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
        *refDir: reference mask file directory
        *sysDir: system output mask file directory
        *rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
        *sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
+       *targetManiType: target manipulation types to be scored
+       *otherArea: whether or not to set the area of other regions not of interest as no-score zones.
        *erodekernSize: Kernel size for Erosion
        *dilatekernSize: Kernel size for Dilation
+       *kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
        *outputRoot: the directory for outputs to be written
        *html: whether or not to output an HTML report
        *verbose: permit printout from metrics
@@ -378,15 +421,17 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    probe_df = scores_4_mask_pairs(m_df['ProbeMaskFileName'],
-                                   m_df['ProbeOutputMaskFileName'],
-                                   m_df['ProbeFileName'],
+    probe_df = scores_4_mask_pairs(m_df,
+                                   journalMask,
                                    refDir,
                                    sysDir,
                                    rbin,
                                    sbin,
+                                   targetManiType,
+                                   otherArea,
                                    erodeKernSize,
                                    dilateKernSize,
+                                   kern,
                                    outputRoot,
                                    html,
                                    precision=precision)
@@ -396,15 +441,17 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
                                        "ColMaskFileName":"ProbeColMaskFileName",
                                        "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
 
-    donor_df = scores_4_mask_pairs(m_df['DonorMaskFileName'],
-                                   m_df['DonorOutputMaskFileName'],
-                                   m_df['DonorFileName'],
+    donor_df = scores_4_mask_pairs(m_df,
+                                   journalMask,
                                    refDir,
                                    sysDir,
                                    rbin,
                                    sbin,
+                                   targetManiType,
+                                   otherArea,
                                    erodeKernSize,
                                    dilateKernSize,
+                                   kern,
                                    outputRoot,
                                    html,
                                    precision=precision)
