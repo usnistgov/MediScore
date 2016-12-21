@@ -16,6 +16,7 @@ class Partition:
         Attributes:
         - factor_mode : 'f' = single query
                         'fp' = cartesian product of the factors
+                        'tf' = filtering for target trials
         - factors_names : list of the dataframe's columns names
         - index_factor : Dictionnary {'factor_name': index_of_the_column}
         - n_partitions : number of partitions generated
@@ -35,11 +36,11 @@ class Partition:
         self.index_factor = self.gen_index_factor(self.factors_names)
 
         # If we have a list of queries
-        if factor_mode == 'f':
+        if self.factor_mode == 'f' or self.factor_mode == 'tf':
             #self.query = None
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
-        elif factor_mode == 'fp':
+        elif self.factor_mode == 'fp':
             self.query = query.replace(' ','')
             #TODO: Simplify the factors dictionnary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
@@ -136,7 +137,23 @@ class Partition:
         """
         df_list = list()
         for query in self.part_query_list:
-            df_list.append(df.query(query))
+#            df_list.append(df.query(query))
+##            #TODO: may need to drop_duplicates by the chosen column in the tf mode
+            if self.factor_mode == 'tf':
+                #print("starting target filtering")
+                operators = ['!=', '==']
+                if any(i in query for i in operators):
+                    print("Removing duplicates of the chosen column for filtering target trials")
+                    chosenField = [x.strip() for x in query.replace('!=', '==').split('==')]
+                    #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+                    new_query = "("+query+ " and IsTarget == ['Y']) or IsTarget == ['N']"
+                    print("Query for target trials: {}\n".format(new_query))
+                    sub_df = df.query(new_query)
+                    new_df = sub_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+                    df_list.append(new_df)
+            else:
+                df_list.append(df.query(query))
+
         return df_list
 
     def gen_part_dm_list(self, fpr_stop, isCI):
@@ -149,7 +166,7 @@ class Partition:
         dm_list = list()
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
-                print("Current query = {}".format(query))
+                print("Current query: {}".format(query))
                 dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI))
             else:
                 print('#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
@@ -176,7 +193,7 @@ class Partition:
             while factor not in List[i]: i += 1
             return i
 
-        if self.factor_mode == 'f':
+        if self.factor_mode == 'f' or self.factor_mode == 'tf':
             df_list = list()
             for i,query in enumerate(self.part_query_list):
                 dm = self.part_dm_list[i]

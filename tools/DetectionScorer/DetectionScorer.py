@@ -41,7 +41,7 @@ import Partition as f
 if __name__ == '__main__':
 
     # Boolean for disabling the command line
-    debug_mode_ide = True
+    debug_mode_ide = False
 
     # Command-line mode
     if not debug_mode_ide:
@@ -95,6 +95,14 @@ if __name__ == '__main__':
         factor_group.add_argument('-fp', '--factorp',
         help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
+        factor_group.add_argument('-tf', '--targetFilter', nargs='*',
+        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials)", metavar='character')
+
+        #TBD: may need this one for provenance filtering
+        #Note that this requires different mutually exclusive gropu to use both -tf and -nf at the same time
+#        parser.add_argument('-nf', '--nontargetFilter',
+#        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
+
         parser.add_argument('--multiFigs', action='store_true',
         help="Generate plots (with only one curve) per a partition ")
 
@@ -104,12 +112,7 @@ if __name__ == '__main__':
         parser.add_argument('--ci', action='store_true',
         help="Calculate Confidence Interval for AUC")
 
-        parser.add_argument('-tf', '--targetFilter',
-        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials)", metavar='character')
 
-        #TBD: may need this one for provenance filtering
-#        parser.add_argument('-nf', '--nontargetFilter',
-#        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
 
         args = parser.parse_args()
 
@@ -126,12 +129,11 @@ if __name__ == '__main__':
         v_print = _v_print
 
 
-        if (not args.factor) and (not args.factorp) and (args.multiFigs is True):
+        if (not args.factor) and (not args.factorp) and (not args.targetFilter) and (args.multiFigs is True):
             print("ERROR: The multiFigs option is not available without factors options.")
             exit(1)
 
         #print("Namespace :\n{}\n".format(args))
-        print("targetFilter format {}".format(str(args.targetFilter)))
 
 
         # Loading the reference file
@@ -145,7 +147,7 @@ if __name__ == '__main__':
             print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
-        # check existence of the JTjoin csv file and then load the file
+        # check existence of the JTjoin and JTmask csv files and then load the files
         inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
         inJTMask = "NC2017-manipulation-ref-journalmask.csv"
         myJTJoinFname = myRefDir + "/" + inJTJoin
@@ -154,7 +156,7 @@ if __name__ == '__main__':
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
         else:
-            print("Note: either JTjoin or JTmask csv file do not exist and it will skip merging the files with the reference file")
+            print("Note: either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
 
         try:
 
@@ -232,19 +234,25 @@ if __name__ == '__main__':
             partition_mode = True
 
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
-                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
-                #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                # merge the reference and index csv
-                df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                # merge the JournalJoinTable and the JournalMaskTable
-                df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
-                # merge the dataframes above
-                pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-#               # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                if args.targetFilter:
-                    chosenField = [x.strip() for x in args.targetFilter.split('==')]
-                    #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-                    pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+                 # merge the reference and index csv only
+                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
+                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+
+                # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
+                if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
+                    print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
+                    # merge the reference and index csv
+                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                    # merge the JournalJoinTable and the JournalMaskTable
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    # merge the dataframes above
+                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+#    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+#                    if args.targetFilter:
+#                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
+#                        chosenField = [x.strip() for x in args.targetFilter.split('==')]
+#                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+#                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
@@ -257,8 +265,9 @@ if __name__ == '__main__':
                 factor_mode = 'fp'
                 query = args.factorp
             elif args.targetFilter: #TODO: testcases
-                factor_mode = 'f'
-                query = ["("+args.targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
+                factor_mode = 'tf'
+                query = args.targetFilter
+                #query = ["("+args.targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
                 #print("targetQuery {}".format(query))
 
             v_print("Query : {}\n".format(query))
@@ -335,7 +344,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if args.factor or args.factorp:
+        if args.factor or args.factorp or args.targetFilter:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
@@ -370,13 +379,19 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
-        #targetFilter = "Purpose ==['remove', 'splice', 'add']"
-#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
-#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"
-
-        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
-        print("f query {}".format(factor))
+ #       targetFilter = None
+        factor = None
         factorp = None
+#        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+#       factor = ["Purpose ==['remove', 'splice', 'add']"]
+#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
+#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
+#        factor = "Purpose ==['remove']"
+        targetFilter = ["Purpose ==['add']", "Purpose ==['remove']"]
+#        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
+#        print("f query {}".format(factor))
+
+#        factorp = "Purpose ==['remove', 'splice']"
 
         if (not factor) and (not factorp) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without factors options.")
@@ -508,12 +523,14 @@ if __name__ == '__main__':
                     df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                    if targetFilter:
-                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
-                        chosenField = [x.strip() for x in targetFilter.split('==')]
-                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+                    #pm_df.to_csv(outRoot + 'test.csv', index = False)
+                    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+#                    operators = ['!=', '==']
+#                    if targetFilter and any(i in targetFilter for i in operators):
+#                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
+#                        chosenField = [x.strip() for x in targetFilter.replace('!=', '==').split('==')]
+#                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+#                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
@@ -521,13 +538,14 @@ if __name__ == '__main__':
 
             if factor:
                 factor_mode = 'f'
-                query = [factor] #TODO: double-check
+                query = factor #TODO: double-check
             elif factorp:
                 factor_mode = 'fp'
                 query = factorp
-            if targetFilter: #TODO: testcases
-                factor_mode = 'f'
-                query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
+            elif targetFilter: #TODO: testcases
+                factor_mode = 'tf'
+                query = targetFilter
+                #query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
                 #print("targetQuery {}".format(query))
 
             print("Query : {}\n".format(query))
@@ -543,7 +561,7 @@ if __name__ == '__main__':
                 for i,df in enumerate(table_df):
                     df.to_csv(outRoot + '_f_query_' + str(i) + '.csv', index = False)
             elif factorp:
-                table_df.to_csv(outRoot + '_fp_query.csv')
+                table_df[0].to_csv(outRoot + '_fp_query.csv') #table_df is List type
 
         # No partitions
         else:
@@ -603,7 +621,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if factor or factorp:
+        if factor or factorpor or targetFilter:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
