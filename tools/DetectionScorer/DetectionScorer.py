@@ -107,8 +107,9 @@ if __name__ == '__main__':
         parser.add_argument('-tf', '--targetFilter',
         help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials)", metavar='character')
 
-        parser.add_argument('-nf', '--nontargetFilter',
-        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
+        #TBD: may need this one for provenance filtering
+#        parser.add_argument('-nf', '--nontargetFilter',
+#        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
 
         args = parser.parse_args()
 
