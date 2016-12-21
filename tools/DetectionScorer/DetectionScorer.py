@@ -41,7 +41,7 @@ import Partition as f
 if __name__ == '__main__':
 
     # Boolean for disabling the command line
-    debug_mode_ide = False
+    debug_mode_ide = True
 
     # Command-line mode
     if not debug_mode_ide:
@@ -145,24 +145,16 @@ if __name__ == '__main__':
             print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
-
-        try:
-            inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
-            myJTJoinFname = myRefDir + "/" + inJTJoin
+        # check existence of the JTjoin csv file and then load the file
+        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
+        myJTJoinFname = myRefDir + "/" + inJTJoin
+        myJTMaskFname = myRefDir + "/" + inJTMask
+        if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
-
-        except IOError:
-            print("ERROR: There was an error opening the JournalJoin csv file")
-            exit(1)
-
-        try:
-            inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-            myJTMaskFname = myRefDir + "/" + inJTMask
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
-
-        except IOError:
-            print("ERROR: There was an error opening the JournalMask csv file")
-            exit(1)
+        else:
+            print("Note: either JTjoin or JTmask csv file do not exist and it will skip merging the files with the reference file")
 
         try:
 
@@ -378,11 +370,12 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
-        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+        #targetFilter = "Purpose ==['remove', 'splice', 'add']"
 #        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"
 
-        factor = None
+        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
+        print("f query {}".format(factor))
         factorp = None
 
         if (not factor) and (not factorp) and (multiFigs is True):
@@ -418,21 +411,32 @@ if __name__ == '__main__':
             print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
-        try:
-
-            myJTJoinFname = myRefDir + "/" + inJTJoin
+#        try:
+#
+#            myJTJoinFname = myRefDir + "/" + inJTJoin
+#            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
+#        except IOError:
+#            print("ERROR: There was an error opening the JournalJoin csv file")
+#            exit(1)
+#
+#        try:
+#
+#            myJTMaskFname = myRefDir + "/" + inJTMask
+#            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+#        except IOError:
+#            print("ERROR: There was an error opening the JournalMask csv file")
+#            exit(1)
+        # check existence of the JTjoin csv file and then load the file
+        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
+        myJTJoinFname = myRefDir + "/" + inJTJoin
+        myJTMaskFname = myRefDir + "/" + inJTMask
+        if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
-        except IOError:
-            print("ERROR: There was an error opening the JournalJoin csv file")
-            exit(1)
-
-        try:
-
-            myJTMaskFname = myRefDir + "/" + inJTMask
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
-        except IOError:
-            print("ERROR: There was an error opening the JournalMask csv file")
-            exit(1)
+        else:
+            print("Note: either JTjoin or JTmask csv file do not exist and merging with the reference file will be skipped")
+
 
 
         try:
@@ -491,18 +495,25 @@ if __name__ == '__main__':
             partition_mode = True
 
             if task in ['manipulation', 'provenancefiltering', 'provenance']:
-                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
-                #pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                # merge the reference and index csv
-                df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                # merge the JournalJoinTable and the JournalMaskTable
-                df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
-                # merge the dataframes above
-                fm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-#                # drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-                chosenField = [x.strip() for x in targetFilter.split('==')]
-                #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-                pm_df = fm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
+                # merge the reference and index csv only
+                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
+                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+
+                # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
+                if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
+                    print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
+                    # merge the reference and index csv
+                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                    # merge the JournalJoinTable and the JournalMaskTable
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    # merge the dataframes above
+                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+                    if targetFilter:
+                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
+                        chosenField = [x.strip() for x in targetFilter.split('==')]
+                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
+                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
             elif task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
