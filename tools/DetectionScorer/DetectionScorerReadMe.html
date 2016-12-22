@@ -12090,9 +12090,9 @@ The following figure illustrates the data query option along with corresponding 
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-f --factor</p>
 <ul>
-<li>Evaluate algorithm performance on a partitioned dataset using multiple factor queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
+<li>Evaluate algorithm performance on a partitioned dataset (or subset) using multiple factor queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
 <li>Syntax : -f "query1" "query2" "query3" ... 
-<pre><code>- The syntax is the same with Pandas query syntax. Please see the detailed query rule in the website: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query.
+<pre><code>- The syntax is the same with Pandas' query syntax. Please see the detailed query rule in the website: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query.
 Examples:
 % -f "Collection==['Nimble-SCI']" =&gt; 1 query
 % -f "Collection==['Nimble-SCI'] and PostProcessing=['rescale']" =&gt; 1 query
@@ -12117,8 +12117,8 @@ Examples:
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-fp --factorp</p>
 <ul>
-<li>Evaluate algorithm performance on a partitioned dataset using one factor query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves.<ul>
-<li>Syntax : -f "query"
+<li>Evaluate algorithm performance on a partitioned dataset (or subset) using one factor query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves.<ul>
+<li>Syntax : -fp "query"
 <pre><code>- The query syntax only allows the three operators "==[]", "&lt;", and "&lt;=".
 Examples: 
 % -fp "Collection==['Nimble-SCI']" =&gt; 1 partition
@@ -12127,6 +12127,34 @@ Examples:
 </li>
 <li>Output: 
 <pre><code>- CSV report: NIST_001_fp_query.csv
+- PDF plot: NIST_001_roc_all.pdf
+- DM file (using --dump): NIST_001_query0.dm, NIST_001_query1.dm, ...</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-tf --targetFilter</p>
+<ul>
+<li>This option is similar to the '-f' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
+<li>Syntax : -tf "query1" "query2" "query3" ... 
+<pre><code>- The syntax is the same with Pandas' query syntax, 
+ note that your query will be converted as to ("query" and IsTarget == ['Y']) or IsTarget == ['N'])
+Examples:
+% -tf "Purpose==['remove']" =&gt; 1 query
+% -tf "Operation==['PasteSplice']" "Operation==['FillContentAwareFill']" =&gt; 2 query
+% -tf "Purpose==['remove', 'add']" "OperationArgument==['people']" =&gt; 3 queries</code></pre>
+</li>
+<li>Output: 
+<pre><code>- CSV report: NIST_001_tf_query0.csv, NIST_001_tf_query1.csv, ...
 - PDF plot: NIST_001_roc_all.pdf
 - DM file (using --dump): NIST_001_query0.dm, NIST_001_query1.dm, ...</code></pre>
 </li>
@@ -12166,7 +12194,7 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Default-Output">Default Output<a class="anchor-link" href="#Default-Output">&#182;</a></h3>
+<h3 id="Default-Output-(NC2016-dataset)">Default Output (NC2016 dataset)<a class="anchor-link" href="#Default-Output-(NC2016-dataset)">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12189,10 +12217,10 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="k">as</span> <span class="nn">di</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="kn">as</span> <span class="nn">di</span>
 <span class="c1"># This line will hide code by default when the notebook is exported as HTML</span>
-<span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="n">df1</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_001_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df1</span>
 </pre></div>
@@ -12267,7 +12295,7 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="-f-and--fp-option-usage-example">-f and -fp option usage example<a class="anchor-link" href="#-f-and--fp-option-usage-example">&#182;</a></h3>
+<h3 id="-f-and--fp-option-usage-(NC2016)">-f and -fp option usage (NC2016)<a class="anchor-link" href="#-f-and--fp-option-usage-(NC2016)">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12288,7 +12316,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
 <span class="n">df2</span>
 </pre></div>
 
@@ -12354,7 +12382,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
 <span class="n">df3</span>
 </pre></div>
 
@@ -12408,7 +12436,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
 <span class="n">df4</span>
 </pre></div>
 
@@ -12474,7 +12502,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
 <span class="n">df5</span>
 </pre></div>
 
@@ -12544,7 +12572,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12637,7 +12665,7 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Splice-task-example">Splice task example<a class="anchor-link" href="#Splice-task-example">&#182;</a></h3>
+<h3 id="Splice-task-example-(NC2016)">Splice task example (NC2016)<a class="anchor-link" href="#Splice-task-example-(NC2016)">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12660,7 +12688,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12712,7 +12740,7 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Manipulation-task-example-with-NC2017-dataset">Manipulation task example with NC2017 dataset<a class="anchor-link" href="#Manipulation-task-example-with-NC2017-dataset">&#182;</a></h3>
+<h3 id="Manipulation-task-example-(NC2017)">Manipulation task example (NC2017)<a class="anchor-link" href="#Manipulation-task-example-(NC2017)">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12735,7 +12763,7 @@ Examples:
 <div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df7</span>
 </pre></div>
 
@@ -12781,6 +12809,66 @@ Examples:
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="-f---factor">-f --factor<a class="anchor-link" href="#-f---factor">&#182;</a></h4>
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_002 -f "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']" --display</code></pre>
+<p><img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><b>The tables are omitted</b></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="-tf---targetFilter-(case1)">-tf --targetFilter (case1)<a class="anchor-link" href="#-tf---targetFilter-(case1)">&#182;</a></h4>
+<pre><code>The following command-line provides a simpler version of the '-f' example above.
+
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_003 -tf "Purpose==['remove']" "Purpose==['clone']" --display</code></pre>
+<p><img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="-tf---targetFilter-(case2)">-tf --targetFilter (case2)<a class="anchor-link" href="#-tf---targetFilter-(case2)">&#182;</a></h4>
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_004 -tf "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']" --display</code></pre>
+<p><img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="-tf---targetFilter-(case3)">-tf --targetFilter (case3)<a class="anchor-link" href="#-tf---targetFilter-(case3)">&#182;</a></h4>
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_005 -tf "Purpose==['remove'] and Operation ==['FillContentAwareFill']" --display</code></pre>
+<p><img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></p>
+
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="prompt input_prompt">

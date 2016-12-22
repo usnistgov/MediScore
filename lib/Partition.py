@@ -138,21 +138,21 @@ class Partition:
         df_list = list()
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
-##            #TODO: may need to drop_duplicates by the chosen column in the tf mode
             if self.factor_mode == 'tf':
-                #print("starting target filtering")
-                operators = ['!=', '==']
-                if any(i in query for i in operators):
-                    print("Removing duplicates of the chosen column for filtering target trials")
-                    chosenField = [x.strip() for x in query.replace('!=', '==').split('==')]
-                    #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-                    new_query = "("+query+ " and IsTarget == ['Y']) or IsTarget == ['N']"
-                    print("Query for target trials: {}\n".format(new_query))
-                    sub_df = df.query(new_query)
-                    new_df = sub_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
-                    df_list.append(new_df)
-            else:
-                df_list.append(df.query(query))
+                #testing as the manipulation task
+                query = "("+query+ " and IsTarget == ['Y']) or IsTarget == ['N']"
+                print("Query for target trials: {}".format(query))
+
+#                #TBD:while testing by each task (remove, add, clone), may need to drop_duplicates by the chosen column in the tf mode
+#                operators = ['!=', '==']
+#                if any(i in query for i in operators):
+#                    chosenField = [x.strip() for x in query.replace('!=', '==').split('==')]
+#                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
+
+            sub_df = df.query(query)
+            #print("Removing duplicates ...\n")
+            new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
+            df_list.append(new_df)
 
         return df_list
 

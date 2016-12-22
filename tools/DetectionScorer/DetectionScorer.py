@@ -96,7 +96,7 @@ if __name__ == '__main__':
         help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
         factor_group.add_argument('-tf', '--targetFilter', nargs='*',
-        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials)", metavar='character')
+        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials only)", metavar='character')
 
         #TBD: may need this one for provenance filtering
         #Note that this requires different mutually exclusive gropu to use both -tf and -nf at the same time
@@ -135,7 +135,6 @@ if __name__ == '__main__':
 
         #print("Namespace :\n{}\n".format(args))
 
-
         # Loading the reference file
         try:
 
@@ -147,17 +146,19 @@ if __name__ == '__main__':
             print("ERROR: There was an error opening the reference csv file")
             exit(1)
 
-        # check existence of the JTjoin and JTmask csv files and then load the files
+        # Loading the JTjoin and JTmask file
         inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
         inJTMask = "NC2017-manipulation-ref-journalmask.csv"
         myJTJoinFname = myRefDir + "/" + inJTJoin
         myJTMaskFname = myRefDir + "/" + inJTMask
+        # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
         else:
-            print("Note: either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
+            v_print("Either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
 
+        # Loading the index file
         try:
 
             myIndexFname = args.refDir + "/" + args.inIndex
@@ -167,8 +168,9 @@ if __name__ == '__main__':
             print("ERROR: There was an error opening the index csv file")
             exit(1)
 
+        # Loading system output for SSD and DSD due to different columns between SSD and DSD
         try:
-            # Loading system output for SSD and DSD due to different columns between SSD and DSD
+
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
@@ -208,31 +210,11 @@ if __name__ == '__main__':
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
 
-#        # Partition Mode
-#        if args.factor or args.factorp: # add or args.targetManiTypeSet or args.nontargetManiTypeSet
-#            v_print("Partition Mode \n")
-#            partition_mode = True
-#
-#            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
-#                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']] # subset the columns due to duplications
-#                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-#            elif args.task in ['splice']:
-#                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-#                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
-#
-#            if args.factor:
-#                factor_mode = 'f'
-#                query = args.factor
-#            elif args.factorp:
-#                factor_mode = 'fp'
-#                query = args.factorp
-
-
          # Partition Mode
         if args.factor or args.factorp or args.targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
-
+            #SSD
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                  # merge the reference and index csv only
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
@@ -247,28 +229,20 @@ if __name__ == '__main__':
                     df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-#    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-#                    if args.targetFilter:
-#                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
-#                        chosenField = [x.strip() for x in args.targetFilter.split('==')]
-#                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
-#                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
-
+            #DSD
             elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
             if args.factor:
                 factor_mode = 'f'
-                query = args.factor #TODO: double-check
+                query = args.factor
             elif args.factorp:
                 factor_mode = 'fp'
                 query = args.factorp
-            elif args.targetFilter: #TODO: testcases
+            elif args.targetFilter:
                 factor_mode = 'tf'
                 query = args.targetFilter
-                #query = ["("+args.targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
-                #print("targetQuery {}".format(query))
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
@@ -284,6 +258,9 @@ if __name__ == '__main__':
                     df.to_csv(args.outRoot + '_f_query_' + str(i) + '.csv', index = False)
             elif args.factorp:
                 table_df.to_csv(args.outRoot + '_fp_query.csv')
+            elif args.targetFilter:
+                for i,df in enumerate(table_df):
+                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
 
 
         # No partitions
@@ -295,7 +272,7 @@ if __name__ == '__main__':
             table_df.to_csv(args.outRoot + '_all.csv', index = False)
 
         if isinstance(table_df,list):
-            print("\nReport tables...\n")
+            print("\nReport tables:\n")
             for i, table in enumerate (table_df):
                 print("\nPartition {}:".format(i))
                 print(table)
@@ -347,7 +324,6 @@ if __name__ == '__main__':
         if args.factor or args.factorp or args.targetFilter:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
-
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
@@ -524,11 +500,10 @@ if __name__ == '__main__':
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
-                    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-#                    operators = ['!=', '==']
-#                    if targetFilter and any(i in targetFilter for i in operators):
+##    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+#                    if args.targetFilter:
 #                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
-#                        chosenField = [x.strip() for x in targetFilter.replace('!=', '==').split('==')]
+#                        chosenField = [x.strip() for x in args.targetFilter.split('==')]
 #                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
 #                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
@@ -562,6 +537,9 @@ if __name__ == '__main__':
                     df.to_csv(outRoot + '_f_query_' + str(i) + '.csv', index = False)
             elif factorp:
                 table_df[0].to_csv(outRoot + '_fp_query.csv') #table_df is List type
+            elif args.targetFilter:
+                for i,df in enumerate(table_df):
+                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
 
         # No partitions
         else:
