@@ -30,6 +30,7 @@ import pandas as pd
 import os
 import random
 import masks
+import maskMetrics as mm
 from decimal import Decimal
 
 class TestImageMethods(ut.TestCase):
@@ -106,12 +107,12 @@ class TestImageMethods(ut.TestCase):
         #read it back in as an image. Also test erode and dilate images.
         mytest=masks.refmask('testImg.png',readopt=0)
         #mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
-        zones=mytest.noScoreZone(0,0,'gaussian')
+        zones=mytest.boundaryNoScoreRegion(0,0,'gaussian')
         self.assertTrue(np.array_equal(zones['wimg'],np.ones((100,100))))
         self.assertTrue(np.array_equal(zones['rimg'],mytest.matrix))
 
         #test for nonzero kernel
-        zones=mytest.noScoreZone(3,3,'box')
+        zones=mytest.boundaryNoScoreRegion(3,3,'box')
         dmat=255*np.ones((100,100),dtype=np.uint8)
         emat=255*np.ones((100,100),dtype=np.uint8)
         dmat[60:81,30:46]=0
@@ -136,8 +137,8 @@ class TestImageMethods(ut.TestCase):
         mytest=masks.refmask('testImgC.png',cs=['255 0 0','0 255 0'],tmt='remove') #red,green
         
         #generate masks
-        baseNoScore = mytest.noScoreZone(3,5,'box')['wimg']
-        distractionNoScore = mytest.distractionNoScoreZone(5,'box')
+        baseNoScore = mytest.boundaryNoScoreRegion(3,5,'box')['wimg']
+        distractionNoScore = mytest.unselectedNoScoreRegion(5,'box')
 
         #generate comparators
         baseNScompare = np.ones((100,100),dtype=np.uint8)
@@ -173,8 +174,8 @@ class TestImageMethods(ut.TestCase):
         def absoluteEquality(r,s):
             w=np.ones(r.get_dims())
             #get measures
-            m1measures = masks.maskMetrics(r,s,w)
-            m1img = m1measures.confusion_measures()
+            m1measures = mm.maskMetrics(r,s,w)
+            m1img = m1measures.conf
             m1imgtp = m1img['TP']
             m1imgtn = m1img['TN']
             m1imgfp = m1img['FP']
@@ -189,11 +190,11 @@ class TestImageMethods(ut.TestCase):
 
             #randomized weights. Should be equal no matter what weights are applied.
             #self.assertEqual(r.hamming(s),0)
-            self.assertEqual(m1measures.weightedL1(),0)
+            self.assertEqual(m1measures.wL1,0)
             #self.assertEqual(r.hingeL1(s,m1w,0),0)
             #self.assertEqual(r.hingeL1(s,m1w,-1),0)
-            self.assertTrue(abs(m1measures.matthews() - 1) < eps)
-            self.assertEqual(m1measures.NimbleMaskMetric(),1)
+            self.assertTrue(abs(m1measures.mcc - 1) < eps)
+            self.assertEqual(m1measures.nmm,1)
 
         absoluteEquality(rImg,sImg)
 
@@ -283,20 +284,20 @@ class TestImageMethods(ut.TestCase):
 #        rImg.matrix = rImg.bw(230).astype(np.uint8) #reading the image back in doesn't automatically make it 0 or 255.
  
         #erode by small amount so that we still get 0
-        wtlist = rImg.noScoreZone(3,3,'disc')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'disc')
         wts = wtlist['wimg'].astype(np.uint8)
         eKern=masks.getKern('disc',3)
 
         sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
-        m2measures = masks.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m2measures.weightedL1(),0)
-        self.assertEqual(m2measures.hingeL1(),0)
+        m2measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m2measures.wL1,0)
+        #self.assertEqual(m2measures.hingeL1(),0)
 
         #erode by a larger amount.
 
-        wtlist = rImg.noScoreZone(3,3,'box')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'box')
         wts = wtlist['wimg']
         eKern=masks.getKern('box',5)
         sImg = masks.mask('testImg.png')
@@ -306,20 +307,20 @@ class TestImageMethods(ut.TestCase):
         errImg = copy.deepcopy(sImg)
         errImg.matrix=np.zeros((10,100))
         with self.assertRaises(ValueError):
-            mEmeasures = masks.maskMetrics(rImg,errImg,wts)
-            mEmeasures.weightedL1()
+            mEmeasures = mm.maskMetrics(rImg,errImg,wts)
+            mEmeasures.wL1
         with self.assertRaises(ValueError):
-            mEmeasures = masks.maskMetrics(rImg,sImg,wts[:,51:100])
-            mEmeasures.weightedL1()
+            mEmeasures = mm.maskMetrics(rImg,sImg,wts[:,51:100])
+            mEmeasures.wL1
         with self.assertRaises(ValueError):
             wts2 = np.copy(wts)
             wts2 = np.reshape(wts2,(200,50))
-            mEmeasures = masks.maskMetrics(rImg,sImg,wts2)
-            mEmeasures.weightedL1()
+            mEmeasures = mm.maskMetrics(rImg,sImg,wts2)
+            mEmeasures.wL1
 
         #want both to be greater than 0
-        m2measures = masks.maskMetrics(rImg,sImg,wts)
-        if (m2measures.weightedL1() == 0):
+        m2measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m2measures.wL1 == 0):
             print("Case 2: weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #commenting out because hinge is not being used
@@ -331,26 +332,26 @@ class TestImageMethods(ut.TestCase):
 
         ##### CASE 3: Dilate only. ###################################
         print("CASE 3: Testing for resulting mask having been only dilated.")
-        wtlist = rImg.noScoreZone(3,3,'disc')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'disc')
         wts = wtlist['wimg']
         dKern=masks.getKern('disc',3)
         sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
-        m3measures = masks.maskMetrics(rImg,sImg,wts)
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
         #dilate by small amount so that we still get 0
-        self.assertEqual(m3measures.weightedL1(),0)
+        self.assertEqual(m3measures.wL1,0)
         #self.assertEqual(m3measures.hingeL1(0.5),0)
 
         #dilate by a larger amount.
-        wtlist = rImg.noScoreZone(3,3,'box')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'box')
         wts = wtlist['wimg']
         dKern=masks.getKern('box',5)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
         #want both to be greater than 0
-        m3measures = masks.maskMetrics(rImg,sImg,wts)
-        if (m3measures.weightedL1() == 0):
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m3measures.wL1 == 0):
             print("Case 3: weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(0.005) == 0):
@@ -360,22 +361,22 @@ class TestImageMethods(ut.TestCase):
         #dilate by small amount so that we still get 0
         dKern=masks.getKern('diamond',3)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
-        wtlist = rImg.noScoreZone(3,3,'diamond')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'diamond')
         wts = wtlist['wimg']
-        m3measures = masks.maskMetrics(rImg,sImg,wts)
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
 
-        self.assertEqual(m3measures.weightedL1(),0)
+        self.assertEqual(m3measures.wL1,0)
         #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
 
         #dilate by a larger amount
         dKern=masks.getKern('box',5)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
-        wtlist = rImg.noScoreZone(3,3,'diamond')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'diamond')
         wts = wtlist['wimg']
 
         #want both to be greater than 0
-        m3measures = masks.maskMetrics(rImg,sImg,wts)
-        if (m3measures.weightedL1() == 0):
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m3measures.wL1 == 0):
             print("Case 3: weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -390,11 +391,11 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
-        wtlist=rImg.noScoreZone(3,3,'gaussian')
+        wtlist=rImg.boundaryNoScoreRegion(3,3,'gaussian')
         wts=wtlist['wimg']
 
-        m4measures = masks.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m4measures.weightedL1(),0)
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures.wL1,0)
         #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
         
         #erode and dilate by larger amount
@@ -402,8 +403,8 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
-        m4measures = masks.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m4measures.weightedL1(),0)
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures.wL1,0)
 
         #erode and dilate by very large amount
         kern = masks.getKern('gaussian',21)
@@ -411,8 +412,8 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix = cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix = 255-sImg.matrix
         #want both to be greater than 0
-        m4measures = masks.maskMetrics(rImg,sImg,wts)
-        if (m4measures.weightedL1() == 0):
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m4measures.wL1 == 0):
             print("Case 4: weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -427,16 +428,16 @@ class TestImageMethods(ut.TestCase):
         #move close
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[59:79,33:48] = 0 #translate a small 20 x 15 square
-        wtlist=rImg.noScoreZone(5,5,'gaussian')
+        wtlist=rImg.boundaryNoScoreRegion(5,5,'gaussian')
         wts=wtlist['wimg']
-        m5measures = masks.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m5measures.weightedL1(),0)
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures.wL1,0)
 
         #move further
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[51:71,36:51] = 0 #translate a small 20 x 15 square
-        m5measures = masks.maskMetrics(rImg,sImg,wts)
-        if (m5measures.weightedL1() == 0):
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m5measures.wL1 == 0):
             print("Case 5: weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -447,8 +448,8 @@ class TestImageMethods(ut.TestCase):
         #move completely out of range
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[31:46,61:81] = 0 #translate a small 20 x 15 square
-        m4measures = masks.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m5measures.weightedL1(),476./9720)
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures.wL1,476./9720)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
 #            print("Case 5, translate out of range: hingeL1 is not greater than 0. Are you too forgiving?")
 #            exit(1)
