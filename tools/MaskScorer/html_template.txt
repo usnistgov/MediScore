@@ -11,6 +11,10 @@
       <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>System Output Mask</b></td>
     </tr>
     <tr>
+      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask</b></td>
+      <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask</b></td>
+    </tr>
+    <tr>
       <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone</b></td>
       <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Mask Scoring Example</b></td>
     </tr>

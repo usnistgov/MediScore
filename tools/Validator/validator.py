@@ -64,8 +64,8 @@ class validator:
     @abstractmethod
     def contentCheck(self): pass
     def fullCheck(self):
-#        if self.nameCheck() == 1: #nameCheck is deprecated.
-#            return 1
+        if self.nameCheck() == 1:
+            return 1
 
         printq("Checking if index file is a pipe-separated csv...")
         idx_pieces = self.idxname.split('.')

@@ -58,7 +58,7 @@ sysFname = data_path + "/SystemOutputs/dct0608/dct02.csv"
 
 parser = argparse.ArgumentParser(description='Compute scores for the masks and generate a report.')
 parser.add_argument('-t','--task',type=str,default='manipulation',
-help='Three different types of tasks: [manipulation],[removal],[clone], and [splice]',metavar='character')
+help='Two different types of tasks: [manipulation] and [splice]',metavar='character')
 parser.add_argument('--refDir',type=str,default='.',
 help='NC2016_Test directory path: [e.g., ../../data/NC2016_Test]',metavar='character')
 parser.add_argument('--sysDir',type=str,default='.',
@@ -79,10 +79,8 @@ help="Evaluate algorithm performance by given queries.", metavar='character')
 factor_group.add_argument('-fp', '--factorp',
 help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
-parser.add_argument('-tmt','--targetManiType',type=str,default=None,
-help="An array of manipulation tasks to be scored, separated by commas. (e.g. 'remove,clone')",metavar='character')
-parser.add_argument('-oA','--otherArea',
-help="Whether or not to set other non-selected mask areas as no-score zones",action='store_true')
+parser.add_argument('-tmt','--targetManiType',type=str,default='all',
+help="An array of manipulations to be scored, separated by commas (e.g. 'remove,clone'). Select 'all' to score all manipulated regions regardless of manipulation.",metavar='character')
 
 parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
@@ -90,16 +88,16 @@ parser.add_argument('--dks',type=int,default=9,
 help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
 parser.add_argument('-k','--kernel',type=str,default='box',
 help="Convolution kernel type for erosion and dilation. Choose from [box],[disc],[diamond],[gaussian], or [line]. The default is 'box'.",metavar='character')
-parser.add_argument('--rbin',type=int,default=254,
-help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=254]",metavar='integer')
+parser.add_argument('--rbin',type=int,default=-1,
+help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to evaluate the relevant regions based on the other arguments. [default=-1]",metavar='integer')
 parser.add_argument('--sbin',type=int,default=-1,
-help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. [default=-1]",metavar='integer')
+help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to choose the threshold for the mask at the maximal absolute MCC value. [default=-1]",metavar='integer')
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
 parser.add_argument('-v','--verbose',type=int,default=None,
 help="Control print output. Select 1 to print all non-error print output and 0 to suppress all print output (bar argument-parsing errors).",metavar='0 or 1')
-parser.add_argument('--precision',type=int,default=5,
-help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=5].",metavar='positive integer')
+parser.add_argument('--precision',type=int,default=16,
+help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 
 args = parser.parse_args()
@@ -123,7 +121,7 @@ else:
             print(string)
             exit(exitcode)
 
-if args.task not in ['manipulation','removal','clone','splice']:
+if args.task not in ['manipulation','splice']:
     printerr("ERROR: Task type must be supplied.")
 if args.refDir is None:
     printerr("ERROR: NC2016_Test directory path must be supplied.")
@@ -151,7 +149,7 @@ if not os.path.isdir(args.outRoot):
 
 printq("Starting a report ...")
 
-if args.task in ['manipulation','removal','clone']:
+if args.task == 'manipulation':
     index_dtype = {'TaskID':str,
              'ProbeFileID':str,
              'ProbeFileName':str,
@@ -159,7 +157,7 @@ if args.task in ['manipulation','removal','clone']:
              'ProbeHeight':np.int64}
     sys_dtype = {'ProbeFileID':str,
              'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
-             'ProbeOutputMaskFileName':str}
+             'OutputProbeMaskFileName':str}
 elif args.task == 'splice':
     index_dtype = {'TaskID':str,
              'ProbeFileID':str,
@@ -173,8 +171,8 @@ elif args.task == 'splice':
     sys_dtype = {'ProbeFileID':str,
              'DonorFileID':str,
              'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
-             'ProbeOutputMaskFileName':str,
-             'DonorOutputMaskFileName':str}
+             'OutputProbeMaskFileName':str,
+             'OutputDonorMaskFileName':str}
 
 mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
@@ -182,7 +180,7 @@ myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
 mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
-factor_mode = '' #TODO: may not be necessary
+factor_mode = ''
 query = ''
 if args.factor:
     factor_mode = 'f'
@@ -216,10 +214,6 @@ if args.task == 'manipulation':
     refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
     probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0)
     journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0)
-    journalMask = journalMask[['JournalID','Color','Purpose']]
-
-    #filter by targetManiType
-    journalMask = journalMask.query('Purpose=={}'.format(args.targetManiType.split(',')))
 
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
@@ -230,7 +224,12 @@ if args.task == 'manipulation':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
+    journalData = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
+
+    if (args.targetManiType != 'all')
+        journalData = journalData.query('Purpose=={}'.format(args.targetManiType.split(','))) #filter by targetManiType
+
+    #m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
     #m_df = pd.merge(journalMask,m_df,how='left',on='JournalID')
 
     #partition query here and filter further
@@ -240,15 +239,31 @@ if args.task == 'manipulation':
    
     if args.factor:
         #divided into separate tables for each query. A separate report for each.
-        for i,q in enumerate(query):
+
+        #TODO: generate list of temp dataframes here
+        my_partition = pt.Partition(m_df,query,'f')
+
+        temp_df_list = my_partition.render_table()
+
+        for i,temp_df in enumerate(temp_df_list):
             # remember, default eks 15, dks 9
-            temp_df = m_df.query(q)
-            r_df = createReportSSD(temp_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-            a_df = avg_scores_by_factors_SSD(temp_df,args.task,avglist,precision=args.precision)
-            r_df.to_csv(path_or_buf='{}-perimage-{}.csv'.format(outRoot,i),index=False)
-            a_df.to_csv(path_or_buf="{}-{}.csv".format(outRoot,i),index=False)
+
+            #TODO: use Partition for OOP niceness and to identify file to be written. Existing partition customized for detection scorer, so customize.
+
+            #Mask Scorer needs own Partition object. Should be in lib or maskreport? See Yooyoung.
+
+            #TODO: get avgdict from Partition
+            r_df = createReportSSD(temp_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+            a_df = avg_scores_by_factors_SSD(temp_df,args.task,avgdict,precision=args.precision)
+            r_df.to_csv(path_or_buf='{}-perimage-{}.csv'.format(outRoot,query[i]),index=False)
+            a_df.to_csv(path_or_buf="{}-{}.csv".format(outRoot,query[i]),index=False)
             
     elif args.factorp:
+
+        #TODO: filter first
+
+        #TODO: then use groupby
+
         r_df_fin = pd.read_csv('../../data/test_suite/maskScorerTests/ref_maskreport_3-perimage.csv') #read in the csv first so we can delete the rows later
         r_df_fin = r_df.drop(r_df.index[0:2])
         a_df_fin = pd.read_csv('../../data/test_suite/maskScorerTests/ref_maskreport_3.csv') #read in the csv first so we can delete the rows later
@@ -263,8 +278,9 @@ if args.task == 'manipulation':
         
         #TODO: instead just use simple parsing and the header list from the reference file?
 
+        #TODO: and then append to both r_df_fin and a_df_fin. 
         
-        r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+        r_df = createReportSSD(m_df,journalData myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
         avglist = avglist.replace(' ','') #delete extra spaces
         avglist = query.split('&')  #TODO: get from factor by query
         if avglist == ['']:
@@ -274,22 +290,22 @@ if args.task == 'manipulation':
 
     else:
         #neither factors
-        r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
         a_df = avg_scores_by_factors_SSD(m_df,args.task,avglist,precision=args.precision)
 
-#TODO: what to do here?
-elif args.task in ['removal','clone']:
-    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
-    # get rid of inf values from the merge and entries for which there is nothing to work with.
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
-
-    # if the confidence score are 'nan', replace the values with the mininum score
-    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
-    # convert to the str type to the float type for computations
-    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
-    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
-
+#commenting out for the time being
+#elif args.task in ['removal','clone']:
+#    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
+#    # get rid of inf values from the merge and entries for which there is nothing to work with.
+#    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
+#
+#    # if the confidence score are 'nan', replace the values with the mininum score
+#    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+#    # convert to the str type to the float type for computations
+#    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+#    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+#    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
+#
 elif args.task == 'splice':
     m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
@@ -300,12 +316,12 @@ elif args.task == 'splice':
     m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+    r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.kern, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
 
-precision = args.precision
 if verbose: #to avoid complications of print formatting when not verbose
-    if args.task in ['manipulation','removal','clone']:
+    precision = args.precision
+    if args.task in ['manipulation']:
         myavgs = [a_df[mets][0] for mets in ['NMM','MCC','WL1']]
     
         allmets = "Avg NMM: {}, Avg MCC: {}, Avg WL1: {}".format(round(myavgs[0],precision),
@@ -331,7 +347,6 @@ outRoot = args.outRoot
 if outRoot[-1]=='/':
     outRoot = outRoot[:-1]
 
-#TODO: what prefix? Temp fix for now.
-prefix = 'results'
-r_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + '-perimage.csv'),index=False)
-a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + ".csv"),index=False)
+prefix = os.path.basename(args.inSys)
+r_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + '-score_perimage.csv'),index=False)
+a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-score.csv"),index=False)

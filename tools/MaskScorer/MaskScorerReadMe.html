@@ -11998,10 +11998,6 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-oA otherArea</p>
-<ul>
-<li>Whether or not to use the other unselected mask areas to generate no-score zones. If true, the other unselected masks will be dilated and then set as no-score zones. (default = true)</li>
-</ul>
 <p>--eks</p>
 <ul>
 <li>Erosion kernel size. (number must be odd; default = 15)</li>
@@ -12071,7 +12067,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </ul>
 <p>--precision</p>
 <ul>
-<li>The number of digits to round computed scores, (e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5), (default = 5).</li>
+<li>The number of digits to round computed scores, (e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5), (default = 16).</li>
 </ul>
 <p>-html</p>
 <ul>
@@ -12095,7 +12091,8 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The following set of images is a sample of what you should see in the HTML page for each image. You can access each image from the appropriate link in the index.html file that is produced in your chosen output directory.</p>
+<p>The following set of images is a sample of what you should see in the HTML report for each image. You can access each image from the appropriate link in the index.html file that is produced in your chosen output directory.</p>
+<p>The probe and donor masks for the splice task will each have one report.</p>
 
 </div>
 </div>

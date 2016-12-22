@@ -3,8 +3,8 @@
 """
  *File: masks.py
  *Date: 12/22/2016
- *Translation by: Daniel Zhou
- *Original Author: Yooyoung Lee
+ *Original Author: Daniel Zhou
+ *Co-Author: Yooyoung Lee
  *Status: Complete
 
  *Description: this code contains the image object for the ground truth image.
@@ -264,8 +264,8 @@ class refmask(mask):
     def aggregateNoScore(self,erodeKernSize,dilateKernSize,kern,includeDistraction):
         """
         * Description: this function calculates and generates the aggregate no score zone of the mask
-                       by performing a bitwise and (&) on the elements of the noScoreZone and the
-                       distractionNoScoreZone functions
+                       by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
+                       unselectedNoScoreRegion functions
         * Inputs
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
@@ -275,15 +275,15 @@ class refmask(mask):
                                   True will include the distraction no-score zones in the final weighted image.
                                   False will simply treat it as a ground-truth negative.
         """
-        baseNoScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)['wimg']
+        baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
         if includeDistraction:
-            distractionNoScore = self.distractionNoScoreZone(dilateKernSize,kern)
+            distractionNoScore = self.unselectedNoScoreRegion(dilateKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
         return wimg
 
-    def noScoreZone(self,erodeKernSize,dilateKernSize,kern):
+    def boundaryNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
         """
         * Description: this function calculates and generates the no score zone of the mask,
                              as well as the eroded and dilated masks for additional reference
@@ -320,9 +320,9 @@ class refmask(mask):
 
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
 
-    def distractionNoScoreZone(self,dilateKernSize,kern):
+    def unselectedNoScoreRegion(self,dilateKernSize,kern):
         """
-        * Description: this function calculates the no score zone of the mask regions counted as distractors.
+        * Description: this function calculates the no score zone of the unselected mask regions.
                             The resulting mask is meant to be paired with the no score zone function above to form
                             a comprehensive no-score region
                             
@@ -337,7 +337,7 @@ class refmask(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        if (dilateKernSize==0) or (self.targetManiType == 'all'):
+        if (dilateKernSize==0) or (self.targetManiType is 'all'):
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
@@ -382,7 +382,7 @@ class maskMetricList:
                   selected over a set of colored regions matching certain tasks
         - sysBin: the threshold to binarize the system output mask files. Setting it to
                   -1 will compute the metrics over a set of distinct thresholds, with the
-                  threshold yielding the maximum absolute MCC picked.
+                  threshold yielding the maximum MCC picked.
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
         - mode: determines the data to access. In most cases, it will be 'Probe', but
@@ -410,7 +410,7 @@ class maskMetricList:
         sysMaskName = os.path.join(self.sysDir,sysMaskFName)
   
         if (self.journalData is 0) and (self.rbin == -1): #no journal saved and rbin not set
-            self.rbin = 254 #automatically binarize
+            self.rbin = 254 #automatically set binary threshold if no journalData provided.
  
         #read in the reference mask
         if self.rbin >= 0:
@@ -475,13 +475,13 @@ class maskMetricList:
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     print("The index is at %d." % i)
                     continue
-                rtemp_name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
-                rImg.save(rtemp_name)
+                rbin_name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+                rImg.save(rbin_name)
 
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
                 if self.sbin >= 0:
-                    stemp_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                    sImg.save(stemp_name,th=self.sbin)
+                    sbin_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
                 wts = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,kern,includeDistraction)
@@ -505,9 +505,8 @@ class maskMetricList:
                     mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
 
                 if self.sbin == -1:
-                    sImg.binarize(threshold)
-                    stemp_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                    sImg.save(stemp_name,th=threshold)
+                    sbin_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    sImg.save(sbin_name,th=threshold)
  
                 for met in ['NMM','MCC','WL1']:
                     df.set_value(i,met,round(mets[met],precision))
@@ -519,18 +518,22 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    manipReport(outputRoot,maniImageFName[i],rtemp_name,stemp_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+                    rImg_name = rbin_name[:-8] + '.png'
+                    sImg_name = sbin_name[:-8] + '.png'
+                    manipReport(outputRoot,maniImageFName[i],rImg_name,sImg_name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
 
         return df
 
-    def manipReport(self,outputRoot,maniImageFName,rImg_name,sImg_name,weights,nmm,confmeasures,colMaskName,aggImgName):
+    def manipReport(self,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,weights,nmm,confmeasures,colMaskName,aggImgName):
         """
         * Description: this function assembles the HTML report for the manipulation task being computed
         * Inputs
         *     outputRoot: the directory to deposit the weight image and the HTML file
         *     maniImageFName: the manipulated probe file name, relative to the reference directory (self.refDir) 
-        *     rImg_name: the name of the (likely modified) reference image used for the mask evaluation
-        *     sImg_name: the name of the (likely modified) system output image used for the mask evaluation
+        *     rImg_name: the name of the unmodified reference image used for the mask evaluation
+        *     sImg_name: the name of the unmodified system output image used for the mask evaluation
+        *     rbin_name: the name of the binarized reference image used for the mask evaluation
+        *     sbin_name: the name of the binarized system output image used for the mask evaluation
         *     weights: the weighted matrix generated for mask evaluation
         *     nmm: the value of the NimbleMaskMetric of the system output with respect to the reference
         *     confmeasures: truth table measures evaluated between the reference and system output masks
@@ -557,6 +560,8 @@ class maskMetricList:
                                       'aggMask' : os.path.abspath(aggImgName),
                                       'refMask' : os.path.abspath(rImg_name),
                                       'sysMask' : os.path.abspath(sImg_name),
+                                      'binRefMask' : os.path.abspath(rbin_name),
+                                      'binSysMask' : os.path.abspath(sbin_name),
                                       'noScoreZone' : weightFName,
                                       'colorMask' : os.path.abspath(colMaskName),
   				      'nmm' : nmm,
@@ -653,7 +658,6 @@ class maskMetrics:
         if self.sysMask.bwmat is 0:
             #TODO: ultimately remove this?
             print("Warning: your system output seems to contain grayscale values. Proceeding to binarize.")
-            print np.unique(self.sysMask.matrix)
             self.sysMask.binarize(254)
 
         s = self.sysMask.bwmat.astype(int)
@@ -785,7 +789,7 @@ class maskMetrics:
         mcc = 0
         wL1 = 1
 
-        noScore = self.refMask.noScoreZone(erodeKernSize,dilateKernSize,kern)
+        noScore = self.refMask.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)
         eImg = noScore['eimg']
         dImg = noScore['dimg']
 
@@ -900,7 +904,7 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'N':[0]*len(thresholds)})
             #for all thresholds
-            noScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)
+            noScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)
             w = noScore['wimg']
             rownum=0
             for th in thresholds:
@@ -919,8 +923,8 @@ class maskMetrics:
                 thresMets.set_value(rownum,'N',thismet.conf['N'])
                 rownum=rownum+1
 
-            #pick max threshold for max absolute MCC
-        tmax = thresMets.query('abs(MCC)=={}'.format(max(abs(thresMets['MCC']))))['Threshold'].iloc[0]
+            #pick max threshold for max MCC
+        tmax = thresMets.query('MCC=={}'.format(max(thresMets['MCC'])))['Threshold'].iloc[0]
 
         return thresMets,tmax
 
