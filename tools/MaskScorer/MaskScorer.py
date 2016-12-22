@@ -219,7 +219,7 @@ if args.task == 'manipulation':
     journalMask = journalMask[['JournalID','Color','Purpose']]
 
     #filter by targetManiType
-    journalMask = journalMask.query('Purpose==[{}]'.format(args.targetManiType))
+    journalMask = journalMask.query('Purpose=={}'.format(args.targetManiType.split(',')))
 
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
@@ -257,11 +257,16 @@ if args.task == 'manipulation':
         #filter m_df and then use groupby to iterate
         m_df = m_df.query(args.factorp)
 
-        #TODO: evaluate with groupby
+        #TODO: use a very general form of partition for string parsing. String parsed very well. Customize it to be more general though. Just like parsing the query string. And then combine with groupby for analysis.
+        m_headers = list(m_df)
+        parselist = args.factorp.replace(' ','').split('&') #remove spaces and parse by
+        
+        #TODO: instead just use simple parsing and the header list from the reference file?
+
         
         r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.otherArea,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
-        avglist = query.split('&')  #TODO: get from factor by query
         avglist = avglist.replace(' ','') #delete extra spaces
+        avglist = query.split('&')  #TODO: get from factor by query
         if avglist == ['']:
             avglist = []
 
@@ -326,5 +331,7 @@ outRoot = args.outRoot
 if outRoot[-1]=='/':
     outRoot = outRoot[:-1]
 
-r_df.to_csv(path_or_buf=outRoot + '-perimage.csv',index=False)
-a_df.to_csv(path_or_buf=outRoot + ".csv",index=False)
+#TODO: what prefix? Temp fix for now.
+prefix = 'results'
+r_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + '-perimage.csv'),index=False)
+a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + ".csv"),index=False)

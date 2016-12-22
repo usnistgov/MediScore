@@ -75,6 +75,10 @@ def scores_4_mask_pairs(m_df
        * report dataframe
     """
 
+    df = masks.maskMetricList(m_df['ProbeMaskFileName'],m_df['ProbeOutputMaskFileName'],refDir,sysDir,rbin,sbin,journalMask,m_df[['ProbeFileID','JournalID']])
+
+    #TODO: move most of this to maskMetricList
+
     numOfRows = len(m_df)
 
     refMaskFName = m_df['ProbeMaskFileName']
@@ -99,8 +103,9 @@ def scores_4_mask_pairs(m_df
                 rImg = masks.refmask(refMaskName)
             elif rbin == -1:
                 journalID = m_df.query('ProbeMaskFileName=={}'.format(refMaskFName[i]))['JournalID'].iloc[0]
-                colorlist = list(journalMask.query('JournalID=={}')['Color'])
-                purposes = list(journalMask.query('JournalID=={}')['Purpose'])
+                myJID = journalMask.query('JournalID=={}'.format(journalID))
+                colorlist = list(myJID['Color'])
+                purposes = list(myJID['Purpose'])
                 purposes_unique = []
                 [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
                 rImg = masks.refmask(refMaskName,readopt=1,cs=colorlist,tmt=purposes_unique)
@@ -160,7 +165,7 @@ def scores_4_mask_pairs(m_df
                     os.system('mkdir ' + outputRoot)
 
                 maniImgName = os.path.join(refDir,maniImageFName[i])
-                colordirs = metrics.aggregateColorMask(maniImgName,eData,outputRoot)
+                colordirs = metrics.aggregateColorMask(maniImgName,outputRoot)
 
                 mywts = np.uint8(255*metrics.weights)
                 sysBase = sysMaskFName[i].split('/')[-1][:-4]
@@ -250,6 +255,7 @@ def avg_scores_by_factors_SSD(df, taskType, byCols=['Collection','PostProcessed'
 
     outeridx = 0
     metrics = ['NMM','MCC','WL1']
+    #TODO: remove this code and move it to MaskScorer.py
     if (byCols != []):
         grouped = df.groupby(byCols,sort=False)
         for g in grouped.groups:
