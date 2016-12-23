@@ -35,7 +35,7 @@ import numbers
 from string import Template
 lib_path='../../lib'
 sys.path.append(lib_path)
-import masks
+import maskMetrics as mm
 
 def store_avg(querydf,metlist,store_df,index,precision):
     """
@@ -51,72 +51,72 @@ def store_avg(querydf,metlist,store_df,index,precision):
     for m in metlist:
         store_df.set_value(index,m,round(querydf[querydf[m].apply(lambda x: isinstance(x,numbers.Number))][m].mean(),precision))
 
-def avg_scores_by_factors_SSD(df, taskType,factorList={},precision=16):
-    """
-     SSD average mask performance by a factor
-     * Description: this function returns a CSV report with the average mask performance by a factor
-     * Inputs
-     *     df: the dataframe with the scored system output
-     *     taskType: [manipulation, removal, clone]
-     *     factorList: the average to be computed over this dictionary of factors and the values over which to compute them
-     *     precision: number of digits to round figures to
-     * Output
-     *     df_avg: report dataframe
-    """
-
-    num_runs = 1
-    dfdict = {'runID' : [None]*num_runs,
-              'TaskID' : [taskType]*num_runs,
-              'NMM' : np.empty(num_runs),
-              'MCC' : np.empty(num_runs),
-              'WL1' : np.empty(num_runs)}
-
-    #add to dfdict over factorList
-    for k in factorList.keys():
-        dfdict[k] = factorList[k]
-
-    df_avg = pd.DataFrame(dfdict)
-    metrics = ['NMM','MCC','WL1']
-    df_avg.set_value(0,'runID',0)
-    store_avg(df,metrics,df_avg,0,precision)
-
-    return df_avg
-
-def avg_scores_by_factors_DSD(df,taskType,factorList={},precision=16):
-    """
-     DSD average mask performance by a factor
-     * Description: this function returns a CSV report with the average mask performance by a factor
-     * Inputs
-     *     df: the dataframe with the scored system output
-     *     taskType: [splice]
-     *     precision: number of digits to round figures to
-     * Output
-     *     df_avg: report dataframe
-    """
-    num_runs = 1
-    dfdict = {'runID' : [None]*num_runs,
-              'TaskID' : [taskType]*num_runs,
-              'pNMM' : np.empty(num_runs),
-              'pMCC' : np.empty(num_runs),
-              'pWL1' : np.empty(num_runs),
-              'dNMM' : np.empty(num_runs),
-              'dMCC' : np.empty(num_runs),
-              'dWL1' : np.empty(num_runs)}
-
-    #add to dfdict over factorList
-    for k in factorList.keys():
-        dfdict[k] = factorList[k]
-
-    df_avg = pd.DataFrame(dfdict)
-    metrics=['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
-    df_avg.set_value(0,'runID',0)
-    store_avg(sub_d,metrics,df_avg,0,precision)
-
-    return df_avg
+#def avg_scores_by_factors_SSD(df, taskType,factorList={},precision=16):
+#    """
+#     SSD average mask performance by a factor
+#     * Description: this function returns a CSV report with the average mask performance by a factor
+#     * Inputs
+#     *     df: the dataframe with the scored system output
+#     *     taskType: [manipulation, removal, clone]
+#     *     factorList: the average to be computed over this dictionary of factors and the values over which to compute them
+#     *     precision: number of digits to round figures to
+#     * Output
+#     *     df_avg: report dataframe
+#    """
+#
+#    num_runs = 1
+#    dfdict = {'runID' : [None]*num_runs,
+#              'TaskID' : [taskType]*num_runs,
+#              'NMM' : np.empty(num_runs),
+#              'MCC' : np.empty(num_runs),
+#              'WL1' : np.empty(num_runs)}
+#
+#    #add to dfdict over factorList
+#    for k in factorList.keys():
+#        dfdict[k] = factorList[k]
+#
+#    df_avg = pd.DataFrame(dfdict)
+#    metrics = ['NMM','MCC','WL1']
+#    df_avg.set_value(0,'runID',0)
+#    store_avg(df,metrics,df_avg,0,precision)
+#
+#    return df_avg
+#
+#def avg_scores_by_factors_DSD(df,taskType,factorList={},precision=16):
+#    """
+#     DSD average mask performance by a factor
+#     * Description: this function returns a CSV report with the average mask performance by a factor
+#     * Inputs
+#     *     df: the dataframe with the scored system output
+#     *     taskType: [splice]
+#     *     precision: number of digits to round figures to
+#     * Output
+#     *     df_avg: report dataframe
+#    """
+#    num_runs = 1
+#    dfdict = {'runID' : [None]*num_runs,
+#              'TaskID' : [taskType]*num_runs,
+#              'pNMM' : np.empty(num_runs),
+#              'pMCC' : np.empty(num_runs),
+#              'pWL1' : np.empty(num_runs),
+#              'dNMM' : np.empty(num_runs),
+#              'dMCC' : np.empty(num_runs),
+#              'dWL1' : np.empty(num_runs)}
+#
+#    #add to dfdict over factorList
+#    for k in factorList.keys():
+#        dfdict[k] = factorList[k]
+#
+#    df_avg = pd.DataFrame(dfdict)
+#    metrics=['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
+#    df_avg.set_value(0,'runID',0)
+#    store_avg(sub_d,metrics,df_avg,0,precision)
+#
+#    return df_avg
 
 def createReportSSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiType,erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
     """
-     Create a CSV report for single source detection
+     Create a CSV report for single source detection, specifically for the manipulation task
      * Description: this function calls each metric function and
                     return the metric value and the colored mask output as a report
      * Inputs
@@ -142,7 +142,7 @@ def createReportSSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiTyp
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    maskMetricRunner = masks.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
     df = maskMetricRunner.getMetricList(targetManiType,erodeKernSize,dilateKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     merged_df = pd.merge(m_df,df,how='left',on='OutputProbeMaskFileName')
@@ -167,7 +167,7 @@ def createReportSSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiTyp
 
 def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
     """
-     Create a CSV report for double source detection
+     Create a CSV report for double source detection, specifically the splice task
      * Description: this function calls each metric function and
                     return the metric value and the colored mask output as a report
      * Inputs
@@ -194,10 +194,10 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    maskMetricRunner = masks.maskMetricList(m_df,refDir,sysDir,rbin,sbin)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin)
     probe_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,outputRoot,kern,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
 
-    maskMetricRunner = masks.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode='Donor') #donor images
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode='Donor') #donor images
     donor_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,outputRoot,kern,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",

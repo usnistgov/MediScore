@@ -254,7 +254,7 @@ class refmask(mask):
         - cs: the list of color strings in RGB format selected based on the target
               manipulations to be evaluated (e.g. ['255 0 0','0 255 0'])
         - tmt: the target manipulations, a string if single, a list if multiple, to be evaluated.
-               The default 'all' means all non-white regions will be evaluated
+               'all' means all non-white regions will be evaluated
         """
         super(refmask,self).__init__(n,readopt)
         #store colors and corresponding type

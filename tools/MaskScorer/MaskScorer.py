@@ -40,7 +40,7 @@ import numpy as np
 lib_path = "../../lib"
 #import masks
 #import maskreport
-import Partition_mask as f
+import Partition_mask as pt
 execfile(os.path.join(lib_path,"masks.py")) #EDIT: find better way to import?
 execfile('maskreport.py')
 
@@ -195,8 +195,8 @@ elif args.factorp:
 #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
 outRoot = args.outRoot
-if outRoot[-1]=='/':
-    outRoot = outRoot[:-1]
+
+prefix = os.path.basename(args.inSys).split('.')[0]
 
 reportq = 0
 if args.verbose:
@@ -224,10 +224,13 @@ if args.task == 'manipulation':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    journalData = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
+    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
+    n_journals = len(journalData0)
+    journalData0['scored'] = pd.Series(['N']*n_journals) #add column for scored: 'Y'/'N'
 
     if (args.targetManiType != 'all')
-        journalData = journalData.query('Purpose=={}'.format(args.targetManiType.split(','))) #filter by targetManiType
+        journalData = journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))) #filter by targetManiType
+        journalData0.loc[journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))).index,'scored'] = 'Y'
 
     #m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
     #m_df = pd.merge(journalMask,m_df,how='left',on='JournalID')
@@ -236,62 +239,25 @@ if args.task == 'manipulation':
     #selection = f.Partition(m_df,query,factor_mode)
     #DM_List = selection.part_dm_list
     #table_df = selection.render_table()
-   
+
+    r_df = createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
+    journalData0.ix[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
+
+    r_df = r_df.query('MCC > -2') #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+    my_partition = pt.Partition(r_df,query,factor_mode) #average over queries
+    df_list = my_partition.render_table(['NMM','MCC','WL1'])
+ 
     if args.factor:
-        #divided into separate tables for each query. A separate report for each.
-
-        #TODO: generate list of temp dataframes here
-        my_partition = pt.Partition(m_df,query,'f')
-
-        temp_df_list = my_partition.render_table()
-
-        for i,temp_df in enumerate(temp_df_list):
-            # remember, default eks 15, dks 9
-
-            #TODO: use Partition for OOP niceness and to identify file to be written. Existing partition customized for detection scorer, so customize.
-
-            #Mask Scorer needs own Partition object. Should be in lib or maskreport? See Yooyoung.
-
-            #TODO: get avgdict from Partition
-            r_df = createReportSSD(temp_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-            a_df = avg_scores_by_factors_SSD(temp_df,args.task,avgdict,precision=args.precision)
-            r_df.to_csv(path_or_buf='{}-perimage-{}.csv'.format(outRoot,query[i]),index=False)
-            a_df.to_csv(path_or_buf="{}-{}.csv".format(outRoot,query[i]),index=False)
+        #use Partition for OOP niceness and to identify file to be written. 
+        for i,temp_df in enumerate(df_list):
+            temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
             
-    elif args.factorp:
+    elif args.factorp or (factor_mode == ''):
+        a_df = df_list
+        a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
-        #TODO: filter first
-
-        #TODO: then use groupby
-
-        r_df_fin = pd.read_csv('../../data/test_suite/maskScorerTests/ref_maskreport_3-perimage.csv') #read in the csv first so we can delete the rows later
-        r_df_fin = r_df.drop(r_df.index[0:2])
-        a_df_fin = pd.read_csv('../../data/test_suite/maskScorerTests/ref_maskreport_3.csv') #read in the csv first so we can delete the rows later
-        a_df_fin = r_df.drop(r_df.index[0])
-
-        #filter m_df and then use groupby to iterate
-        m_df = m_df.query(args.factorp)
-
-        #TODO: use a very general form of partition for string parsing. String parsed very well. Customize it to be more general though. Just like parsing the query string. And then combine with groupby for analysis.
-        m_headers = list(m_df)
-        parselist = args.factorp.replace(' ','').split('&') #remove spaces and parse by
-        
-        #TODO: instead just use simple parsing and the header list from the reference file?
-
-        #TODO: and then append to both r_df_fin and a_df_fin. 
-        
-        r_df = createReportSSD(m_df,journalData myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
-        avglist = avglist.replace(' ','') #delete extra spaces
-        avglist = query.split('&')  #TODO: get from factor by query
-        if avglist == ['']:
-            avglist = []
-
-        a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
-
-    else:
-        #neither factors
-        r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-        a_df = avg_scores_by_factors_SSD(m_df,args.task,avglist,precision=args.precision)
+    journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
 #commenting out for the time being
 #elif args.task in ['removal','clone']:
@@ -317,7 +283,18 @@ elif args.task == 'splice':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.kern, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-    a_df = avg_scores_by_factors_DSD(r_df,args.task,avglist,precision=args.precision)
+
+    my_partition = pt.Partition(r_df,query,factor_mode) #average over queries
+    df_list = my_partition.render_table(['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1'])
+
+    if args.factor:
+        #use Partition for OOP niceness and to identify file to be written. 
+        for i,temp_df in enumerate(df_list):
+            temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
+            
+    elif args.factorp or (factor_mode == ''):
+        a_df = df_list
+        a_df.to_csv(path_or_buf=os.path.join(outRoot,"mask_score.csv"),index=False)
 
 if verbose: #to avoid complications of print formatting when not verbose
     precision = args.precision
@@ -343,10 +320,6 @@ if verbose: #to avoid complications of print formatting when not verbose
     else:
         printerr("ERROR: Task not recognized.")
 
-outRoot = args.outRoot
-if outRoot[-1]=='/':
-    outRoot = outRoot[:-1]
+prefix = os.path.basename(args.inSys).split('.')[0]
+r_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-mask_scores_perimage.csv'),index=False)
 
-prefix = os.path.basename(args.inSys)
-r_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + '-score_perimage.csv'),index=False)
-a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-score.csv"),index=False)

@@ -67,7 +67,7 @@ class maskMetricList:
         self.journalData = journaldf
         self.mode=mode
        
-    def readMasks(self,refMaskFName,sysMaskFName,targetManiType):
+    def readMasks(self,refMaskFName,sysMaskFName,targetManiType,verbose):
         """
         * Description: reads both the reference and system output masks and caches the binarized image
                        into the reference mask. If the journal dataframe is provided, the color and purpose
@@ -99,6 +99,19 @@ class maskMetricList:
             [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
             rImg = masks.refmask(refMaskName,cs=colorlist,tmt=purposes_unique)
             rImg.binarize(254)
+
+            #check to see if the color in question is even present
+            if targetManiType is not 'all':
+                presence = 0
+                for c in rImg.colors:
+                    rmat = rImg.matrix
+                    presence = presence + np.sum((rmat[:,:,0]==c[0]) & (rmat[:,:,1]==c[1]) & (rmat[:,:,2]==c[2]))
+                    if presence > 0:
+                        break
+                if presence == 0:
+                    if verbose:
+                        print("The region you are looking for is not in reference mask {}. Scoring neglected.".format(refMaskFName))
+                    return 0,0
 
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
@@ -145,8 +158,14 @@ class maskMetricList:
                 print("Empty system mask file at index %d" % i)
                 continue
             else:
-                rImg,sImg = readMasks(reflist[i],syslist[i],targetManiType)
+                rImg,sImg = readMasks(reflist[i],syslist[i],targetManiType,verbose)
+                if (rImg is 0) and (sImg is 0):
+                    #no masks detected with score-able regions, so set to not scored
+                    self.journalData.set_value(i,'scored','N')
+                    df.set_value(i,'MCC',-2) #for reference to filter later
+                    continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
+                    #Likely this could be FP or FN. Set scores as usual.
                     print("The index is at %d." % i)
                     continue
                 rbin_name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
@@ -195,6 +214,7 @@ class maskMetricList:
                     rImg_name = rbin_name[:-8] + '.png'
                     sImg_name = sbin_name[:-8] + '.png'
                     manipReport(outputRoot,maniImageFName[i],rImg_name,sImg_name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+
         return df
 
     def manipReport(self,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,weights,nmm,confmeasures,colMaskName,aggImgName):

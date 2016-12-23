@@ -11956,7 +11956,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-tmt --targetManiType</p>
 <ul>
-<li>An array of manipulation tasks to be scored, separated by commas, e.g. 'Removal,Splice'. No input implies that the system output will be scored against every manipulated region of the reference masks. (default: None)</li>
+<li>An array of manipulation tasks to be scored, separated by commas, e.g. 'Removal,Splice'. The default 'all' means that the system output will be scored against every manipulated region of the reference masks. (default: 'all')</li>
 </ul>
 
 </div>
@@ -12019,7 +12019,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Performance-Evaluation-by-Factors">Performance Evaluation by Factors<a class="anchor-link" href="#Performance-Evaluation-by-Factors">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified factors. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). The following figure illustrates the data query option along with corresponding outputs for factor-based evaluations.</p>
+<h3 id="Performance-Evaluation-by-Factors">Performance Evaluation by Factors<a class="anchor-link" href="#Performance-Evaluation-by-Factors">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified factors. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting neither of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
 
 </div>
 </div>
