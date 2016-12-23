@@ -129,7 +129,7 @@ class Partition:
         """
         List_part_query = list()
         for part_list in self.part_values_list:
-            List_part_query.append(''.join([x+' & ' for x in part_list].)[:-3])
+            List_part_query.append(''.join([x+' & ' for x in part_list])[:-3])
         return List_part_query
 
     def gen_part_df_list(self,df):

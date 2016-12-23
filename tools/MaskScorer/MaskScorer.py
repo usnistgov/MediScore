@@ -35,22 +35,23 @@ import cv2
 import pandas as pd
 import argparse
 import numpy as np
+import maskreport as mr
 
 # loading scoring and reporting libraries
 lib_path = "../../lib"
-#import masks
-#import maskreport
+sys.path.append(lib_path)
 import Partition_mask as pt
-execfile(os.path.join(lib_path,"masks.py")) #EDIT: find better way to import?
-execfile('maskreport.py')
+#import masks
+#execfile(os.path.join(lib_path,"masks.py"))
+#execfile('maskreport.py')
 
 
 ########### Command line interface ########################################################
 
-data_path = "../../data"
+#data_path = "../../data"
 refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
 indexFname = "indexes/NC2016-manipulation-index.csv"
-sysFname = data_path + "/SystemOutputs/dct0608/dct02.csv"
+#sysFname = data_path + "/SystemOutputs/dct0608/dct02.csv"
 
 #################################################
 ## command-line arguments for "file"
@@ -228,7 +229,7 @@ if args.task == 'manipulation':
     n_journals = len(journalData0)
     journalData0['scored'] = pd.Series(['N']*n_journals) #add column for scored: 'Y'/'N'
 
-    if (args.targetManiType != 'all')
+    if (args.targetManiType != 'all'):
         journalData = journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))) #filter by targetManiType
         journalData0.loc[journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))).index,'scored'] = 'Y'
 
@@ -240,7 +241,7 @@ if args.task == 'manipulation':
     #DM_List = selection.part_dm_list
     #table_df = selection.render_table()
 
-    r_df = createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
     journalData0.ix[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
 
@@ -282,7 +283,7 @@ elif args.task == 'splice':
     m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    r_df = createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.kern, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.kern, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
 
     my_partition = pt.Partition(r_df,query,factor_mode) #average over queries
     df_list = my_partition.render_table(['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1'])
