@@ -71,7 +71,7 @@ help='System output csv file name: [e.g., ~/expid/system_output.csv]',metavar='c
 parser.add_argument('-x','--inIndex',type=str,default=indexFname,
 help='Task Index csv file name: [e.g., indexes/NC2016-manipulation-index.csv]',metavar='character')
 parser.add_argument('-oR','--outRoot',type=str,default='.',
-help="Directory root + file name to save outputs.",metavar='character')
+help="Directory root to save outputs.",metavar='character')
 
 #added from DetectionScorer.py
 factor_group = parser.add_mutually_exclusive_group()
@@ -241,13 +241,14 @@ if args.task == 'manipulation':
     #DM_List = selection.part_dm_list
     #table_df = selection.render_table()
 
-    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
     journalData0.ix[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
 
     r_df = r_df.query('MCC > -2') #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
-    my_partition = pt.Partition(r_df,query,factor_mode) #average over queries
-    df_list = my_partition.render_table(['NMM','MCC','WL1'])
+    metrics = ['NMM','MCC','WL1']
+    my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+    df_list = my_partition.render_table(metrics)
  
     if args.factor:
         #use Partition for OOP niceness and to identify file to be written. 
@@ -255,7 +256,7 @@ if args.task == 'manipulation':
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
             
     elif args.factorp or (factor_mode == ''):
-        a_df = df_list
+        a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
     journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
@@ -283,10 +284,11 @@ elif args.task == 'splice':
     m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.kern, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
 
-    my_partition = pt.Partition(r_df,query,factor_mode) #average over queries
-    df_list = my_partition.render_table(['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1'])
+    metrics = ['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
+    my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+    df_list = my_partition.render_table(metrics)
 
     if args.factor:
         #use Partition for OOP niceness and to identify file to be written. 
@@ -294,7 +296,7 @@ elif args.task == 'splice':
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
             
     elif args.factorp or (factor_mode == ''):
-        a_df = df_list
+        a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(outRoot,"mask_score.csv"),index=False)
 
 if verbose: #to avoid complications of print formatting when not verbose

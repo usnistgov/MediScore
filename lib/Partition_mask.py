@@ -168,6 +168,9 @@ class Partition:
             This function creates and store each partition's metric
             dataframe according to its dataframe in part_df_list.
         """
+        if self.factor_mode == '':
+            return self.part_df_list
+
         dm_list = list()
 
         for df, query in zip(self.part_df_list,self.part_query_list):
@@ -203,11 +206,11 @@ class Partition:
 
         if self.factor_mode == '':
             #base case
-            data = list()
+            data = dict()
             dm = self.part_metric_list[0]
             for m in metrics:
-                data[m] = dm[m].mean()
-            return pd.DataFrame(data=data,columns=metrics)
+                data[m] = [dm[m].mean()]
+            return [pd.DataFrame(data=data,columns=metrics)]
 
         if self.factor_mode == 'f':
             df_list = list()
@@ -263,7 +266,7 @@ class Partition:
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
             df = pd.DataFrame(data,index,columns)
-            return df
+            return [df]
 
     def __repr__(self):
         """Representation method

@@ -46,7 +46,7 @@ def getKern(kernopt,size):
     """
     if (size % 2 == 0):
         raise Exception('ERROR: One of your kernel sizes is not an odd integer.')
-
+    kern = 0
     kernopt=kernopt.lower()
     if kernopt=='box':
         kern=cv2.getStructuringElement(cv2.MORPH_RECT,(size,size))
@@ -73,7 +73,7 @@ def getKern(kernopt,size):
         #45 degree line, or identity matrix
         kern=np.eye(erodeKernSize,dtype=np.uint8)
     else:
-        print("I don't recognize your kernel. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].")
+        print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
     return kern
 
 class mask(object):

@@ -33,6 +33,7 @@ import os
 import random
 import masks
 from decimal import Decimal
+from string import Template
 
 class maskMetricList:
     """
@@ -57,7 +58,7 @@ class maskMetricList:
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
         - mode: determines the data to access. In most cases, it will be 'Probe', but
-                'Donor' will be used for the 'splice' task
+                Donor' will be used for the 'splice' task
         """
         self.maskData = mergedf
         self.refDir = refD
@@ -89,7 +90,7 @@ class maskMetricList:
         #read in the reference mask
         if self.rbin >= 0:
             rImg = masks.refmask(refMaskName)
-            rImg.binarize(rbin)
+            rImg.binarize(self.rbin)
         elif self.rbin == -1:
             #only need colors if selectively scoring
             myProbeID = self.maskData.query("ProbeMaskFileName=='{}' & OutputProbeMaskFileName=='{}'".format(refMaskFName,sysMaskFName))['ProbeFileID'].iloc[0]
@@ -158,7 +159,7 @@ class maskMetricList:
                 print("Empty system mask file at index %d" % i)
                 continue
             else:
-                rImg,sImg = readMasks(reflist[i],syslist[i],targetManiType,verbose)
+                rImg,sImg = self.readMasks(reflist[i],syslist[i],targetManiType,verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
                     self.journalData.set_value(i,'scored','N')
@@ -191,7 +192,7 @@ class maskMetricList:
                     threshold = self.sbin
                 elif self.sbin == -1:
                     #get everything through an iterative run of max threshold
-                    thresMets,threshold = metricRunner.runningThresholds(erodeKernSize,dilateKernSize,kern=kern,popt=verbose)
+                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,wts,erodeKernSize,dilateKernSize,kern=kern,popt=verbose)
                     #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
                     metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                     mets = metrics[['NMM','MCC','WL1']].to_dict()
@@ -206,14 +207,14 @@ class maskMetricList:
    
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
-                    colordirs = aggregateColorMask(rImg,sImg,wts,kern,erodeKernSize,maniImgName,outputRoot)
+                    colordirs = self.aggregateColorMask(rImg,sImg,wts,kern,erodeKernSize,maniImgName,outputRoot)
                     colMaskName=colordirs['mask']
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     rImg_name = rbin_name[:-8] + '.png'
                     sImg_name = sbin_name[:-8] + '.png'
-                    manipReport(outputRoot,maniImageFName[i],rImg_name,sImg_name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+                    self.manipReport(outputRoot,maniImageFName[i],rImg_name,sImg_name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
 
         return df
 
@@ -234,7 +235,7 @@ class maskMetricList:
                            for the HTML report
         *     aggImgName: the above colored mask superimposed on a grayscale of the reference image
         """
-        if ~os.path.isdir(outputRoot):
+        if not os.path.isdir(outputRoot):
             os.system('mkdir ' + outputRoot)
 
         mywts = np.uint8(255*weights)
@@ -376,6 +377,7 @@ class maskMetrics:
             sys.binarize(systh)
         elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform
             sys.bwmat = sys.matrix
+
         self.conf = self.confusion_measures(ref,sys,w)
 
         #record this dictionary of parameters
@@ -470,9 +472,8 @@ class maskMetrics:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
         r = ref.bwmat.astype(int)
+        #TODO: placeholder until something else covers it
         if sys.bwmat is 0:
-            #TODO: remove this later?
-            print("Warning: your system output seems to contain grayscale values. Proceeding to binarize.")
             sys.binarize(254)
 
         s = sys.bwmat.astype(int)
@@ -693,9 +694,9 @@ class maskMetrics:
                 thismet = maskMetrics(ref,tmask,w,th)
 
                 thresMets.set_value(rownum,'Threshold',th)
-                thresMets.set_value(rownum,'NMM',thismet.NimbleMaskMetric())
-                thresMets.set_value(rownum,'MCC',thismet.matthews())
-                thresMets.set_value(rownum,'WL1',thismet.weightedL1())
+                thresMets.set_value(rownum,'NMM',thismet.nmm)
+                thresMets.set_value(rownum,'MCC',thismet.mcc)
+                thresMets.set_value(rownum,'WL1',thismet.wL1)
                 thresMets.set_value(rownum,'TP',thismet.conf['TP'])
                 thresMets.set_value(rownum,'TN',thismet.conf['TN'])
                 thresMets.set_value(rownum,'FP',thismet.conf['FP'])
@@ -704,8 +705,8 @@ class maskMetrics:
                 rownum=rownum+1
 
             #pick max threshold for max MCC
-        tmax = thresMets.query('MCC=={}'.format(max(thresMets['MCC'])))['Threshold'].iloc[0]
-
+        
+        tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
         return thresMets,tmax
 
 
