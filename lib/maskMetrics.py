@@ -212,9 +212,7 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    rImg_name = rbin_name[:-8] + '.png'
-                    sImg_name = sbin_name[:-8] + '.png'
-                    self.manipReport(outputRoot,maniImageFName[i],rImg_name,sImg_name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+                    self.manipReport(outputRoot,maniImageFName[i],os.path.join(self.refDir,rImg.name),sImg.name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
 
         return df
 
