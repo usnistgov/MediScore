@@ -154,6 +154,8 @@ class maskMetricList:
                          'ColMaskFileName':['']*nrow,
                          'AggMaskFileName':['']*nrow})
 
+        task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
+
         for i,row in df.iterrows():
             if syslist[i] in [None,'',np.nan]:
                 print("Empty system mask file at index %d" % i)
@@ -169,12 +171,25 @@ class maskMetricList:
                     #Likely this could be FP or FN. Set scores as usual.
                     print("The index is at %d." % i)
                     continue
-                rbin_name = os.path.join(outputRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+
+                #save all images in their own directories instead, rather than pool it all in one subdirectory.
+                #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
+                if task == 'manipulation':
+                    subdir_name = self.maskData['ProbeFileID'].iloc[i]
+                elif task == 'splice':
+                    subdir_name = "{}_{}".format(self.maskData['ProbeFileID'].iloc[i],self.maskData['DonorFileID'].iloc[i])
+                
+                #save in subdirectory
+                subOutRoot = os.path.join(outputRoot,subdir_name)
+                if not os.path.isdir(subOutRoot):
+                    os.system('mkdir ' + subOutRoot)
+
+                rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
                 rImg.save(rbin_name)
 
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
                 if self.sbin >= 0:
-                    sbin_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
@@ -199,7 +214,7 @@ class maskMetricList:
                     mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
 
                 if self.sbin == -1:
-                    sbin_name = os.path.join(outputRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                    sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=threshold)
  
                 for met in ['NMM','MCC','WL1']:
@@ -207,18 +222,18 @@ class maskMetricList:
    
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
-                    colordirs = self.aggregateColorMask(rImg,sImg,wts,kern,erodeKernSize,maniImgName,outputRoot)
+                    colordirs = self.aggregateColorMask(rImg,sImg,wts,kern,erodeKernSize,maniImgName,subOutRoot)
                     colMaskName=colordirs['mask']
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    self.manipReport(outputRoot,maniImageFName[i],os.path.join(self.refDir,rImg.name),sImg.name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+                    self.manipReport(subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
 
         return df
 
     def manipReport(self,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,weights,nmm,confmeasures,colMaskName,aggImgName):
         """
-        * Description: this function assembles the HTML report for the manipulation task being computed
+        * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
         *     outputRoot: the directory to deposit the weight image and the HTML file
         *     maniImageFName: the manipulated probe file name, relative to the reference directory (self.refDir) 
@@ -237,7 +252,7 @@ class maskMetricList:
             os.system('mkdir ' + outputRoot)
 
         mywts = np.uint8(255*weights)
-        sysBase = sImg_name.split('/')[-1][:-8]
+        sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
         cv2.imwrite(weightpath,mywts)
@@ -263,7 +278,7 @@ class maskMetricList:
                                       'tp' : confmeasures['TP'],
                                       'ns' : np.sum(mywts==0)})
         #print htmlstr
-        fprefix=maniImageFName.split('/')[-1]
+        fprefix=os.path.basename(maniImageFName)
         fprefix=fprefix.split('.')[0]
         fname=os.path.join(outputRoot,fprefix + '.html')
         myhtml=open(fname,'w')
