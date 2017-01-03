@@ -11769,7 +11769,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of four distinctive detection tasks, namely 1) Manipulation, 2) Removal, 3) Splice, and 4) Clone. The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Removal detectiont task is to detect if a region of a probe image has been removed. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image. The Clone detection task is to detect if a region within a probe image has been cloned.</p>   
+<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of four distinctive detection tasks, namely 1) Manipulation, 2) Splice, 3) Provenance Filtering (TBD), and 4) Provenance Graph Building (namely, provenance)(TBD). The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image. The provenance filtering task is to retrieve the top N images from the provided world dataset, containing images that contributed to creating a probe image. The provenance graph building task is to contruct a phylogeny graph for a probe image and the images contributing to the probe image that are within the ‘world’ collection of images. Please refer the detailed information in the document "Nimble Challenge 2017 Evaluation Data and Tool" </p>   
 <p>The script calculates performance measures of AUC (Area Under Curve) and EER (Equal Error Rate)
 based on a system's output (e.g., confidence scores) for the tasks described above. The output is a report table (CSV) that includes the measures of AUC, EER, and AUC_CI (confidence interval for AUC), and a graphical plot (PDF) that supports either ROC (receiver operating characteristic) or DET (detection error tradeoff) for algorithm performance results. In addition, this script supports factor-based evaluations on algorithm performance</p>
 </div>
@@ -11821,7 +11821,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-t --task [manipulation, removal, splice, clone]</p>
+<p>-t --task [manipulation, splice, provenancefiltering, provenance]</p>
 <ul>
 <li>Define the target manipulation task type for evaluation (default = manipulation). This is a value of the "TaskID" column in the index file. </li>
 </ul>
@@ -12037,7 +12037,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The user can customize the plot (e.g. change the title font size) by adjusting the json files located in the "plotJsonFiles" folder (e.g., plotJsonFiles/plot_options.json).</p>
+<p>The user can customize the plot (e.g. change the title font size) by augmenting the json files located in the "plotJsonFiles" folder (e.g., plotJsonFiles/plot_options.json).</p>
 <p>An example:</p>
 <div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;DET&quot;</span><span class="p">,</span>
  <span class="nt">&quot;plot_type&quot;</span><span class="p">:</span> <span class="s2">&quot;DET&quot;</span><span class="p">,</span>
@@ -12067,7 +12067,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified factors. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...).
+<p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified factors. The reference and index CSV files contain a list of factors (e.g., Operation| Color| Purpose| OperationArgument| ...).
 The following figure illustrates the data query option along with corresponding outputs for factor-based evaluations.</p>
 
 </div>
@@ -12151,7 +12151,7 @@ Examples:
 Examples:
 % -tf "Purpose==['remove']" =&gt; 1 query
 % -tf "Operation==['PasteSplice']" "Operation==['FillContentAwareFill']" =&gt; 2 query
-% -tf "Purpose==['remove', 'add']" "OperationArgument==['people']" =&gt; 3 queries</code></pre>
+% -tf "Purpose==['remove']" "Purpose==['add']" "Purpose==['splice']"=&gt; 3 queries</code></pre>
 </li>
 <li>Output: 
 <pre><code>- CSV report: NIST_001_tf_query0.csv, NIST_001_tf_query1.csv, ...
@@ -12214,7 +12214,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="kn">as</span> <span class="nn">di</span>
@@ -12241,7 +12241,7 @@ Examples:
 
 </div>
 
-<div class="output_area"><div class="prompt output_prompt">Out[1]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[23]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12313,7 +12313,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
@@ -12328,7 +12328,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[2]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[24]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12379,7 +12379,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
@@ -12394,7 +12394,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[25]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12433,7 +12433,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
@@ -12448,7 +12448,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[26]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12499,7 +12499,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
@@ -12514,7 +12514,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[27]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12569,7 +12569,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
@@ -12584,7 +12584,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[28]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12641,6 +12641,126 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="-tf-option-with-two-queries">-tf option with two queries<a class="anchor-link" href="#-tf-option-with-two-queries">&#182;</a></h4>
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_010 -tf "Collection==['Nimble-SCI'] &amp; IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] &amp; IsManipulationTypeRemoval==['Y']" --display</code></pre>
+<p><img src="./notebookImgs/NC16_010_roc_all.png" alt="ROC111" width="700" height="600" align="left"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_0.csv&quot;</span><span class="p">)</span>
+<span class="n">df10</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt output_prompt">Out[29]:</div>
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Query</th>
+      <th>auc</th>
+      <th>fpr_stop</th>
+      <th>eer</th>
+      <th>auc_ci_lower</th>
+      <th>auc_ci_upper</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>(Collection==['Nimble-SCI'] and IsManipulation...</td>
+      <td>0.4525</td>
+      <td>1</td>
+      <td>0.594643</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_1.csv&quot;</span><span class="p">)</span>
+<span class="n">df11</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt output_prompt">Out[30]:</div>
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Query</th>
+      <th>auc</th>
+      <th>fpr_stop</th>
+      <th>eer</th>
+      <th>auc_ci_lower</th>
+      <th>auc_ci_upper</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>(Collection==['Nimble-WEB'] and IsManipulation...</td>
+      <td>0.590206</td>
+      <td>1</td>
+      <td>0.436607</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="--multiFigs-option">--multiFigs option<a class="anchor-link" href="#--multiFigs-option">&#182;</a></h4>
 <pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_007 -fp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; 300 &lt;= ProbeWidth" --multiFigs --ci --display</code></pre>
 <p><img src="./notebookImgs/NC16_007_roc_combine.png" alt="ROC7" width="1000" height="700" align="left"></p>
@@ -12654,8 +12774,7 @@ Examples:
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="--dump-option">--dump option<a class="anchor-link" href="#--dump-option">&#182;</a></h4>
-<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_008 -fp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; 300 &lt;= ProbeWidth" --dump --display</code></pre>
-<p><img src="./notebookImgs/NIST_005_roc_0_1.png" alt="ROC7" width="1000" height="700" align="left"></p>
+<pre><code>python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_008 -fp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; 300 &lt;= ProbeWidth" --dump</code></pre>
 
 </div>
 </div>
@@ -12685,7 +12804,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
@@ -12700,7 +12819,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[31]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12760,7 +12879,7 @@ Examples:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
@@ -12775,7 +12894,7 @@ Examples:
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[32]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12827,7 +12946,7 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><b>The tables are omitted</b></p>
+<p><b>This table is omitted here</b></p>
 
 </div>
 </div>
