@@ -89,13 +89,13 @@ if __name__ == '__main__':
 
         factor_group = parser.add_mutually_exclusive_group()
 
-        factor_group.add_argument('-f', '--factor', nargs='*',
+        factor_group.add_argument('-q', '--query', nargs='*',
         help="Evaluate algorithm performance by given queries.", metavar='character')
 
-        factor_group.add_argument('-fp', '--factorp',
+        factor_group.add_argument('-qp', '--queryPartition',
         help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
-        factor_group.add_argument('-tf', '--targetFilter', nargs='*',
+        factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
         help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials only)", metavar='character')
 
         #TBD: may need this one for provenance filtering
@@ -112,6 +112,8 @@ if __name__ == '__main__':
         parser.add_argument('--ci', action='store_true',
         help="Calculate Confidence Interval for AUC")
 
+        parser.add_argument('--configPlot', action='store_true',
+        help="Open a JSON file that allows the user to customize the plot")
 
 
         args = parser.parse_args()
@@ -129,8 +131,8 @@ if __name__ == '__main__':
         v_print = _v_print
 
 
-        if (not args.factor) and (not args.factorp) and (not args.targetFilter) and (args.multiFigs is True):
-            print("ERROR: The multiFigs option is not available without factors options.")
+        if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
+            print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
         #print("Namespace :\n{}\n".format(args))
@@ -211,8 +213,8 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
          # Partition Mode
-        if args.factor or args.factorp or args.targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
-            print("Partition Mode \n")
+        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+            v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
@@ -222,7 +224,7 @@ if __name__ == '__main__':
 
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
-                    print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
+                    v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
@@ -234,33 +236,33 @@ if __name__ == '__main__':
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
-            if args.factor:
-                factor_mode = 'f'
-                query = args.factor
-            elif args.factorp:
-                factor_mode = 'fp'
-                query = args.factorp
-            elif args.targetFilter:
-                factor_mode = 'tf'
-                query = args.targetFilter
+            if args.query:
+                query_mode = 'q'
+                query = args.query
+            elif args.queryPartition:
+                query_mode = 'qp'
+                query = args.queryPartition
+            elif args.queryManipulation:
+                query_mode = 'qm'
+                query = args.queryManipulation
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=args.farStop, isCI=args.ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI=args.ci)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
             table_df = selection.render_table()
             if isinstance(table_df,list):
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
-            if args.factor:
+            if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_f_query_' + str(i) + '.csv', index = False)
-            elif args.factorp:
-                table_df.to_csv(args.outRoot + '_fp_query.csv')
-            elif args.targetFilter:
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '.csv', index = False)
+            elif args.queryPartition:
+                table_df.to_csv(args.outRoot + '_qp_query.csv')
+            elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '.csv', index = False)
 
 
         # No partitions
@@ -321,7 +323,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if args.factor or args.factorp or args.targetFilter:
+        if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
@@ -355,22 +357,22 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
- #       targetFilter = None
-        factor = None
-        factorp = None
-#        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+ #       queryManipulation = None
+        arg_query = None
+        queryPartition = None
+#        queryManipulation = "Purpose ==['remove', 'splice', 'add']"
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
-#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
-#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
+#        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
+#        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
 #        factor = "Purpose ==['remove']"
-        targetFilter = ["Purpose ==['add']", "Purpose ==['remove']"]
+        queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
 #        print("f query {}".format(factor))
 
-#        factorp = "Purpose ==['remove', 'splice']"
+#        queryPartition = "Purpose ==['remove', 'splice']"
 
-        if (not factor) and (not factorp) and (multiFigs is True):
-            print("ERROR: The multiFigs option is not available without factors options.")
+        if (not query) and (not queryPartition) and (multiFigs is True):
+            print("ERROR: The multiFigs option is not available without querys options.")
             exit(1)
 
 #        if task == 'manipulation':
@@ -481,7 +483,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if factor or factorp or targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args_query or queryPartition or queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
 
@@ -500,10 +502,10 @@ if __name__ == '__main__':
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
-##    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-#                    if args.targetFilter:
+##    #                # for queryManipulation, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+#                    if args.queryManipulation:
 #                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
-#                        chosenField = [x.strip() for x in args.targetFilter.split('==')]
+#                        chosenField = [x.strip() for x in args.queryManipulation.split('==')]
 #                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
 #                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
@@ -511,35 +513,35 @@ if __name__ == '__main__':
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
-            if factor:
-                factor_mode = 'f'
-                query = factor #TODO: double-check
-            elif factorp:
-                factor_mode = 'fp'
-                query = factorp
-            elif targetFilter: #TODO: testcases
-                factor_mode = 'tf'
-                query = targetFilter
+            if args_query:
+                query_mode = 'q'
+                query = args_query #TODO: double-check
+            elif args_queryPartition:
+                query_mode = 'qp'
+                query = args_queryPartition
+            elif args_queryManipulation: #TODO: testcases
+                query_mode = 'qm'
+                query = args_queryManipulation
                 #query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
                 #print("targetQuery {}".format(query))
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=farStop, isCI=ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
             table_df = selection.render_table()
             if isinstance(table_df,list):
                 print("Number of table DataFrame generated = {}\n".format(len(table_df)))
-            if factor:
+            if args_query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_f_query_' + str(i) + '.csv', index = False)
-            elif factorp:
-                table_df[0].to_csv(outRoot + '_fp_query.csv') #table_df is List type
-            elif args.targetFilter:
+                    df.to_csv(outRoot + '_q_query_' + str(i) + '.csv', index = False)
+            elif args_queryPartition:
+                table_df[0].to_csv(outRoot + '_qp_query.csv') #table_df is List type
+            elif args_queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_qm_query_' + str(i) + '.csv', index = False)
 
         # No partitions
         else:
@@ -599,7 +601,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if factor or factorpor or targetFilter:
+        if args_query or args_queryPartition or args_queryManipulation:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
