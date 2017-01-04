@@ -287,10 +287,19 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+        
+                       
+        if os.path.isfile(dict_plot_options_path_name):
+            # Loading of the plot_options json config file
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        else:
+            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        
+        # opening of the plot_options json config file from command-line
+        if args.configPlot:
+            p.open_plot_options(dict_plot_options_path_name)
 
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
 
         # Dumping DetMetrics objects
         if args.dump:
@@ -565,10 +574,18 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
-
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
+                
+        if os.path.isfile(dict_plot_options_path_name):
+            # Loading of the plot_options json config file
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        else:
+            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        
+        # opening of the plot_options json config file from command-line
+        configPlot = False
+        if configPlot:
+            p.open_plot_options(dict_plot_options_path_name)
 
         # Dumping DetMetrics objects
         if dump:
