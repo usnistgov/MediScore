@@ -35,6 +35,7 @@ class Partition:
         self.factor_mode = factor_mode
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
+        self.task = dataframe['TaskID'].iloc[0]
 
         # If we have a list of queries
         if self.factor_mode == 'f':
@@ -193,9 +194,9 @@ class Partition:
 
     #def render_table(self):
     def render_table(self,metrics):
-        """ This function compute a table (as a dataframe) for each partitions
-            containing the informations stored in the corresponding DetMetric object.
-            It returns a list of dataframe in 'f' mode and
+        """ This function computes a table (as a dataframe) for each partition
+            containing the informations stored in the corresponding object.
+            It returns a list of dataframes in 'f' mode and
             one dataframe listing all the partitions in 'fp' mode
         """
 
@@ -210,7 +211,10 @@ class Partition:
             dm = self.part_metric_list[0]
             for m in metrics:
                 data[m] = [dm[m].mean()]
-            return [pd.DataFrame(data=data,columns=metrics)]
+            data['TaskID'] = self.task
+            columns = ['TaskID']
+            columns.extend(metrics)
+            return [pd.DataFrame(data=data,columns=columns)]
 
         if self.factor_mode == 'f':
             df_list = list()
@@ -227,8 +231,10 @@ class Partition:
 #                         'eer':dm.eer,
 #                         'auc_ci_lower':dm.ci_lower,
 #                         'auc_ci_upper':dm.ci_upper}
-                columns = ['Query'].append(metrics)
 #                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
+                data['TaskID'] = self.task
+                columns = ['TaskID','Query']
+                columns.extend(metrics)
                 df_list.append(pd.DataFrame(data=data,columns=columns))
             return df_list
 
@@ -260,8 +266,10 @@ class Partition:
 #                data['eer'].append(dm.eer)
 #                data['auc_ci_lower'].append(dm.ci_lower)
 #                data['auc_ci_upper'].append(dm.ci_upper)
+                data['TaskID'] = self.task
 
-            columns = list(self.factors_order)
+            columns = ['TaskID']
+            columns.extend(self.factors_order)
             columns.extend(metrics)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]

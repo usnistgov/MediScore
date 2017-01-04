@@ -115,14 +115,14 @@ def store_avg(querydf,metlist,store_df,index,precision):
 #
 #    return df_avg
 
-def createReportSSD(m_df, journalMask, refDir, sysDir, rbin, sbin, targetManiType,erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
+def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiType,erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for single source detection, specifically for the manipulation task
      * Description: this function calls each metric function and
                     return the metric value and the colored mask output as a report
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
-     *     journalMask: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
+     *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)

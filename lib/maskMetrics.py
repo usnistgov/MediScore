@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
 """
- *File: masks.py
+ *File: maskMetrics.py
  *Date: 12/22/2016
  *Original Author: Daniel Zhou
  *Co-Author: Yooyoung Lee
  *Status: Complete
 
- *Description: this code contains the image object for the ground truth image.
- The image object contains methods for evaluating the scores for the ground
- truth image.
+ *Description: this code contains the metrics for evaluating the accuracy
+               of the system output mask regions, as well as the runner that
+               runs the metrics over each pair of masks.
 
 
  *Disclaimer:
@@ -185,7 +185,7 @@ class maskMetricList:
                     os.system('mkdir ' + subOutRoot)
 
                 rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
-                rImg.save(rbin_name)
+                rImg.save(rbin_name,th=254)
 
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
                 if self.sbin >= 0:
@@ -273,9 +273,9 @@ class maskMetricList:
                                       'colorMask' : os.path.abspath(colMaskName),
   				      'nmm' : nmm,
                                       'totalPixels' : np.sum(mywts==255),
-                                      'fp' : confmeasures['FP'],
-                                      'fn' : confmeasures['FN'],
-                                      'tp' : confmeasures['TP'],
+                                      'fp' : int(confmeasures['FP']),
+                                      'fn' : int(confmeasures['FN']),
+                                      'tp' : int(confmeasures['TP']),
                                       'ns' : np.sum(mywts==0)})
         #print htmlstr
         fprefix=os.path.basename(maniImageFName)
@@ -391,6 +391,7 @@ class maskMetrics:
         elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform
             sys.bwmat = sys.matrix
 
+        self.sys_threshold = systh
         self.conf = self.confusion_measures(ref,sys,w)
 
         #record this dictionary of parameters
@@ -408,15 +409,15 @@ class maskMetrics:
 
         if popt==1:
             #for nicer printout
-            if (nmm==1) or (nmm==-1):
+            if (self.nmm==1) or (self.nmm==-1):
                 print("NMM: %d" % self.nmm)
             else:
                 print("NMM: %0.9f" % self.nmm)
-            if (mcc==1) or (mcc==-1):
+            if (self.mcc==1) or (self.mcc==-1):
                 print("MCC: %d" % self.mcc)
             else:
                 print("MCC (Matthews correlation coeff.): %0.9f" % self.mcc)
-            if (wL1==1) or (wL1==0):
+            if (self.wL1==1) or (self.wL1==0):
                 print("WL1: %d" % self.wL1)
             else:
                 print("Weighted L1: %0.9f" % self.wL1)
@@ -433,7 +434,9 @@ class maskMetrics:
 #            else:
 #                print("Hinge Loss L1: %0.9f" % hL1)
 
-        return {'NMM':self.nmm,'MCC':self.mcc,'WL1':self.wL1}.update(self.conf)
+        metrics = {'NMM':self.nmm,'MCC':self.mcc,'WL1':self.wL1}
+        metrics.update(self.conf)
+        return metrics
 
     def confusion_measures_gs(self,ref,sys,w):
         """
@@ -450,7 +453,11 @@ class maskMetrics:
         *     dictionary of the TP, TN, FP, and FN area, and N (total score region)
         """
         r=ref.bwmat.astype(int) #otherwise, negative values won't be recorded
-        s=sys.matrix.astype(int)
+        s=0
+        if self.sys_threshold >= 0:
+            s=sys.matrix.astype(int)
+        else:
+            s=sys.bwmat.astype(int)
         x=np.multiply(w,(r-s)/255.) #entrywise product of w and difference between masks
 
         #white is 1, black is 0
@@ -485,7 +492,7 @@ class maskMetrics:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
         r = ref.bwmat.astype(int)
-        #TODO: placeholder until something else covers it
+        #TODO: placeholder until something better covers it
         if sys.bwmat is 0:
             sys.binarize(254)
 
@@ -552,7 +559,7 @@ class maskMetrics:
         """
         * Metric: Hamming distance
         * Description: this function calculates the Hamming distance
-                                     between the reference mask and the system output mask
+                       between the reference mask and the system output mask
                       This metric is no longer called in getMetrics.
         * Inputs:
         *     ref: the reference mask object
@@ -561,8 +568,13 @@ class maskMetrics:
         *     Hamming distance value
         """
 
-        rmat = ref.bwmat
-        smat = sys.matrix
+        rmat = ref.bwmat.astype(int)
+        smat=0
+        if self.sys_threshold >= 0:
+            smat=sys.matrix.astype(int)
+        else:
+            smat=sys.bwmat.astype(int)
+
         ham = np.sum(abs(rmat - smat))/255./(rmat.shape[0]*rmat.shape[1])
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
@@ -580,8 +592,12 @@ class maskMetrics:
         *     Normalized WL1 value
         """
 
-        rmat = ref.bwmat.astype(np.float64)
-        smat = sys.matrix.astype(np.float64)
+        rmat = ref.bwmat.astype(int)
+        smat=0
+        if self.sys_threshold >= 0:
+            smat=sys.matrix.astype(int)
+        else:
+            smat=sys.bwmat.astype(int)
 
         wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)

@@ -218,7 +218,7 @@ if args.task == 'manipulation':
 
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['OutputProbeMaskFileName'])
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
@@ -228,10 +228,13 @@ if args.task == 'manipulation':
     journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
     n_journals = len(journalData0)
     journalData0['scored'] = pd.Series(['N']*n_journals) #add column for scored: 'Y'/'N'
+    journalData = journalData0.copy()
 
     if (args.targetManiType != 'all'):
-        journalData = journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))) #filter by targetManiType
-        journalData0.loc[journalData0.query('Purpose=={}'.format(args.targetManiType.split(','))).index,'scored'] = 'Y'
+        journalData = journalData0.query("Purpose=={}".format(args.targetManiType.split(','))) #filter by targetManiType
+        journalData0.loc[journalData0.query("Purpose=={}".format(args.targetManiType.split(','))).index,'scored'] = 'Y'
+    else:
+        journalData0.loc[journalData0.query("ProbeFileID=={}".format(sub_ref['ProbeFileID'].tolist())).index,'scored'] = 'Y'
 
     #m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
     #m_df = pd.merge(journalMask,m_df,how='left',on='JournalID')
@@ -243,7 +246,7 @@ if args.task == 'manipulation':
 
     r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
-    journalData0.ix[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
+    journalData0.ix[journalData.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
 
     r_df = r_df.query('MCC > -2') #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     metrics = ['NMM','MCC','WL1']
@@ -298,7 +301,7 @@ elif args.task == 'splice':
             
     elif args.factorp or (factor_mode == ''):
         a_df = df_list[0]
-        a_df.to_csv(path_or_buf=os.path.join(outRoot,"mask_score.csv"),index=False)
+        a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
 
 if verbose: #to avoid complications of print formatting when not verbose
     precision = args.precision
