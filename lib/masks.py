@@ -125,7 +125,7 @@ class mask(object):
         * Output:
         *     the binarized matrix
         """
-        ret,mymat = cv2.threshold(self.matrix,threshold,255,cv2.THRESH_BINARY)
+        _,mymat = cv2.threshold(self.matrix,threshold,255,cv2.THRESH_BINARY)
         return mymat
 
     #flips mask
@@ -140,13 +140,33 @@ class mask(object):
 
     def dimcheck(self,img):
         """
-        * Description: dimensional validation against masks. Image assumed to have been entered as a matrix for flexibility.
+        * Description: dimensional validation against masks. Image assumed to have been entered as a matrix for flexibility
         * Input:
         *     img: the image to validate dimensionality against
         * Output:
         *     True or False, depending on whether the dimensions are equivalent
         """
         return self.get_dims() == img.shape
+
+    @staticmethod
+    def getColors(img,popt=0):
+        """
+        * Description: outputs the (non-white) colors of the image and their total
+        * Input:
+        *     img: the image to determine the distinct (non-white) colors
+        *     popt: whether or not to print the colors and number of colors
+        * Output:
+        *     the distinct colors in the image and the total number of distinct colors
+        """
+        colors = list(set(tuple(p) for m2d in img for p in m2d))
+        colors.remove((255,255,255))
+        if popt==1:
+            for c in colors:
+                print(c)
+            print("Total: " + len(colors))
+
+        return colors,len(colors)
+
 
     def overlay(self,imgName,alpha=0.7):
         """
@@ -223,10 +243,12 @@ class mask(object):
         *     compression: the PNG compression level. 0 for no compression, 9 for maximum compression
         *     th: the threshold to binarize the image. Selecting a threshold less than 0 will not
                   binarize the image
+        * Output:
+        *     0 if saved with no incident, 1 otherwise
         """
         if fname[-4:] != '.png':
             print("You should only save {} as a png. Remember to add on the prefix.".format(self.name))
-            return 0
+            return 1
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(compression)
@@ -236,6 +258,7 @@ class mask(object):
                 self.binarize(th)
             outmat = self.bwmat
         cv2.imwrite(fname,outmat,params)
+        return 0
 
 class refmask(mask):
     """
@@ -329,7 +352,7 @@ class refmask(mask):
                             It parses the BGR color codes to determine the color corresponding to the
                             type of manipulation
         * Inputs:
-        *     dilateKernSize: total length of the dilation kernel matrix
+        *     dilateKernSize: total length of the dilation kernel matrix for the unselected no-score region
         *     kern: kernel shape to be used
         * Output:
         *     weights: the weighted matrix computed from the distraction zones
@@ -345,8 +368,8 @@ class refmask(mask):
         dKern=getKern(kern,dilateKernSize)
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-        notcolors = list(set(tuple(p) for m2d in mymat for p in m2d))
-        notcolors.remove((255,255,255))
+        notcolors,_ = mask.getColors(mymat)
+
         for c in self.colors:
             notcolors.remove(tuple(c))
 
