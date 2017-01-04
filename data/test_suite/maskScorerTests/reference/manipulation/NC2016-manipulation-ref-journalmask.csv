@@ -1,1 +1,2 @@
-JournalID|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgumentlights|light|lightplus|PasteSampled|0 0 0|clone|lights
+JournalID|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument
+lights|light|lightplus|PasteSampled|0 0 0|clone|lights
