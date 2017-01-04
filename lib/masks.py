@@ -158,8 +158,14 @@ class mask(object):
         * Output:
         *     the distinct colors in the image and the total number of distinct colors
         """
-        colors = list(set(tuple(p) for m2d in img for p in m2d))
-        colors.remove((255,255,255))
+
+        if len(img.shape) == 3:
+            colors = list(set(tuple(p) for m2d in img for p in m2d))
+            colors.remove((255,255,255))
+        elif len(img.shape) == 2:
+            colors = list(set(p for m2d in img for p in m2d))
+            colors.remove(255) 
+
         if popt==1:
             for c in colors:
                 print(c)
