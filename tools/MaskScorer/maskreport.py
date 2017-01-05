@@ -115,7 +115,7 @@ def store_avg(querydf,metlist,store_df,index,precision):
 #
 #    return df_avg
 
-def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiType,erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
+def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiType,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for single source detection, specifically for the manipulation task
      * Description: this function calls each metric function and
@@ -130,6 +130,7 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiTyp
      *     targetManiType: target manipulation types to be scored
      *     erodekernSize: Kernel size for Erosion
      *     dilatekernSize: Kernel size for Dilation
+     *     distractionkernSize: Kernel size for dilation for the distraction no-score regions
      *     kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
      *     outputRoot: the directory for outputs to be written
      *     html: whether or not to output an HTML report
@@ -144,7 +145,7 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiTyp
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
-    df = maskMetricRunner.getMetricList(targetManiType,erodeKernSize,dilateKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
+    df = maskMetricRunner.getMetricList(targetManiType,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     merged_df = pd.merge(m_df,df,how='left',on='OutputProbeMaskFileName')
 
@@ -197,10 +198,10 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin)
-    probe_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
+    probe_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode='Donor') #donor images
-    donor_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
+    donor_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",

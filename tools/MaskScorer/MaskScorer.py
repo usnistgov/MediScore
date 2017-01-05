@@ -87,6 +87,8 @@ parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('--dks',type=int,default=9,
 help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
+parser.add_argument('--ntdks',type=int,default=15,
+help="Non-target dilation kernel for distraction no-score regions. Size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('-k','--kernel',type=str,default='box',
 help="Convolution kernel type for erosion and dilation. Choose from [box],[disc],[diamond],[gaussian], or [line]. The default is 'box'.",metavar='character')
 parser.add_argument('--rbin',type=int,default=-1,
@@ -244,7 +246,7 @@ if args.task == 'manipulation':
     #DM_List = selection.part_dm_list
     #table_df = selection.render_table()
 
-    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.ntdks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
     journalData0.ix[journalData.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
 

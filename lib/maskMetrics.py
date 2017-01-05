@@ -117,24 +117,22 @@ class maskMetricList:
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
 
-    def getMetricList(self,targetManiType,erodeKernSize,dilateKernSize,kern,outputRoot,verbose,html,maniImageFName='',precision=16,includeDistraction=True):
+    def getMetricList(self,targetManiType,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,maniImageFName='',precision=16):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
         *     targetManiType: the target types to search to be manipulated
         *     erodeKernSize: length of the erosion kernel matrix
         *     dilateKernSize: length of the dilation kernel matrix
+        *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
+                                   0 means nothing will be scored
         *     kern: kernel shape to be used
         *     outputRoot: the directory for outputs to be written
         *     verbose: permit printout from metrics
         *     html: whether or not to generate an HTML report
         *     maniImageFName: the list of Probe File images. Only relevant if html=True
         *     precision: the number of digits to round the computed metrics to.
-        *     includeDistraction: whether or not to include the distraction manipulation no-score zones.
-                                  True will include the distraction no-score zones in the final weighted image.
-                                  False will simply treat it as another region to be weighted.
-                                  (default: True)
-        * Outputs:
+        * Output:
         *     df: a dataframe of the computed metrics
         """
         #reflist and syslist should come from the same dataframe, so length checking is not required
@@ -193,7 +191,7 @@ class maskMetricList:
                     sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
-                wts = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,kern,includeDistraction)
+                wts = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
 
                 #computes differently depending on choice to binarize system output mask
                 mets = 0
