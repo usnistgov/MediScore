@@ -35,7 +35,6 @@ import Partition as f
 #import time
 
 
-
 ########### Command line interface ########################################################
 
 if __name__ == '__main__':
@@ -46,74 +45,88 @@ if __name__ == '__main__':
     # Command-line mode
     if not debug_mode_ide:
 
-        parser = argparse.ArgumentParser(description='NIST detection scorer.')
-
-        parser.add_argument('-t','--task', default='manipulation', choices=['manipulation','splice','provenancefiltering', 'provenance'],
-        help='Four different types of tasks: [manipulation], [splice], [provenancefiltering] or [provenance] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--refDir',default='.',
-        help='Reference and index file path: [e.g., ../NC2016_Test] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-r','--inRef',default='reference/manipulation/reference.csv',
-        help='Reference csv file name: [e.g., reference/manipulation/reference.csv] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-x','--inIndex',default='indexes/index.csv',
-        help='Task Index csv file name: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--sysDir',default='.',
-        help='System output file path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-s','--inSys',default="",
-        help='System output csv file name: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
-
+        def is_file_specified(x):
+            if x == '':
+                raise argparse.ArgumentTypeError("{0} not provided".format(x))
+            return x
+            
         def restricted_float(x):
             x = float(x)
             if x < 0.0 or x > 1.0:
                 raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
             return x
+        
+        parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
+        #Task Type Options
+        parser.add_argument('-t','--task', default='manipulation', 
+                            choices=['manipulation','splice'], # add provenanceFiltering and provenance in future
+                            help='Define the target manipulation task type for evaluation:[manipulation] and [splice] (default: %(default)s)',metavar='character')
+        
+        #Input Options
+        parser.add_argument('--refDir', default='.',
+                            help='Specify the reference and index data path: [e.g., ../NC2016_Test] (default: %(default)s)', metavar='character')
+                            #type=lambda x: is_dir(parser, x))#Optional
+
+        parser.add_argument('-r','--inRef', default='', type=is_file_specified,
+                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character') 
+                            #type=lambda x: is_file(parser, x))# Mandatory     
+
+        parser.add_argument('-x','--inIndex',default='', type=is_file_specified,
+                            help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
+
+        parser.add_argument('--sysDir',default='.',
+                            help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character') #Optional
+
+        parser.add_argument('-s','--inSys',default='', type=is_file_specified,
+                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')    
+
+        # Metric Options
         parser.add_argument('--farStop',type=restricted_float, default = 1,
-        help="FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
+                            help="Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
+        
+        parser.add_argument('--ci', action='store_true',
+                            help="Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.")
 
+        # Output Options
         parser.add_argument('--outRoot',default='.',
-        help='Report output file (plot and table) path along with the file suffix: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
-        help="Plot option:[roc] and [det] (default: %(default)s)", metavar='character')
+                            help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
         parser.add_argument('--dump', action='store_true',
-        help="DetMetrics object dumping option")
-
+                            help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
+        
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help="Print output with procedure messages on the command-line if this option is specified.")
+        
+        # Plot Options
+        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
+                            help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
+    
         parser.add_argument('--display', action='store_true',
-        help="display plots")
+                            help="Display a window with the plot (s) on the command-line if this option is specified.")
+        
+        parser.add_argument('--multiFigs', action='store_true',
+                            help="Generate plots (with only one curve) per a partition ")
+        # Custom Plot Options
+        parser.add_argument('--configPlot', action='store_true',
+                            help="Open a JSON file that allows the user to customize the plot (e.g. change the title font size) by augmenting the json files located in the 'plotJsonFiles' folder.")
 
+        # Performance Evaluation by Query Options
         factor_group = parser.add_mutually_exclusive_group()
 
         factor_group.add_argument('-q', '--query', nargs='*',
-        help="Evaluate algorithm performance by given queries.", metavar='character')
+                                  help="Evaluate algorithm performance on a partitioned dataset (or subset) using multiple queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
         factor_group.add_argument('-qp', '--queryPartition',
-        help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+                                  help="Evaluate algorithm performance on a partitioned dataset (or subset) using one query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves. (syntax retriction: '==[]','<','<=')", metavar='character')
 
         factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
-        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials only)", metavar='character')
+                                  help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
         #TBD: may need this one for provenance filtering
-        #Note that this requires different mutually exclusive gropu to use both -tf and -nf at the same time
-#        parser.add_argument('-nf', '--nontargetFilter',
+        #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
+#        parser.add_argument('-qn', '--queryNonManipulation',
 #        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
-
-        parser.add_argument('--multiFigs', action='store_true',
-        help="Generate plots (with only one curve) per a partition ")
-
-        parser.add_argument('-v', '--verbose', action='store_true',
-        help="Increase output verbosity")
-
-        parser.add_argument('--ci', action='store_true',
-        help="Calculate Confidence Interval for AUC")
-
-        parser.add_argument('--configPlot', action='store_true',
-        help="Open a JSON file that allows the user to customize the plot")
 
 
         args = parser.parse_args()
@@ -130,22 +143,20 @@ if __name__ == '__main__':
         global v_print
         v_print = _v_print
 
-
         if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
             print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
-        #print("Namespace :\n{}\n".format(args))
+        print("Namespace :\n{}\n".format(args))
 
         # Loading the reference file
         try:
-
             myRefFname = args.refDir + "/" + args.inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
-            print("ERROR: There was an error opening the reference csv file")
+            print("ERROR: There was an error opening the reference csv file '" + myRefFname + "'")
             exit(1)
 
         # Loading the JTjoin and JTmask file

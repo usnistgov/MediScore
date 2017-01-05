@@ -11769,7 +11769,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of four distinctive detection tasks, namely 1) Manipulation, 2) Splice, 3) Provenance Filtering (TBD), and 4) Provenance Graph Building (namely, provenance)(TBD). The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image. The provenance filtering task is to retrieve the top N images from the provided world dataset, containing images that contributed to creating a probe image. The provenance graph building task is to contruct a phylogeny graph for a probe image and the images contributing to the probe image that are within the ‘world’ collection of images. Please refer the detailed information in the document "Nimble Challenge 2017 Evaluation Data and Tool" </p>   
+<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of two distinctive detection tasks, namely 1) Manipulation Detection and 2) Splice Detection. The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image.  Please refer the detailed information in the document "Nimble Challenge 2017 Evaluation Data and Tool" </p>   
 <p>The script calculates performance measures of AUC (Area Under Curve) and EER (Equal Error Rate)
 based on a system's output (e.g., confidence scores) for the tasks described above. The output is a report table (CSV) that includes the measures of AUC, EER, and AUC_CI (confidence interval for AUC), and a graphical plot (PDF) that supports either ROC (receiver operating characteristic) or DET (detection error tradeoff) for algorithm performance results. In addition, this script allows the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries.</p>
 </div>
@@ -11792,7 +11792,6 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <p>Syntax:</p>
 
 <pre><code>python DetectionScorer.py [-t task] [--refDir] [-r inRef] [-x inIndex] [-s inSys] [--outRoot] ...</code></pre>
-<p>This command generates the ROC plot and the report table for evaluating algorithm performance given the reference data and the system output.</p>
 
 </div>
 </div>
@@ -11821,7 +11820,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-t --task [manipulation, splice, provenancefiltering, provenance]</p>
+<p>-t --task [manipulation, splice]</p>
 <ul>
 <li>Define the target manipulation task type for evaluation (default = manipulation). This is a value of the "TaskID" column in the index file. </li>
 </ul>
@@ -11956,10 +11955,9 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--dump</p>
 <ul>
-<li>Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.
-``` </li>
+<li>Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.<pre></li>
 <li>Dump file output: NIST_001_query_0.dm, NIST_001_query_1.dm, ...
-```</li>
+&lt;/pre&gt;</li>
 </ul>
 
 </div>
@@ -12033,9 +12031,9 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--multiFigs</p>
 <ul>
-<li>Generate a single curve plot per partition
-<pre><code> - Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...</code></pre>
-</li>
+<li>Generate a single curve plot per partition<pre>
+Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
+</pre></li>
 </ul>
 
 </div>
@@ -12961,7 +12959,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><b>The tables are omitted fron now on.</b></p>
+<p><b>The tables are omitted from now on.</b></p>
 
 </div>
 </div>
