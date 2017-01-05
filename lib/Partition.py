@@ -205,7 +205,7 @@ class Partition:
                          'auc_ci_upper':dm.ci_upper}
                 index = ['P:']
                 columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
-                df_list.append(pd.DataFrame(data,index,columns))
+                df_list.append(pd.DataFrame(data,index,columns).round(6))
             return df_list
 
         elif self.factor_mode == 'qp':
@@ -234,7 +234,7 @@ class Partition:
             columns = list(self.factors_order)
             columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
-            df = pd.DataFrame(data,index,columns)
+            df = pd.DataFrame(data,index,columns).round(6)
             return df
 
     def __repr__(self):
