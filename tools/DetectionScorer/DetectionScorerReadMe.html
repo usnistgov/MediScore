@@ -11789,9 +11789,10 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Syntax:</p>
-
-<pre><code>python DetectionScorer.py [-t task] [--refDir] [-r inRef] [-x inIndex] [-s inSys] [--outRoot] ...</code></pre>
+<p>Syntax:
+<code>
+python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
+</code></p>
 
 </div>
 </div>
@@ -11857,7 +11858,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-r --inRef</p>
 <ul>
-<li>Specify the reference CSV file (under the refDir folder) that contains the ground-truth information</li>
+<li>Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information</li>
 <li>For example, the fields are: TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|...             </li>
 </ul>
 
@@ -11898,7 +11899,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-s --inSys</p>
 <ul>
-<li>Specify the CSV file of the system performance result formatted according to NC2016 specification</li>
+<li>Specify the CSV file of the system performance result formatted according to the specification</li>
 </ul>
 
 </div>
@@ -11921,6 +11922,19 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <p>--farStop</p>
 <ul>
 <li>Specify the stop point of FAR for calculating partial AUC. The default (1) provides the full AUC value.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--ci</p>
+<ul>
+<li>Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.</li>
 </ul>
 
 </div>
@@ -11971,19 +11985,6 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <p>-v --verbose</p>
 <ul>
 <li>Print output with procedure messages on the command-line if this option is specified.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--ci</p>
-<ul>
-<li>Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.</li>
 </ul>
 
 </div>
@@ -12090,7 +12091,7 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 <ul>
 <li>Query (-q --query): this option allows the user to specify multiple queries. Each query filters both target and non-target trials and then processes one scoring run of the system output to generate the requested scoring report.</li>
 <li>Query for partitions (-qp --queryPartition): this option allows the user to specify one query. The query separates the data set into M partitions by filtering both target and non-target trials and processes one or multiple scoring runs of the system output to generate the requested scoring report.</li>
-<li>Query for selective manipulations (-qm --queryManipulation): this option allows the user to specify multiple queries. Each query restricts on filtering the target trials only (while using all non-target trials) to generate the requested scoring report.</li>
+<li>Query for selective manipulations (-qm --queryManipulation): this option allows the user to specify multiple queries. Each query restricts filtering to target trials only (while using all non-target trials) to generate the requested scoring report.</li>
 </ul>
 
 </div>
@@ -12103,7 +12104,7 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-q --query</p>
 <ul>
-<li>Evaluate algorithm performance on a partitioned dataset (or subset) using multiple queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
+<li>Evaluate algorithm performance selecting the targets and non-targets via a query. Multiple queries can be used. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
 <li>Syntax : -q "query1" "query2" "query3" ... 
 <pre><code>- The syntax is the same with Pandas' query syntax. Please see the detailed query rule in the website: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query.
 Examples:
@@ -12130,7 +12131,7 @@ Examples:
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-qp --queryPartition</p>
 <ul>
-<li>Evaluate algorithm performance on a partitioned dataset (or subset) using one query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves.<ul>
+<li>Evaluate algorithm performance partitioning the dataset via a query.  The partitions are automatically determined based on the metadata factors identified in the query.  Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves.<ul>
 <li>Syntax : -fp "query"
 <pre><code>- The query syntax only allows the three operators "==[]", "&lt;", and "&lt;=".
 Examples: 
@@ -12157,7 +12158,7 @@ Examples:
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-qm --queryManipulation</p>
 <ul>
-<li>This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
+<li>This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') while all non-target trials are used. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
 <li>Syntax : -qm "query1" "query2" "query3" ... 
 <pre><code>- The syntax is the same with Pandas' query syntax, 
  note that your query will be converted as to ("query" and IsTarget == ['Y']) or IsTarget == ['N'])
