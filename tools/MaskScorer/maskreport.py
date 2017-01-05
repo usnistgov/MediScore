@@ -198,10 +198,10 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin)
-    probe_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
+    probe_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode='Donor') #donor images
-    donor_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision,includeDistraction=False)
+    donor_df = maskMetricRunner.getMetricList('all',erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",
