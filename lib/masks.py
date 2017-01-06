@@ -374,7 +374,9 @@ class refmask(mask):
         notcolors,_ = mask.getColors(mymat)
 
         for c in self.colors:
-            notcolors.remove(tuple(c))
+            if tuple(c) in notcolors:
+                notcolors.remove(tuple(c))
+            #skip the colors that aren't present, in case they haven't made it to the mask in question
 
         mybin = np.ones((dims[0],dims[1])).astype(np.uint8)
         for c in notcolors:

@@ -77,10 +77,15 @@ class maskMetricList:
         *     refMaskFName: the name of the reference mask to be parsed
         *     sysMaskFName: the name of the system output mask to be parsed
         *     targetManiType: the target types to search to be manipulated
+        *     verbose: permit printout from metrics
         * Outputs:
         *     rImg: the reference mask object
         *     sImg: the system output mask object
         """
+
+        if verbose:
+            print("Reference Mask: {}, System Mask: {}".format(refMaskFName,sysMaskFName))
+
         refMaskName = os.path.join(self.refDir,refMaskFName)
         sysMaskName = os.path.join(self.sysDir,sysMaskFName)
   
@@ -156,7 +161,8 @@ class maskMetricList:
 
         for i,row in df.iterrows():
             if syslist[i] in [None,'',np.nan]:
-                print("Empty system mask file at index %d" % i)
+                if verbose:
+                    print("Empty system mask file at index %d" % i)
                 continue
             else:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],targetManiType,verbose)
@@ -167,7 +173,8 @@ class maskMetricList:
                     continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     #Likely this could be FP or FN. Set scores as usual.
-                    print("The index is at %d." % i)
+                    if verbose:
+                        print("The index is at %d." % i)
                     continue
 
                 #save all images in their own directories instead, rather than pool it all in one subdirectory.

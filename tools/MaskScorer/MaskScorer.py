@@ -150,7 +150,50 @@ if args.outRoot is None:
 if not os.path.isdir(args.outRoot):
     os.system('mkdir ' + args.outRoot)
 
-printq("Starting a report ...")
+#define HTML functions here
+if args.html:
+    if args.task == 'manipulation':
+        def df2html(df,outputRoot):
+            html_out = df.copy()
+    
+            #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
+            if outputRoot[-1] == '/':
+                outputRoot = outputRoot[:-1]
+    
+            #set links around the system output data frame files for images that are not NaN
+            #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+            pd.set_option('display.max_colwidth',-1)
+            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            #write to index.html
+            fname = os.path.join(outputRoot,'index.html')
+            myf = open(fname,'w')
+            myf.write(html_out.to_html(escape=False))
+            myf.close()
+
+    elif args.task == 'splice':
+        def df2html(df,outputRoot):
+            html_out = df.copy()
+    
+            #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
+            if outputRoot[-1] == '/':
+                outputRoot = outputRoot[:-1]
+    
+            #set links around the system output data frame files for images that are not NaN
+            #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+            #html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
+            pd.set_option('display.max_colwidth',-1)
+            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
+            #write to index.html
+            fname = os.path.join(outputRoot,'index.html')
+            myf = open(fname,'w')
+            myf.write(html_out.to_html(escape=False))
+            myf.close()
+
+    else:
+        df2html = lambda *a:None
+
+printq("Beginning the mask scoring report...")
 
 if args.task == 'manipulation':
     index_dtype = {'TaskID':str,
@@ -206,8 +249,8 @@ if args.verbose:
     reportq = 1
 
 if args.precision < 1:
-    printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 5 digits.")
-    args.precision=5
+    printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 16 digits.")
+    args.precision=16
 
 sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 
@@ -223,7 +266,7 @@ if args.task == 'manipulation':
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['OutputProbeMaskFileName'])
 
     # if the confidence score are 'nan', replace the values with the mininum score
-    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+    m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
@@ -238,6 +281,11 @@ if args.task == 'manipulation':
     else:
         journalData0.loc[journalData0.query("ProbeFileID=={}".format(sub_ref['ProbeFileID'].tolist())).index,'scored'] = 'Y'
 
+    #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
+    if (len(journalData) == 0) or not (True in journalData['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
+        print("The task '{}' was not found in any manipulation in any journal for the queried data.".format(args.targetManiType))
+        exit(0)
+
     #m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
     #m_df = pd.merge(journalMask,m_df,how='left',on='JournalID')
 
@@ -247,12 +295,25 @@ if args.task == 'manipulation':
     #table_df = selection.render_table()
 
     r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.ntdks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-    #get the columns of journalData that were not scored and set the same columns in journalData0 to 'N'
-    journalData0.ix[journalData.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
+    #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
+    journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
+    journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
     r_df = r_df.query('MCC > -2') #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+
+    #add targetManiType for r_df
+    r_df['TargetManipulations'] = args.targetManiType.replace(',',' + ')
+
+    #generate HTML table report
+    if len(r_df) > 0:
+        df2html(r_df,args.outRoot)
+    else:
+        #if nothing was scored, print a message and return
+        print("None of the masks that we attempted to score for this run had regions to be scored. This is not an error.")
+        exit(0)
+
     metrics = ['NMM','MCC','WL1']
-    my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+    my_partition = pt.Partition(r_df,query,factor_mode,args.targetManiType,metrics) #average over queries
     df_list = my_partition.render_table(metrics)
  
     if args.factor:
@@ -264,8 +325,6 @@ if args.task == 'manipulation':
         a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
-    journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
-
 #commenting out for the time being
 #elif args.task in ['removal','clone']:
 #    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
@@ -273,7 +332,7 @@ if args.task == 'manipulation':
 #    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
 #
 #    # if the confidence score are 'nan', replace the values with the mininum score
-#    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+#    m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
 #    # convert to the str type to the float type for computations
 #    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
@@ -286,14 +345,17 @@ elif args.task == 'splice':
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
                                                                 'DonorMaskFileName'])
     # if the confidence score are 'nan', replace the values with the mininum score
-    m_df.ix[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
+    m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
 
+    #generate HTML table report
+    df2html(r_df,args.outRoot)
+
     metrics = ['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
-    my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+    my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
     df_list = my_partition.render_table(metrics)
 
     if args.factor:

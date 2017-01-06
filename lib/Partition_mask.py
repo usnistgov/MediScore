@@ -10,12 +10,13 @@ class Partition:
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
-    def __init__(self,dataframe,query,factor_mode,metrics): #,fpr_stop=1, isCI=False):
+    def __init__(self,dataframe,query,factor_mode,targetManiType,metrics): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
         - factor_mode : 'f' = single query
                         'fp' = cartesian product of the factors
                         '' = no factors. Average the entire frame
+        - targetManiType: manipulations targeted
         - factors_names : list of the dataframe's columns names
         - index_factor : Dictionary {'factor_name': index_of_the_column}
         - n_partitions : number of partitions generated
@@ -33,6 +34,7 @@ class Partition:
         """
 
         self.factor_mode = factor_mode
+        self.targetManiType = targetManiType.replace(',',' + ')
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
         self.task = dataframe['TaskID'].iloc[0]
@@ -212,7 +214,8 @@ class Partition:
             for m in metrics:
                 data[m] = [dm[m].mean()]
             data['TaskID'] = self.task
-            columns = ['TaskID']
+            data['TargetManipulations'] = self.targetManiType
+            columns = ['TaskID','TargetManipulations']
             columns.extend(metrics)
             return [pd.DataFrame(data=data,columns=columns)]
 
@@ -233,7 +236,8 @@ class Partition:
 #                         'auc_ci_upper':dm.ci_upper}
 #                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
                 data['TaskID'] = self.task
-                columns = ['TaskID','Query']
+                data['TargetManipulations'] = self.targetManiType
+                columns = ['TaskID','Query','TargetManipulations']
                 columns.extend(metrics)
                 df_list.append(pd.DataFrame(data=data,columns=columns))
             return df_list
@@ -267,8 +271,9 @@ class Partition:
 #                data['auc_ci_lower'].append(dm.ci_lower)
 #                data['auc_ci_upper'].append(dm.ci_upper)
                 data['TaskID'] = self.task
+                data['TargetManipulations'] = self.targetManiType
 
-            columns = ['TaskID']
+            columns = ['TaskID','TargetManipulations']
             columns.extend(self.factors_order)
             columns.extend(metrics)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])

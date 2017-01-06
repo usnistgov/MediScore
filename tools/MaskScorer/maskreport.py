@@ -149,23 +149,6 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiTyp
 
     merged_df = pd.merge(m_df,df,how='left',on='OutputProbeMaskFileName')
 
-    #generate HTML table report
-    if html:
-        html_out = merged_df.copy()
-
-        #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
-        if (outputRoot[-1] == '/'):
-            outputRoot = outputRoot[:-1]
-
-        #set links around the system output data frame files for images that are not NaN
-        #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-        html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-        #write to index.html
-        fname = os.path.join(outputRoot,'index.html')
-        myf = open(fname,'w')
-        myf.write(html_out.to_html(escape=False))
-        myf.close()
-
     return merged_df
 
 def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
@@ -218,24 +201,6 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
 
     pd_df = pd.concat([probe_df,donor_df],axis=1)
     merged_df = pd.merge(m_df,pd_df,how='left',on=['OutputProbeMaskFileName','OutputDonorMaskFileName'])
-
-    if html:
-        html_out = merged_df.copy()
-
-        #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
-        if (outputRoot[-1] == '/'):
-            outputRoot = outputRoot[:-1]
-
-        #set links around the system output data frame files for images that are not NaN
-        #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-        #html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
-        html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-        html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
-        #write to index.html
-        fname = os.path.join(outputRoot,'index.html')
-        myf = open(fname,'w')
-        myf.write(html_out.to_html(escape=False))
-        myf.close()
 
     return merged_df
 

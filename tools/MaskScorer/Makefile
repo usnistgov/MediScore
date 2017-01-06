@@ -6,4 +6,5 @@ MAKE=make
 check:
 	(cd ../../lib; python2 -m unittest maskTests)
 	(rm ../../lib/testImg*.png)
-	(./maskcompcheckfiles.sh)
+	(./maskcompcheckfiles_0.sh)
+	(./maskcompcheckfiles_1.sh)
