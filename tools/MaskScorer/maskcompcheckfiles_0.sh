@@ -33,6 +33,7 @@ filter_mjr="cat comp_maskreport_manip-journalResults.txt | grep -v CVS"
 if ([ ! -f comp_maskreport_splice.txt -o ! -f comp_maskreport_manip.txt -o ! -f comp_maskreport_splice-perimage.txt -o ! -f comp_maskreport_manip-perimage.txt -o ! -f comp_maskreport_manip-journalResults.txt ]); then
   echo
   echo "    !!!!! MASK SCORER TEST FAILED AT CASE 0 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
   echo
   exit
 fi

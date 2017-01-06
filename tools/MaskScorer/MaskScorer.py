@@ -74,6 +74,7 @@ parser.add_argument('-oR','--outRoot',type=str,default='.',
 help="Directory root to save outputs.",metavar='character')
 
 #added from DetectionScorer.py
+#TODO: rename according to DetectionScorer renaming
 factor_group = parser.add_mutually_exclusive_group()
 factor_group.add_argument('-f', '--factor', nargs='*',
 help="Evaluate algorithm performance by given queries.", metavar='character')

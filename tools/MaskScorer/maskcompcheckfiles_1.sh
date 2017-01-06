@@ -74,19 +74,36 @@ filter_remove="cat comp_maskreport_remove.txt | grep -v -CVS"
 filter_removepi="cat comp_maskreport_remove-perimage.txt | grep -v -CVS"
 filter_removejr="cat comp_maskreport_remove-journalResults.txt | grep -v -CVS"
 
-#TODO: update the testing script accordingly with CASE 1 and CASE 2
- 
-if ([ ! -f comp_maskreport_all.txt -o ! -f comp_maskreport_all-perimage.txt -o ! -f comp_maskreport_all-journalResults.txt ]); then
+if ([ -f comp_maskreport_removal.txt -o -f comp_maskreport_removal-perimage.txt -o -f comp_maskreport_removal-journalResults.txt \
+ -o -f comp_maskreport_heal.txt -o -f comp_maskreport_heal-perimage.txt \
+]); then
   echo
   echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
+  echo "     EXTRA FILES PRESENT     "
+  echo
+  exit
+fi
+ 
+if ([ ! -f comp_maskreport_all.txt -o ! -f comp_maskreport_all-perimage.txt -o ! -f comp_maskreport_all-journalResults.txt \
+ -o ! -f comp_maskreport_clone.txt -o ! -f comp_maskreport_clone-perimage.txt -o ! -f comp_maskreport_clone-journalResults.txt \
+ -o ! -f comp_maskreport_add.txt -o ! -f comp_maskreport_add-perimage.txt -o ! -f comp_maskreport_add-journalResults.txt \
+ -o ! -f comp_maskreport_clone_add.txt -o ! -f comp_maskreport_clone_add-perimage.txt -o ! -f comp_maskreport_clone_add-journalResults.txt \
+ -o ! -f comp_maskreport_remove.txt -o ! -f comp_maskreport_remove-perimage.txt -o ! -f comp_maskreport_remove-journalResults.txt \
+ -o ! -f comp_maskreport_heal-journalResults.txt \
+]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
   echo
   exit
 fi
 
-if test "`eval $filter_m`" = "" ; then
-  flag_m=0
+#TODO: update the testing script accordingly with CASE 1 and CASE 2
+
+if test "`eval $filter_all`" = "" ; then
+  flag_all=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
 	fi
 	rm comp_maskreport_manip.txt
 else
@@ -94,10 +111,10 @@ else
 	cat comp_maskreport_manip.txt
 fi
 
-if test "`eval $filter_mpi`" = "" ; then
-  flag_mpi=0
+if test "`eval $filter_allpi`" = "" ; then
+  flag_allpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manip-perimage.txt
 else
@@ -105,10 +122,10 @@ else
 	cat comp_maskreport_manip-perimage.txt
 fi
 
-if test "`eval $filter_mjr`" = "" ; then
-  flag_mjr=0
+if test "`eval $filter_alljr`" = "" ; then
+  flag_alljr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
 	fi
 	rm comp_maskreport_manip-journalResults.txt
 else
