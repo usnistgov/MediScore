@@ -147,7 +147,7 @@ if __name__ == '__main__':
             print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
-        print("Namespace :\n{}\n".format(args))
+        #print("Namespace :\n{}\n".format(args))
 
         # Loading the reference file
         try:
