@@ -135,7 +135,7 @@ class Render:
         return fig
 
 
-def gen_default_plot_options(path='./plot_options.json',plot_type='DET'):
+def gen_default_plot_options(path="./plotJsonFiles/plot_options.json",plot_type='DET'):
     """ This function generates JSON file to customize the plot.
         path: JSON file name along with the path
         plot_type: either DET or ROC"""
@@ -154,12 +154,20 @@ def gen_default_plot_options(path='./plot_options.json',plot_type='DET'):
         f.write(json.dumps(mon_dict).replace(',', ',\n'))
 
 
-def load_plot_options(path='./plot_options.json'):
+def load_plot_options(path="./plotJsonFiles/plot_options.json"):
     """ Load JSON file for plot options"""
     with open(path, 'r') as f:
         opt_dict = json.load(f)
     return opt_dict
 
+def open_plot_options(path="./plotJsonFiles/plot_options.json"):
+    """ open JSON file for customizng plot options"""
+    import os
+    try:
+        os.system("idle " + path)
+    except IOError:
+        print("ERROR: There was an error opening JSON file")
+        exit(1)
 
 class setRender:
 

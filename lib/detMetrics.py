@@ -107,7 +107,13 @@ class detMetrics:
 #        #label =  np.where(gt=='Y', 1, 0)
 #        yes_mask = np.array(gt == 'Y')#TODO: error here
 #        label[yes_mask] = 1
+        # TODO:  Print the number of trials (target and non-target) here
+
         label = np.where(gt=='Y', 1, 0)
+        target_num = label[label==1].size
+        nontarget_num = label[label==0].size
+        print("Total# ({}),  Target# ({}),  NonTarget# ({}) \n".format(label.size, target_num, nontarget_num))
+
         fpr, tpr, thres = roc_curve(label, score)
         fnr = 1 - tpr
         return fpr, tpr, fnr, thres
@@ -156,7 +162,7 @@ class detMetrics:
 
 def load_dm_file(path):
     """ Load Dump (DM) files
-        path: the DM file name along with the path
+        path: DM file name along with the path
     """
     import pickle
     file = open(path, 'rb')

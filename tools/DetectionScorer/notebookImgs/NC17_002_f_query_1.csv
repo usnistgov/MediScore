@@ -1,0 +1,2 @@
+Query,auc,fpr_stop,eer,auc_ci_lower,auc_ci_upper
+(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N'],0.764561403508772,1,0.24941520467836256,0,0

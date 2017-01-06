@@ -1,6 +1,6 @@
 File: README.txt
-Date: November 21, 2016
-MediScore Version: 1.0.1
+Date: January 6, 2017
+MediScore Version: 1.0.2
 
 NEW Python
 
@@ -10,7 +10,7 @@ example data for the following tools:
 
   SSDValidate      V2.0 - Single Source Detection Validator
   DSDValidate      V2.0 - Double Source Detection Validator
-  DetectionScorer  V2.0 - Single/Double Source Detection Evaluation
+  DetectionScorer  V2.1 - Single/Double Source Detection Evaluation
                           Scorer
   MaskScorer       V2.0 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
@@ -39,6 +39,7 @@ INSTALLATION
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
   - unittest
+
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
     1) https://repo.continuum.io/archive/Anaconda2-4.2.0-Linux-x86_64.sh
@@ -47,6 +48,11 @@ INSTALLATION
     $ conda install -c https://conda.binstar.org/menpo opencv
   - Check the required packages using "conda list"
   - Install missing packages using "conda install"
+
+* SSH with XQuartz on OS X for saving or displaying plots:
+  - If you want to run the code using ssh on OSX, you may install XQuartz from the website:
+    https://www.xquartz.org/, then
+    $ ssh -X servername
 
 3) To test your installation, run MediScore's "make check" in the MediScore directory.
    You should expect to see ERROR messages pop up as we test the behavior of the functions.
@@ -101,9 +107,9 @@ HISTORY
 -------
 
   Oct. 28, 2016 - MediScore Version 1.0.0:
-
     - Python release
-
+  Jan. 6, 2017 - MediScore Version 1.1.0:
+    - Started to support Selective Manipulation Scoring. This is a roll out of the new DetectionScorer.  Note the filter options changed
 
 CONTACT
 -------
