@@ -14,16 +14,16 @@ class Partition:
     def __init__(self,dataframe,query,factor_mode,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
-        - factor_mode : 'f' = single query
-                        'fp' = cartesian product of the factors
-                        'tf' = filtering for target trials
+        - factor_mode : 'q' = single query
+                        'qp' = cartesian product of the factors for partitioning data
+                        'qm' = filtering for target trials for selective manipulation
         - factors_names : list of the dataframe's columns names
         - index_factor : Dictionnary {'factor_name': index_of_the_column}
         - n_partitions : number of partitions generated
         - factor_dict : Dictionnary associating each query's conditions to its factor
         - factors_order : List used to keep track of the factor's order in the query
-        - part_query_list : List containing the single query in 'f' mode or
-                                 containing each query generated query in 'fp' mode
+        - part_query_list : List containing the single query in 'q' and 'qm' mode or
+                                 containing each query generated query in 'qp' mode
                                  base on the cartesian product
         - part_values_list : List of the values' conditions for each factor for
                              each partitions
@@ -36,11 +36,11 @@ class Partition:
         self.index_factor = self.gen_index_factor(self.factors_names)
 
         # If we have a list of queries
-        if self.factor_mode == 'f' or self.factor_mode == 'tf':
+        if self.factor_mode == 'q' or self.factor_mode == 'qm':
             #self.query = None
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
-        elif self.factor_mode == 'fp':
+        elif self.factor_mode == 'qp':
             self.query = query.replace(' ','')
             #TODO: Simplify the factors dictionnary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
@@ -138,7 +138,7 @@ class Partition:
         df_list = list()
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
-            if self.factor_mode == 'tf':
+            if self.factor_mode == 'qm':
                 #testing as the manipulation task
                 query = "("+query+ " and IsTarget == ['Y']) or IsTarget == ['N']"
                 print("Query for target trials: {}".format(query))
@@ -184,8 +184,8 @@ class Partition:
     def render_table(self):
         """ This function compute a table (as a dataframe) for each partitions
             containing the informations stored in the corresponding DetMetric object.
-            It returns a list of dataframe in 'f' mode and
-            one dataframe listing all the partitions in 'fp' mode
+            It returns a list of dataframe in 'q' and 'qm' mode and
+            one dataframe listing all the partitions in 'qp' mode
         """
 
         def find_factor_list_pos(List, factor):
@@ -193,7 +193,7 @@ class Partition:
             while factor not in List[i]: i += 1
             return i
 
-        if self.factor_mode == 'f' or self.factor_mode == 'tf':
+        if self.factor_mode == 'q' or self.factor_mode == 'qm':
             df_list = list()
             for i,query in enumerate(self.part_query_list):
                 dm = self.part_dm_list[i]
@@ -205,10 +205,10 @@ class Partition:
                          'auc_ci_upper':dm.ci_upper}
                 index = ['P:']
                 columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
-                df_list.append(pd.DataFrame(data,index,columns))
+                df_list.append(pd.DataFrame(data,index,columns).round(6))
             return df_list
 
-        elif self.factor_mode == 'fp':
+        elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
             data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
@@ -234,7 +234,7 @@ class Partition:
             columns = list(self.factors_order)
             columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
-            df = pd.DataFrame(data,index,columns)
+            df = pd.DataFrame(data,index,columns).round(6)
             return df
 
     def __repr__(self):

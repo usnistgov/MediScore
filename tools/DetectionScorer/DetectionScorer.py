@@ -35,7 +35,6 @@ import Partition as f
 #import time
 
 
-
 ########### Command line interface ########################################################
 
 if __name__ == '__main__':
@@ -46,72 +45,88 @@ if __name__ == '__main__':
     # Command-line mode
     if not debug_mode_ide:
 
-        parser = argparse.ArgumentParser(description='NIST detection scorer.')
-
-        parser.add_argument('-t','--task', default='manipulation', choices=['manipulation','splice','provenancefiltering', 'provenance'],
-        help='Four different types of tasks: [manipulation], [splice], [provenancefiltering] or [provenance] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--refDir',default='.',
-        help='Reference and index file path: [e.g., ../NC2016_Test] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-r','--inRef',default='reference/manipulation/reference.csv',
-        help='Reference csv file name: [e.g., reference/manipulation/reference.csv] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-x','--inIndex',default='indexes/index.csv',
-        help='Task Index csv file name: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--sysDir',default='.',
-        help='System output file path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('-s','--inSys',default="",
-        help='System output csv file name: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
-
+        def is_file_specified(x):
+            if x == '':
+                raise argparse.ArgumentTypeError("{0} not provided".format(x))
+            return x
+            
         def restricted_float(x):
             x = float(x)
             if x < 0.0 or x > 1.0:
                 raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
             return x
+        
+        parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
+        #Task Type Options
+        parser.add_argument('-t','--task', default='manipulation', 
+                            choices=['manipulation','splice'], # add provenanceFiltering and provenance in future
+                            help='Define the target manipulation task type for evaluation:[manipulation] and [splice] (default: %(default)s)',metavar='character')
+        
+        #Input Options
+        parser.add_argument('--refDir', default='.',
+                            help='Specify the reference and index data path: [e.g., ../NC2016_Test] (default: %(default)s)', metavar='character')
+                            #type=lambda x: is_dir(parser, x))#Optional
+
+        parser.add_argument('-r','--inRef', default='', type=is_file_specified,
+                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character') 
+                            #type=lambda x: is_file(parser, x))# Mandatory     
+
+        parser.add_argument('-x','--inIndex',default='', type=is_file_specified,
+                            help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
+
+        parser.add_argument('--sysDir',default='.',
+                            help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character') #Optional
+
+        parser.add_argument('-s','--inSys',default='', type=is_file_specified,
+                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')    
+
+        # Metric Options
         parser.add_argument('--farStop',type=restricted_float, default = 1,
-        help="FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
+                            help="Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
+        
+        parser.add_argument('--ci', action='store_true',
+                            help="Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.")
 
+        # Output Options
         parser.add_argument('--outRoot',default='.',
-        help='Report output file (plot and table) path along with the file suffix: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
-
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
-        help="Plot option:[roc] and [det] (default: %(default)s)", metavar='character')
+                            help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
         parser.add_argument('--dump', action='store_true',
-        help="DetMetrics object dumping option")
-
+                            help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
+        
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help="Print output with procedure messages on the command-line if this option is specified.")
+        
+        # Plot Options
+        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
+                            help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
+    
         parser.add_argument('--display', action='store_true',
-        help="display plots")
+                            help="Display a window with the plot (s) on the command-line if this option is specified.")
+        
+        parser.add_argument('--multiFigs', action='store_true',
+                            help="Generate plots (with only one curve) per a partition ")
+        # Custom Plot Options
+        parser.add_argument('--configPlot', action='store_true',
+                            help="Open a JSON file that allows the user to customize the plot (e.g. change the title font size) by augmenting the json files located in the 'plotJsonFiles' folder.")
 
+        # Performance Evaluation by Query Options
         factor_group = parser.add_mutually_exclusive_group()
 
-        factor_group.add_argument('-f', '--factor', nargs='*',
-        help="Evaluate algorithm performance by given queries.", metavar='character')
+        factor_group.add_argument('-q', '--query', nargs='*',
+                                  help="Evaluate algorithm performance on a partitioned dataset (or subset) using multiple queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
-        factor_group.add_argument('-fp', '--factorp',
-        help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+        factor_group.add_argument('-qp', '--queryPartition',
+                                  help="Evaluate algorithm performance on a partitioned dataset (or subset) using one query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves. (syntax retriction: '==[]','<','<=')", metavar='character')
 
-        factor_group.add_argument('-tf', '--targetFilter', nargs='*',
-        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering target trials only)", metavar='character')
+        factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
+                                  help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
         #TBD: may need this one for provenance filtering
-        #Note that this requires different mutually exclusive gropu to use both -tf and -nf at the same time
-#        parser.add_argument('-nf', '--nontargetFilter',
+        #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
+#        parser.add_argument('-qn', '--queryNonManipulation',
 #        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
-
-        parser.add_argument('--multiFigs', action='store_true',
-        help="Generate plots (with only one curve) per a partition ")
-
-        parser.add_argument('-v', '--verbose', action='store_true',
-        help="Increase output verbosity")
-
-        parser.add_argument('--ci', action='store_true',
-        help="Calculate Confidence Interval for AUC")
-
 
 
         args = parser.parse_args()
@@ -128,22 +143,20 @@ if __name__ == '__main__':
         global v_print
         v_print = _v_print
 
-
-        if (not args.factor) and (not args.factorp) and (not args.targetFilter) and (args.multiFigs is True):
-            print("ERROR: The multiFigs option is not available without factors options.")
+        if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
+            print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
-        #print("Namespace :\n{}\n".format(args))
+        print("Namespace :\n{}\n".format(args))
 
         # Loading the reference file
         try:
-
             myRefFname = args.refDir + "/" + args.inRef
             #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
             myRef = pd.read_csv(myRefFname, sep='|')
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
-            print("ERROR: There was an error opening the reference csv file")
+            print("ERROR: There was an error opening the reference csv file '" + myRefFname + "'")
             exit(1)
 
         # Loading the JTjoin and JTmask file
@@ -211,8 +224,8 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
          # Partition Mode
-        if args.factor or args.factorp or args.targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
-            print("Partition Mode \n")
+        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+            v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
@@ -222,7 +235,7 @@ if __name__ == '__main__':
 
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
-                    print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
+                    v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
@@ -234,33 +247,33 @@ if __name__ == '__main__':
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
-            if args.factor:
-                factor_mode = 'f'
-                query = args.factor
-            elif args.factorp:
-                factor_mode = 'fp'
-                query = args.factorp
-            elif args.targetFilter:
-                factor_mode = 'tf'
-                query = args.targetFilter
+            if args.query:
+                query_mode = 'q'
+                query = args.query
+            elif args.queryPartition:
+                query_mode = 'qp'
+                query = args.queryPartition
+            elif args.queryManipulation:
+                query_mode = 'qm'
+                query = args.queryManipulation
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=args.farStop, isCI=args.ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI=args.ci)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
             table_df = selection.render_table()
             if isinstance(table_df,list):
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
-            if args.factor:
+            if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_f_query_' + str(i) + '.csv', index = False)
-            elif args.factorp:
-                table_df.to_csv(args.outRoot + '_fp_query.csv')
-            elif args.targetFilter:
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '.csv', index = False)
+            elif args.queryPartition:
+                table_df.to_csv(args.outRoot + '_qp_query.csv')
+            elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '.csv', index = False)
 
 
         # No partitions
@@ -285,10 +298,19 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+        
+                       
+        if os.path.isfile(dict_plot_options_path_name):
+            # Loading of the plot_options json config file
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        else:
+            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        
+        # opening of the plot_options json config file from command-line
+        if args.configPlot:
+            p.open_plot_options(dict_plot_options_path_name)
 
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
 
         # Dumping DetMetrics objects
         if args.dump:
@@ -321,7 +343,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if args.factor or args.factorp or args.targetFilter:
+        if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
@@ -355,22 +377,22 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
- #       targetFilter = None
-        factor = None
-        factorp = None
-#        targetFilter = "Purpose ==['remove', 'splice', 'add']"
+ #       queryManipulation = None
+        arg_query = None
+        queryPartition = None
+#        queryManipulation = "Purpose ==['remove', 'splice', 'add']"
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
-#        targetFilter = "Operation ==['PasteSplice', 'FillContentAwareFill']"
-#        targetFilter = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
+#        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
+#        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
 #        factor = "Purpose ==['remove']"
-        targetFilter = ["Purpose ==['add']", "Purpose ==['remove']"]
+        queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
 #        print("f query {}".format(factor))
 
-#        factorp = "Purpose ==['remove', 'splice']"
+#        queryPartition = "Purpose ==['remove', 'splice']"
 
-        if (not factor) and (not factorp) and (multiFigs is True):
-            print("ERROR: The multiFigs option is not available without factors options.")
+        if (not query) and (not queryPartition) and (multiFigs is True):
+            print("ERROR: The multiFigs option is not available without querys options.")
             exit(1)
 
 #        if task == 'manipulation':
@@ -481,7 +503,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if factor or factorp or targetFilter: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args_query or queryPartition or queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
 
@@ -500,10 +522,10 @@ if __name__ == '__main__':
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
-##    #                # for targetfilter, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
-#                    if args.targetFilter:
+##    #                # for queryManipulation, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
+#                    if args.queryManipulation:
 #                        print("Removing duplicates of the chosen column for filtering target trials ...\n")
-#                        chosenField = [x.strip() for x in args.targetFilter.split('==')]
+#                        chosenField = [x.strip() for x in args.queryManipulation.split('==')]
 #                        #fm_df.sort(['ProbeFileID', chosenField[0]], inplace=True) #TODO: not necesary, but for testing
 #                        pm_df = pm_df.drop_duplicates(['ProbeFileID', chosenField[0]]) #remove duplicates for the chosen column
 
@@ -511,35 +533,35 @@ if __name__ == '__main__':
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
 
-            if factor:
-                factor_mode = 'f'
-                query = factor #TODO: double-check
-            elif factorp:
-                factor_mode = 'fp'
-                query = factorp
-            elif targetFilter: #TODO: testcases
-                factor_mode = 'tf'
-                query = targetFilter
+            if args_query:
+                query_mode = 'q'
+                query = args_query #TODO: double-check
+            elif args_queryPartition:
+                query_mode = 'qp'
+                query = args_queryPartition
+            elif args_queryManipulation: #TODO: testcases
+                query_mode = 'qm'
+                query = args_queryManipulation
                 #query = ["("+targetFilter+ " and IsTarget == ['Y']) or IsTarget == ['N']"] #TODO: double-check
                 #print("targetQuery {}".format(query))
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, factor_mode, fpr_stop=farStop, isCI=ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
             table_df = selection.render_table()
             if isinstance(table_df,list):
                 print("Number of table DataFrame generated = {}\n".format(len(table_df)))
-            if factor:
+            if args_query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_f_query_' + str(i) + '.csv', index = False)
-            elif factorp:
-                table_df[0].to_csv(outRoot + '_fp_query.csv') #table_df is List type
-            elif args.targetFilter:
+                    df.to_csv(outRoot + '_q_query_' + str(i) + '.csv', index = False)
+            elif args_queryPartition:
+                table_df[0].to_csv(outRoot + '_qp_query.csv') #table_df is List type
+            elif args_queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_tf_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_qm_query_' + str(i) + '.csv', index = False)
 
         # No partitions
         else:
@@ -563,10 +585,18 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
-
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
+                
+        if os.path.isfile(dict_plot_options_path_name):
+            # Loading of the plot_options json config file
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        else:
+            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+        
+        # opening of the plot_options json config file from command-line
+        configPlot = False
+        if configPlot:
+            p.open_plot_options(dict_plot_options_path_name)
 
         # Dumping DetMetrics objects
         if dump:
@@ -599,7 +629,7 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        if factor or factorpor or targetFilter:
+        if args_query or args_queryPartition or args_queryManipulation:
             for curve_opts,query in zip(opts_list,selection.part_query_list):
                 curve_opts["label"] = query
 
