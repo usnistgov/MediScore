@@ -13,8 +13,8 @@ class Partition:
     def __init__(self,dataframe,query,factor_mode,targetManiType,metrics): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
-        - factor_mode : 'f' = single query
-                        'fp' = cartesian product of the factors
+        - factor_mode : 'q' = single query
+                        'qp' = cartesian product of the factors
                         '' = no factors. Average the entire frame
         - targetManiType: manipulations targeted
         - factors_names : list of the dataframe's columns names
@@ -40,11 +40,11 @@ class Partition:
         self.task = dataframe['TaskID'].iloc[0]
 
         # If we have a list of queries
-        if self.factor_mode == 'f':
+        if self.factor_mode == 'q':
             #self.query = None
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
-        elif self.factor_mode == 'fp':
+        elif self.factor_mode == 'qp':
             self.query = query.replace(' ','')
             #TODO: Simplify the factors dictionary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
@@ -219,7 +219,7 @@ class Partition:
             columns.extend(metrics)
             return [pd.DataFrame(data=data,columns=columns)]
 
-        if self.factor_mode == 'f':
+        if self.factor_mode == 'q':
             df_list = list()
             for i,query in enumerate(self.part_query_list):
                 #dm = self.part_dm_list[i]
@@ -242,7 +242,7 @@ class Partition:
                 df_list.append(pd.DataFrame(data=data,columns=columns))
             return df_list
 
-        elif self.factor_mode == 'fp':
+        elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
             for m in metrics:

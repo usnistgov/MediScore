@@ -74,11 +74,13 @@ parser.add_argument('-oR','--outRoot',type=str,default='.',
 help="Directory root to save outputs.",metavar='character')
 
 #added from DetectionScorer.py
-#TODO: rename according to DetectionScorer renaming
 factor_group = parser.add_mutually_exclusive_group()
-factor_group.add_argument('-f', '--factor', nargs='*',
+factor_group.add_argument('-q', '--query', nargs='*',
 help="Evaluate algorithm performance by given queries.", metavar='character')
-factor_group.add_argument('-fp', '--factorp',
+factor_group.add_argument('-qp', '--queryPartition',
+help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+#TODO: what does queryManipulation do?
+factor_group.add_argument('-qm', '--queryManipulation',
 help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
 parser.add_argument('-tmt','--targetManiType',type=str,default='all',
@@ -229,12 +231,12 @@ myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype
 
 factor_mode = ''
 query = ''
-if args.factor:
-    factor_mode = 'f'
-    query = args.factor
-elif args.factorp:
-    factor_mode = 'fp'
-    query = args.factorp
+if args.query:
+    factor_mode = 'q'
+    query = args.query
+elif args.queryPartition:
+    factor_mode = 'qp'
+    query = args.queryPartition
 
 ## if the confidence score are 'nan', replace the values with the mininum score
 #mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
@@ -317,12 +319,12 @@ if args.task == 'manipulation':
     my_partition = pt.Partition(r_df,query,factor_mode,args.targetManiType,metrics) #average over queries
     df_list = my_partition.render_table(metrics)
  
-    if args.factor:
+    if args.query:
         #use Partition for OOP niceness and to identify file to be written. 
         for i,temp_df in enumerate(df_list):
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
             
-    elif args.factorp or (factor_mode == ''):
+    elif args.queryPartition or (factor_mode == ''):
         a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
@@ -359,12 +361,12 @@ elif args.task == 'splice':
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
     df_list = my_partition.render_table(metrics)
 
-    if args.factor:
+    if args.query:
         #use Partition for OOP niceness and to identify file to be written. 
         for i,temp_df in enumerate(df_list):
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
             
-    elif args.factorp or (factor_mode == ''):
+    elif args.queryPartition or (factor_mode == ''):
         a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
 

@@ -303,11 +303,12 @@ class refmask(mask):
         """
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
+        distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
         if distractionKernSize > 0:
             distractionNoScore = self.unselectedNoScoreRegion(distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
-        return wimg
+        return wimg,baseNoScore,distractionNoScore
 
     def boundaryNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
         """

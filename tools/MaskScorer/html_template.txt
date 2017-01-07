@@ -7,24 +7,96 @@
 <table border="1">
   <tbody>
     <tr>
-      <td><img src="$refMask" alt="reference mask" style="width:${width}px;"><br/><b>Reference Mask</b></td>
+      <td><img src="$refMask" alt="reference mask" style="width:${width}px;"><br/><b>Colorized Reference Mask</b></td>
       <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>System Output Mask</b></td>
     </tr>
     <tr>
-      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask</b></td>
-      <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask</b></td>
+      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated)</b></td>
+      <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated)</b></td>
     </tr>
     <tr>
       <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone</b></td>
-      <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Mask Scoring Example</b></td>
+      <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Evaluation Result Visualization</b></td>
     </tr>
     <tr>
-      <td>NIMBLE Mask Metric (NMM): $nmm </td>
+      <td><b>NIMBLE Mask Metric (NMM)</b>: $nmm <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: $mcc <br/>
+      <b>Weighted L1 Loss (WL1)</b>: $wL1 <br/></td>
       <td><b>Total Pixels</b>: $totalPixels <br/>
-<b>False Positives (FP)</b>: $fp <br/>
-<b>False Negatives (FN)</b>: $fn <br/>
-<b>True Positives (TP)</b>: $tp <br/>
-<b>No Score Zone (NS)</b>: $ns <br/></td>
+<table border="1" bgcolor="#C8C8C8">
+  <tbody>
+    <tr>
+      <td>
+<b>True Positives (<font style="color:#$tphex">TP: $tpcol</font>)</b>:
+      </td>
+      <td>
+      $tp
+      </td>
+      <td>
+      $perctp
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Positives (<font style="color:#$fphex">FP: $fpcol</font>)</b>:
+      </td>
+      <td>
+      $fp
+      </td>
+      <td>
+      $percfp
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>True Negatives (<font style="color:#$tnhex">TN: $tncol</font>)</b>:
+      </td>
+      <td>
+      $tn
+      </td>
+      <td>
+      $perctn
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Negatives (<font style="color:#$fnhex">FN: $fncol</font>)</b>:
+      </td>
+      <td>
+      $fn
+      </td>
+      <td>
+      $percfn
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Boundary No-Score Zone (<font style="color:#$bnshex">BNS: $bnscol</font>)</b>:
+      </td>
+      <td>
+      $bns
+      </td>
+      <td>
+      $percbns
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Selective No-Score Zone (<font style="color:#$snshex">SNS: $snscol</font>)</b>:
+      </td>
+      <td>
+      $sns
+      </td>
+      <td>
+      $percsns
+      </td>
     </tr>
   </tbody>
 </table>
+</td>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<h4>Target Manipulations: $tmt</h4><br/>
+$jtable

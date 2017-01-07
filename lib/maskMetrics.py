@@ -40,7 +40,15 @@ class maskMetricList:
     This class computes the metrics given a list of reference and system output mask names.
     Other relevant metadata may also be included depending on the task being evaluated.
     """
-    def __init__(self,mergedf,refD,sysD,refBin,sysBin,journaldf=0,mode='Probe'):
+    def __init__(self,
+                 mergedf,
+                 refD,
+                 sysD,
+                 refBin,
+                 sysBin,
+                 journaldf=0,
+                 mode='Probe',
+                 colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,252,124],'pink':[193,182,255],'white':[255,255,255]}):
         """
         Constructor
 
@@ -58,7 +66,8 @@ class maskMetricList:
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
         - mode: determines the data to access. In most cases, it will be 'Probe', but
-                Donor' will be used for the 'splice' task
+        - colordict: the dictionary of colors to use for the HTML output, in BGR array format,
+                     to be used as reference
         """
         self.maskData = mergedf
         self.refDir = refD
@@ -67,6 +76,7 @@ class maskMetricList:
         self.sbin = sysBin
         self.journalData = journaldf
         self.mode=mode
+        self.colordict=colordict
        
     def readMasks(self,refMaskFName,sysMaskFName,targetManiType,verbose):
         """
@@ -189,16 +199,22 @@ class maskMetricList:
                 if not os.path.isdir(subOutRoot):
                     os.system('mkdir ' + subOutRoot)
 
-                rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
-                rImg.save(rbin_name,th=254)
-
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
                 if self.sbin >= 0:
                     sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
-                wts = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
+                wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
+
+                #do a 3-channel combine with bns and sns for their colors before saving
+                rImgbin = rImg.get_copy()
+                rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+                rbinmat = np.copy(rImgbin.bwmat)
+                rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
+                rImgbin.matrix[bns==0] = self.colordict['yellow']
+                rImgbin.matrix[sns==0] = self.colordict['pink']
+                rImgbin.save(rbin_name)
 
                 #computes differently depending on choice to binarize system output mask
                 mets = 0
@@ -227,28 +243,66 @@ class maskMetricList:
    
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
-                    colordirs = self.aggregateColorMask(rImg,sImg,wts,kern,erodeKernSize,maniImgName,subOutRoot)
+                    colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,kern,erodeKernSize,maniImgName,subOutRoot)
                     colMaskName=colordirs['mask']
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    self.manipReport(subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,wts,mets['NMM'],mymeas,colMaskName,aggImgName)
+                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
 
         return df
 
-    def manipReport(self,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,weights,nmm,confmeasures,colMaskName,aggImgName):
+    def num2hex(self,color):
+        """
+        * Description: this function converts one BGR color to a hex string at a time
+        * Inputs:
+        *     color: a list of three integers from 0 to 255 denoting a color code
+        * Outputs:
+        *     hexcolor: the hexadecimal color code corresponding to that color
+        """
+
+        myb = hex(color[0])[2:]
+        myg = hex(color[1])[2:]
+        myr = hex(color[2])[2:]
+        if len(myb)==1:
+            myb = '0' + myb 
+        if len(myg)==1:
+            myg = '0' + myg 
+        if len(myr)==1:
+            myr = '0' + myr
+        hexcolor = (myr + myg + myb).upper()
+        return hexcolor
+
+    def nums2hex(self,colors):
+        """
+        * Description: this function outputs the hexadecimal strings for a dictionary of colors for the HTML report
+        * Inputs:
+        *     colors: list of strings corresponding to the colors in self.colordict
+        * Outputs:
+        *     hexcolors: dictionary of hexadecimal color codes
+        """
+        hexcolors = {}
+        for c in colors:
+            mybgr = self.colordict[c]
+            hexcolors[c] = self.num2hex(mybgr)
+        return hexcolors
+    
+    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
+        *     task: the task over which the scorer is run
         *     outputRoot: the directory to deposit the weight image and the HTML file
         *     maniImageFName: the manipulated probe file name, relative to the reference directory (self.refDir) 
         *     rImg_name: the name of the unmodified reference image used for the mask evaluation
         *     sImg_name: the name of the unmodified system output image used for the mask evaluation
         *     rbin_name: the name of the binarized reference image used for the mask evaluation
         *     sbin_name: the name of the binarized system output image used for the mask evaluation
-        *     weights: the weighted matrix generated for mask evaluation
-        *     nmm: the value of the NimbleMaskMetric of the system output with respect to the reference
+        *     b_weights: the weighted matrix of the no-score zones of the targeted regions
+        *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
+        *     metrics: the dictionary of mask scores
         *     confmeasures: truth table measures evaluated between the reference and system output masks
+        *     targetManiType: the target types to search to be manipulated
         *     colMaskName: the aggregate mask image of the ground truth, system output, and no-score regions
                            for the HTML report
         *     aggImgName: the above colored mask superimposed on a grayscale of the reference image
@@ -256,17 +310,50 @@ class maskMetricList:
         if not os.path.isdir(outputRoot):
             os.system('mkdir ' + outputRoot)
 
-        mywts = np.uint8(255*weights)
+        bwts = np.uint8(255*b_weights)
+        swts = np.uint8(255*s_weights)
         sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
-        cv2.imwrite(weightpath,mywts)
+
+        mywts = cv2.bitwise_and(b_weights,s_weights)
+
+        dims = bwts.shape
+        colwts = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
+        #combine the colors for bwts and swts to colwts
+        colwts[bwts==0] = self.colordict['yellow']
+        colwts[swts==0] = self.colordict['pink']
+
+        cv2.imwrite(weightpath,colwts)
 
         mPath = os.path.join(self.refDir,maniImageFName)
-        allshapes=min(weights.shape[1],640) #limit on width for readability of the report
+        allshapes=min(dims[1],640) #limit on width for readability of the report
+
         # generate HTML files
         with open("html_template.txt", 'r') as f:
             htmlstr = Template(f.read())
+
+        #dictionary of colors corresponding to confusion measures
+        cols = {'tpcol':'green','fpcol':'red','tncol':'white','fncol':'blue','bnscol':'yellow','snscol':'pink'}
+        hexs = self.nums2hex(cols.values()) #get hex strings from the BGR cols
+
+        jtable = ''
+        if task=='manipulation':
+            myProbeID = self.maskData.query("ProbeFileName=='{}'".format(maniImageFName))['ProbeFileID'].iloc[0]
+            jdata = self.journalData.query("ProbeFileID=='{}'".format(myProbeID))[['Purpose','Color']]
+            
+            #make those color cells empty with only the color as demonstration
+            jDataColors = list(jdata['Color'])
+            jDataColArrays = [x[::-1] for x in [c.split(' ') for c in jDataColors]]
+            jDataColArrays = [[int(x) for x in c] for c in jDataColArrays]
+            jDataHex = pd.Series([self.num2hex(c) for c in jDataColArrays],index=jdata.index) #match the indices
+            jdata['Color'] = 'td bgcolor="#' + jDataHex + '"btd'
+            jtable = jdata.to_html(index=False)
+            jtable = jtable.replace('<td>td','<td').replace('btd','>')
+        
+        totalpx = np.sum(mywts==1)
+        totalbns = np.sum(bwts==0)
+        totalsns = np.sum(swts==0)
         htmlstr = htmlstr.substitute({'probeFname': os.path.abspath(mPath),
                                       'width': allshapes,
                                       'aggMask' : os.path.abspath(aggImgName),
@@ -276,12 +363,37 @@ class maskMetricList:
                                       'binSysMask' : os.path.abspath(sbin_name),
                                       'noScoreZone' : weightFName,
                                       'colorMask' : os.path.abspath(colMaskName),
-  				      'nmm' : nmm,
-                                      'totalPixels' : np.sum(mywts==255),
-                                      'fp' : int(confmeasures['FP']),
-                                      'fn' : int(confmeasures['FN']),
+  				      'nmm' : metrics['NMM'],
+  				      'mcc' : metrics['MCC'],
+  				      'wL1' : metrics['WL1'],
+                                      'totalPixels' : totalpx,
                                       'tp' : int(confmeasures['TP']),
-                                      'ns' : np.sum(mywts==0)})
+                                      'fp' : int(confmeasures['FP']),
+                                      'tn' : int(confmeasures['TN']),
+                                      'fn' : int(confmeasures['FN']),
+                                      'bns' : totalbns,
+                                      'sns' : totalsns,
+                                      'tpcol':cols['tpcol'],
+                                      'fpcol':cols['fpcol'],
+                                      'tncol':cols['tncol'],
+                                      'fncol':cols['fncol'],
+                                      'bnscol':cols['bnscol'],
+                                      'snscol':cols['snscol'],
+                                      'tphex':hexs[cols['tpcol']],
+                                      'fphex':hexs[cols['fpcol']],
+                                      'tnhex':hexs[cols['tncol']],
+                                      'fnhex':hexs[cols['fncol']],
+                                      'bnshex':hexs[cols['bnscol']],
+                                      'snshex':hexs[cols['snscol']],
+                                      'perctp':float(confmeasures['TP'])/totalpx,
+                                      'percfp':float(confmeasures['FP'])/totalpx,
+                                      'perctn':float(confmeasures['TN'])/totalpx,
+                                      'percfn':float(confmeasures['FN'])/totalpx,
+                                      'percbns':float(totalbns)/totalpx,
+                                      'percsns':float(totalsns)/totalpx,
+                                      'tmt':targetManiType,
+                                      'jtable':jtable}) #add journal operations and set bg color to the html
+
         #print htmlstr
         fprefix=os.path.basename(maniImageFName)
         fprefix=fprefix.split('.')[0]
@@ -291,7 +403,7 @@ class maskMetricList:
         myhtml.close()
 
     #prints out the aggregate mask, reference and other data
-    def aggregateColorMask(self,ref,sys,w,kern,erodeKernSize,maniImgName,outputMaskPath):
+    def aggregateColorMask(self,ref,sys,bns,sns,kern,erodeKernSize,maniImgName,outputMaskPath):
         """
         *Description: this function produces the aggregate mask image of the ground truth, system output,
                       and no-score regions for the HTML report, and a composite of the same image superimposed
@@ -300,7 +412,8 @@ class maskMetricList:
         * Inputs:
         *     ref: the reference mask file
         *     sys: the system output mask file to be evaluated
-        *     w: the weighted matrix
+        *     bns: the boundary no-score weighted matrix
+        *     sns: the selected no-score weighted matrix
         *     kern: kernel shape to be used
         *     erodeKernSize: length of the erosion kernel matrix
         *     maniImgName: a list of reference images (not masks) for superimposition
@@ -309,23 +422,26 @@ class maskMetricList:
         * Output
         *     a dictionary containing the colored mask path and the aggregate mask path
         """
+
         #set new image as some RGB
         mydims = ref.get_dims()
-        mycolor = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
+        mycolor = 255*np.ones((mydims[0],mydims[1],3),dtype=np.uint8)
 
         eKern = masks.getKern(kern,erodeKernSize)
         eData = 255 - cv2.erode(255 - ref.bwmat,eKern,iterations=1)
 
         #flip all because black is 0 by default. Use the regions to determine where to color.
         b_sImg = 1-sys.matrix/255
-        b_wImg = 1-w
         b_eImg = 1-eData/255 #erosion of black/white reference mask
+        b_bnsImg = 1-bns
+        b_snsImg = 1-sns
 
         b_sImg[b_sImg != 0] = 1
         b_eImg[b_eImg != 0] = 2
-        b_wImg[b_wImg != 0] = 4
+        b_bnsImg[b_bnsImg != 0] = 4
+        b_snsImg[b_snsImg != 0] = 8
 
-        mImg = b_eImg + b_wImg + b_sImg
+        mImg = b_sImg + b_eImg + b_bnsImg + b_snsImg
 
         #set pixels equal to some value:
         #red to false accept and false reject
@@ -334,10 +450,12 @@ class maskMetricList:
         #yellow to system mask intersect with GT
         #black to true negatives
 
-        mycolor[(mImg==1) | (mImg==2)] = [0,0,255] #either only system (FP) or only erode image (FN)
-        mycolor[mImg==4] = [255,51,51] #no-score zone
-        mycolor[mImg==5] = [255,51,255] #system intersecting with no-score zone
-        mycolor[mImg==3] = [0,255,255] #system and erode image coincide (TP)
+        #get colors through self.colordict
+        mycolor[mImg==1] = self.colordict['red'] #only system (FP)
+        mycolor[mImg==2] = self.colordict['blue'] #only erode image (FN)
+        mycolor[mImg==3] = self.colordict['green'] #system and erode image coincide (TP)
+        mycolor[(mImg>=4) & (mImg <=7)] = self.colordict['yellow'] #boundary no-score zone
+        mycolor[mImg>=8] = self.colordict['pink'] #selection no-score zone
 
         #return path to mask
         outputMaskName = sys.name.split('/')[-1]
