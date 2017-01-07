@@ -1,6 +1,6 @@
 File: README.txt
-Date: Oct. 28, 2016
-MediScore Version: 1.0.0
+Date: January 6, 2017
+MediScore Version: 1.0.2
 
 NEW Python
 
@@ -8,11 +8,11 @@ This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
 example data for the following tools:
 
-  SSDValidate      V1.0 - Single Source Detection Validator
-  DSDValidate      V1.0 - Double Source Detection Validator
-  DetectionScorer  V1.0 - Single/Double Source Detection Evaluation
+  SSDValidate      V2.0 - Single Source Detection Validator
+  DSDValidate      V2.0 - Double Source Detection Validator
+  DetectionScorer  V2.1 - Single/Double Source Detection Evaluation
                           Scorer
-  MaskScorer       V1.0 - Single/Double Source Mask Evaluation
+  MaskScorer       V2.0 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
 
 This distribution consists of a set of Python2.7 scripts intended to be run
@@ -107,9 +107,9 @@ HISTORY
 -------
 
   Oct. 28, 2016 - MediScore Version 1.0.0:
-
     - Python release
-
+  Jan. 6, 2017 - MediScore Version 1.1.0:
+    - Started to support Selective Manipulation Scoring. This is a roll out of the new DetectionScorer.  Note the filter options changed
 
 CONTACT
 -------
