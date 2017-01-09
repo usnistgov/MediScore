@@ -155,7 +155,7 @@ if not os.path.isdir(args.outRoot):
 #define HTML functions here
 if args.html:
     if args.task == 'manipulation':
-        def df2html(df,outputRoot):
+        def df2html(df,average_df,outputRoot):
             html_out = df.copy()
     
             #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
@@ -170,10 +170,16 @@ if args.html:
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False))
+            myf.write('\n')
+            if not (average_df is 0):
+                #write title and then average_df
+                myf.write('<h3>Average Scores</h3>\n')
+                myf.write(average_df.to_html(escape=False))
+
             myf.close()
 
     elif args.task == 'splice':
-        def df2html(df,outputRoot):
+        def df2html(df,average_df,outputRoot):
             html_out = df.copy()
     
             #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
@@ -190,6 +196,12 @@ if args.html:
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False))
+            myf.write('\n')
+            if not (average_df is 0):
+                #write title and then average_df
+                myf.write('<h3>Average Scores</h3>\n')
+                myf.write(average_df.to_html(escape=False))
+
             myf.close()
 
     else:
@@ -310,27 +322,28 @@ if args.task == 'manipulation':
 
     #add targetManiType for r_df
     r_df['TargetManipulations'] = args.targetManiType.replace(',',' + ')
-
-    #generate HTML table report
-    df2html(r_df,args.outRoot)
+    a_df = 0
 
     if len(r_df.query("Scored=='Y'")) == 0:
         #if nothing was scored, print a message and return
         print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
-        exit(0)
+    else:
+        metrics = ['NMM','MCC','WL1']
+        my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
+        df_list = my_partition.render_table(metrics)
+     
+        if args.query:
+            #use Partition for OOP niceness and to identify file to be written. 
+            for i,temp_df in enumerate(df_list):
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
+                
+        elif args.queryPartition or (factor_mode == ''):
+            a_df = df_list[0]
+            a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
-    metrics = ['NMM','MCC','WL1']
-    my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
-    df_list = my_partition.render_table(metrics)
- 
-    if args.query:
-        #use Partition for OOP niceness and to identify file to be written. 
-        for i,temp_df in enumerate(df_list):
-            temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
-            
-    elif args.queryPartition or (factor_mode == ''):
-        a_df = df_list[0]
-        a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
+    #generate HTML table report
+    df2html(r_df,a_df,args.outRoot)
+
 
 #commenting out for the time being
 #elif args.task in ['removal','clone']:
@@ -357,9 +370,7 @@ elif args.task == 'splice':
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-
-    #generate HTML table report
-    df2html(r_df,args.outRoot)
+    a_df = 0
 
     metrics = ['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
@@ -373,6 +384,9 @@ elif args.task == 'splice':
     elif args.queryPartition or (factor_mode == ''):
         a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
+
+    #generate HTML table report
+    df2html(r_df,a_df,args.outRoot)
 
 if verbose: #to avoid complications of print formatting when not verbose
     precision = args.precision

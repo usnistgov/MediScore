@@ -504,10 +504,9 @@ class maskMetricList:
         #for modified images, weighted sum the colored mask with the grayscale
         alpha=0.7
         mData = np.stack((mData,mData,mData),axis=2)
-        mycolor[mImg==3] = self.colordict['blue'] #recolor to get the ref mask out of the way
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
-        modified = cv2.addWeighted(mycolor,alpha,mData,1-alpha,0)
+        modified = cv2.addWeighted(ref.matrix,alpha,mData,1-alpha,0)
         myagg[mImg!=0]=modified[mImg!=0]
 
         compositeMaskName=outputMaskBase + "_composite.jpg"

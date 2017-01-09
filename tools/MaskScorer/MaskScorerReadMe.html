@@ -12029,17 +12029,17 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-f factor</p>
+<p>-q query</p>
 <ul>
 <li>Evaluate algorithm performance on a partitioned dataset using multiple factor queries. The option generates N report tables (CSV), one for each query.<ul>
-<li>Syntax: -f "query1" "query2" "query3" ...</li>
+<li>Syntax: -q "query1" "query2" "query3" ...</li>
 </ul>
 </li>
 </ul>
-<p>-fp factorp</p>
+<p>-qp queryPartition</p>
 <ul>
 <li>Evaluate algorithm performance on a partitioned dataset using one factor query. This option generates a single report table (CSV) that contains M partition results, one result for each query.<ul>
-<li>Syntax: -fp "query"</li>
+<li>Syntax: -qp "query"</li>
 </ul>
 </li>
 </ul>
@@ -12102,28 +12102,141 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><h2>Manipulated Image: morelight.jpg</h2><br />
+<p><h2>Manipulated Image: morelight.jpg </h2><br/>
 <img src="notebookImgs/morelight.jpg" alt="manipulated image" style="width:640px;">
-<br /></p>
-<p><h3>Composite with Color Mask: sys-light_composite.jpg</h3>
+<br/></p>
+<p><h3>Composite with Color Mask: sys-light_composite.jpg </h3>
 <img src="notebookImgs/sys-light_composite.jpg" alt="manip image plus mask" style="width:640px;">
-<br /></p>
+<br/></p>
 <table border="1">
   <tbody>
     <tr>
-      <td><img src="notebookImgs/light-mask.png" alt="reference mask" style="width:640px;"><br /><b>Reference Mask</b></td>
-      <td><img src="notebookImgs/sys-light.png" alt="system output mask" style="width:640px;"><br /><b>System Output Mask</b></td>
+      <td><img src="notebookImgs/light-mask.png" alt="reference mask" style="width:640px;"><br/><b>Colorized Reference Mask</b></td>
+      <td><img src="notebookImgs/sys-light.png" alt="system output mask" style="width:640px;"><br/><b>System Output Mask</b></td>
     </tr>
     <tr>
-      <td><img src="notebookImgs/sys-light-weights.png" alt="no-score zone" style="width:640px;"><br /><b>No-Score Zone</b></td>
-      <td><img src="notebookImgs/sys-light_colored.jpg" alt="color mask" style="width:640px;"><br /><b>Mask Scoring Example</b></td>
+      <td><img src="notebookImgs/light-mask-bin.png" alt="binarized reference mask" style="width:640px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="notebookImgs/sys-light-bin.png" alt="binarized system output mask" style="width:640px;"><br/><b>Binarized System Output Mask (Black = Manipulated)</b></td>
     </tr>
     <tr>
-      <td>NIMBLE Mask Metric (NMM): -1.000000</td>
-      <td><b>Total Pixels</b>: 6016000<br /><b>False Positives (FP)</b>: 175678<br /><b>False Negatives (FN)</b>: 462<br /><b>True Positives (TP)</b>: 11462<br /><b>No Score Zone (NS)</b>: 9161<br /></td>
+      <td><img src="notebookImgs/sys-light-weights.png" alt="no-score zone" style="width:640px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="notebookImgs/sys-light_colored.jpg" alt="color mask" style="width:640px;"><br/><b>Evaluation Result Visualization</b></td>
+    </tr>
+    <tr>
+      <td><b>NIMBLE Mask Metric (NMM)</b>: -1.0 <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: 0.271985771309 <br/>
+      <b>Weighted L1 Loss (WL1)</b>: 0.0281554742248 <br/></td>
+      <td><b>Total Pixels</b>: 6002101 <br/>
+<table style="border:1; background-color:#C8C8C8">
+  <tbody>
+    <tr>
+      <td>
+<b>True Positives (<font style="color:#00CF00">TP: green</font>)</b>:
+      </td>
+      <td>
+      14055
+      </td>
+      <td>
+      0.00234168002171
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Positives (<font style="color:#FF0000">FP: red</font>)</b>:
+      </td>
+      <td>
+      168868
+      </td>
+      <td>
+      0.0281348147924
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>True Negatives (<font style="color:#FFFFFF">TN: white</font>)</b>:
+      </td>
+      <td>
+      5819054
+      </td>
+      <td>
+      0.969502845754
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Negatives (<font style="color:#3333FF">FN: blue</font>)</b>:
+      </td>
+      <td>
+      124
+      </td>
+      <td>
+      2.06594324221e-05
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Boundary No-Score Zone (<font style="color:#FFFF00">BNS: yellow</font>)</b>:
+      </td>
+      <td>
+      13899
+      </td>
+      <td>
+      0.00231568912286
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Selective No-Score Zone (<font style="color:#FFB6C1">SNS: pink</font>)</b>:
+      </td>
+      <td>
+      0
+      </td>
+      <td>
+      0.0
+      </td>
     </tr>
   </tbody>
 </table>
+</td>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<h4>Target Manipulations: all</h4><br/>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Purpose</th>
+      <th>Color</th>
+      <th>Evaluated</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>clone</td>
+      <td bgcolor="#000000"></td>
+      <td>Y</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+
 </div>
 </div>
 </div>

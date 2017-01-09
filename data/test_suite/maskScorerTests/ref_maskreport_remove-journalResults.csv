@@ -1,4 +1,4 @@
-ProbeFileID,JournalID,StartNodeID,EndNodeID,Operation,Color,Purpose,OperationArgument,scored
+ProbeFileID,JournalID,StartNodeID,EndNodeID,Operation,Color,Purpose,OperationArgument,Evaluated
 43e1d6f0a9306a629a51062729549d76,1e205633945e55593066eb5835c8e294,a71ee79143c09d264fc4d3ebf7449249-01,a71ee79143c09d264fc4d3ebf7449249-place(r&s)03,PasteSplice,0 247 250,add,people,N
 43e1d6f0a9306a629a51062729549d76,1e205633945e55593066eb5835c8e294,a71ee79143c09d264fc4d3ebf7449249-dupclone11,a71ee79143c09d264fc4d3ebf7449249-clone12,PasteSampled,255 0 240,remove,,Y
 43e1d6f0a9306a629a51062729549d76,1e205633945e55593066eb5835c8e294,a71ee79143c09d264fc4d3ebf7449249-place(r&s)03,a71ee79143c09d264fc4d3ebf7449249-place(s&r)04,PasteSplice,0 255 6,add,natural object,N

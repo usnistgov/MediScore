@@ -31,7 +31,8 @@ diff ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulatio
 diff ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_clone_add-perimage.csv > comp_maskreport_clone_add-perimage.txt
 diff ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/ref_maskreport_clone_add-journalResults.csv > comp_maskreport_clone_add-journalResults.txt
 
-#heal should only have journalResults to validate that nothing was scored
+#heal should only have journalResults and perimage to validate that nothing was scored or averaged
+diff ../../data/test_suite/maskScorerTests/target_heal/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_heal-perimage.csv > comp_maskreport_heal-perimage.txt
 diff ../../data/test_suite/maskScorerTests/target_heal/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/ref_maskreport_heal-journalResults.csv > comp_maskreport_heal-journalResults.txt
 
 diff ../../data/test_suite/maskScorerTests/target_remove/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_remove.csv > comp_maskreport_remove.txt
@@ -69,13 +70,14 @@ filter_addjr="cat comp_maskreport_add-journalResults.txt | grep -v -CVS"
 filter_clone_add="cat comp_maskreport_clone_add.txt | grep -v -CVS"
 filter_clone_addpi="cat comp_maskreport_clone_add-perimage.txt | grep -v -CVS"
 filter_clone_addjr="cat comp_maskreport_clone_add-journalResults.txt | grep -v -CVS"
+filter_healpi="cat comp_maskreport_heal-perimage.txt | grep -v -CVS"
 filter_healjr="cat comp_maskreport_heal-journalResults.txt | grep -v -CVS"
 filter_remove="cat comp_maskreport_remove.txt | grep -v -CVS"
 filter_removepi="cat comp_maskreport_remove-perimage.txt | grep -v -CVS"
 filter_removejr="cat comp_maskreport_remove-journalResults.txt | grep -v -CVS"
 
 if ([ -f comp_maskreport_removal.txt -o -f comp_maskreport_removal-perimage.txt -o -f comp_maskreport_removal-journalResults.txt \
- -o -f comp_maskreport_heal.txt -o -f comp_maskreport_heal-perimage.txt \
+ -o -f comp_maskreport_heal.txt \
 ]); then
   echo
   echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
@@ -89,7 +91,7 @@ if ([ ! -f comp_maskreport_all.txt -o ! -f comp_maskreport_all-perimage.txt -o !
  -o ! -f comp_maskreport_add.txt -o ! -f comp_maskreport_add-perimage.txt -o ! -f comp_maskreport_add-journalResults.txt \
  -o ! -f comp_maskreport_clone_add.txt -o ! -f comp_maskreport_clone_add-perimage.txt -o ! -f comp_maskreport_clone_add-journalResults.txt \
  -o ! -f comp_maskreport_remove.txt -o ! -f comp_maskreport_remove-perimage.txt -o ! -f comp_maskreport_remove-journalResults.txt \
- -o ! -f comp_maskreport_heal-journalResults.txt \
+ -o ! -f comp_maskreport_heal-journalResults.txt -o ! -f comp_maskreport_heal-perimage.txt \
 ]); then
   echo
   echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
@@ -228,6 +230,17 @@ if test "`eval $filter_clone_addjr`" = "" ; then
 else
 	echo comp_maskreport_clone_add-journalResults.txt
 	cat comp_maskreport_clone_add-journalResults.txt
+fi
+
+if test "`eval $filter_clone_healpi`" = "" ; then
+  flag_clone_healpi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone_heal/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_clone_heal-perimage.txt
+else
+	echo comp_maskreport_clone_heal-perimage.txt
+	cat comp_maskreport_clone_heal-perimage.txt
 fi
 
 if test "`eval $filter_healjr`" = "" ; then
