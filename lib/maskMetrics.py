@@ -48,7 +48,7 @@ class maskMetricList:
                  sysBin,
                  journaldf=0,
                  mode='Probe',
-                 colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,252,124],'pink':[193,182,255],'white':[255,255,255]}):
+                 colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
         """
         Constructor
 
@@ -109,8 +109,8 @@ class maskMetricList:
         elif self.rbin == -1:
             #only need colors if selectively scoring
             myProbeID = self.maskData.query("ProbeMaskFileName=='{}' & OutputProbeMaskFileName=='{}'".format(refMaskFName,sysMaskFName))['ProbeFileID'].iloc[0]
-            colorlist = list(self.journalData.query("ProbeFileID=='{}'".format(myProbeID))['Color'])
-            purposes = list(self.journalData.query("ProbeFileID=='{}'".format(myProbeID))['Purpose'])
+            colorlist = list(self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))['Color']) #get the target colors
+            purposes = list(self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))['Purpose'])
             purposes_unique = []
             [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
             rImg = masks.refmask(refMaskName,cs=colorlist,tmt=purposes_unique)
@@ -178,7 +178,7 @@ class maskMetricList:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],targetManiType,verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
-                    self.journalData.set_value(i,'scored','N')
+                    self.journalData.set_value(i,'Evaluated','N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
@@ -340,8 +340,8 @@ class maskMetricList:
         jtable = ''
         if task=='manipulation':
             myProbeID = self.maskData.query("ProbeFileName=='{}'".format(maniImageFName))['ProbeFileID'].iloc[0]
-            jdata = self.journalData.query("ProbeFileID=='{}'".format(myProbeID))[['Purpose','Color']]
-            
+            jdata = self.journalData.query("ProbeFileID=='{}'".format(myProbeID))[['Purpose','Color','Evaluated']]
+           
             #make those color cells empty with only the color as demonstration
             jDataColors = list(jdata['Color'])
             jDataColArrays = [x[::-1] for x in [c.split(' ') for c in jDataColors]]
@@ -354,15 +354,42 @@ class maskMetricList:
         totalpx = np.sum(mywts==1)
         totalbns = np.sum(bwts==0)
         totalsns = np.sum(swts==0)
-        htmlstr = htmlstr.substitute({'probeFname': os.path.abspath(mPath),
+
+        #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
+        mBase = os.path.basename(mPath)
+        rBase = os.path.basename(rImg_name)
+        sBase = os.path.basename(sImg_name)
+
+        mPathNew = os.path.join(outputRoot,mBase)
+        rPathNew = os.path.join(outputRoot,rBase)
+        sPathNew = os.path.join(outputRoot,sBase)
+
+        try:
+            os.remove(mPathNew)
+        except OSError:
+            None
+        try:
+            os.remove(rPathNew)
+        except OSError:
+            None
+        try:
+            os.remove(sPathNew)
+        except OSError:
+            None
+
+        os.symlink(os.path.abspath(mPath),mPathNew)
+        os.symlink(os.path.abspath(rImg_name),rPathNew)
+        os.symlink(os.path.abspath(sImg_name),sPathNew)
+
+        htmlstr = htmlstr.substitute({'probeFname': mBase,
                                       'width': allshapes,
-                                      'aggMask' : os.path.abspath(aggImgName),
-                                      'refMask' : os.path.abspath(rImg_name),
-                                      'sysMask' : os.path.abspath(sImg_name),
-                                      'binRefMask' : os.path.abspath(rbin_name),
-                                      'binSysMask' : os.path.abspath(sbin_name),
-                                      'noScoreZone' : weightFName,
-                                      'colorMask' : os.path.abspath(colMaskName),
+                                      'aggMask' : os.path.basename(aggImgName),
+                                      'refMask' : rBase,
+                                      'sysMask' : sBase,
+                                      'binRefMask' : os.path.basename(rbin_name),
+                                      'binSysMask' : os.path.basename(sbin_name),
+                                      'noScoreZone' : os.path.basename(weightFName),
+                                      'colorMask' : os.path.basename(colMaskName),
   				      'nmm' : metrics['NMM'],
   				      'mcc' : metrics['MCC'],
   				      'wL1' : metrics['WL1'],
@@ -452,7 +479,7 @@ class maskMetricList:
 
         #get colors through self.colordict
         mycolor[mImg==1] = self.colordict['red'] #only system (FP)
-        mycolor[mImg==2] = self.colordict['blue'] #only erode image (FN)
+        mycolor[mImg==2] = self.colordict['blue'] #only erode image (FN) (the part that is scored)
         mycolor[mImg==3] = self.colordict['green'] #system and erode image coincide (TP)
         mycolor[(mImg>=4) & (mImg <=7)] = self.colordict['yellow'] #boundary no-score zone
         mycolor[mImg>=8] = self.colordict['pink'] #selection no-score zone
@@ -471,11 +498,13 @@ class maskMetricList:
         myagg = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
         m3chan = np.stack((mData,mData,mData),axis=2)
         #np.reshape(np.kron(mData,np.uint8([1,1,1])),(mData.shape[0],mData.shape[1],3))
+        mImg[mImg==1] = 0 #get rid of the system output image for the composite mask
         myagg[mImg==0]=m3chan[mImg==0]
 
         #for modified images, weighted sum the colored mask with the grayscale
         alpha=0.7
         mData = np.stack((mData,mData,mData),axis=2)
+        mycolor[mImg==3] = self.colordict['blue'] #recolor to get the ref mask out of the way
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         modified = cv2.addWeighted(mycolor,alpha,mData,1-alpha,0)

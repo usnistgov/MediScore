@@ -98,48 +98,200 @@ if ([ ! -f comp_maskreport_all.txt -o ! -f comp_maskreport_all-perimage.txt -o !
   exit
 fi
 
-#TODO: update the testing script accordingly with CASE 1 and CASE 2
-
 if test "`eval $filter_all`" = "" ; then
   flag_all=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/target_all/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
 	fi
-	rm comp_maskreport_manip.txt
+	rm comp_maskreport_all.txt
 else
-	echo comp_maskreport_manip.txt
-	cat comp_maskreport_manip.txt
+	echo comp_maskreport_all.txt
+	cat comp_maskreport_all.txt
 fi
 
 if test "`eval $filter_allpi`" = "" ; then
   flag_allpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/target_all/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
 	fi
-	rm comp_maskreport_manip-perimage.txt
+	rm comp_maskreport_all-perimage.txt
 else
-	echo comp_maskreport_manip-perimage.txt
-	cat comp_maskreport_manip-perimage.txt
+	echo comp_maskreport_all-perimage.txt
+	cat comp_maskreport_all-perimage.txt
 fi
 
 if test "`eval $filter_alljr`" = "" ; then
   flag_alljr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/maniptest/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/target_all/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
 	fi
-	rm comp_maskreport_manip-journalResults.txt
+	rm comp_maskreport_all-journalResults.txt
 else
-	echo comp_maskreport_manip-journalResults.txt
-	cat comp_maskreport_manip-journalResults.txt
+	echo comp_maskreport_all-journalResults.txt
+	cat comp_maskreport_all-journalResults.txt
 fi
 
-if ([ $flag_all == 0 -a $flag_allpi == 0 -a $flag_alljr == 0 ]); then
+if test "`eval $filter_clone`" = "" ; then
+  flag_clone=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+	fi
+	rm comp_maskreport_clone.txt
+else
+	echo comp_maskreport_clone.txt
+	cat comp_maskreport_clone.txt
+fi
+
+if test "`eval $filter_clonepi`" = "" ; then
+  flag_clonepi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_clone-perimage.txt
+else
+	echo comp_maskreport_clone-perimage.txt
+	cat comp_maskreport_clone-perimage.txt
+fi
+
+if test "`eval $filter_clonejr`" = "" ; then
+  flag_clonejr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+	fi
+	rm comp_maskreport_clone-journalResults.txt
+else
+	echo comp_maskreport_clone-journalResults.txt
+	cat comp_maskreport_clone-journalResults.txt
+fi
+
+if test "`eval $filter_add`" = "" ; then
+  flag_add=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+	fi
+	rm comp_maskreport_add.txt
+else
+	echo comp_maskreport_add.txt
+	cat comp_maskreport_add.txt
+fi
+
+if test "`eval $filter_addpi`" = "" ; then
+  flag_addpi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_add-perimage.txt
+else
+	echo comp_maskreport_add-perimage.txt
+	cat comp_maskreport_add-perimage.txt
+fi
+
+if test "`eval $filter_addjr`" = "" ; then
+  flag_addjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+	fi
+	rm comp_maskreport_add-journalResults.txt
+else
+	echo comp_maskreport_add-journalResults.txt
+	cat comp_maskreport_add-journalResults.txt
+fi
+
+if test "`eval $filter_clone_add`" = "" ; then
+  flag_clone_add=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+	fi
+	rm comp_maskreport_clone_add.txt
+else
+	echo comp_maskreport_clone_add.txt
+	cat comp_maskreport_clone_add.txt
+fi
+
+if test "`eval $filter_clone_addpi`" = "" ; then
+  flag_clone_addpi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_clone_add-perimage.txt
+else
+	echo comp_maskreport_clone_add-perimage.txt
+	cat comp_maskreport_clone_add-perimage.txt
+fi
+
+if test "`eval $filter_clone_addjr`" = "" ; then
+  flag_clone_addjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_clone_add/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+	fi
+	rm comp_maskreport_clone_add-journalResults.txt
+else
+	echo comp_maskreport_clone_add-journalResults.txt
+	cat comp_maskreport_clone_add-journalResults.txt
+fi
+
+if test "`eval $filter_healjr`" = "" ; then
+  flag_healjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_heal/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+	fi
+	rm comp_maskreport_heal-journalResults.txt
+else
+	echo comp_maskreport_heal-journalResults.txt
+	cat comp_maskreport_heal-journalResults.txt
+fi
+
+if test "`eval $filter_remove`" = "" ; then
+  flag_remove=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_remove/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv
+	fi
+	rm comp_maskreport_remove.txt
+else
+	echo comp_maskreport_remove.txt
+	cat comp_maskreport_remove.txt
+fi
+
+if test "`eval $filter_removepi`" = "" ; then
+  flag_removepi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_remove/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_remove-perimage.txt
+else
+	echo comp_maskreport_remove-perimage.txt
+	cat comp_maskreport_remove-perimage.txt
+fi
+
+if test "`eval $filter_removejr`" = "" ; then
+  flag_removejr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_remove/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv
+	fi
+	rm comp_maskreport_remove-journalResults.txt
+else
+	echo comp_maskreport_remove-journalResults.txt
+	cat comp_maskreport_remove-journalResults.txt
+fi
+
+if ([ $flag_all == 0 -a $flag_allpi == 0 -a $flag_alljr == 0 \
+-a $flag_clone == 0 -a $flag_clonepi == 0 -a $flag_clonejr == 0 \
+-a $flag_add == 0 -a $flag_addpi == 0 -a $flag_addjr == 0 \
+-a $flag_clone_add == 0 -a $flag_clone_addpi == 0 -a $flag_clone_addjr == 0 \
+-a $flag_healjr == 0 \
+-a $flag_remove == 0 -a $flag_removepi == 0 -a $flag_removejr == 0 \
+]); then
   echo
   echo "CASE 1 SUCCESSFULLY PASSED"
   echo
 	if [ $clean = "TRUE" ] ; then
-		rm -rf ../../data/test_suite/maskScorerTests/splicetest
-		rm -rf ../../data/test_suite/maskScorerTests/maniptest
+		rm -rf ../../data/test_suite/maskScorerTests/target_all
+		rm -rf ../../data/test_suite/maskScorerTests/target_clone
+		rm -rf ../../data/test_suite/maskScorerTests/target_add
+		rm -rf ../../data/test_suite/maskScorerTests/target_removal
+		rm -rf ../../data/test_suite/maskScorerTests/target_clone_add
+		rm -rf ../../data/test_suite/maskScorerTests/target_heal
+		rm -rf ../../data/test_suite/maskScorerTests/target_remove
 	fi
 else
   echo

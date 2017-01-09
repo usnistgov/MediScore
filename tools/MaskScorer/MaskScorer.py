@@ -79,9 +79,8 @@ factor_group.add_argument('-q', '--query', nargs='*',
 help="Evaluate algorithm performance by given queries.", metavar='character')
 factor_group.add_argument('-qp', '--queryPartition',
 help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
-#TODO: what does queryManipulation do?
-factor_group.add_argument('-qm', '--queryManipulation',
-help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+#factor_group.add_argument('-qm', '--queryManipulation',
+#help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
 
 parser.add_argument('-tmt','--targetManiType',type=str,default='all',
 help="An array of manipulations to be scored, separated by commas (e.g. 'remove,clone'). Select 'all' to score all manipulated regions regardless of manipulation.",metavar='character')
@@ -166,7 +165,7 @@ if args.html:
             #set links around the system output data frame files for images that are not NaN
             #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
             pd.set_option('display.max_colwidth',-1)
-            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -275,14 +274,14 @@ if args.task == 'manipulation':
 
     journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
     n_journals = len(journalData0)
-    journalData0['scored'] = pd.Series(['N']*n_journals) #add column for scored: 'Y'/'N'
+    journalData0['Evaluated'] = pd.Series(['N']*n_journals) #add column for Evaluated: 'Y'/'N'
     journalData = journalData0.copy()
 
-    if (args.targetManiType != 'all'):
+    if args.targetManiType != 'all':
         journalData = journalData0.query("Purpose=={}".format(args.targetManiType.split(','))) #filter by targetManiType
-        journalData0.loc[journalData0.query("Purpose=={}".format(args.targetManiType.split(','))).index,'scored'] = 'Y'
+        journalData0.loc[journalData0.query("Purpose=={}".format(args.targetManiType.split(','))).index,'Evaluated'] = 'Y'
     else:
-        journalData0.loc[journalData0.query("ProbeFileID=={}".format(sub_ref['ProbeFileID'].tolist())).index,'scored'] = 'Y'
+        journalData0.loc[journalData0.query("ProbeFileID=={}".format(sub_ref['ProbeFileID'].tolist())).index,'Evaluated'] = 'Y'
 
     #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
     if (len(journalData) == 0) or not (True in journalData['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
@@ -297,26 +296,31 @@ if args.task == 'manipulation':
     #DM_List = selection.part_dm_list
     #table_df = selection.render_table()
 
-    r_df = mr.createReportSSD(m_df,journalData, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.ntdks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
+    r_df = mr.createReportSSD(m_df,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.ntdks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
-    journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'scored'] = 'N'
+    journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
     journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
-    r_df = r_df.query('MCC > -2') #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+    r_df['Scored'] = pd.Series(['Y']*len(r_df))
+    r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
+    r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
+    r_df.loc[r_df.query('MCC == -2').index,'WL1'] = ''
+    r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
+    #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
 
     #add targetManiType for r_df
     r_df['TargetManipulations'] = args.targetManiType.replace(',',' + ')
 
     #generate HTML table report
-    if len(r_df) > 0:
-        df2html(r_df,args.outRoot)
-    else:
+    df2html(r_df,args.outRoot)
+
+    if len(r_df.query("Scored=='Y'")) == 0:
         #if nothing was scored, print a message and return
-        print("None of the masks that we attempted to score for this run had regions to be scored. This is not an error.")
+        print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
         exit(0)
 
     metrics = ['NMM','MCC','WL1']
-    my_partition = pt.Partition(r_df,query,factor_mode,args.targetManiType,metrics) #average over queries
+    my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
     df_list = my_partition.render_table(metrics)
  
     if args.query:

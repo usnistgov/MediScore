@@ -11,11 +11,11 @@
       <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>System Output Mask</b></td>
     </tr>
     <tr>
-      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated)</b></td>
+      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
       <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated)</b></td>
     </tr>
     <tr>
-      <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone</b></td>
+      <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
       <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Evaluation Result Visualization</b></td>
     </tr>
     <tr>

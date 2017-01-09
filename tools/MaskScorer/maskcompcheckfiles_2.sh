@@ -1,12 +1,27 @@
 #!/bin/bash
 clean=FALSE
 
-#TODO: update the testing script accordingly with CASE 1 and CASE 2
- 
 echo
-echo "CASE 1: VALIDATING SCORING OF TARGET REGIONS"
+echo "CASE 2: VALIDATING FACTOR-BASED SCORING"
 echo
 
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconf -html -q "0.5 < ConfidenceScore"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade -html -q "ConfidenceScore < 0.5" "ManMade=='yes'"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconf -html -q "ConfidenceScore=='foo'"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfpart -html -qp "0.5 < ConfidenceScore"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfclonepart -html -qp "0.3 < ConfidenceScore & Clone==['yes','no']"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconfpart -html -qp "ConfidenceScore=='foo'"
+
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconf -html -q "0.5 < ConfidenceScore"
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcoll -html -q "0.3 < ConfidenceScore" "Collection==['Nimble-WEB']"
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconf -html -q "ConfidenceScore=='foo'"
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfpart -html -qp "0.5 < ConfidenceScore"
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcollpart -html -qp "0.3 < ConfidenceScore & Collection==['Nimble-WEB','Nimble-SCI']"
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_c-me2_1/B_NC2016_Splice_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconfpart -html -qp "ConfidenceScore=='foo'"
+
+
+#TODO: update the testing script accordingly with CASE 2
+ 
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_all -html
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_clone -html -tmt 'clone'
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_add -html -tmt 'add'
@@ -76,10 +91,6 @@ filter_remove="cat comp_maskreport_remove.txt | grep -v -CVS"
 filter_removepi="cat comp_maskreport_remove-perimage.txt | grep -v -CVS"
 filter_removejr="cat comp_maskreport_remove-journalResults.txt | grep -v -CVS"
 
-
-echo
-echo "CASE 2: VALIDATING FACTOR-BASED SCORING"
-echo
 
 
 
