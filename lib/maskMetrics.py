@@ -248,7 +248,7 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
+                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
 
         return df
 
@@ -287,7 +287,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
+    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -298,6 +298,7 @@ class maskMetricList:
         *     sImg_name: the name of the unmodified system output image used for the mask evaluation
         *     rbin_name: the name of the binarized reference image used for the mask evaluation
         *     sbin_name: the name of the binarized system output image used for the mask evaluation
+        *     sys_threshold: the threshold used to binarize the system output mask
         *     b_weights: the weighted matrix of the no-score zones of the targeted regions
         *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
         *     metrics: the dictionary of mask scores
@@ -388,11 +389,12 @@ class maskMetricList:
                                       'sysMask' : sBase,
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
+                                      'systh' : sys_threshold,
                                       'noScoreZone' : os.path.basename(weightFName),
                                       'colorMask' : os.path.basename(colMaskName),
-  				      'nmm' : metrics['NMM'],
-  				      'mcc' : metrics['MCC'],
-  				      'wL1' : metrics['WL1'],
+  				      'nmm' : round(metrics['NMM'],3),
+  				      'mcc' : round(metrics['MCC'],3),
+  				      'wL1' : round(metrics['WL1'],3),
                                       'totalPixels' : totalpx,
                                       'tp' : int(confmeasures['TP']),
                                       'fp' : int(confmeasures['FP']),
@@ -412,12 +414,12 @@ class maskMetricList:
                                       'fnhex':hexs[cols['fncol']],
                                       'bnshex':hexs[cols['bnscol']],
                                       'snshex':hexs[cols['snscol']],
-                                      'perctp':float(confmeasures['TP'])/totalpx,
-                                      'percfp':float(confmeasures['FP'])/totalpx,
-                                      'perctn':float(confmeasures['TN'])/totalpx,
-                                      'percfn':float(confmeasures['FN'])/totalpx,
-                                      'percbns':float(totalbns)/totalpx,
-                                      'percsns':float(totalsns)/totalpx,
+                                      'perctp':round(float(confmeasures['TP'])/totalpx,3),
+                                      'percfp':round(float(confmeasures['FP'])/totalpx,3),
+                                      'perctn':round(float(confmeasures['TN'])/totalpx,3),
+                                      'percfn':round(float(confmeasures['FN'])/totalpx,3),
+                                      'percbns':round(float(totalbns)/totalpx,3),
+                                      'percsns':round(float(totalsns)/totalpx,3),
                                       'tmt':targetManiType,
                                       'jtable':jtable}) #add journal operations and set bg color to the html
 
@@ -498,8 +500,8 @@ class maskMetricList:
         myagg = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
         m3chan = np.stack((mData,mData,mData),axis=2)
         #np.reshape(np.kron(mData,np.uint8([1,1,1])),(mData.shape[0],mData.shape[1],3))
-        mImg[mImg==1] = 0 #get rid of the system output image for the composite mask
-        myagg[mImg==0]=m3chan[mImg==0]
+        refbw = ref.bwmat
+        myagg[refbw==255]=m3chan[refbw==255]
 
         #for modified images, weighted sum the colored mask with the grayscale
         alpha=0.7
@@ -507,7 +509,7 @@ class maskMetricList:
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         modified = cv2.addWeighted(ref.matrix,alpha,mData,1-alpha,0)
-        myagg[mImg!=0]=modified[mImg!=0]
+        myagg[refbw==0]=modified[refbw==0]
 
         compositeMaskName=outputMaskBase + "_composite.jpg"
         compositePath = os.path.join(outputMaskPath,compositeMaskName)

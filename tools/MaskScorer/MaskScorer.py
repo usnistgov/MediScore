@@ -79,8 +79,8 @@ factor_group.add_argument('-q', '--query', nargs='*',
 help="Evaluate algorithm performance by given queries.", metavar='character')
 factor_group.add_argument('-qp', '--queryPartition',
 help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
-#factor_group.add_argument('-qm', '--queryManipulation',
-#help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
+help="Evaluate algorithm performance by given queries. This argument is identical to the -q option and is included for consistency of the interface with the detection scorer.", metavar='character')
 
 parser.add_argument('-tmt','--targetManiType',type=str,default='all',
 help="An array of manipulations to be scored, separated by commas (e.g. 'remove,clone'). Select 'all' to score all manipulated regions regardless of manipulation.",metavar='character')
@@ -166,15 +166,18 @@ if args.html:
             #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
             pd.set_option('display.max_colwidth',-1)
             html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out = html_out.round({'NMM':3,'MCC':3,'WL1':3})
+
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
-            myf.write(html_out.to_html(escape=False))
+            myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;"))
             myf.write('\n')
             if not (average_df is 0):
                 #write title and then average_df
+                average_df = average_df.round({'NMM':3,'MCC':3,'WL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
-                myf.write(average_df.to_html(escape=False))
+                myf.write(average_df.to_html(escape=False).replace("text-align: right;","text-align: center;"))
 
             myf.close()
 
@@ -192,6 +195,8 @@ if args.html:
             pd.set_option('display.max_colwidth',-1)
             html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out = html_out.round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
+
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -199,8 +204,9 @@ if args.html:
             myf.write('\n')
             if not (average_df is 0):
                 #write title and then average_df
+                average_df = average_df.round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
-                myf.write(average_df.to_html(escape=False))
+                myf.write(average_df.to_html(escape=False).replace("text-align: right;","text-align: center;"))
 
             myf.close()
 
@@ -242,7 +248,7 @@ myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype
 
 factor_mode = ''
 query = ''
-if args.query:
+if args.query or args.queryManipulation:
     factor_mode = 'q'
     query = args.query
 elif args.queryPartition:
@@ -332,7 +338,7 @@ if args.task == 'manipulation':
         my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
         df_list = my_partition.render_table(metrics)
      
-        if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+        if (factor_mode=='q') and (len(df_list) > 0): #don't print anything if there's nothing to print
             #use Partition for OOP niceness and to identify file to be written.
             #a_df get the headers of temp_df and tack entries on one after the other
             a_df = pd.DataFrame(columns=df_list[0].columns) 
@@ -342,7 +348,10 @@ if args.task == 'manipulation':
                 
         elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
             a_df = df_list[0]
-            a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
+            if len(a_df) > 0:
+                a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
+            else:
+                a_df = 0
 
     #generate HTML table report
     df2html(r_df,a_df,args.outRoot)
@@ -379,7 +388,7 @@ elif args.task == 'splice':
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
     df_list = my_partition.render_table(metrics)
 
-    if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+    if (factor_mode=='q') and (len(df_list) > 0): #don't print anything if there's nothing to print
         #use Partition for OOP niceness and to identify file to be written. 
         #a_df get the headers of temp_df and tack entries on one after the other
         a_df = pd.DataFrame(columns=df_list[0].columns) 
@@ -389,7 +398,10 @@ elif args.task == 'splice':
             
     elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
         a_df = df_list[0]
-        a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
+        if len(a_df) > 0:
+            a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
+        else:
+            a_df = 0
 
     #generate HTML table report
     df2html(r_df,a_df,args.outRoot)

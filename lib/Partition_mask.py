@@ -254,10 +254,12 @@ class Partition:
                 data[m] = []
 
 #            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
+            n_emptydf = 0
             for i,partition in enumerate(self.part_values_list):
                 dm = self.part_metric_list[i]
                 if len(dm) == 0:
                     #skip where dm is empty
+                    n_emptydf = n_emptydf + 1
                     continue
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition,field)]
@@ -285,8 +287,7 @@ class Partition:
             columns.extend(self.factors_order)
             columns.extend(metrics)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
-            index = ['Partition_'+str(i) for i in range(self.n_partitions)]
-            #TODO: subset index with max len of columns
+            index = ['Partition_'+str(i) for i in range(self.n_partitions-n_emptydf)]
 
             df = pd.DataFrame(data,index,columns)
             return [df]
