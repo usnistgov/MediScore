@@ -332,12 +332,15 @@ if args.task == 'manipulation':
         my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
         df_list = my_partition.render_table(metrics)
      
-        if args.query:
-            #use Partition for OOP niceness and to identify file to be written. 
+        if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+            #use Partition for OOP niceness and to identify file to be written.
+            #a_df get the headers of temp_df and tack entries on one after the other
+            a_df = pd.DataFrame(columns=df_list[0].columns) 
             for i,temp_df in enumerate(df_list):
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
+                a_df = a_df.append(temp_df,ignore_index=True)
                 
-        elif args.queryPartition or (factor_mode == ''):
+        elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
             a_df = df_list[0]
             a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
 
@@ -376,12 +379,15 @@ elif args.task == 'splice':
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
     df_list = my_partition.render_table(metrics)
 
-    if args.query:
+    if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
         #use Partition for OOP niceness and to identify file to be written. 
+        #a_df get the headers of temp_df and tack entries on one after the other
+        a_df = pd.DataFrame(columns=df_list[0].columns) 
         for i,temp_df in enumerate(df_list):
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
+            a_df = a_df.append(temp_df,ignore_index=True)
             
-    elif args.queryPartition or (factor_mode == ''):
+    elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
         a_df = df_list[0]
         a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
 

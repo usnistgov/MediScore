@@ -63,7 +63,7 @@ class Partition:
         """ Function used only in the constructor,
             shouldn't be called outside of the class.
 
-            Generate the dictionnary which make the association between
+            Generate the dictionary which make the association between
             each factor name and its column's index in the dataframe.
         """
         index_factor = dict()
@@ -75,13 +75,14 @@ class Partition:
         """ Function used only in the constructor,
             shouldn't be called outside of the class.
 
-            Parse the query and store it as a dictionnary.
+            Parse the query and store it as a dictionary.
             {'factor_name': condition}
             The numerical factors are separeted from the general ones
             in a second dictionnary associated to the key 'Numerical_factors'
             For each numerical factors, the entire string (name+condition)
             is appended to a list associated to the key 'Numericals_factors_conditions'
         """
+        #TODO: more descriptive querying? Current one is not descriptive enough
         L_factors = re.split('&|and',self.query)
         L_order = list()
         D_factors = OrderedDict()
@@ -108,7 +109,7 @@ class Partition:
             shouldn't be called outside of the class.
 
             This function computes the cartesian product of all the
-            factors conditions, based on the factors dictionnary
+            factors conditions, based on the factors dictionary
             It returns a list of lists. Each list contains the list
             of factors' conditions for one partition.
         """
@@ -179,10 +180,11 @@ class Partition:
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
                 print("Current query: {}".format(query))
-                dm_list.append(df[metrics])
+                #dm_list.append(df[metrics])
                 #dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI))
             else:
-                print('#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
+                print('#### Warning: Empty DataFrame for query "{}"\n#### Please verify factors conditions.'.format(query))
+            dm_list.append(df[metrics])
         return dm_list
 
     def get_query(self):
@@ -224,6 +226,9 @@ class Partition:
             for i,query in enumerate(self.part_query_list):
                 #dm = self.part_dm_list[i]
                 dm = self.part_metric_list[i]
+                if len(dm) == 0:
+                    #skip where dm is empty
+                    continue
                 data = {'Query': query}
                 for m in metrics:
                     data[m] = dm[m].mean() #average this
@@ -235,7 +240,7 @@ class Partition:
 #                         'auc_ci_lower':dm.ci_lower,
 #                         'auc_ci_upper':dm.ci_upper}
 #                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
-                data['TaskID'] = self.task
+                data['TaskID'] = [self.task]
                 data['TargetManipulations'] = self.targetManiType
                 columns = ['TaskID','Query','TargetManipulations']
                 columns.extend(metrics)
@@ -250,6 +255,10 @@ class Partition:
 
 #            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
             for i,partition in enumerate(self.part_values_list):
+                dm = self.part_metric_list[i]
+                if len(dm) == 0:
+                    #skip where dm is empty
+                    continue
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition,field)]
                     if '==' in full_condition:
@@ -262,7 +271,6 @@ class Partition:
                         data[field].append(condition)
 
 #                dm = self.part_dm_list[i]
-                dm = self.part_metric_list[i]
                 for m in metrics:
                     data[m] = dm[m].mean() #average this
 #                data['auc'].append(dm.auc)
@@ -270,14 +278,16 @@ class Partition:
 #                data['eer'].append(dm.eer)
 #                data['auc_ci_lower'].append(dm.ci_lower)
 #                data['auc_ci_upper'].append(dm.ci_upper)
-                data['TaskID'] = self.task
-                data['TargetManipulations'] = self.targetManiType
+            data['TaskID'] = self.task
+            data['TargetManipulations'] = self.targetManiType
 
             columns = ['TaskID','TargetManipulations']
             columns.extend(self.factors_order)
             columns.extend(metrics)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
+            #TODO: subset index with max len of columns
+
             df = pd.DataFrame(data,index,columns)
             return [df]
 
