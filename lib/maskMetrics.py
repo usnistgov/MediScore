@@ -154,13 +154,13 @@ class maskMetricList:
         reflist = self.maskData['{}MaskFileName'.format(self.mode)]
         syslist = self.maskData['Output{}MaskFileName'.format(self.mode)]
 
+        manip_ids = self.maskData['{}FileID'.format(self.mode)]
         if html:
             maniImageFName = self.maskData['{}FileName'.format(self.mode)]
 
         nrow = len(reflist) 
-    
         #initialize empty frame to minimum scores 
-        df=pd.DataFrame({'Output{}MaskFileName'.format(self.mode):syslist,
+        df=pd.DataFrame({'{}FileID'.format(self.mode):manip_ids,
                          'NMM':[-1.]*nrow,
                          'MCC': 0.,
                          'WL1': 1.,

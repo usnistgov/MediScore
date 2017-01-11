@@ -147,7 +147,7 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin, targetManiTyp
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
     df = maskMetricRunner.getMetricList(targetManiType,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    merged_df = pd.merge(m_df,df,how='left',on='OutputProbeMaskFileName')
+    merged_df = pd.merge(m_df,df,how='left',on='ProbeFileID')
 
     return merged_df
 
@@ -192,15 +192,14 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
                                        "ColMaskFileName":"ProbeColMaskFileName",
                                        "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
 
-    donor_df.rename(index=str,columns={"OutputProbeMaskFileName":"OutputDonorMaskFileName",
-                                       "NMM":"dNMM",
+    donor_df.rename(index=str,columns={"NMM":"dNMM",
                                        "MCC":"dMCC",
                                        "WL1":"dWL1",
                                        "ColMaskFileName":"DonorColMaskFileName",
                                        "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
 
     pd_df = pd.concat([probe_df,donor_df],axis=1)
-    merged_df = pd.merge(m_df,pd_df,how='left',on=['OutputProbeMaskFileName','OutputDonorMaskFileName'])
+    merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID'])
 
     return merged_df
 
