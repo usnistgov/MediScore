@@ -12,7 +12,7 @@
     </tr>
     <tr>
       <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
-      <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated, Threshold = $systh)</b></td>
+      <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated, Threshold &gt; $systh)</b></td>
     </tr>
     <tr>
       <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>

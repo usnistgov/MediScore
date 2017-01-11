@@ -228,7 +228,7 @@ class maskMetricList:
                     threshold = self.sbin
                 elif self.sbin == -1:
                     #get everything through an iterative run of max threshold
-                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,wts,erodeKernSize,dilateKernSize,kern=kern,popt=verbose)
+                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,wts,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
                     #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
                     metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                     mets = metrics[['NMM','MCC','WL1']].to_dict()
@@ -786,7 +786,7 @@ class maskMetrics:
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,w,erodeKernSize,dilateKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,w,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
@@ -796,6 +796,7 @@ class maskMetrics:
         *     w: the weight matrix
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
+        *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
         *     kern: kernel shape to be used (default: 'box')
         *     popt: whether or not to print messages for getMetrics.
                     This option is directly tied to the verbose option through MaskScorer.py
@@ -867,8 +868,7 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'N':[0]*len(thresholds)})
             #for all thresholds
-            noScore = ref.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)
-            w = noScore['wimg']
+            w,_,_ = ref.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
             rownum=0
             for th in thresholds:
                 tmask = sys.get_copy()
@@ -886,8 +886,7 @@ class maskMetrics:
                 thresMets.set_value(rownum,'N',thismet.conf['N'])
                 rownum=rownum+1
 
-            #pick max threshold for max MCC
-        
+        #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
         return thresMets,tmax
 

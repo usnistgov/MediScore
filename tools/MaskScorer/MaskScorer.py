@@ -322,6 +322,8 @@ if args.task == 'manipulation':
     journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
     journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
+    #TODO: reorder r_df's columns by re-merging? Names first, then scores, then other metadata
+
     r_df['Scored'] = pd.Series(['Y']*len(r_df))
     r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
     r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''

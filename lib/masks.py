@@ -117,15 +117,15 @@ class mask(object):
         mycopy.name = self.name[-4:] + '-2.png'
         return mycopy
 
-    def bw(self,threshold):
+    def bw(self,thres):
         """
         * Description: returns binarized matrix without affecting base matrix
         * Input:
-        *     threshold: the threshold to binarize the matrix
+        *     thres: the threshold to binarize the matrix
         * Output:
         *     the binarized matrix
         """
-        _,mymat = cv2.threshold(self.matrix,threshold,255,cv2.THRESH_BINARY)
+        _,mymat = cv2.threshold(self.matrix,thres,255,cv2.THRESH_BINARY)
         return mymat
 
     #flips mask
@@ -260,8 +260,7 @@ class mask(object):
         params.append(compression)
         outmat = self.matrix
         if th >= 0:
-            if np.array_equal(self.bwmat,0):
-                self.binarize(th)
+            self.binarize(th)
             outmat = self.bwmat
         cv2.imwrite(fname,outmat,params)
         return 0
