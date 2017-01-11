@@ -324,13 +324,6 @@ if args.task == 'manipulation':
     journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
     journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
-    #reorder r_df's columns. Names first, then scores, then other metadata
-    rcols = r_df.columns.tolist()
-    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','WL1','Scored','TargetManipulations']
-    metadata = [t for t in rcols if t not in firstcols]
-    firstcols.extend(metadata)
-    r_df = r_df[firstcols]
-
     r_df['Scored'] = pd.Series(['Y']*len(r_df))
     r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
     r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
@@ -341,6 +334,13 @@ if args.task == 'manipulation':
     #add targetManiType for r_df
     r_df['TargetManipulations'] = args.targetManiType.replace(',',' + ')
     a_df = 0
+
+    #reorder r_df's columns. Names first, then scores, then other metadata
+    rcols = r_df.columns.tolist()
+    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','WL1','Scored','TargetManipulations']
+    metadata = [t for t in rcols if t not in firstcols]
+    firstcols.extend(metadata)
+    r_df = r_df[firstcols]
 
     if len(r_df.query("Scored=='Y'")) == 0:
         #if nothing was scored, print a message and return

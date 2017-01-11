@@ -12043,6 +12043,13 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </ul>
 </li>
 </ul>
+<p>-qm queryManipulation</p>
+<ul>
+<li>Identical to -q for the mask scorer in behavior and result.<ul>
+<li>Syntax: -q "query1" "query2" "query3" ...</li>
+</ul>
+</li>
+</ul>
 
 </div>
 </div>
@@ -12091,8 +12098,82 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The following set of images is a sample of what you should see in the HTML report for each image. You can access each image from the appropriate link in the index.html file that is produced in your chosen output directory.</p>
-<p>The probe and donor masks for the splice task will each have one report.</p>
+<p>The following set of images is a sample of what you should see in the HTML report for each image. You can access each image from the appropriate link in the index.html file that is produced in your chosen output directory. Following is a sample index file:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>TaskID</th>
+      <th>ProbeFileID</th>
+      <th>ProbeFileName</th>
+      <th>ProbeMaskFileName</th>
+      <th>IsTarget</th>
+      <th>OutputProbeMaskFileName</th>
+      <th>ConfidenceScore</th>
+      <th>NMM</th>
+      <th>MCC</th>
+      <th>WL1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>manipulation</td>
+      <td>morelight</td>
+      <td><font style="color:#0000FF"><u>morelight.jpg</u></font></td>
+      <td>reference/manipulation/mask/light-mask.png</td>
+      <td>Y</td>
+      <td>mask/sys-light.png</td>
+      <td>1.0</td>
+      <td>-1.0</td>
+      <td>0.272</td>
+      <td>0.028</td>
+    </tr>
+  </tbody>
+</table>
+<h3>Average Scores</h3>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>TaskID</th>
+      <th>TargetManipulations</th>
+      <th>NMM</th>
+      <th>MCC</th>
+      <th>WL1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>manipulation</td>
+      <td>all</td>
+      <td>-1.0</td>
+      <td>0.272</td>
+      <td>0.028</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The columns in this table have been truncated for the sake of display. Multiple rows may be displayed in the Average Scores table depending on the query option and query(ies) being passed.</p>
+<p>Reports for each image are located in hyperlinks (formatted in the above example for display) under ProbeFileName for images that can be evaluated. Probe and donor masks for each ProbeFileID in the splice task will have one report each.</p>
+<p>Following is an example of basic output being evaluated by the mask scorer:</p>
 
 </div>
 </div>
@@ -12123,12 +12204,23 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       <td><img src="notebookImgs/sys-light_colored.jpg" alt="color mask" style="width:640px;"><br/><b>Evaluation Result Visualization</b></td>
     </tr>
     <tr>
-      <td><b>NIMBLE Mask Metric (NMM)</b>: -1.0 <br/>
-      <b>Matthews Correlation Coefficient (MCC)</b>: 0.271985771309 <br/>
-      <b>Weighted L1 Loss (WL1)</b>: 0.0281554742248 <br/></td>
+    <td><b>NIMBLE Mask Metric (NMM)</b>: -1.0 <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: 0.272 <br/>
+      <b>Weighted L1 Loss (WL1)</b>: 0.028 <br/></td>
       <td><b>Total Pixels</b>: 6002101 <br/>
-<table style="border:1; background-color:#C8C8C8">
+<table style = "border:1;background-color:#C8C8C8">
   <tbody>
+    <tr>
+      <th>
+      Confusion Measures
+      </th>
+      <th>
+      Pixels
+      </th>      
+      <th>
+      Proportion
+      </th>      
+    </tr>
     <tr>
       <td>
 <b>True Positives (<font style="color:#00CF00">TP: green</font>)</b>:
@@ -12137,7 +12229,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       14055
       </td>
       <td>
-      0.00234168002171
+      0.002
       </td>
     </tr>
     <tr>
@@ -12148,7 +12240,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       168868
       </td>
       <td>
-      0.0281348147924
+      0.028
       </td>
     </tr>
     <tr>
@@ -12159,7 +12251,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       5819054
       </td>
       <td>
-      0.969502845754
+      0.97
       </td>
     </tr>
     <tr>
@@ -12170,7 +12262,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       124
       </td>
       <td>
-      2.06594324221e-05
+      0.0
       </td>
     </tr>
     <tr>
@@ -12181,7 +12273,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       13899
       </td>
       <td>
-      0.00231568912286
+      0.002
       </td>
     </tr>
     <tr>
@@ -12219,6 +12311,36 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
     </tr>
   </tbody>
 </table>
+<br/>
+<b>Measures for Each Threshold</b></br>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Threshold</th>
+      <th>NMM</th>
+      <th>MCC</th>
+      <th>WL1</th>
+      <th>TP</th>
+      <th>TN</th>
+      <th>FP</th>
+      <th>FN</th>
+      <th>N</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.0</td>
+      <td>-1.0</td>
+      <td>0.271986</td>
+      <td>0.028155</td>
+      <td>14055</td>
+      <td>5819054</td>
+      <td>168868</td>
+      <td>124</td>
+      <td>6002101</td>
+    </tr>
+  </tbody>
+</table>
 </div>
 </div>
 </div>
@@ -12227,6 +12349,8 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<hr>
+<p>The page below is a sample page of a manipulation with selected regions (based on manipulation type) being scored. Other regions are dilated by a separate factor and counted as selective no-score zones (pink) in addition to the boundary no-score zones applied to the regions of interest (yellow).</p>
 
 </div>
 </div>
@@ -12236,7 +12360,148 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-
+<p><h2>Manipulated Image: 43e1d6f0a9306a629a51062729549d76.jpg </h2><br/>
+<img src="notebookImgs/43e1d6f0a9306a629a51062729549d76.jpg" alt="manipulated image" style="width:640px;">
+<br/></p>
+<p><h3>Composite with Color Mask: leaves-mask_composite.jpg </h3>
+<img src="notebookImgs/leaves-mask_composite.jpg" alt="manip image plus mask" style="width:640px;">
+<br/></p>
+<table border="1">
+  <tbody>
+    <tr>
+      <td><img src="notebookImgs/77232d3f2f9e866ad7bbc5faccd25119.png" alt="reference mask" style="width:640px;"><br/><b>Colorized Reference Mask</b></td>
+      <td><img src="notebookImgs/leaves-mask.png" alt="system output mask" style="width:640px;"><br/><b>System Output Mask</b></td>
+    </tr>
+    <tr>
+      <td><img src="notebookImgs/77232d3f2f9e866ad7bbc5faccd25119-bin.png" alt="binarized reference mask" style="width:640px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="notebookImgs/leaves-mask-bin.png" alt="binarized system output mask" style="width:640px;"><br/><b>Binarized System Output Mask (Black = Manipulated)</b></td>
+    </tr>
+    <tr>
+      <td><img src="notebookImgs/leaves-mask-weights.png" alt="no-score zone" style="width:640px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="notebookImgs/leaves-mask_colored.jpg" alt="color mask" style="width:640px;"><br/><b>Evaluation Result Visualization</b></td>
+    </tr>
+    <tr>
+      <td><b>NIMBLE Mask Metric (NMM)</b>: 0.292536767785 <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: 0.722353353812 <br/>
+      <b>Weighted L1 Loss (WL1)</b>: 0.0717813808655 <br/></td>
+      <td><b>Total Pixels</b>: 9227609 <br/>
+<table style = "border:1;background-color:#C8C8C8">
+  <tbody>
+    <tr>
+      <td>
+<b>True Positives (<font style="color:#00CF00">TP: green</font>)</b>:
+      </td>
+      <td>
+      1012095
+      </td>
+      <td>
+      0.109681175264
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Positives (<font style="color:#FF0000">FP: red</font>)</b>:
+      </td>
+      <td>
+      588762
+      </td>
+      <td>
+      0.063804393966
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>True Negatives (<font style="color:#FFFFFF">TN: white</font>)</b>:
+      </td>
+      <td>
+      7874451
+      </td>
+      <td>
+      0.853357679113
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Negatives (<font style="color:#3333FF">FN: blue</font>)</b>:
+      </td>
+      <td>
+      98456
+      </td>
+      <td>
+      0.0106697195341
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Boundary No-Score Zone (<font style="color:#FFFF00">BNS: yellow</font>)</b>:
+      </td>
+      <td>
+      160636
+      </td>
+      <td>
+      0.0174081931733
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Selective No-Score Zone (<font style="color:#FFB6C1">SNS: pink</font>)</b>:
+      </td>
+      <td>
+      348211
+      </td>
+      <td>
+      0.0377357774912
+      </td>
+    </tr>
+  </tbody>
+</table>
+</td>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<h4>Target Manipulations: add</h4><br/>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Purpose</th>
+      <th>Color</th>
+      <th>Evaluated</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#00F7FA"></td>
+      <td>Y</td>
+    </tr>
+    <tr>
+      <td>remove</td>
+      <td bgcolor="#FF00F0"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#00FF06"></td>
+      <td>Y</td>
+    </tr>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#F4FD00"></td>
+      <td>Y</td>
+    </tr>
+    <tr>
+      <td>clone</td>
+      <td bgcolor="#FF0C00"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>heal</td>
+      <td bgcolor="#FFFF7F"></td>
+      <td>N</td>
+    </tr>
+  </tbody>
+</table>
 </div>
 </div>
 </div>

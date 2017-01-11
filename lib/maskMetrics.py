@@ -226,6 +226,7 @@ class maskMetricList:
                     mets = metricRunner.getMetrics(popt=verbose)
                     mymeas = metricRunner.conf
                     threshold = self.sbin
+                    thresMets = ''
                 elif self.sbin == -1:
                     #get everything through an iterative run of max threshold
                     thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,wts,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
@@ -248,7 +249,7 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
+                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
 
         return df
 
@@ -287,7 +288,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
+    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -299,6 +300,7 @@ class maskMetricList:
         *     rbin_name: the name of the binarized reference image used for the mask evaluation
         *     sbin_name: the name of the binarized system output image used for the mask evaluation
         *     sys_threshold: the threshold used to binarize the system output mask
+        *     thresMets: the table of thresholds for the image and the scores they yielded for that threshold
         *     b_weights: the weighted matrix of the no-score zones of the targeted regions
         *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
         *     metrics: the dictionary of mask scores
@@ -420,7 +422,8 @@ class maskMetricList:
                                       'percbns':round(float(totalbns)/totalpx,3),
                                       'percsns':round(float(totalsns)/totalpx,3),
                                       'tmt':targetManiType,
-                                      'jtable':jtable}) #add journal operations and set bg color to the html
+                                      'jtable':jtable,
+                                      'th_table':thresMets.to_html(index=False)}) #add journal operations and set bg color to the html
 
         #print htmlstr
         fprefix=os.path.basename(maniImageFName)
@@ -891,6 +894,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
+        thresMets = thresMets[['Threshold','NMM','MCC','WL1','TP','TN','FP','FN','N']]
         return thresMets,tmax
 
 

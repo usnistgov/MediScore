@@ -27,7 +27,7 @@
   <tbody>
     <tr>
       <th>
-      Measure
+      Confusion Measures
       </th>
       <th>
       Pixels
@@ -111,3 +111,6 @@
 <br/>
 <h4>Target Manipulations: $tmt</h4><br/>
 $jtable
+<br/>
+<h4>Measures for Each Threshold</h4><br/>
+$th_table
