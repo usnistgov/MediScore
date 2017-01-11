@@ -82,7 +82,6 @@ class Partition:
             For each numerical factors, the entire string (name+condition)
             is appended to a list associated to the key 'Numericals_factors_conditions'
         """
-        #TODO: more descriptive querying? Current one is not descriptive enough
         L_factors = re.split('&|and',self.query)
         L_order = list()
         D_factors = OrderedDict()
@@ -102,6 +101,16 @@ class Partition:
                 else:
                     D_factors['Numericals_factors'][split[1]] = factor
                     L_order.append(split[1])
+            elif '>' in factor:
+                D_factors['Numericals_factors_conditions'].append(factor)
+                split = re.split('[>|=]+',factor)
+                if split[0] in self.factors_names:
+                    D_factors['Numericals_factors'][split[0]] = factor
+                    L_order.append(split[0])
+                else:
+                    D_factors['Numericals_factors'][split[1]] = factor
+                    L_order.append(split[1])
+
         return D_factors,L_order
 
     def gen_part_values_list(self):
@@ -194,7 +203,8 @@ class Partition:
         return self.query.replace('&',' & ')\
                          .replace('and',' and ')\
                          .replace('==',' == ')\
-                         .replace('<',' < ')
+                         .replace('<',' < ')\
+                         .replace('>',' > ')
 
     #def render_table(self):
     def render_table(self,metrics):

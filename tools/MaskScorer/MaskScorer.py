@@ -173,11 +173,11 @@ if args.html:
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;"))
             myf.write('\n')
-            if not (average_df is 0):
+            if average_df is not 0:
                 #write title and then average_df
-                average_df = average_df.round({'NMM':3,'MCC':3,'WL1':3})
+                a_df_copy = average_df.copy().round({'NMM':3,'MCC':3,'WL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
-                myf.write(average_df.to_html(escape=False).replace("text-align: right;","text-align: center;"))
+                myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
             myf.close()
 
@@ -202,11 +202,11 @@ if args.html:
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False))
             myf.write('\n')
-            if not (average_df is 0):
+            if average_df is not 0:
                 #write title and then average_df
-                average_df = average_df.round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
+                a_df_copy = average_df.copy().round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
-                myf.write(average_df.to_html(escape=False).replace("text-align: right;","text-align: center;"))
+                myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
             myf.close()
 
@@ -248,9 +248,12 @@ myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype
 
 factor_mode = ''
 query = ''
-if args.query or args.queryManipulation:
+if args.query:
     factor_mode = 'q'
     query = args.query
+elif args.queryManipulation:
+    factor_mode = 'q' #behaves the same as standard query for mask scorer
+    query = args.queryManipulation
 elif args.queryPartition:
     factor_mode = 'qp'
     query = args.queryPartition
