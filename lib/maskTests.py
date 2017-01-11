@@ -60,6 +60,16 @@ class TestImageMethods(ut.TestCase):
         totalpix=10000
         self.assertEqual(np.sum(mytestbw==255)+np.sum(mytestbw==0),totalpix)
 
+        #test for boundary case for a threshold, less than or equal to
+        testimg = 255*np.ones((100,100),dtype=np.uint8)
+        testimg[45:55,45:55] = 128
+        cv2.imwrite('testImg.png',testimg,params)
+        mytest=masks.mask('testImg.png')
+        self.assertEqual(len(mytest.matrix.shape),2)
+        mytest.binarize(128)
+        testimg[testimg==128] = 0
+        self.assertTrue(np.array_equal(mytest.bwmat,testimg))
+
     def test_color(self):
         #Set existing image. Safer test.
         random.seed(1998)
@@ -152,7 +162,8 @@ class TestImageMethods(ut.TestCase):
 
         self.assertTrue(np.array_equal(baseNoScore,baseNScompare))
         self.assertTrue(np.array_equal(distractionNoScore,distractionNScompare))
-        self.assertTrue(np.array_equal(mytest.aggregateNoScore(3,5,'box',True),baseNoScore & distractionNoScore))
+        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box')
+        self.assertTrue(np.array_equal(aggwts,baseNoScore & distractionNoScore))
 
     def test_metrics(self):
         random.seed(1998)

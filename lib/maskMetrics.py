@@ -316,7 +316,6 @@ class maskMetricList:
         sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
-
         mywts = cv2.bitwise_and(b_weights,s_weights)
 
         dims = bwts.shape
@@ -460,7 +459,7 @@ class maskMetricList:
         eData = 255 - cv2.erode(255 - ref.bwmat,eKern,iterations=1)
 
         #flip all because black is 0 by default. Use the regions to determine where to color.
-        b_sImg = 1-sys.matrix/255
+        b_sImg = 1-sys.bwmat/255
         b_eImg = 1-eData/255 #erosion of black/white reference mask
         b_bnsImg = 1-bns
         b_snsImg = 1-sns
@@ -855,7 +854,11 @@ class maskMetrics:
                     thresMets.set_value(rownum,'N',thismet.conf['N'])
                     rownum=rownum+1
         else:
-            thresholds=map(lambda x,y: (x+y)/2.,uniques[:-1],uniques[1:]) #list of thresholds
+            #get actual thresholds. Remove 255.
+            thresholds=uniques.tolist()
+            if 255 in thresholds:
+                thresholds.remove(255)
+            
             thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                        'System Output Mask':sys.name,
                                        'Threshold':127.,

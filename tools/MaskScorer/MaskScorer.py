@@ -212,6 +212,8 @@ if args.html:
 
     else:
         df2html = lambda *a:None
+else:
+    df2html = lambda *a:None
 
 printq("Beginning the mask scoring report...")
 
@@ -322,7 +324,12 @@ if args.task == 'manipulation':
     journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
     journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
 
-    #TODO: reorder r_df's columns by re-merging? Names first, then scores, then other metadata
+    #reorder r_df's columns. Names first, then scores, then other metadata
+    rcols = r_df.columns.tolist()
+    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','WL1','Scored','TargetManipulations']
+    metadata = [t for t in rcols if t not in firstcols]
+    firstcols.extend(metadata)
+    r_df = r_df[firstcols]
 
     r_df['Scored'] = pd.Series(['Y']*len(r_df))
     r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
@@ -388,6 +395,13 @@ elif args.task == 'splice':
 
     r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
     a_df = 0
+
+    #reorder r_df's columns. Names first, then scores, then other metadata
+    rcols = r_df.columns.tolist()
+    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
+    metadata = [t for t in rcols if t not in firstcols]
+    firstcols.extend(metadata)
+    r_df = r_df[firstcols]
 
     metrics = ['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
