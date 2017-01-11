@@ -357,6 +357,8 @@ class maskMetricList:
         totalbns = np.sum(bwts==0)
         totalsns = np.sum(swts==0)
 
+        thresMets.round({'NMM':3,'MCC':3,'WL1':3})
+
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
         mBase = os.path.basename(mPath)
         rBase = os.path.basename(rImg_name)

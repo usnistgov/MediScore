@@ -12331,8 +12331,8 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
     <tr>
       <td>0.0</td>
       <td>-1.0</td>
-      <td>0.271986</td>
-      <td>0.028155</td>
+      <td>0.271</td>
+      <td>0.028</td>
       <td>14055</td>
       <td>5819054</td>
       <td>168868</td>
@@ -12381,12 +12381,23 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       <td><img src="notebookImgs/leaves-mask_colored.jpg" alt="color mask" style="width:640px;"><br/><b>Evaluation Result Visualization</b></td>
     </tr>
     <tr>
-      <td><b>NIMBLE Mask Metric (NMM)</b>: 0.292536767785 <br/>
-      <b>Matthews Correlation Coefficient (MCC)</b>: 0.722353353812 <br/>
-      <b>Weighted L1 Loss (WL1)</b>: 0.0717813808655 <br/></td>
+      <td><b>NIMBLE Mask Metric (NMM)</b>: 0.293 <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: 0.721 <br/>
+      <b>Weighted L1 Loss (WL1)</b>: 0.074 <br/></td>
       <td><b>Total Pixels</b>: 9227609 <br/>
 <table style = "border:1;background-color:#C8C8C8">
   <tbody>
+    <tr>
+      <th>
+      Confusion Measures
+      </th>
+      <th>
+      Pixels
+      </th>      
+      <th>
+      Proportion
+      </th>      
+    </tr>
     <tr>
       <td>
 <b>True Positives (<font style="color:#00CF00">TP: green</font>)</b>:
@@ -12395,7 +12406,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       1012095
       </td>
       <td>
-      0.109681175264
+      0.11
       </td>
     </tr>
     <tr>
@@ -12406,7 +12417,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       588762
       </td>
       <td>
-      0.063804393966
+      0.064
       </td>
     </tr>
     <tr>
@@ -12414,10 +12425,10 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <b>True Negatives (<font style="color:#FFFFFF">TN: white</font>)</b>:
       </td>
       <td>
-      7874451
+      7528296
       </td>
       <td>
-      0.853357679113
+      0.816
       </td>
     </tr>
     <tr>
@@ -12428,7 +12439,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       98456
       </td>
       <td>
-      0.0106697195341
+      0.011
       </td>
     </tr>
     <tr>
@@ -12439,7 +12450,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       160636
       </td>
       <td>
-      0.0174081931733
+      0.017
       </td>
     </tr>
     <tr>
@@ -12450,7 +12461,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
       348211
       </td>
       <td>
-      0.0377357774912
+      0.038
       </td>
     </tr>
   </tbody>
@@ -12502,6 +12513,36 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
     </tr>
   </tbody>
 </table>
+<br/>
+<h4>Measures for Each Threshold</h4><br/>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Threshold</th>
+      <th>NMM</th>
+      <th>MCC</th>
+      <th>WL1</th>
+      <th>TP</th>
+      <th>TN</th>
+      <th>FP</th>
+      <th>FN</th>
+      <th>N</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.0</td>
+      <td>0.292</td>
+      <td>0.720</td>
+      <td>0.074</td>
+      <td>1012095</td>
+      <td>7528296</td>
+      <td>588762</td>
+      <td>98456</td>
+      <td>9227609</td>
+    </tr>
+  </tbody>
+</table>
 </div>
 </div>
 </div>
@@ -12521,6 +12562,19 @@ reliability, or any other characteristic.</p>
 
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span> 
+</pre></div>
+
+</div>
+</div>
+</div>
+
 </div>
     </div>
   </div>
