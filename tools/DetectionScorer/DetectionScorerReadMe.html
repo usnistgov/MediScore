@@ -12087,7 +12087,7 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The set of the following options allow the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries. These options utilize Pandas’ queries to produce scoring reports using the metadata (e.g., Operation| Color| Purpose| OperationArgument| ...) within the reference file to subset/partition of the scored data.  There are three types of analysis supported:</p>
+<p>The set of the following options allow the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries. These options utilize Pandas’ queries to produce scoring reports using the metadata (e.g., Operation| Color| Purpose| OperationArgument| ...) within the reference file to subset/partition of the scored data.  There are three types of analysis supported:</p>
 <ul>
 <li>Query (-q --query): this option allows the user to specify multiple queries. Each query filters both target and non-target trials and then processes one scoring run of the system output to generate the requested scoring report.</li>
 <li>Query for partitions (-qp --queryPartition): this option allows the user to specify one query. The query separates the data set into M partitions by filtering both target and non-target trials and processes one or multiple scoring runs of the system output to generate the requested scoring report.</li>
@@ -12214,7 +12214,7 @@ Examples:
 <ul>
 <li>Full scoring: rendering the ROC curve and the report table,
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_001 --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_001 --ci --display
 </code>
 <img src="./notebookImgs/NC16_001_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
@@ -12224,13 +12224,13 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[51]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="k">as</span> <span class="nn">di</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="kn">as</span> <span class="nn">di</span>
 <span class="c1"># This line will hide code by default when the notebook is exported as HTML</span>
-<span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="n">df1</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_001_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df1</span>
 </pre></div>
@@ -12251,7 +12251,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 
 </div>
 
-<div class="output_area"><div class="prompt output_prompt">Out[51]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[1]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12294,7 +12294,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Full scoring: rendering DET curve:
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_002 --plotType det --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_002 --plotType det --display
 </code>
 <img src="./notebookImgs/NC16_002_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
 </ul>
@@ -12310,7 +12310,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with one query
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_003 <b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_003 <b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> --ci --display
 </code>
 <img src="./notebookImgs/NC16_003_roc_all.png" alt="ROC3" width="700" height="600" align="left"></li>
 </ul>
@@ -12320,10 +12320,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[52]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
 <span class="n">df2</span>
 </pre></div>
 
@@ -12335,7 +12335,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[52]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[2]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12380,7 +12380,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_004 <b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"  "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_004 <b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"  "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
 </code>
 <img src="./notebookImgs/NC16_004_roc_all.png" alt="ROC4" width="700" height="600"  align="left"></li>
 </ul>
@@ -12390,10 +12390,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[53]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
 <span class="n">df3</span>
 </pre></div>
 
@@ -12405,7 +12405,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[53]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12444,10 +12444,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
 <span class="n">df4</span>
 </pre></div>
 
@@ -12459,7 +12459,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[54]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12504,7 +12504,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for partition (-qp) with one partition
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_005 <b>-qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"</b> --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_005 <b>-qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"</b> --ci --display
 </code>
 <img src="./notebookImgs/NC16_005_roc_all.png" alt="ROC4" width="700" height="600" align="left"></li>
 </ul>
@@ -12514,10 +12514,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
 <span class="n">df5</span>
 </pre></div>
 
@@ -12529,7 +12529,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[55]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12578,7 +12578,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for partition (-qp) with two partitions
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_006 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_006 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
 </code>
 <img src="./notebookImgs/NC16_006_roc_all.png" alt="ROC6" width="700" height="600" align="left"></li>
 </ul>
@@ -12588,10 +12588,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12603,7 +12603,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[56]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12663,7 +12663,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_010 <b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_010 <b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> --display
 </code>
 <img src="./notebookImgs/NC16_010_roc_all.png" alt="ROC111" width="700" height="600" align="left"></li>
 </ul>
@@ -12673,10 +12673,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[57]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_0.csv&quot;</span><span class="p">)</span>
 <span class="n">df10</span>
 </pre></div>
 
@@ -12688,7 +12688,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[57]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12727,10 +12727,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[58]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_1.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_1.csv&quot;</span><span class="p">)</span>
 <span class="n">df11</span>
 </pre></div>
 
@@ -12742,7 +12742,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[58]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12787,7 +12787,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>--multiFigs with the query option
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s dct02.csv --outRoot ./testcases/NC16_007 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs</b> --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_007 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs</b> --ci --display
 </code>
 <img src="./notebookImgs/NC16_007_roc_combine.png" alt="ROC7" width="1000" height="700" align="left"></li>
 </ul>
@@ -12810,7 +12810,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><code>
-python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s splice.csv --outRoot ./testcases/NC16_100 --ci --display
+python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_100 --ci --display
 </code>
 <img src="./notebookImgs/NC16_100_roc_all.png" alt="ROC8" width="500" height="400" align="left"></p>
 
@@ -12819,10 +12819,10 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[59]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12834,7 +12834,7 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[59]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[9]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12895,7 +12895,7 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
 <ul>
 <li>Full scoring: rendering ROC curve
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_001 --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_001 --ci --display
 </code>
 <img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
 </ul>
@@ -12905,10 +12905,10 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[60]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
 <span class="n">df7</span>
 </pre></div>
 
@@ -12920,7 +12920,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[60]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[10]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12973,7 +12973,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
 </ul>
@@ -12989,7 +12989,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "Purpose"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
 </ul>
@@ -13005,7 +13005,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "OperationArgument"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
 </ul>
@@ -13021,7 +13021,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the mixed of factors
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s NC17_copymove01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
 </ul>
