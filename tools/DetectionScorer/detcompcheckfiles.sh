@@ -1,68 +1,174 @@
 #!/bin/bash
 clean=TRUE
 
-python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_01
+echo
+echo "BEGINNING FUNCTIONALITY TEST OF DETECTION SCORER"
 
-python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_01_ci --ci
+echo
+echo "CASE 0: VALIDATING FULL SCORING WITH BASELINEs"
+echo
 
-python2 DetectionScorer.py -t splice --refDir ../../data/test_suite/detectionScorerTests/sample -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Splice_ImgOnly_p-me_1/D_NC2016_Splice_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_02
+echo "Testing NC2016 Manipulation"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_C0_01
+echo
+echo "Testing NC2016 Splice"
+python2 DetectionScorer.py -t splice --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_C0_02
+echo
+echo "Testing NC2017 Manipulation"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2017-manipulation-reference.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_C0_01
 
-diff testcases/NC16_01_all.csv ../../data/test_suite/detectionScorerTests/sample/ref_detreport.csv > comp_detreport.txt
-diff testcases/NC16_01_ci_all.csv ../../data/test_suite/detectionScorerTests/sample/ref_detreport_ci.csv > comp_detreport_ci.txt
-diff testcases/NC16_02_all.csv ../../data/test_suite/detectionScorerTests/sample/ref_detreport2.csv > comp_detreport2.txt
+diff testcases/NC16_C0_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_01_all_test.csv > comp_NC16_C0_01_all.txt
+diff testcases/NC16_C0_02_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_02_all_test.csv > comp_NC16_C0_02_all.txt
+diff testcases/NC17_C0_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C0_01_all_test.csv > comp_NC17_C0_01_all.txt
 
-filter="cat comp_detreport.txt | grep -v CVS"
-filter_ci="cat comp_detreport_ci.txt | grep -v CVS"
-filter2="cat comp_detreport2.txt | grep -v CVS"
-flag=1
-flag_ci=1
-flag2=1
+c0_res1="cat comp_NC16_C0_01_all.txt | grep -v CVS"
+c0_res2="cat comp_NC16_C0_02_all.txt | grep -v CVS"
+c0_res3="cat comp_NC17_C0_01_all.txt | grep -v CVS"
+c0_flag1=1
+c0_flag2=1
+c0_flag3=1
 
-if ([ ! -e comp_detreport.txt -o ! -e comp_detreport_ci.txt -o ! -e comp_detreport2.txt ]); then
+if ([ ! -e comp_NC16_C0_01_all.txt -o ! -e comp_NC16_C0_02_all.txt -o ! -e comp_NC17_C0_01_all.txt ]); then
   echo
-  echo "    !!!!! DETECTION SCORER TESTS FAILED !!!!!    "
+  echo "DETECTION SCORER TESTS FAILED FOR CASE 0 !!! "
   echo
   exit
 fi
 
-if test "`eval $filter`" = "" ; then
-        flag=0
-	if [ $clean = "TRUE" ] ; then
-		rm testcases/NC16_01_roc_all.pdf
-		rm -rf plotJsonFiles
-	fi
-	rm comp_detreport.txt
+if test "`eval $c0_res1`" = "" ; then
+  c0_flag1=0
+	rm comp_NC16_C0_01_all.txt
 else
-	cat comp_detreport.txt
-fi
-if test "`eval $filter_ci`" = "" ; then
-        flag_ci=0
-	if [ $clean = "TRUE" ] ; then
-		rm testcases/NC16_01_ci_roc_all.pdf
-		rm -rf plotJsonFiles
-	fi
-	rm comp_detreport_ci.txt
-else
-	cat comp_detreport_ci.txt
-fi
-if test "`eval $filter2`" = "" ; then
-        flag2=0
-	if [ $clean = "TRUE" ] ; then
-		rm testcases/NC16_02_roc_all.pdf
-		rm -rf plotJsonFiles
-	fi
-	rm comp_detreport2.txt
-else
-	cat comp_detreport2.txt
+	cat comp_NC16_C0_01_all.txt
 fi
 
-if [ $flag == 0 -a $flag_ci == 0 -a $flag2 == 0 ] ; then
-	echo
-	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED."
-	echo
+if test "`eval $c0_res2`" = "" ; then
+  c0_flag2=0
+	rm comp_NC16_C0_02_all.txt
 else
-	rm -rf testcases
+	cat comp_NC16_C0_02_all.txt
+fi
+
+if test "`eval $c0_res3`" = "" ; then
+  c0_flag3=0
+	rm comp_NC17_C0_01_all.txt
+else
+	cat comp_NC17_C0_01_all.txt
+fi
+
+if [ $c0_flag1 == 0 -a $c0_flag2 == 0 -a $c0_flag3 == 0 ] ; then
 	echo
-	echo "    !!!!! DETECTION SCORER TESTS FAILED !!!!!"
+	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 0."
+	echo
+  if [ $clean = "TRUE" ] ; then
+    rm -rf testcases
+		rm -rf plotJsonFiles
+	fi
+else
+	echo
+	echo "DETECTION SCORER TESTS FAILED FOR CASE 0 !!!"
 	echo
 fi
+
+
+echo
+echo "CASE 1: VALIDATING SYSTEM OUTPUT SCORING TESTCASES"
+echo
+echo "Testing with the manipulation case"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_C1_01
+echo
+
+echo "Testing with the splice case"
+python2 DetectionScorer.py -t splice --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Splice_ImgOnly_p-me_1/D_NC2016_Splice_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_C1_02
+echo
+
+echo "Testing with the same scores across all image files"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_2/D_NC2016_Manipulation_ImgOnly_p-me_2.csv --outRoot ./testcases/NC16_C1_03
+echo
+
+echo "Testing with no non-target value"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2017-manipulation-ref.csv -x NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2017_Manipulation_ImgOnly_c-me_2/D_NC2017_Manipulation_ImgOnly_c-me_2.csv --outRoot ./testcases/NC17_C1_04
+echo
+
+echo "Testing with one target and one non-target trial"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2017-manipulation-ref2.csv -x NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2017_Manipulation_ImgOnly_c-me_2/D_NC2017_Manipulation_ImgOnly_c-me_2.csv --outRoot ./testcases/NC17_C1_05
+echo
+
+diff testcases/NC16_C1_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_01_all_test.csv > comp_NC16_C1_01_all.txt
+diff testcases/NC16_C1_02_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_02_all_test.csv > comp_NC16_C1_02_all.txt
+diff testcases/NC16_C1_03_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_03_all_test.csv > comp_NC16_C1_03_all.txt
+diff testcases/NC17_C1_04_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_04_all_test.csv > comp_NC17_C1_04_all.txt
+diff testcases/NC17_C1_05_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_05_all_test.csv > comp_NC17_C1_05_all.txt
+
+c1_res1="cat comp_NC16_C1_01_all.txt | grep -v CVS"
+c1_res2="cat comp_NC16_C1_02_all.txt | grep -v CVS"
+c1_res3="cat comp_NC16_C1_03_all.txt | grep -v CVS"
+c1_res4="cat comp_NC17_C1_04_all.txt | grep -v CVS"
+c1_res5="cat comp_NC17_C1_05_all.txt | grep -v CVS"
+
+c1_flag1=1
+c1_flag2=1
+c1_flag3=1
+c1_flag4=1
+c1_flag5=1
+
+if ([ ! -e comp_NC16_C1_01_all.txt -o ! -e comp_NC16_C1_02_all.txt -o ! -e comp_NC16_C1_03_all.txt -o ! -e comp_NC17_C1_04_all.txt -o ! -e comp_NC17_C1_05_all.txt ]); then
+  echo
+  echo "DETECTION SCORER TESTS FAILED FOR CASE 0 !!! "
+  echo
+  exit
+fi
+
+if test "`eval $c1_res1`" = "" ; then
+  c1_flag1=0
+	rm comp_NC16_C1_01_all.txt
+else
+	cat comp_NC16_C1_01_all.txt
+fi
+
+if test "`eval $c1_res2`" = "" ; then
+  c1_flag2=0
+	rm comp_NC16_C1_02_all.txt
+else
+	cat comp_NC16_C1_02_all.txt
+fi
+
+if test "`eval $c1_res3`" = "" ; then
+  c1_flag3=0
+	rm comp_NC16_C1_03_all.txt
+else
+	cat comp_NC16_C1_03_all.txt
+fi
+
+if test "`eval $c1_res4`" = "" ; then
+  c1_flag4=0
+	rm comp_NC17_C1_04_all.txt
+else
+	cat comp_NC17_C1_04_all.txt
+fi
+
+if test "`eval $c1_res5`" = "" ; then
+  c1_flag5=0
+	rm comp_NC17_C1_05_all.txt
+else
+	cat comp_NC17_C1_05_all.txt
+fi
+
+if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c1_flag5 == 0 ]) ; then
+	echo
+	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 1."
+	echo
+  if [ $clean = "TRUE" ] ; then
+    rm -rf testcases
+		rm -rf plotJsonFiles
+	fi
+else
+	echo
+	echo "DETECTION SCORER TESTS FAILED FOR CASE 1 !!!"
+	echo
+fi
+
+
+#echo
+#echo "CASE 2: VALIDATING QUERY-BASED SCORING TESTCASES"
+#echo
