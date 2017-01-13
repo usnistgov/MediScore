@@ -28,7 +28,6 @@ import math
 import copy
 import numpy as np
 import pandas as pd
-#import matplotlib.pyplot as plt
 import os
 import random
 from decimal import Decimal
@@ -221,7 +220,7 @@ class mask(object):
         * Output:
         *     bimg: single-channel binarized image
         """
-        bimg = intensityBinarize3Channel(254,254,254,0,255)
+        bimg = self.intensityBinarize3Channel(254,254,254,0,255)
         return bimg
 
     #general binarize

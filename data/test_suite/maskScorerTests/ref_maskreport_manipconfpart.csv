@@ -1,0 +1,2 @@
+TaskID,TargetManipulations,ConfidenceScore,NMM,MCC,WL1
+manipulation,all,0.5<ConfidenceScore,0.111423520485,0.65126992147,0.0917816367978

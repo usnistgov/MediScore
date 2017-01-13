@@ -1,14 +1,26 @@
 <h2>Manipulated Image: $probeFname </h2><br/>
 <img src="$probeFname" alt="manipulated image" style="width:${width}px;">
 <br/>
+<table>
+  <tbody>
+    <tr>
+      <td>
 <h3>Composite with Color Mask: $aggMask </h3>
 <img src="$aggMask" alt="manip image plus mask" style="width:${width}px;">
+      </td>
+      <td width="640px" align="center">
+<h3>Target Manipulations: $tmt</h3>
+$jtable
+      </td>
+    </tr>
+  </tbody>
+</table>
 <br/>
 <table border="1">
   <tbody>
     <tr>
       <td><img src="$refMask" alt="reference mask" style="width:${width}px;"><br/><b>Colorized Reference Mask</b></td>
-      <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>System Output Mask</b></td>
+      <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>Original System Output Mask</b></td>
     </tr>
     <tr>
       <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
@@ -21,7 +33,8 @@
     <tr>
       <td><b>NIMBLE Mask Metric (NMM)</b>: $nmm <br/>
       <b>Matthews Correlation Coefficient (MCC)</b>: $mcc <br/>
-      <b>Weighted L1 Loss (WL1)</b>: $wL1 <br/></td>
+      <b>Binary Weighted L1 Loss (WL1)</b>: $bwL1 <br/>
+      <b>Grayscale Weighted L1 Loss (WL1)</b>: $gwL1 <br/></td>
       <td><b>Total Pixels</b>: $totalPixels <br/>
 <table border="1" bgcolor="#C8C8C8">
   <tbody>
@@ -109,8 +122,4 @@
   </tbody>
 </table>
 <br/>
-<h4>Target Manipulations: $tmt</h4><br/>
-$jtable
-<br/>
-<h4>Measures for Each Threshold</h4><br/>
 $th_table

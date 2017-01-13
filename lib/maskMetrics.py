@@ -163,7 +163,8 @@ class maskMetricList:
         df=pd.DataFrame({'{}FileID'.format(self.mode):manip_ids,
                          'NMM':[-1.]*nrow,
                          'MCC': 0.,
-                         'WL1': 1.,
+                         'BWL1': 1.,
+                         'GWL1': 1.,
                          'ColMaskFileName':['']*nrow,
                          'AggMaskFileName':['']*nrow})
 
@@ -221,6 +222,7 @@ class maskMetricList:
                 mymeas = 0
                 threshold = 0
                 metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
+                gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
                 if self.sbin >= 0:
                     #just get scores in one run if threshold is chosen
                     mets = metricRunner.getMetrics(popt=verbose)
@@ -229,19 +231,22 @@ class maskMetricList:
                     thresMets = ''
                 elif self.sbin == -1:
                     #get everything through an iterative run of max threshold
-                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,wts,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
+                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
                     #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
                     metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
-                    mets = metrics[['NMM','MCC','WL1']].to_dict()
+                    mets = metrics[['NMM','MCC','BWL1']].to_dict()
                     mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
+                    if len(thresMets) == 1:
+                        thresMets='' #to minimize redundancy
 
                 if self.sbin == -1:
                     sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=threshold)
  
-                for met in ['NMM','MCC','WL1']:
+                mets['GWL1'] = gwL1
+                for met in ['NMM','MCC','BWL1','GWL1']:
                     df.set_value(i,met,round(mets[met],precision))
-   
+ 
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
                     colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,kern,erodeKernSize,maniImgName,subOutRoot)
@@ -249,6 +254,7 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
+                    #TODO: trim the arguments here down a little?
                     self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
 
         return df
@@ -357,7 +363,10 @@ class maskMetricList:
         totalbns = np.sum(bwts==0)
         totalsns = np.sum(swts==0)
 
-        thresMets.round({'NMM':3,'MCC':3,'WL1':3})
+        thresString = ''
+        if thresMets is not '':
+            thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+            thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
         mBase = os.path.basename(mPath)
@@ -397,7 +406,8 @@ class maskMetricList:
                                       'colorMask' : os.path.basename(colMaskName),
   				      'nmm' : round(metrics['NMM'],3),
   				      'mcc' : round(metrics['MCC'],3),
-  				      'wL1' : round(metrics['WL1'],3),
+  				      'bwL1' : round(metrics['BWL1'],3),
+  				      'gwL1' : round(metrics['GWL1'],3),
                                       'totalPixels' : totalpx,
                                       'tp' : int(confmeasures['TP']),
                                       'fp' : int(confmeasures['FP']),
@@ -425,7 +435,7 @@ class maskMetricList:
                                       'percsns':round(float(totalsns)/totalpx,3),
                                       'tmt':targetManiType,
                                       'jtable':jtable,
-                                      'th_table':thresMets.to_html(index=False)}) #add journal operations and set bg color to the html
+                                      'th_table':thresString}) #add journal operations and set bg color to the html
 
         #print htmlstr
         fprefix=os.path.basename(maniImageFName)
@@ -543,25 +553,28 @@ class maskMetrics:
         #get masks for ref and sys
         if np.array_equal(ref.bwmat,0):
             ref.binarize(254) #get the black/white mask first if not already gotten
+
+        self.sys_threshold = systh
         if systh >= 0:
             sys.binarize(systh)
         elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform
             sys.bwmat = sys.matrix
 
-        self.sys_threshold = systh
         self.conf = self.confusion_measures(ref,sys,w)
 
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
         self.mcc = self.matthews(self.conf)
-        self.wL1 = self.weightedL1(ref,sys,w)
+        self.bwL1 = self.binaryWeightedL1(ref,sys,w)
 
     def getMetrics(self,popt=0):
         """
-        * Description: this function calculates the metrics with an implemented no-score zone
+        * Description: this function calculates the metrics with an implemented no-score zone.
+                       Due to its repeated use for the same reference and system masks, the
+                       getMetrics function excludes the GWL1
 
         * Output:
-        *     dictionary of the NMM, MCC, WL1, and the confusion measures.
+        *     dictionary of the NMM, MCC, BWL1, and the confusion measures.
         """
 
         if popt==1:
@@ -574,10 +587,10 @@ class maskMetrics:
                 print("MCC: %d" % self.mcc)
             else:
                 print("MCC (Matthews correlation coeff.): %0.9f" % self.mcc)
-            if (self.wL1==1) or (self.wL1==0):
-                print("WL1: %d" % self.wL1)
+            if (self.bwL1==1) or (self.bwL1==0):
+                print("BWL1: %d" % self.bwL1)
             else:
-                print("Weighted L1: %0.9f" % self.wL1)
+                print("Binary Weighted L1: %0.9f" % self.bwL1)
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
@@ -591,7 +604,7 @@ class maskMetrics:
 #            else:
 #                print("Hinge Loss L1: %0.9f" % hL1)
 
-        metrics = {'NMM':self.nmm,'MCC':self.mcc,'WL1':self.wL1}
+        metrics = {'NMM':self.nmm,'MCC':self.mcc,'BWL1':self.bwL1}
         metrics.update(self.conf)
         return metrics
 
@@ -736,25 +749,50 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def weightedL1(self,ref,sys,w):
+    def binaryWeightedL1(self,ref,sys,w):
         """
-        * Metric: Weighted L1
+        * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
-                       and normalizes the value with the no score zone
+                       for the binarized mask and normalizes the value
+                       with the no score zone
         * Inputs:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
         * Outputs:
-        *     Normalized WL1 value
+        *     Normalized binary WL1 value
         """
 
         rmat = ref.bwmat.astype(int)
-        smat=0
-        if self.sys_threshold >= 0:
-            smat=sys.matrix.astype(int)
-        else:
-            smat=sys.bwmat.astype(int)
+        smat = sys.bwmat.astype(int)
+
+        wL1=np.multiply(w,abs(rmat-smat)/255.)
+        wL1=np.sum(wL1)
+        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
+        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        norm_wL1=wL1/n
+        return norm_wL1
+
+    @staticmethod
+    def grayscaleWeightedL1(ref,sys,w):
+        """
+        * Metric: grayscale Weighted L1
+        * Description: this function calculates the weighted L1 loss
+                       for the unmodified grayscale mask and normalizes
+                       the value with the no score zone.
+                       The grayscale weighted L1 needs only be computed
+                       once for each reference and system mask pair
+                       and so is set as a static method
+        * Inputs:
+        *     ref: the reference mask object
+        *     sys: the system output mask object
+        *     w: the weight matrix
+        * Outputs:
+        *     Normalized grayscale WL1 value
+        """
+
+        rmat = ref.bwmat.astype(int)
+        smat = sys.matrix.astype(int)
 
         wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)
@@ -784,20 +822,21 @@ class maskMetrics:
             e=0
         rmat = ref.bwmat
         rArea=np.sum(rmat==0) #mask area
-        wL1 = self.weightedL1(ref,sys,w)
+        wL1 = self.grayscaleWeightedL1(ref,sys,w)
         n=np.sum(w)
         hL1=max(0,wL1-e*rArea/n)
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,w,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
         * Inputs:
         *     ref: the reference mask object
         *     sys: the system output mask object
-        *     w: the weight matrix
+        *     bns: the boundary no-score weighted matrix
+        *     sns: the selected no-score weighted matrix
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
@@ -811,22 +850,30 @@ class maskMetrics:
         """
         smat = sys.matrix
         uniques=np.unique(smat.astype(float))
+
+        #add bns/sns totals as well
+        btotal = np.sum(bns)
+        stotal = np.sum(sns)
+        w = cv2.bitwise_and(bns,sns)
+
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
             if (uniques[0] == 255) or (uniques[0] == 0):
                 thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                            'System Output Mask':sys.name,
-                                           'Threshold':127.,
+                                           'Threshold':127,
                                            'NMM':[-1.],
                                            'MCC':[0.],
-                                           'WL1':[1.],
+                                           'BWL1':[1.],
                                            'TP':[0],
                                            'TN':[0],
                                            'FP':[0],
                                            'FN':[0],
+                                           'BNS':btotal,
+                                           'SNS':stotal,
                                            'N':[0]})
                 mets = self.getMetrics(popt=popt)
-                for m in ['NMM','MCC','WL1']:
+                for m in ['NMM','MCC','BWL1']:
                     thresMets.set_value(0,m,mets[m])
                 for m in ['TP','TN','FP','FN','N']:
                     thresMets.set_value(0,m,self.conf[m])
@@ -834,24 +881,26 @@ class maskMetrics:
                 #assess for both cases where we treat as all black or all white
                 thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                            'System Output Mask':sys.name,
-                                           'Threshold':127.,
+                                           'Threshold':127,
                                            'NMM':[-1.]*2,
                                            'MCC':[0.]*2,
-                                           'WL1':[1.]*2,
+                                           'BWL1':[1.]*2,
                                            'TP':[0]*2,
                                            'TN':[0]*2,
                                            'FP':[0]*2,
                                            'FN':[0]*2,
+                                           'BNS':btotal,
+                                           'SNS':stotal,
                                            'N':[0]*2})
                 rownum=0
-                for th in [uniques[0]-1,uniques[0]+1]:
+                for th in [uniques[0],255]:
                     sys.binarize(th)
                     thismet = maskMetrics(ref,sys,w,th)
 
                     thresMets.set_value(rownum,'Threshold',th)
                     thresMets.set_value(rownum,'NMM',thismet.nmm)
                     thresMets.set_value(rownum,'MCC',thismet.mcc)
-                    thresMets.set_value(rownum,'WL1',thismet.wL1)
+                    thresMets.set_value(rownum,'BWL1',thismet.bwL1)
                     thresMets.set_value(rownum,'TP',thismet.conf['TP'])
                     thresMets.set_value(rownum,'TN',thismet.conf['TN'])
                     thresMets.set_value(rownum,'FP',thismet.conf['FP'])
@@ -866,17 +915,18 @@ class maskMetrics:
             
             thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                        'System Output Mask':sys.name,
-                                       'Threshold':127.,
+                                       'Threshold':127,
                                        'NMM':[-1.]*len(thresholds),
                                        'MCC':[0.]*len(thresholds),
-                                       'WL1':[1.]*len(thresholds),
+                                       'BWL1':[1.]*len(thresholds),
                                        'TP':[0]*len(thresholds),
                                        'TN':[0]*len(thresholds),
                                        'FP':[0]*len(thresholds),
                                        'FN':[0]*len(thresholds),
+                                       'BNS':btotal,
+                                       'SNS':stotal,
                                        'N':[0]*len(thresholds)})
             #for all thresholds
-            w,_,_ = ref.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
             rownum=0
             for th in thresholds:
                 tmask = sys.get_copy()
@@ -886,7 +936,7 @@ class maskMetrics:
                 thresMets.set_value(rownum,'Threshold',th)
                 thresMets.set_value(rownum,'NMM',thismet.nmm)
                 thresMets.set_value(rownum,'MCC',thismet.mcc)
-                thresMets.set_value(rownum,'WL1',thismet.wL1)
+                thresMets.set_value(rownum,'BWL1',thismet.bwL1)
                 thresMets.set_value(rownum,'TP',thismet.conf['TP'])
                 thresMets.set_value(rownum,'TN',thismet.conf['TN'])
                 thresMets.set_value(rownum,'FP',thismet.conf['FP'])
@@ -896,7 +946,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','WL1','TP','TN','FP','FN','N']]
+        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
         return thresMets,tmax
 
 

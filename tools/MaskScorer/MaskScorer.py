@@ -166,7 +166,7 @@ if args.html:
             #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
             pd.set_option('display.max_colwidth',-1)
             html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
-            html_out = html_out.round({'NMM':3,'MCC':3,'WL1':3})
+            html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
 
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
@@ -175,7 +175,7 @@ if args.html:
             myf.write('\n')
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'NMM':3,'MCC':3,'WL1':3})
+                a_df_copy = average_df.copy().round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -195,7 +195,7 @@ if args.html:
             pd.set_option('display.max_colwidth',-1)
             html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
-            html_out = html_out.round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
+            html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
@@ -204,7 +204,7 @@ if args.html:
             myf.write('\n')
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'pNMM':3,'pMCC':3,'pWL1':3,'dNMM':3,'dMCC':3,'dWL1':3})
+                a_df_copy = average_df.copy().round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -327,7 +327,8 @@ if args.task == 'manipulation':
     r_df['Scored'] = pd.Series(['Y']*len(r_df))
     r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
     r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-    r_df.loc[r_df.query('MCC == -2').index,'WL1'] = ''
+    r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
+    r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
     r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
     #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
 
@@ -337,7 +338,7 @@ if args.task == 'manipulation':
 
     #reorder r_df's columns. Names first, then scores, then other metadata
     rcols = r_df.columns.tolist()
-    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','WL1','Scored','TargetManipulations']
+    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored','TargetManipulations']
     metadata = [t for t in rcols if t not in firstcols]
     firstcols.extend(metadata)
     r_df = r_df[firstcols]
@@ -346,7 +347,7 @@ if args.task == 'manipulation':
         #if nothing was scored, print a message and return
         print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
     else:
-        metrics = ['NMM','MCC','WL1']
+        metrics = ['NMM','MCC','BWL1','GWL1']
         my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
         df_list = my_partition.render_table(metrics)
      
@@ -398,12 +399,12 @@ elif args.task == 'splice':
 
     #reorder r_df's columns. Names first, then scores, then other metadata
     rcols = r_df.columns.tolist()
-    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
+    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
     metadata = [t for t in rcols if t not in firstcols]
     firstcols.extend(metadata)
     r_df = r_df[firstcols]
 
-    metrics = ['pNMM','pMCC','pWL1','dNMM','dMCC','dWL1']
+    metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
     my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
     df_list = my_partition.render_table(metrics)
 
@@ -428,22 +429,25 @@ elif args.task == 'splice':
 if verbose: #to avoid complications of print formatting when not verbose
     precision = args.precision
     if args.task in ['manipulation']:
-        myavgs = [a_df[mets][0] for mets in ['NMM','MCC','WL1']]
+        myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
     
-        allmets = "Avg NMM: {}, Avg MCC: {}, Avg WL1: {}".format(round(myavgs[0],precision),
+        allmets = "Avg NMM: {}, Avg MCC: {}, Avg BWL1: {}, Avg GWL1: {}".format(round(myavgs[0],precision),
                                                                  round(myavgs[1],precision),
-                                                                 round(myavgs[2],precision))
+                                                                 round(myavgs[2],precision),
+                                                                 round(myavgs[3],precision))
         printq(allmets)
     
     elif args.task == 'splice':
-        pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pWL1']]
-        davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dWL1']]
-        pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pWL1: {}".format(round(pavgs[0],precision),
+        pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pBWL1','pGWL1']]
+        davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dBWL1','dGWL1']]
+        pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pBWL1: {}, Avg pGWL1: {}".format(round(pavgs[0],precision),
                                                                      round(pavgs[1],precision),
-                                                                     round(pavgs[2],precision))
-        dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dWL1: {}".format(round(davgs[0],precision),
+                                                                     round(pavgs[2],precision),
+                                                                     round(pavgs[3],precision))
+        dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dBWL1: {}, Avg dGWL1: {}".format(round(davgs[0],precision),
                                                                      round(davgs[1],precision),
-                                                                     round(davgs[2],precision))
+                                                                     round(davgs[2],precision),
+                                                                     round(davgs[3],precision))
         printq(pallmets)
         printq(dallmets)
     else:

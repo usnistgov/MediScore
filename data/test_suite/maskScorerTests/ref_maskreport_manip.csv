@@ -1,2 +1,2 @@
-TaskID,TargetManipulations,NMM,MCC,WL1
-manipulation,all,-1.0,0.271985771309,0.0281554742248
+TaskID,TargetManipulations,NMM,MCC,BWL1,GWL1
+manipulation,all,-1.0,0.271985771309,0.0281554742248,0.0281554742248

@@ -188,13 +188,15 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",
-                                       "WL1":"pWL1",
+                                       "BWL1":"pBWL1",
+                                       "GWL1":"pGWL1",
                                        "ColMaskFileName":"ProbeColMaskFileName",
                                        "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
 
     donor_df.rename(index=str,columns={"NMM":"dNMM",
                                        "MCC":"dMCC",
-                                       "WL1":"dWL1",
+                                       "BWL1":"dBWL1",
+                                       "GWL1":"dGWL1",
                                        "ColMaskFileName":"DonorColMaskFileName",
                                        "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
 
