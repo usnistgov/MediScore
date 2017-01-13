@@ -365,7 +365,7 @@ class maskMetricList:
 
         thresString = ''
         if thresMets is not '':
-            thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
             thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
