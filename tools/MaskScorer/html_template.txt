@@ -9,7 +9,6 @@
 <img src="$aggMask" alt="manip image plus mask" style="width:${width}px;">
       </td>
       <td width="640px" align="center">
-<h3>Target Manipulations: $tmt</h3>
 $jtable
       </td>
     </tr>
@@ -53,10 +52,10 @@ $jtable
       <td>
 <b>True Positives (<font style="color:#$tphex">TP: $tpcol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $tp
       </td>
-      <td>
+      <td align="left">
       $perctp
       </td>
     </tr>
@@ -64,10 +63,10 @@ $jtable
       <td>
 <b>False Positives (<font style="color:#$fphex">FP: $fpcol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $fp
       </td>
-      <td>
+      <td align="left">
       $percfp
       </td>
     </tr>
@@ -75,10 +74,10 @@ $jtable
       <td>
 <b>True Negatives (<font style="color:#$tnhex">TN: $tncol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $tn
       </td>
-      <td>
+      <td align="left">
       $perctn
       </td>
     </tr>
@@ -86,10 +85,10 @@ $jtable
       <td>
 <b>False Negatives (<font style="color:#$fnhex">FN: $fncol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $fn
       </td>
-      <td>
+      <td align="left">
       $percfn
       </td>
     </tr>
@@ -97,10 +96,10 @@ $jtable
       <td>
 <b>Boundary No-Score Zone (<font style="color:#$bnshex">BNS: $bnscol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $bns
       </td>
-      <td>
+      <td align="left">
       $percbns
       </td>
     </tr>
@@ -108,10 +107,10 @@ $jtable
       <td>
 <b>Selective No-Score Zone (<font style="color:#$snshex">SNS: $snscol</font>)</b>:
       </td>
-      <td>
+      <td align="left">
       $sns
       </td>
-      <td>
+      <td align="left">
       $percsns
       </td>
     </tr>

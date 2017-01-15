@@ -10,13 +10,14 @@ class Partition:
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
-    def __init__(self,dataframe,query,factor_mode,targetManiType,metrics): #,fpr_stop=1, isCI=False):
+    def __init__(self,dataframe,query,factor_mode,metrics): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
                         'qp' = cartesian product of the factors
                         '' = no factors. Average the entire frame
-        - targetManiType: manipulations targeted
+                        'qm' = no factors. Average the entire frame.
+                               (Note that the frame should already be queried beforehand.)
         - factors_names : list of the dataframe's columns names
         - index_factor : Dictionary {'factor_name': index_of_the_column}
         - n_partitions : number of partitions generated
@@ -34,25 +35,26 @@ class Partition:
         """
 
         self.factor_mode = factor_mode
-        self.targetManiType = targetManiType.replace(',',' + ')
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
         self.task = dataframe['TaskID'].iloc[0]
 
         # If we have a list of queries
-        if self.factor_mode == 'q':
+        if (self.factor_mode == 'q'):
             #self.query = None
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
         elif self.factor_mode == 'qp':
-            self.query = query.replace(' ','')
+            self.query = query[0].replace(' ','')
             #TODO: Simplify the factors dictionary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
             self.part_values_list = self.gen_part_values_list()
             self.part_query_list = self.gen_part_query_list()
             self.n_partitions = len(self.part_values_list)
-        elif self.factor_mode == '':
-            self.part_query_list = ''
+        elif (self.factor_mode == 'qm') or (self.factor_mode == ''):
+            #self.query = None
+            self.part_query_list = ['']
+            self.n_partitions = len(self.part_query_list)
 
         self.part_df_list = self.gen_part_df_list(dataframe)
         self.part_metric_list = self.gen_part_metric_list(metrics)
@@ -153,7 +155,7 @@ class Partition:
             generated according to its query in part_query_list.
         """
         df_list = list()
-        if self.part_query_list == '':
+        if self.part_query_list == ['']:
             #base case
             return [df]
 
@@ -181,7 +183,7 @@ class Partition:
             This function creates and store each partition's metric
             dataframe according to its dataframe in part_df_list.
         """
-        if self.factor_mode == '':
+        if (self.factor_mode == '') or (self.factor_mode == 'qm'):
             return self.part_df_list
 
         dm_list = list()
@@ -219,15 +221,14 @@ class Partition:
             while factor not in List[i]: i += 1
             return i
 
-        if self.factor_mode == '':
+        if (self.factor_mode == '') or (self.factor_mode == 'qm'):
             #base case
             data = dict()
             dm = self.part_metric_list[0]
             for m in metrics:
                 data[m] = [dm[m].mean()]
             data['TaskID'] = self.task
-            data['TargetManipulations'] = self.targetManiType
-            columns = ['TaskID','TargetManipulations']
+            columns = ['TaskID']
             columns.extend(metrics)
             return [pd.DataFrame(data=data,columns=columns)]
 
@@ -251,8 +252,7 @@ class Partition:
 #                         'auc_ci_upper':dm.ci_upper}
 #                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
                 data['TaskID'] = [self.task]
-                data['TargetManipulations'] = self.targetManiType
-                columns = ['TaskID','Query','TargetManipulations']
+                columns = ['TaskID','Query']
                 columns.extend(metrics)
                 df_list.append(pd.DataFrame(data=data,columns=columns))
             return df_list
@@ -291,9 +291,7 @@ class Partition:
 #                data['auc_ci_lower'].append(dm.ci_lower)
 #                data['auc_ci_upper'].append(dm.ci_upper)
             data['TaskID'] = self.task
-            data['TargetManipulations'] = self.targetManiType
-
-            columns = ['TaskID','TargetManipulations']
+            columns = ['TaskID']
             columns.extend(self.factors_order)
             columns.extend(metrics)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])

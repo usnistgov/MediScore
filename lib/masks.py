@@ -170,7 +170,7 @@ class mask(object):
                 print(c)
             print("Total: " + len(colors))
 
-        return colors,len(colors)
+        return colors
 
 
     def overlay(self,imgName,alpha=0.7):
@@ -269,7 +269,7 @@ class refmask(mask):
     This class is used to read in and hold the reference mask and its relevant parameters.
     It inherits from the (system output) mask above.
     """
-    def __init__(self,n,readopt=1,cs=[],tmt='all'):
+    def __init__(self,n,readopt=1,cs=[],purposes='all'):
         """
         Constructor
 
@@ -280,13 +280,13 @@ class refmask(mask):
                    single-channel grayscale
         - cs: the list of color strings in RGB format selected based on the target
               manipulations to be evaluated (e.g. ['255 0 0','0 255 0'])
-        - tmt: the target manipulations, a string if single, a list if multiple, to be evaluated.
+        - purposes: the target manipulations, a string if single, a list if multiple, to be evaluated.
                'all' means all non-white regions will be evaluated
         """
         super(refmask,self).__init__(n,readopt)
         #store colors and corresponding type
         self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in cs]
-        self.targetManiType = tmt #just for the record
+        self.purposes = purposes
 
     def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
         """
@@ -323,7 +323,7 @@ class refmask(mask):
             return {'rimg':self.matrix,'wimg':weight}
 
         mymat = 0
-        if (len(self.matrix.shape) == 3) and (self.targetManiType is not 'all'):
+        if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'): 
             selfmat = self.matrix
             mymat = np.ones(self.get_dims(),dtype=np.uint8)
             for c in self.colors:
@@ -362,7 +362,7 @@ class refmask(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        if (dilateKernSize==0) or (self.targetManiType is 'all'):
+        if (dilateKernSize==0) and (self.purposes is not 'all'):
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
@@ -370,12 +370,15 @@ class refmask(mask):
         dKern=getKern(kern,dilateKernSize)
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-        notcolors,_ = mask.getColors(mymat)
+        notcolors = mask.getColors(mymat)
 
         for c in self.colors:
             if tuple(c) in notcolors:
                 notcolors.remove(tuple(c))
             #skip the colors that aren't present, in case they haven't made it to the mask in question
+        if len(notcolors)==0:
+            weights = np.ones(dims,dtype=np.uint8)
+            return weights
 
         mybin = np.ones((dims[0],dims[1])).astype(np.uint8)
         for c in notcolors:

@@ -78,12 +78,9 @@ factor_group = parser.add_mutually_exclusive_group()
 factor_group.add_argument('-q', '--query', nargs='*',
 help="Evaluate algorithm performance by given queries.", metavar='character')
 factor_group.add_argument('-qp', '--queryPartition',
-help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=')", metavar='character')
+help="Evaluate algorithm performance with partitions given by one query (syntax : '==[]','<','<=','>','>=')", metavar='character')
 factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
-help="Evaluate algorithm performance by given queries. This argument is identical to the -q option and is included for consistency of the interface with the detection scorer.", metavar='character')
-
-parser.add_argument('-tmt','--targetManiType',type=str,default='all',
-help="An array of manipulations to be scored, separated by commas (e.g. 'remove,clone'). Select 'all' to score all manipulated regions regardless of manipulation.",metavar='character')
+help="Filter the data by given queries before evaluation. Each query will result in a separate evaluation run.", metavar='character')
 
 parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
@@ -155,7 +152,7 @@ if not os.path.isdir(args.outRoot):
 #define HTML functions here
 if args.html:
     if args.task == 'manipulation':
-        def df2html(df,average_df,outputRoot):
+        def df2html(df,average_df,outputRoot,queryManipulation,query):
             html_out = df.copy()
     
             #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
@@ -173,16 +170,18 @@ if args.html:
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;"))
             myf.write('\n')
+            #write the query if manipulated
+            if queryManipulation:
+                myf.write("\nFiltered by query: {}\n".format(query))
+
             if average_df is not 0:
                 #write title and then average_df
                 a_df_copy = average_df.copy().round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
-
             myf.close()
-
     elif args.task == 'splice':
-        def df2html(df,average_df,outputRoot):
+        def df2html(df,average_df,outputRoot,queryManipulation,query):
             html_out = df.copy()
     
             #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
@@ -202,14 +201,16 @@ if args.html:
             myf = open(fname,'w')
             myf.write(html_out.to_html(escape=False))
             myf.write('\n')
+            #write the query if manipulated
+            if queryManipulation:
+                myf.write("\nFiltered by query: {}\n".format(query))
+
             if average_df is not 0:
                 #write title and then average_df
                 a_df_copy = average_df.copy().round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
-
             myf.close()
-
     else:
         df2html = lambda *a:None
 else:
@@ -249,16 +250,15 @@ mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 factor_mode = ''
-query = ''
+query = ['']
 if args.query:
     factor_mode = 'q'
     query = args.query
-elif args.queryManipulation:
-    factor_mode = 'q' #behaves the same as standard query for mask scorer
-    query = args.queryManipulation
 elif args.queryPartition:
     factor_mode = 'qp'
-    query = args.queryPartition
+    query = [args.queryPartition]
+elif args.queryManipulation:
+    query = args.queryManipulation
 
 ## if the confidence score are 'nan', replace the values with the mininum score
 #mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
@@ -266,7 +266,6 @@ elif args.queryPartition:
 #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
 outRoot = args.outRoot
-
 prefix = os.path.basename(args.inSys).split('.')[0]
 
 reportq = 0
@@ -297,79 +296,94 @@ if args.task == 'manipulation':
 
     journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
     n_journals = len(journalData0)
-    journalData0['Evaluated'] = pd.Series(['N']*n_journals) #add column for Evaluated: 'Y'/'N'
-    journalData = journalData0.copy()
 
-    if args.targetManiType != 'all':
-        journalData = journalData0.query("Purpose=={}".format(args.targetManiType.split(','))) #filter by targetManiType
-        journalData0.loc[journalData0.query("Purpose=={}".format(args.targetManiType.split(','))).index,'Evaluated'] = 'Y'
+    if args.queryManipulation:
+        queryM = query
     else:
-        journalData0.loc[journalData0.query("ProbeFileID=={}".format(sub_ref['ProbeFileID'].tolist())).index,'Evaluated'] = 'Y'
+        queryM = ['']
 
-    #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
-    if (len(journalData) == 0) or not (True in journalData['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
-        print("The task '{}' was not found in any manipulation in any journal for the queried data.".format(args.targetManiType))
-        exit(0)
+    for qnum,q in enumerate(queryM):
+        m_dfc = m_df.copy()
+        if args.queryManipulation:
+            journalData0['Evaluated'] = pd.Series(['N']*n_journals)
+        else:
+            journalData0['Evaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
 
-    #m_df = pd.merge(m_df,probeJournalJoin,how='left',on='ProbeFileID')
-    #m_df = pd.merge(journalMask,m_df,how='left',on='JournalID')
+        journalData = journalData0.copy()
 
-    #partition query here and filter further
-    #selection = f.Partition(m_df,query,factor_mode)
-    #DM_List = selection.part_dm_list
-    #table_df = selection.render_table()
+        #use big_df to filter from the list as a temporary thing
+        if q is not '':
+            big_df = pd.merge(m_df,journalData0,how='left',on='ProbeFileID').query(q)
+            m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
+            journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+            journalData0.loc[journalData0.query("ProbeFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.ProbeFileID),\
+                                                                                                                           list(big_df.JournalID),\
+                                                                                                                           list(big_df.StartNodeID),\
+                                                                                                                           list(big_df.EndNodeID))).index,'Evaluated'] = 'Y'
+            m_dfc.index = range(0,len(m_dfc))
+            journalData.index = range(0,len(journalData))
 
-    r_df = mr.createReportSSD(m_df,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.ntdks, args.kernel, args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-    #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
-    journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
-    journalData0.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-journalResults.csv'),index=False)
+        #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
+        if (len(journalData) == 0) or not (True in journalData['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
+            print("The query '{}' yielded no journal data over which computation may take place.".format(q))
+            continue
 
-    r_df['Scored'] = pd.Series(['Y']*len(r_df))
-    r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-    r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-    r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-    r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
-    r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
-    #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+        outRootQuery = outRoot
+        if len(queryM) > 1:
+            outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
+            if not os.path.isdir(outRootQuery):
+                os.system('mkdir ' + outRootQuery)
+    
+        r_df = mr.createReportSSD(m_dfc,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
+        journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
+        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
+    
+        r_df['Scored'] = pd.Series(['Y']*len(r_df))
+        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
+        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
+        #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+    
+        #reorder r_df's columns. Names first, then scores, then other metadata
+        rcols = r_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        r_df = r_df[firstcols]
+    
+        a_df = 0
+        if len(r_df.query("Scored=='Y'")) == 0:
+            #if nothing was scored, print a message and return
+            print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
+        else:
+            metrics = ['NMM','MCC','BWL1','GWL1']
+            my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
+            df_list = my_partition.render_table(metrics)
+         
+            if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+                #use Partition for OOP niceness and to identify file to be written.
+                #a_df get the headers of temp_df and tack entries on one after the other
+                a_df = pd.DataFrame(columns=df_list[0].columns) 
+                for i,temp_df in enumerate(df_list):
+                    temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),index=False)
+                    a_df = a_df.append(temp_df,ignore_index=True)
+                    
+            elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
+                a_df = df_list[0]
+                if len(a_df) > 0:
+                    a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),index=False)
+                else:
+                    a_df = 0
+    
+        #generate HTML table report
+        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
-    #add targetManiType for r_df
-    r_df['TargetManipulations'] = args.targetManiType.replace(',',' + ')
-    a_df = 0
-
-    #reorder r_df's columns. Names first, then scores, then other metadata
-    rcols = r_df.columns.tolist()
-    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored','TargetManipulations']
-    metadata = [t for t in rcols if t not in firstcols]
-    firstcols.extend(metadata)
-    r_df = r_df[firstcols]
-
-    if len(r_df.query("Scored=='Y'")) == 0:
-        #if nothing was scored, print a message and return
-        print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
-    else:
-        metrics = ['NMM','MCC','BWL1','GWL1']
-        my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,args.targetManiType,metrics) #average over queries
-        df_list = my_partition.render_table(metrics)
-     
-        if (factor_mode=='q') and (len(df_list) > 0): #don't print anything if there's nothing to print
-            #use Partition for OOP niceness and to identify file to be written.
-            #a_df get the headers of temp_df and tack entries on one after the other
-            a_df = pd.DataFrame(columns=df_list[0].columns) 
-            for i,temp_df in enumerate(df_list):
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
-                a_df = a_df.append(temp_df,ignore_index=True)
-                
-        elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
-            a_df = df_list[0]
-            if len(a_df) > 0:
-                a_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + "-mask_score.csv"),index=False)
-            else:
-                a_df = 0
-
-    #generate HTML table report
-    df2html(r_df,a_df,args.outRoot)
-
-
+        prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
+    
 #commenting out for the time being
 #elif args.task in ['removal','clone']:
 #    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
@@ -380,7 +394,7 @@ if args.task == 'manipulation':
 #    m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
 #    # convert to the str type to the float type for computations
 #    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-#    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.targetManiType,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
+#    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
@@ -394,39 +408,65 @@ elif args.task == 'splice':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    r_df = mr.createReportDSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=args.outRoot, html=args.html,verbose=reportq,precision=args.precision)
-    a_df = 0
+    if args.queryManipulation:
+        queryM = query
+    else:
+        queryM = ['']
 
-    #reorder r_df's columns. Names first, then scores, then other metadata
-    rcols = r_df.columns.tolist()
-    firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-    metadata = [t for t in rcols if t not in firstcols]
-    firstcols.extend(metadata)
-    r_df = r_df[firstcols]
+    for qnum,q in enumerate(queryM):
+        m_dfc = m_df.copy()
 
-    metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-    my_partition = pt.Partition(r_df,query,factor_mode,'all',metrics) #average over queries
-    df_list = my_partition.render_table(metrics)
+        if q is not '':
+            m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
+            m_dfc.index = range(0,len(m_dfc))
 
-    if (factor_mode=='q') and (len(df_list) > 0): #don't print anything if there's nothing to print
-        #use Partition for OOP niceness and to identify file to be written. 
-        #a_df get the headers of temp_df and tack entries on one after the other
-        a_df = pd.DataFrame(columns=df_list[0].columns) 
-        for i,temp_df in enumerate(df_list):
-            temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRoot,prefix + '-mask_scores'),i),index=False)
-            a_df = a_df.append(temp_df,ignore_index=True)
-            
-    elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
-        a_df = df_list[0]
-        if len(a_df) > 0:
-            a_df.to_csv(path_or_buf=os.path.join(outRoot,prefix + "-mask_score.csv"),index=False)
-        else:
-            a_df = 0
+        if len(m_dfc)==0:
+            print("The query '{}' yielded no journal data.".format(q))
+            continue
 
-    #generate HTML table report
-    df2html(r_df,a_df,args.outRoot)
+        outRootQuery = outRoot
+        if len(queryM) > 1:
+            outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
+            if not os.path.isdir(outRootQuery):
+                os.system('mkdir ' + outRootQuery)
+    
+        r_df = mr.createReportDSD(m_dfc, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        a_df = 0
+    
+        #reorder r_df's columns. Names first, then scores, then other metadata
+        rcols = r_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        r_df = r_df[firstcols]
+    
+        metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+        df_list = my_partition.render_table(metrics)
+    
+        if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+            #use Partition for OOP niceness and to identify file to be written. 
+            #a_df get the headers of temp_df and tack entries on one after the other
+            a_df = pd.DataFrame(columns=df_list[0].columns) 
+            for i,temp_df in enumerate(df_list):
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),index=False)
+                a_df = a_df.append(temp_df,ignore_index=True)
+                
+        elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
+            a_df = df_list[0]
+            if len(a_df) > 0:
+                a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),index=False)
+            else:
+                a_df = 0
+    
+        #generate HTML table report
+        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
+    
+        prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
 
-if verbose: #to avoid complications of print formatting when not verbose
+
+if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
     precision = args.precision
     if args.task in ['manipulation']:
         myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
@@ -452,7 +492,4 @@ if verbose: #to avoid complications of print formatting when not verbose
         printq(dallmets)
     else:
         printerr("ERROR: Task not recognized.")
-
-prefix = os.path.basename(args.inSys).split('.')[0]
-r_df.to_csv(path_or_buf=os.path.join(args.outRoot,prefix + '-mask_scores_perimage.csv'),index=False)
 
