@@ -434,7 +434,11 @@ elif args.task == 'splice':
         m_dfc = m_df.copy()
 
         if q is not '':
-            m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
+            try:
+                m_dfc = m_dfc.query(q)
+            except pd.computation.ops.UndefinedVariableError:
+                print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
+                exit(1)
             m_dfc.index = range(0,len(m_dfc))
 
         if len(m_dfc)==0:

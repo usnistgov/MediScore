@@ -168,7 +168,11 @@ class Partition:
 #                    chosenField = [x.strip() for x in query.replace('!=', '==').split('==')]
 #                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
 
-            sub_df = df.query(query)
+            try:
+                sub_df = df.query(query)
+            except pd.computation.ops.UndefinedVariableError:
+                print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(query))
+                exit(1)
             #print("Removing duplicates ...\n")
             new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
             df_list.append(new_df)
