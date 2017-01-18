@@ -257,7 +257,7 @@ class maskMetricList:
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little?
-                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName)
+                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         return df
 
@@ -296,7 +296,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName):
+    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -316,6 +316,7 @@ class maskMetricList:
         *     colMaskName: the aggregate mask image of the ground truth, system output, and no-score regions
                            for the HTML report
         *     aggImgName: the above colored mask superimposed on a grayscale of the reference image
+        *     verbose: whether or not to exercise printout
         """
         if not os.path.isdir(outputRoot):
             os.system('mkdir ' + outputRoot)
@@ -374,9 +375,9 @@ class maskMetricList:
         rBase = os.path.basename(rImg_name)
         sBase = os.path.basename(sImg_name)
 
-        mPathNew = os.path.join(outputRoot,mBase)
-        rPathNew = os.path.join(outputRoot,rBase)
-        sPathNew = os.path.join(outputRoot,sBase)
+        mPathNew = os.path.join(outputRoot,'probeFile' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
+        rPathNew = os.path.join(outputRoot,'refMask.png') #os.path.join(outputRoot,rBase)
+        sPathNew = os.path.join(outputRoot,'sysMask.png') #os.path.join(outputRoot,sBase)
 
         try:
             os.remove(mPathNew)
@@ -391,15 +392,19 @@ class maskMetricList:
         except OSError:
             None
 
+        if verbose: print "Creating link for " + mPathNew
         os.symlink(os.path.abspath(mPath),mPathNew)
+        if verbose: print "Creating link for " + rPathNew
         os.symlink(os.path.abspath(rImg_name),rPathNew)
+        if verbose: print "Creating link for " + sPathNew
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
-        htmlstr = htmlstr.substitute({'probeFname': mBase,
+        if verbose: print("Writing HTML...")
+        htmlstr = htmlstr.substitute({'probeFname': 'probeFile' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
-                                      'refMask' : rBase,
-                                      'sysMask' : sBase,
+                                      'refMask' : 'refMask.png',#rBase,
+                                      'sysMask' : 'sysMask.png',#sBase,
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
                                       'systh' : sys_threshold,
@@ -582,15 +587,15 @@ class maskMetrics:
             if (self.nmm==1) or (self.nmm==-1):
                 print("NMM: %d" % self.nmm)
             else:
-                print("NMM: %0.9f" % self.nmm)
+                print("NMM: %0.3f" % self.nmm)
             if (self.mcc==1) or (self.mcc==-1):
                 print("MCC: %d" % self.mcc)
             else:
-                print("MCC (Matthews correlation coeff.): %0.9f" % self.mcc)
+                print("MCC (Matthews correlation coeff.): %0.3f" % self.mcc)
             if (self.bwL1==1) or (self.bwL1==0):
                 print("BWL1: %d" % self.bwL1)
             else:
-                print("Binary Weighted L1: %0.9f" % self.bwL1)
+                print("Binary Weighted L1: %0.3f" % self.bwL1)
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
@@ -716,9 +721,10 @@ class maskMetrics:
         fn = conf['FN']
         n = conf['N']
 
-        s=np.float64(tp+fn)/n
-        p=np.float64(tp+fp)/n
-        if (s==1) or (p==1) or (s==0) or (p==0):
+        s=tp+fn
+        p=tp+fp
+
+        if (s==n) or (p==n) or (s==0) or (p==0):
             score=0.0
         else:
             score=Decimal(tp*tn-fp*fn)/Decimal((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)).sqrt()
@@ -944,6 +950,25 @@ class maskMetrics:
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
         thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
+        if popt==1:
+            maxMets = thresMets.query("Threshold=={}".format(tmax))
+            maxNMM = maxMets.iloc[0]['NMM']
+            maxMCC = maxMets.iloc[0]['MCC']
+            maxBWL1 = maxMets.iloc[0]['BWL1']
+            if (maxNMM==1) or (maxNMM==-1):
+                print("NMM: %d" % maxNMM)
+            else:
+                print("NMM: %0.3f" % maxNMM)
+            if (maxMCC==1) or (maxMCC==-1):
+                print("MCC: %d" % maxMCC)
+            else:
+                print("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
+            if (maxBWL1==1) or (maxBWL1==0):
+                print("BWL1: %d" % maxBWL1)
+            else:
+                print("Binary Weighted L1: %0.3f" % maxBWL1)
+            
+
         return thresMets,tmax
 
 

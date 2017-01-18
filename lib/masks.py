@@ -160,10 +160,12 @@ class mask(object):
 
         if len(img.shape) == 3:
             colors = list(set(tuple(p) for m2d in img for p in m2d))
-            colors.remove((255,255,255))
+            if (255,255,255) in colors:
+                colors.remove((255,255,255))
         elif len(img.shape) == 2:
             colors = list(set(p for m2d in img for p in m2d))
-            colors.remove(255) 
+            if 255 in colors:
+                colors.remove(255) 
 
         if popt==1:
             for c in colors:
@@ -302,7 +304,7 @@ class refmask(mask):
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
-        if distractionKernSize > 0:
+        if (distractionKernSize > 0) and (self.purposes is not 'all'):
             distractionNoScore = self.unselectedNoScoreRegion(distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
@@ -362,10 +364,6 @@ class refmask(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        if (dilateKernSize==0) and (self.purposes is not 'all'):
-            weights = np.ones(dims,dtype=np.uint8)
-            return weights
-
         kern = kern.lower()
         dKern=getKern(kern,dilateKernSize)
         

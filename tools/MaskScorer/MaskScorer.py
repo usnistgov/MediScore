@@ -282,8 +282,19 @@ sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 if args.task == 'manipulation':
     #update accordingly along with ProbeJournalJoin and JournalMask csv's in refDir
     refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
-    probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0)
-    journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0)
+    #try/catch this
+    try:
+        probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0)
+    except IOError:
+        print("No probeJournalJoin file is present. This run will terminate.")
+        exit(1)
+
+    try:
+        journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0)
+    except IOError:
+        print("No journalMask file is present. This run will terminate.")
+        exit(1)
+        
 
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
@@ -313,7 +324,13 @@ if args.task == 'manipulation':
 
         #use big_df to filter from the list as a temporary thing
         if q is not '':
-            big_df = pd.merge(m_df,journalData0,how='left',on='ProbeFileID').query(q)
+            #exit if query does not match
+            try:
+                big_df = pd.merge(m_df,journalData0,how='left',on='ProbeFileID').query(q)
+            except pd.computation.ops.UndefinedVariableError:
+                print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
+                exit(1)
+
             m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
             journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData0.loc[journalData0.query("ProbeFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.ProbeFileID),\
