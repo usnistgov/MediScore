@@ -224,7 +224,8 @@ class maskMetricList:
                 mymeas = 0
                 threshold = 0
                 metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
-                gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
+                #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
+                gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
                 if self.sbin >= 0:
                     #just get scores in one run if threshold is chosen
                     mets = metricRunner.getMetrics(popt=verbose)
@@ -256,7 +257,7 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    #TODO: trim the arguments here down a little?
+                    #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
                     self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         return df
@@ -366,7 +367,7 @@ class maskMetricList:
         totalsns = np.sum(swts==0)
 
         thresString = ''
-        if thresMets is not '':
+        if len(thresMets) > 1:
             thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
             thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
