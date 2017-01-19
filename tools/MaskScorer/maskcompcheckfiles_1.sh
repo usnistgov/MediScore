@@ -6,7 +6,7 @@ echo "CASE 1: VALIDATING SCORING OF TARGET REGIONS"
 echo
 
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_all -html
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_purpose -html -qm "Purpose==['clone']" "Purpose==['add']" "Purpose==['removal']" "Purpose==['clone','add']" "Purpose==['heal']" "Purpose==['remove']"
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_purpose -qm "Purpose==['clone']" "Purpose==['add']" "Purpose==['removal']" "Purpose==['clone','add']" "Purpose==['heal']" "Purpose==['remove']"
 
 
 diff ../../data/test_suite/maskScorerTests/target_all/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_all.csv > comp_maskreport_all.txt
@@ -55,23 +55,23 @@ flag_removepi=1
 flag_removejr=1
 
 #filters to evaluate
-filter_all="cat comp_maskreport_all.txt | grep -v -CVS"
-filter_allpi="cat comp_maskreport_all-perimage.txt | grep -v -CVS"
-filter_alljr="cat comp_maskreport_all-journalResults.txt | grep -v -CVS"
-filter_clone="cat comp_maskreport_clone.txt | grep -v -CVS"
-filter_clonepi="cat comp_maskreport_clone-perimage.txt | grep -v -CVS"
-filter_clonejr="cat comp_maskreport_clone-journalResults.txt | grep -v -CVS"
-filter_add="cat comp_maskreport_add.txt | grep -v -CVS"
-filter_addpi="cat comp_maskreport_add-perimage.txt | grep -v -CVS"
-filter_addjr="cat comp_maskreport_add-journalResults.txt | grep -v -CVS"
-filter_clone_add="cat comp_maskreport_clone_add.txt | grep -v -CVS"
-filter_clone_addpi="cat comp_maskreport_clone_add-perimage.txt | grep -v -CVS"
-filter_clone_addjr="cat comp_maskreport_clone_add-journalResults.txt | grep -v -CVS"
-filter_healpi="cat comp_maskreport_heal-perimage.txt | grep -v -CVS"
-filter_healjr="cat comp_maskreport_heal-journalResults.txt | grep -v -CVS"
-filter_remove="cat comp_maskreport_remove.txt | grep -v -CVS"
-filter_removepi="cat comp_maskreport_remove-perimage.txt | grep -v -CVS"
-filter_removejr="cat comp_maskreport_remove-journalResults.txt | grep -v -CVS"
+filter_all="cat comp_maskreport_all.txt | grep -v CVS"
+filter_allpi="cat comp_maskreport_all-perimage.txt | grep -v CVS"
+filter_alljr="cat comp_maskreport_all-journalResults.txt | grep -v CVS"
+filter_clone="cat comp_maskreport_clone.txt | grep -v CVS"
+filter_clonepi="cat comp_maskreport_clone-perimage.txt | grep -v CVS"
+filter_clonejr="cat comp_maskreport_clone-journalResults.txt | grep -v CVS"
+filter_add="cat comp_maskreport_add.txt | grep -v CVS"
+filter_addpi="cat comp_maskreport_add-perimage.txt | grep -v CVS"
+filter_addjr="cat comp_maskreport_add-journalResults.txt | grep -v CVS"
+filter_clone_add="cat comp_maskreport_clone_add.txt | grep -v CVS"
+filter_clone_addpi="cat comp_maskreport_clone_add-perimage.txt | grep -v CVS"
+filter_clone_addjr="cat comp_maskreport_clone_add-journalResults.txt | grep -v CVS"
+filter_healpi="cat comp_maskreport_heal-perimage.txt | grep -v CVS"
+filter_healjr="cat comp_maskreport_heal-journalResults.txt | grep -v CVS"
+filter_remove="cat comp_maskreport_remove.txt | grep -v CVS"
+filter_removepi="cat comp_maskreport_remove-perimage.txt | grep -v CVS"
+filter_removejr="cat comp_maskreport_remove-journalResults.txt | grep -v CVS"
 
 if ([ -f comp_maskreport_removal.txt -o -f comp_maskreport_removal-perimage.txt -o -f comp_maskreport_removal-journalResults.txt \
  -o -f comp_maskreport_heal.txt \
