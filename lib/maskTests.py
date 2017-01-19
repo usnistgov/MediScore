@@ -144,7 +144,7 @@ class TestImageMethods(ut.TestCase):
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(0)
         cv2.imwrite('testImgC.png',testimg,params)
-        mytest=masks.refmask('testImgC.png',cs=['255 0 0','0 255 0'],tmt='remove') #red,green
+        mytest=masks.refmask('testImgC.png',cs=['255 0 0','0 255 0'],purposes='remove') #red,green
         
         #generate masks
         baseNoScore = mytest.boundaryNoScoreRegion(3,5,'box')['wimg']
