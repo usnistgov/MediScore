@@ -179,10 +179,10 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=1)
     probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode='Donor') #donor images
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=2) #donor images
     donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",

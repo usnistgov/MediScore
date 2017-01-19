@@ -47,7 +47,7 @@ class maskMetricList:
                  refBin,
                  sysBin,
                  journaldf=0,
-                 mode='Probe',
+                 mode=0,
                  colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
         """
         Constructor
@@ -153,16 +153,20 @@ class maskMetricList:
         *     df: a dataframe of the computed metrics
         """
         #reflist and syslist should come from the same dataframe, so length checking is not required
-        reflist = self.maskData['{}MaskFileName'.format(self.mode)]
-        syslist = self.maskData['Output{}MaskFileName'.format(self.mode)]
+        mymode='Probe'
+        if self.mode==2:
+            mymode='Donor'
 
-        manip_ids = self.maskData['{}FileID'.format(self.mode)]
+        reflist = self.maskData['{}MaskFileName'.format(mymode)]
+        syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
+
+        manip_ids = self.maskData['{}FileID'.format(mymode)]
         if html:
-            maniImageFName = self.maskData['{}FileName'.format(self.mode)]
+            maniImageFName = self.maskData['{}FileName'.format(mymode)]
 
         nrow = len(reflist) 
         #initialize empty frame to minimum scores 
-        df=pd.DataFrame({'{}FileID'.format(self.mode):manip_ids,
+        df=pd.DataFrame({'{}FileID'.format(mymode):manip_ids,
                          'NMM':[-1.]*nrow,
                          'MCC': 0.,
                          'BWL1': 1.,
@@ -201,8 +205,16 @@ class maskMetricList:
                 subOutRoot = os.path.join(outputRoot,subdir_name)
                 if not os.path.isdir(subOutRoot):
                     os.system('mkdir ' + subOutRoot)
+                #further subdirectories for the splice task
+                if self.mode == 1:
+                    subOutRoot = os.path.join(subOutRoot,'probe')
+                elif self.mode == 2:
+                    subOutRoot = os.path.join(subOutRoot,'donor')
+                if not os.path.isdir(subOutRoot):
+                    os.system('mkdir ' + subOutRoot)
 
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
+                sbin_name = ''
                 if self.sbin >= 0:
                     sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=self.sbin)
@@ -376,7 +388,12 @@ class maskMetricList:
         rBase = os.path.basename(rImg_name)
         sBase = os.path.basename(sImg_name)
 
-        mPathNew = os.path.join(outputRoot,'probeFile' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
+        #change to donor depending on mode
+        mpfx = 'probe'
+        if self.mode==2:
+            mpfx = 'donor'
+
+        mPathNew = os.path.join(outputRoot,mpfx+'File' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
         rPathNew = os.path.join(outputRoot,'refMask.png') #os.path.join(outputRoot,rBase)
         sPathNew = os.path.join(outputRoot,'sysMask.png') #os.path.join(outputRoot,sBase)
 
@@ -401,7 +418,7 @@ class maskMetricList:
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         if verbose: print("Writing HTML...")
-        htmlstr = htmlstr.substitute({'probeFname': 'probeFile' + maniImageFName[-4:],#mBase,
+        htmlstr = htmlstr.substitute({'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
                                       'refMask' : 'refMask.png',#rBase,
