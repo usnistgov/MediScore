@@ -8,11 +8,10 @@ This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
 example data for the following tools:
 
-  SSDValidate      V2.0 - Single Source Detection Validator
-  DSDValidate      V2.0 - Double Source Detection Validator
+  Validator        V2.0 - Single/Double Source Detection Validator
   DetectionScorer  V2.1 - Single/Double Source Detection Evaluation
                           Scorer
-  MaskScorer       V2.0 - Single/Double Source Mask Evaluation
+  MaskScorer       V2.1 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
 
 This distribution consists of a set of Python2.7 scripts intended to be run

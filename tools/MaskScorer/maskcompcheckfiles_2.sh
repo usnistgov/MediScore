@@ -45,22 +45,22 @@ diff ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulatio
 
 
 #splice confs
-diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_0.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconf_0.csv > comp_maskreport_spliceconf_0.txt
-diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconf-perimage.csv > comp_maskreport_spliceconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_0.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconf_0.csv > comp_maskreport_spliceconf_0.txt
+diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconf-perimage.csv > comp_maskreport_spliceconf-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_0.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll_0.csv > comp_maskreport_spliceconfcoll_0.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_1.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll_1.csv > comp_maskreport_spliceconfcoll_1.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll-perimage.csv > comp_maskreport_spliceconfcoll-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_0.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll_0.csv > comp_maskreport_spliceconfcoll_0.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_1.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll_1.csv > comp_maskreport_spliceconfcoll_1.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcoll-perimage.csv > comp_maskreport_spliceconfcoll-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splicefooconf-perimage.csv > comp_maskreport_splicefooconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splicefooconf-perimage.csv > comp_maskreport_splicefooconf-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfpart.csv > comp_maskreport_spliceconfpart.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfpart-perimage.csv > comp_maskreport_spliceconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfpart.csv > comp_maskreport_spliceconfpart.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfpart-perimage.csv > comp_maskreport_spliceconfpart-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcollpart.csv > comp_maskreport_spliceconfcollpart.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcollpart-perimage.csv > comp_maskreport_spliceconfcollpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcollpart.csv > comp_maskreport_spliceconfcollpart.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_spliceconfcollpart-perimage.csv > comp_maskreport_spliceconfcollpart-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Manipulation_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splicefooconfpart-perimage.csv > comp_maskreport_splicefooconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splicefooconfpart-perimage.csv > comp_maskreport_splicefooconfpart-perimage.txt
 
 
 #flags
@@ -479,6 +479,8 @@ if ([ $flag_manipconf_0 == 0 -a $flag_manipconfpi == 0 -a $flag_manipconfjr == 0
 ]); then
   echo
   echo "CASE 2 SUCCESSFULLY PASSED"
+  echo
+  echo "MASK SCORER TESTS SUCCESSFULLY PASSED"
   echo
 	if [ $clean = "TRUE" ] ; then
 		rm -rf ../../data/test_suite/maskScorerTests/manipconf
