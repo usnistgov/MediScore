@@ -157,7 +157,7 @@ class SSD_Validator(validator):
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        truelist = ["ProbeFileID","ConfidenceScore","ProbeOutputMaskFileName"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] == sysHeads[i])
@@ -189,7 +189,7 @@ class SSD_Validator(validator):
         
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str)
         sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
-        sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
+        sysfile['ProbeOutputMaskFileName'] = sysfile['ProbeOutputMaskFileName'].astype(str) 
 
         idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
         idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 
@@ -204,11 +204,11 @@ class SSD_Validator(validator):
                 return 1
 
             #check mask validation
-            probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
+            probeOutputMaskFileName = sysfile['ProbeOutputMaskFileName'][i]
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                 continue
-            maskFlag = maskFlag | maskCheck1(sysPath + "/" + sysfile['OutputProbeMaskFileName'][i],sysfile['ProbeFileID'][i],idxfile)
+            maskFlag = maskFlag | maskCheck1(sysPath + "/" + sysfile['ProbeOutputMaskFileName'][i],sysfile['ProbeFileID'][i],idxfile)
         
         #final validation
         if (scoreFlag == 0) and (maskFlag == 0):
@@ -290,7 +290,7 @@ class DSD_Validator(validator):
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
+        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","ProbeOutputMaskFileName","DonorOutputMaskFileName"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] == sysHeads[i])
@@ -321,14 +321,14 @@ class DSD_Validator(validator):
         
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str) 
         sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64) 
-        sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
+        sysfile['ProbeOutputMaskFileName'] = sysfile['ProbeOutputMaskFileName'].astype(str) 
 
         idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
         idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.uint32) 
         idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.uint32) 
 
         sysfile['DonorFileID'] = sysfile['DonorFileID'].astype(str) 
-        sysfile['OutputDonorMaskFileName'] = sysfile['OutputDonorMaskFileName'].astype(str) 
+        sysfile['DonorOutputMaskFileName'] = sysfile['DonorOutputMaskFileName'].astype(str) 
 
         idxfile['DonorFileID'] = idxfile['DonorFileID'].astype(str) 
         idxfile['DonorHeight'] = idxfile['DonorHeight'].astype(np.uint32) 
@@ -351,8 +351,8 @@ class DSD_Validator(validator):
                 return 1
 
             #check mask validation
-            probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
-            donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
+            probeOutputMaskFileName = sysfile['ProbeOutputMaskFileName'][i]
+            donorOutputMaskFileName = sysfile['DonorOutputMaskFileName'][i]
 
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
                 printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping it.")
