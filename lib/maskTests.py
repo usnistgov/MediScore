@@ -283,7 +283,7 @@ class TestImageMethods(ut.TestCase):
         print("CASE 1 testing complete.\n")
 
         ##### CASE 2: Erode only. ###################################
-        print("CASE 2: Testing for resulting mask having been only eroded and behavior of other library functions. You should expect to see ERROR messages pop up as we test the behavior of the functions, from the library functions being tested and the RUnit test package. This should happen in the test run.")
+        print("CASE 2: Testing for resulting mask having been only eroded and behavior of other library functions.")
     
         #use this rImg for all subsequent cases
         rImg = 255*np.ones((100,100))
