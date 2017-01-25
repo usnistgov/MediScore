@@ -1,0 +1,164 @@
+<h2>Manipulated Image: probeFile.jpg </h2><br/>
+<img src="probeFile.jpg" alt="manipulated image" style="width:640px;">
+<br/>
+<table>
+  <tbody>
+    <tr>
+      <td>
+<h3>Composite with Color Mask: leaves-mask_composite.jpg </h3>
+<img src="leaves-mask_composite.jpg" alt="manip image plus mask" style="width:640px;">
+      </td>
+      <td width="640px" align="center">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Purpose</th>
+      <th>Color</th>
+      <th>Evaluated</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#00F7FA"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>remove</td>
+      <td bgcolor="#FF00F0"></td>
+      <td>Y</td>
+    </tr>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#00FF06"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>add</td>
+      <td bgcolor="#F4FD00"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>clone</td>
+      <td bgcolor="#FF0C00"></td>
+      <td>N</td>
+    </tr>
+    <tr>
+      <td>heal</td>
+      <td bgcolor="#FFFF7F"></td>
+      <td>N</td>
+    </tr>
+  </tbody>
+</table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br/>
+<table border="1">
+  <tbody>
+    <tr>
+      <td><img src="refMask.png" alt="reference mask" style="width:640px;"><br/><b>Colorized Reference Mask</b></td>
+      <td><img src="sysMask.png" alt="system output mask" style="width:640px;"><br/><b>Original System Output Mask</b></td>
+    </tr>
+    <tr>
+      <td><img src="77232d3f2f9e866ad7bbc5faccd25119-bin.png" alt="binarized reference mask" style="width:640px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="leaves-mask-bin.png" alt="binarized system output mask" style="width:640px;"><br/><b>Binarized System Output Mask (Black = Manipulated, Threshold &lt;= 0)</b></td>
+    </tr>
+    <tr>
+      <td><img src="leaves-mask-weights.png" alt="no-score zone" style="width:640px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="leaves-mask_colored.jpg" alt="color mask" style="width:640px;"><br/><b>Evaluation Result Visualization</b></td>
+    </tr>
+    <tr>
+      <td><b>NIMBLE Mask Metric (NMM)</b>: -1.0 <br/>
+      <b>Matthews Correlation Coefficient (MCC)</b>: -0.032 <br/>
+      <b>Binary Weighted L1 Loss (WL1)</b>: 0.083 <br/>
+      <b>Grayscale Weighted L1 Loss (WL1)</b>: 0.083 <br/></td>
+      <td><b>Total Pixels</b>: 8189855 <br/>
+<table border="1" bgcolor="#C8C8C8">
+  <tbody>
+    <tr>
+      <th>
+      Confusion Measures
+      </th>
+      <th>
+      Pixels
+      </th>      
+      <th>
+      Proportion
+      </th>      
+    </tr>
+    <tr>
+      <td>
+<b>True Positives (<font style="color:#00CF00">TP: green</font>)</b>:
+      </td>
+      <td align="left">
+      0
+      </td>
+      <td align="left">
+      0.0
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Positives (<font style="color:#FF0000">FP: red</font>)</b>:
+      </td>
+      <td align="left">
+      567076
+      </td>
+      <td align="left">
+      0.069
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>True Negatives (<font style="color:#FFFFFF">TN: white</font>)</b>:
+      </td>
+      <td align="left">
+      7512404
+      </td>
+      <td align="left">
+      0.917
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>False Negatives (<font style="color:#3333FF">FN: blue</font>)</b>:
+      </td>
+      <td align="left">
+      110375
+      </td>
+      <td align="left">
+      0.013
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Boundary No-Score Zone (<font style="color:#FFFF00">BNS: yellow</font>)</b>:
+      </td>
+      <td align="left">
+      61656
+      </td>
+      <td align="left">
+      0.008
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>Selective No-Score Zone (<font style="color:#FFB6C1">SNS: pink</font>)</b>:
+      </td>
+      <td align="left">
+      1484969
+      </td>
+      <td align="left">
+      0.181
+      </td>
+    </tr>
+  </tbody>
+</table>
+</td>
+    </tr>
+  </tbody>
+</table>
+<br/>
+

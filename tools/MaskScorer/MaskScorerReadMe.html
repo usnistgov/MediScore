@@ -11787,9 +11787,10 @@ NMM(GT,sys,weights,c)=\max{\left(\frac{TP - FN - FP}{\Sigma_{px\in GT}weights(px
 <h3 id="Matthews-Correlation-Coefficient-(MCC)">Matthews Correlation Coefficient (MCC)<a class="anchor-link" href="#Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
 MCC(GT,sys) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
 \end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation.</p>
-<h3 id="Weighted-L1-Loss-(WL1)">Weighted L1 Loss (WL1)<a class="anchor-link" href="#Weighted-L1-Loss-(WL1)">&#182;</a></h3>\begin{equation*}
+<h3 id="Weighted-L1-Loss-(BWL1-and-GWL1)">Weighted L1 Loss (BWL1 and GWL1)<a class="anchor-link" href="#Weighted-L1-Loss-(BWL1-and-GWL1)">&#182;</a></h3>\begin{equation*}
 WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 \end{equation*}<p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
+<p>The Weighted L1 is applied separately to the original grayscale system output and the binarized mask, producing the grayscale Weighted L1 (GWL1) and binarized Weighted L1 (BWL1) metrics respectively. In the case of the original grayscale, the value is summed over the weighted difference in pixel intensity.</p>
 
 </div>
 </div>
@@ -11800,19 +11801,6 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Command-line-Options">Command-line Options<a class="anchor-link" href="#Command-line-Options">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Example:</p>
-
-<pre><code>python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests/ -r reference/removal/NC2016-removal-ref.csv -x index/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR maskoutputs/sample -html</code></pre>
-<p>Running this code would produce, under the maskoutputs directory, an aggregate report of the computed mask scores titled sample.csv and a per-image score report titled sample-perimage.csv for the removal task. The -html flag is also set, allowing the code to generate an HTML per-image index file with the scores and metadata containing links to individual detailed reports of each image (described in the Sample HTML Output at the bottom of the page).</p>
-
 </div>
 </div>
 </div>
@@ -11840,7 +11828,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-t --task [manipulation, removal, splice, clone]</p>
+<p>-t --task [manipulation, splice]</p>
 <ul>
 <li>Specify the task type for evaluation (default = manipulation)</li>
 </ul>
@@ -11930,7 +11918,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--rbin</p>
 <ul>
-<li>Binarize the reference mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. (default = 254)</li>
+<li>Binarize the reference mask to black and white with a numeric threshold in the interval [0,255]. Choose -1 to not binarize and leave the mask as is. (default = -1)</li>
 </ul>
 
 </div>
@@ -11943,7 +11931,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--sbin</p>
 <ul>
-<li>Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to not binarize and leave the mask as is. (default = -1)</li>
+<li>Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. Pick -1 to binarize by the threshold that gives the maximum absolute MCC. (default = -1)</li>
 </ul>
 
 </div>
@@ -11976,7 +11964,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Kernel-Size-Options">Kernel Size Options<a class="anchor-link" href="#Kernel-Size-Options">&#182;</a></h3>
+<h3 id="Scoring-Options">Scoring Options<a class="anchor-link" href="#Scoring-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -11992,6 +11980,67 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <p>--dks</p>
 <ul>
 <li>Dilation kernel size. (number must be odd; default = 9)</li>
+</ul>
+<p>-k kernel</p>
+<ul>
+<li>The shape of the kernel to be used, for both erosion and dilation. Choose from 'box','disc','diamond','gaussian', or 'line'. The default kernel is 'box'.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Performance-Evaluation-by-Query">Performance Evaluation by Query<a class="anchor-link" href="#Performance-Evaluation-by-Query">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified queries and query options. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting none of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-q query</p>
+<ul>
+<li><p>Evaluate algorithm performance on a partitioned dataset using multiple factor queries, one at a time (e.g. "Collection==['NC2017'] &amp; Purpose==['add','remove']" will average over the rows that fit this criterion for one queried average, but "Collection==['NC2017']" "Purpose==['add','remove']" will average over the first and then the second independently for two queried averages). The option generates N report tables (CSV), one for each query.</p>
+<ul>
+<li>Syntax: -q "query1" "query2" "query3" ...</li>
+<li>The syntax is the same as Pandas' query syntax. Please see the detailed query rule in the website: <a href="http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query">http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query</a>.</li>
+</ul>
+<p>Examples:</p>
+<p>% -q "Collection==['Nimble-SCI']" =&gt; 1 query</p>
+<p>% -q "Collection==['Nimble-SCI'] and PostProcessing=['rescale']" =&gt; 1 query</p>
+<p>% -q "Collection==['Nimble-SCI','Nimble-WEB']" "PostProcessing=['rescale']" "200&lt;ProbeWidth&lt;=3000" =&gt; 3 queries</p>
+</li>
+</ul>
+<p>-qp queryPartition</p>
+<ul>
+<li><p>Uses one factor query to evaluate algorithm performance on a partitioned dataset through its individual sub-queries (e.g. "Collection==['NC2017'] &amp; Purpose==['add','remove']" will average over "Collection==['NC2017'] &amp; Purpose==['add']" and "Collection==['NC2017'] &amp; Purpose==['remove']" for a total of two queried averages). This option generates a single report table (CSV) that contains M partition results, one result for each query.</p>
+<ul>
+<li>Syntax: -qp "query"</li>
+</ul>
+<p>Examples:</p>
+<p>% -qp "Collection==['Nimble-SCI']" =&gt; 1 partition</p>
+<p>% -qp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale']" =&gt; 2 partitions</p>
+<p>% -qp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale','noise']" =&gt; 4 partitions</p>
+</li>
+</ul>
+<p>-qm queryManipulation</p>
+<ul>
+<li><p>Filters the dataset before scoring takes place for some number of queries. It is functionally similar to the -q query option. The option generates M report tables (CSV), one for each query.</p>
+<ul>
+<li>Syntax: -qm "query1" "query2" "query3" ...</li>
+<li>Like the -q option, the syntax is the same as Pandas' query syntax.</li>
+</ul>
+<p>Examples:</p>
+<p>% -qm "Purpose==['remove']" =&gt; 1 query</p>
+<p>% -qm "Operation==['PasteSplice']" "Operation==['FillContentAwareFill']" =&gt; 2 query</p>
+<p>% -qm "Purpose==['remove']" "Purpose==['add']" "Purpose==['splice']"=&gt; 3 queries</p>
+</li>
 </ul>
 
 </div>
@@ -12017,7 +12066,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </ul>
 <p>--precision</p>
 <ul>
-<li>The number of digits to round computed scores, (e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5), (default = 5).</li>
+<li>The number of digits to round computed scores, (e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5), (default = 16).</li>
 </ul>
 <p>-html</p>
 <ul>
@@ -12032,16 +12081,34 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Sample-HTML-Output">Sample HTML Output<a class="anchor-link" href="#Sample-HTML-Output">&#182;</a></h2>
+<h2 id="Examples">Examples<a class="anchor-link" href="#Examples">&#182;</a></h2>
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span>%%bash
+python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
+-r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
+-s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
+-oR outputs/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The following set of images is a sample of what you should see in the HTML page for each image. You can access each image from the appropriate link in the index.html file that is produced in your chosen output directory.</p>
+<p>Running this code in the tools/MaskScorer directory will generate an aggregate report of the computed mask scores titled B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores.csv and a per-image score report titled B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv for the manipulation task.</p>
+<p>The -html flag is also set, allowing the code to generate an HTML per-image <a href="outputs/maniptest/index.html">index file</a> with the scores and metadata containing links to individual detailed reports of each image.</p>
 
 </div>
 </div>
@@ -12051,28 +12118,35 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><h2>Manipulated Image: morelight.jpg</h2><br />
-<img src="notebookImgs/morelight.jpg" alt="manipulated image" style="width:640px;">
-<br /></p>
-<p><h3>Composite with Color Mask: sys-light_composite.jpg</h3>
-<img src="notebookImgs/sys-light_composite.jpg" alt="manip image plus mask" style="width:640px;">
-<br /></p>
-<table border="1">
-  <tbody>
-    <tr>
-      <td><img src="notebookImgs/light-mask.png" alt="reference mask" style="width:640px;"><br /><b>Reference Mask</b></td>
-      <td><img src="notebookImgs/sys-light.png" alt="system output mask" style="width:640px;"><br /><b>System Output Mask</b></td>
-    </tr>
-    <tr>
-      <td><img src="notebookImgs/sys-light-weights.png" alt="no-score zone" style="width:640px;"><br /><b>No-Score Zone</b></td>
-      <td><img src="notebookImgs/sys-light_colored.jpg" alt="color mask" style="width:640px;"><br /><b>Mask Scoring Example</b></td>
-    </tr>
-    <tr>
-      <td>NIMBLE Mask Metric (NMM): -1.000000</td>
-      <td><b>Total Pixels</b>: 6016000<br /><b>False Positives (FP)</b>: 175678<br /><b>False Negatives (FN)</b>: 462<br /><b>True Positives (TP)</b>: 11462<br /><b>No Score Zone (NS)</b>: 9161<br /></td>
-    </tr>
-  </tbody>
-</table>
+<p>The user may also select which manipulation regions to score, depending on the manipulations listed under the "Purpose" column in the journalMask file. Other regions are dilated by a separate factor and counted as selective no-score zones in addition to the boundary no-score zones applied to the regions of interest. Multiple pre-filters can be applied independently to the data, resulting in the output of multiple output indices corresponding to the number of queries passed to -qm.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span>%%bash
+python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
+-r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
+-s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
+-oR outputs/maniptargets -html -qm <span class="s2">&quot;Purpose==[&#39;remove&#39;]&quot;</span> <span class="s2">&quot;Purpose==[&#39;clone&#39;,&#39;add&#39;]&quot;</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The sample HTML index files for the 'remove' and 'clone','add' operations can be found <a href="outputs/maniptargets/index_0/index.html">here</a> and <a href="outputs/maniptargets/index_1/index.html">here</a> respectively.</p>
+
 </div>
 </div>
 </div>
