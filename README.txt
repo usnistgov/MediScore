@@ -1,8 +1,6 @@
 File: README.txt
-Date: January 6, 2017
-MediScore Version: 1.0.2
-
-NEW Python
+Date: January 25, 2017
+MediScore Version: 1.0.3
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -112,8 +110,12 @@ HISTORY
 
   Oct. 28, 2016 - MediScore Version 1.0.0:
     - Python release
-  Jan. 6, 2017 - MediScore Version 1.1.0:
-    - Started to support Selective Manipulation Scoring. This is a roll out of the new DetectionScorer.  Note the filter options changed
+  Jan. 6, 2017 - MediScore Version 1.0.2:
+    - Started to support Selective Manipulation Scoring. This is a roll out of the
+      new DetectionScorer.  Note the filter options changed
+  Jan. 25, 2017 - MediScore Version 1.0.3:
+    - Add Selective Manipulation Scoring to the Mask scoring.
+    
 
 CONTACT
 -------
