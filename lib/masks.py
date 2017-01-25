@@ -2,9 +2,9 @@
 
 """
  *File: masks.py
- *Date: 8/29/2016
- *Translation by: Daniel Zhou
- *Original Author: Yooyoung Lee
+ *Date: 12/22/2016
+ *Original Author: Daniel Zhou
+ *Co-Author: Yooyoung Lee
  *Status: Complete
 
  *Description: this code contains the image object for the ground truth image.
@@ -28,29 +28,37 @@ import math
 import copy
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 import random
 from decimal import Decimal
 
 #returns a kernel matrix
-def getKern(opt,size):
+def getKern(kernopt,size):
+    """
+    * Description: gets the kernel to perform erosion and/or dilation
+    * Input:
+    *     kernopt: the shape of the kernel to be generated. Can be one of the following:
+                   'box','disc','diamond','gaussian','line'
+    *     size: the length of the kernel to be generated. Must be an odd integer
+    * Output:
+    *     the kernel to perform erosion and/or dilation 
+    """
     if (size % 2 == 0):
         raise Exception('ERROR: One of your kernel sizes is not an odd integer.')
-
-    opt=opt.lower()
-    if opt=='box':
+    kern = 0
+    kernopt=kernopt.lower()
+    if kernopt=='box':
         kern=cv2.getStructuringElement(cv2.MORPH_RECT,(size,size))
-    elif opt=='disc':
+    elif kernopt=='disc':
         kern=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(size,size))
-    elif opt=='diamond':
+    elif kernopt=='diamond':
         #build own kernel out of numpy ndarray
         kern=np.ones((size,size),dtype=np.uint8)
         center=(size-1)/2
         for idx,x in np.ndenumerate(kern):
             if abs(idx[0]-center) + abs(idx[1]-center) > center:
                 kern[idx]=0
-    elif opt=='gaussian':
+    elif kernopt=='gaussian':
         sigma=0.3 #as used in the R implementation
         center=(size-1)/2
         x=np.asmatrix(np.linspace(-center,center,size))
@@ -60,57 +68,145 @@ def getKern(opt,size):
         kern=z/np.sum(z) #final normalization
         kern[kern > 0] = 1
         kern = np.uint8(kern)
-    elif opt=='line':
+    elif kernopt=='line':
         #45 degree line, or identity matrix
         kern=np.eye(erodeKernSize,dtype=np.uint8)
     else:
-        print("I don't recognize your kernel. Please enter a valid kernel.")
+        print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
     return kern
 
-class mask:
-    #set readopt=1 to read in as RGB, readopt=-1 to include possibility of alpha channels. Default 0.
+class mask(object):
+    """
+    This class is used to read in and hold the system mask and its relevant parameters.
+    """
     def __init__(self,n,readopt=0):
+        """
+        Constructor
+
+        Attributes:
+        - n: the name of the mask file
+        - readopt: the option to read in the reference mask file. Choose 1 to read in
+                   as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
+                   single-channel grayscale
+        """
         self.name=n
-        self.matrix=cv2.imread(n,readopt)
+        self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
+        if self.matrix is None:
+            masktype = 'System'
+            if isinstance(self,refmask):
+                masktype = 'Reference'
+            print("{} mask file {} is unreadable.".format(masktype,n))
+        self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
 
     def get_dims(self):
+        """
+        * Description: gets the dimensions of the image
+        * Output:
+        *     a list containing the dimensions of the image
+        """
         return [self.matrix.shape[0],self.matrix.shape[1]]
 
     def get_copy(self):
+        """
+        * Description: generates a copy of this mask
+        * Output:
+        *     a copy of the file, ending in -2.png
+        """
         mycopy = copy.deepcopy(self)
         mycopy.name = self.name[-4:] + '-2.png'
         return mycopy
 
-    #returns binarized matrix without affecting base matrix
-    def bw(self,threshold):
-        ret,mymat = cv2.threshold(self.matrix,threshold,255,cv2.THRESH_BINARY)
+    def bw(self,thres):
+        """
+        * Description: returns binarized matrix without affecting base matrix
+        * Input:
+        *     thres: the threshold to binarize the matrix
+        * Output:
+        *     the binarized matrix
+        """
+        _,mymat = cv2.threshold(self.matrix,thres,255,cv2.THRESH_BINARY)
         return mymat
-
-    #turns to black all pixels less than perfectly white
-    def flatten(self):
-        return self.bw(254)
 
     #flips mask
     def binary_flip(self):
+        """
+        * Description: flips a [0,255] grayscale mask to a 1 to 0 matrix, 1 corresponding to black and
+                       0 corresponding to white. Used for weights and aggregate color mask computation
+        * Output:
+        *     the flipped matrix
+        """
         return 1 - self.matrix/255.
 
-    #dimensional validation against masks. Image assumed to have been entered as a matrix for flexibility.
     def dimcheck(self,img):
+        """
+        * Description: dimensional validation against masks. Image assumed to have been entered as a matrix for flexibility
+        * Input:
+        *     img: the image to validate dimensionality against
+        * Output:
+        *     True or False, depending on whether the dimensions are equivalent
+        """
         return self.get_dims() == img.shape
 
-    #overlays the mask on top of the grayscale image. If you want a color mask, reread the image in as a color mask.
-    def overlay(self,imgName):
+    @staticmethod
+    def getColors(img,popt=0):
+        """
+        * Description: outputs the (non-white) colors of the image and their total
+        * Input:
+        *     img: the image to determine the distinct (non-white) colors
+        *     popt: whether or not to print the colors and number of colors
+        * Output:
+        *     the distinct colors in the image and the total number of distinct colors
+        """
+
+        if len(img.shape) == 3:
+            colors = list(set(tuple(p) for m2d in img for p in m2d))
+            if (255,255,255) in colors:
+                colors.remove((255,255,255))
+        elif len(img.shape) == 2:
+            colors = list(set(p for m2d in img for p in m2d))
+            if 255 in colors:
+                colors.remove(255) 
+
+        if popt==1:
+            for c in colors:
+                print(c)
+            print("Total: " + len(colors))
+
+        return colors
+
+
+    def overlay(self,imgName,alpha=0.7):
+        """
+        * Description: overlays the mask on top of the grayscale image. If you want a color mask,
+                       reread the image in as a color mask
+        * Input:
+        *     imgName: the image on which to overlay this image
+        *     alpha: the alpha value to overlay the image in the interval [0,1] (default 0.7)
+        * Output:
+        *     overmat: the overlayed image
+        """
         mymat = np.copy(self.matrix)
         gImg = cv2.imread(imgName,0)
         gImg = np.dstack(gImg,gImg,gImg)
         if len(self.matrix.shape)==2:
             mymat = np.dstack([mymat,mymat,mymat])
 
-        alpha=0.7
         overmat = cv2.addWeighted(mymat,alpha,gImg,1-alpha,0)
         return overmat
 
-    def binarize3Channel(self,RThresh,GThresh,BThresh,v,g):
+    def intensityBinarize3Channel(self,RThresh,GThresh,BThresh,v,g):
+        """
+        * Description: generalized binarization based on intensity of all three channels
+        * Input:
+        *     RThresh: the threshold for the red channel
+        *     GThresh: the threshold for the green channel
+        *     BThresh: the threshold for the blue channel
+        *     v: the value taken by pixels with intensity less than or equal to any of the
+                 three channels
+        *     g: the value taken by pixels with intensity greater than all three channels
+        * Output:
+        *     bimg: single-channel binarized image
+        """
         dims = self.get_dims()
         bimg = np.zeros((dims[0],dims[1]))
         reds,greens,blues=cv2.split(self.matrix)
@@ -120,515 +216,177 @@ class mask:
         bimg = np.uint8(bimg)
         return bimg
 
+    def binarize3Channel(self):
+        """
+        * Description: sets all non-white pixels to single-channel black
+        * Output:
+        *     bimg: single-channel binarized image
+        """
+        bimg = self.intensityBinarize3Channel(254,254,254,0,255)
+        return bimg
+
     #general binarize
     def binarize(self,threshold):
+        """
+        * Description: sets all non-white pixels of the image to single-channel black.
+                       The resulting image is also cached in a variable for the object
+        * Input:
+        *     threshold: the threshold at which to binarize the image
+        * Output:
+        *     self.bwmat: single-channel binarized image
+        """
         if len(self.matrix.shape)==2:
-            return self.bw(threshold)
+            self.bwmat = self.bw(threshold)
         else:
-            return self.binarize3Channel(threshold,threshold,threshold,0,255)
+            self.bwmat = self.intensityBinarize3Channel(threshold,threshold,threshold,0,255)
+        return self.bwmat
 
     #save mask to file
-    def save(self,fname,compression=0):
+    def save(self,fname,compression=0,th=-1):
+        """
+        * Description: this function saves the image under a specified file name
+        * Inputs:
+        *     fname: the name of the file to save the image under. Must be saved as a PNG
+        *     compression: the PNG compression level. 0 for no compression, 9 for maximum compression
+        *     th: the threshold to binarize the image. Selecting a threshold less than 0 will not
+                  binarize the image
+        * Output:
+        *     0 if saved with no incident, 1 otherwise
+        """
         if fname[-4:] != '.png':
-            print("You should only save {} as a png.".format(self.name))
-            return 0
+            print("You should only save {} as a png. Remember to add on the prefix.".format(self.name))
+            return 1
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(compression)
-        cv2.imwrite(fname,self.matrix,params)
+        outmat = self.matrix
+        if th >= 0:
+            self.binarize(th)
+            outmat = self.bwmat
+        cv2.imwrite(fname,outmat,params)
+        return 0
 
 class refmask(mask):
+    """
+    This class is used to read in and hold the reference mask and its relevant parameters.
+    It inherits from the (system output) mask above.
+    """
+    def __init__(self,n,readopt=1,cs=[],purposes='all'):
+        """
+        Constructor
 
-    def noScoreZone(self,erodeKernSize,dilateKernSize,opt):
-        if ((erodeKernSize==0) and (dilateKernSize==0)):
+        Attributes:
+        - n: the name of the reference mask file
+        - readopt: the option to read in the reference mask file. Choose 1 to read in
+                   as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
+                   single-channel grayscale
+        - cs: the list of color strings in RGB format selected based on the target
+              manipulations to be evaluated (e.g. ['255 0 0','0 255 0'])
+        - purposes: the target manipulations, a string if single, a list if multiple, to be evaluated.
+               'all' means all non-white regions will be evaluated
+        """
+        super(refmask,self).__init__(n,readopt)
+        #store colors and corresponding type
+        self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in cs]
+        self.purposes = purposes
+
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
+        """
+        * Description: this function calculates and generates the aggregate no score zone of the mask
+                       by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
+                       unselectedNoScoreRegion functions
+        * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix
+        *     dilateKernSize: total length of the dilation kernel matrix
+        *     distractionKernSize: total length of the dilation kernel matrix for the distraction no-score zone
+        *     kern: kernel shape to be used
+        """
+        baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
+        wimg = baseNoScore
+        distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
+        if (distractionKernSize > 0) and (self.purposes is not 'all'):
+            distractionNoScore = self.unselectedNoScoreRegion(distractionKernSize,kern)
+            wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
+
+        return wimg,baseNoScore,distractionNoScore
+
+    def boundaryNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
+        """
+        * Description: this function calculates and generates the no score zone of the mask,
+                             as well as the eroded and dilated masks for additional reference
+        * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix
+        *     dilateKernSize: total length of the dilation kernel matrix
+        *     kern: kernel shape to be used 
+        """
+        if (erodeKernSize==0) and (dilateKernSize==0):
             dims = self.get_dims()
             weight = np.ones(dims,dtype=np.uint8)
             return {'rimg':self.matrix,'wimg':weight}
 
-        opt = opt.lower()
-        eKern=getKern(opt,erodeKernSize)
-        dKern=getKern(opt,dilateKernSize)
+        mymat = 0
+        if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'): 
+            selfmat = self.matrix
+            mymat = np.ones(self.get_dims(),dtype=np.uint8)
+            for c in self.colors:
+                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
+            mymat = 255*mymat
+            self.bwmat = mymat
+        else:
+            mymat = self.binarize(254)
+        kern = kern.lower()
+        eKern=getKern(kern,erodeKernSize)
+        dKern=getKern(kern,dilateKernSize)
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
-        eImg=255-cv2.erode(255-self.matrix,eKern,iterations=1)
-        dImg=255-cv2.dilate(255-self.matrix,dKern,iterations=1)
+        eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+        dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
 
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
 
-    def confusion_measures_gs(self,sys,w):
+    def unselectedNoScoreRegion(self,dilateKernSize,kern):
         """
-        *Metric: confusion_measures_gs
-        *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
-                                     between the reference mask and a grayscale system output mask,
-                                     accommodating the no score zone
-
-        *Inputs
-        * sys: system output mask object, with binary or grayscale matrix data
-        * w: binary data from weighted table generated from this mask
-
-        *Outputs
-        * MET: list of the TP, TN, FP, and FN area, and N (total score region)
-        """
-        r=self.matrix.astype(int) #otherwise, negative values won't be recorded
-        s=sys.matrix.astype(int)
-        x=np.multiply(w,(r-s)/255.) #entrywise product of w and difference between masks
-
-        #white is 1, black is 0
-        y = 1+np.copy(x)
-        y[~((x<=0) & (r==0))]=0 #set all values that don't fulfill criteria to 0
-        y = np.multiply(w,y)
-        tp = np.sum(y) #sum_same_values + sum_neg_values
-
-        y = np.copy(x)
-        y[~((x > 0) & (r==255))]=0 #set all values that don't fulfill criteria to 0
-        fp = np.sum(y)
-
-        fn = np.sum(np.multiply((r==0),w)) - tp
-        tn = np.sum(np.multiply((r==255),w)) - fp
-
-        mydims = r.shape
-        n = mydims[0]*mydims[1] - np.sum(1-w[w<1])
-
-        return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
-
-    def confusion_measures(self,sys,w):
-        """
-        *Metric: confusion_measures
-        *Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
-                                     between the reference mask and a black and white system output mask,
-                                     accommodating the no score zone
-
-        *Inputs
-        * sys: system output mask object, with binary or grayscale matrix data
-        * w: binary data from weighted table generated from this mask
-
-        *Outputs
-        * MET: list of the TP, TN, FP, and FN area, and N (total score region)
-        """
-        r = self.matrix.astype(int)
-        s = sys.matrix.astype(int)
-        x = (r+s)/255.
-        tp = np.float64(np.sum((x==0) & (w==1)))
-        fp = np.float64(np.sum((x==1) & (r==255) & (w==1)))
-        fn = np.float64(np.sum((x==1) & (w==1)) - fp)
-        tn = np.float64(np.sum((x==2) & (w==1)))
-        n = np.sum(w==1)
-
-        return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
-    #add mask scoring, with this as the GT. img is assumed to be a numpy matrix for flexibility of implementation.
-
-    def NimbleMaskMetric(self,confmeasures,w,c=-1):
-        """
-        *Metric: NMM
-        *Description: this function calculates the system mask score
-                                     based on the confusion_measures function
-        * Inputs
-        *     confmeasures: the dictionary of confusion measures obtained from the confusion_measures method above
-        *     w: binary data from weighted table generated from reference mask
-        *     c: forgiveness value
-        * Outputs
-        *     Score range [c, 1]
-        """
-        tp = confmeasures['TP']
-        fp = confmeasures['FP']
-        fn = confmeasures['FN']
-        Rgt=np.sum((self.matrix==0) & (w==1))
-        return max(c,(tp-fn-fp)/Rgt)
-
-    def matthews(self,confmeasures,w):
-        """
-        *Metric: MCC (Matthews correlation coefficient)
-        *Description: this function calculates the system mask score
-                                     based on the MCC function
-        * Inputs
-        *     confmeasures: the dictionary of confusion measures obtained from the confusion_measures method above
-        *     w: binary data from weighted table generated from reference mask
-        * Outputs
-        *     Score range [0, 1]
-        """
-        tp = confmeasures['TP']
-        fp = confmeasures['FP']
-        tn = confmeasures['TN']
-        fn = confmeasures['FN']
-
-        mydims = self.get_dims()
-        n = confmeasures['N']
-
-        s=np.float64(tp+fn)/n
-        p=np.float64(tp+fp)/n
-        if (s==1) or (p==1) or (s==0) or (p==0):
-            score=0.0
-        else:
-            score=Decimal(tp*tn-fp*fn)/Decimal((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)).sqrt()
-            score = float(score)
-        return score
-
-    def hamming(self,sys):
-        """
-        *Description: this function calculates the Hamming distance
-                                     between the reference mask and the system output mask
-                      This metric is no longer called when 'all' is selected in getMetrics.
-
-        *Inputs
-        *     sys: system output mask object, with binary or grayscale matrix data
-
-        * Outputs
-            * Hamming distance value
+        * Description: this function calculates the no score zone of the unselected mask regions.
+                            The resulting mask is meant to be paired with the no score zone function above to form
+                            a comprehensive no-score region
+                            
+                            It parses the BGR color codes to determine the color corresponding to the
+                            type of manipulation
+        * Inputs:
+        *     dilateKernSize: total length of the dilation kernel matrix for the unselected no-score region
+        *     kern: kernel shape to be used
+        * Output:
+        *     weights: the weighted matrix computed from the distraction zones
         """
 
-        rmat = self.matrix
-        smat = sys.matrix
-        ham = np.sum(abs(rmat - smat))/255./(rmat.shape[0]*rmat.shape[1])
-        #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
-        return ham
+        mymat = self.matrix
+        dims = self.get_dims()
+        kern = kern.lower()
+        dKern=getKern(kern,dilateKernSize)
+        
+        #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
+        notcolors = mask.getColors(mymat)
 
-    def weightedL1(self,sys,w):
-        """
-        *Description: this function calculates Weighted L1 loss
-                                     and normalize the value with the no score zone
+        for c in self.colors:
+            if tuple(c) in notcolors:
+                notcolors.remove(tuple(c))
+            #skip the colors that aren't present, in case they haven't made it to the mask in question
+        if len(notcolors)==0:
+            weights = np.ones(dims,dtype=np.uint8)
+            return weights
 
-        * Inputs
-        *     sys: system output mask object, with binary or grayscale matrix data
-        *     w: binary data from weighted table generated from reference mask
+        mybin = np.ones((dims[0],dims[1])).astype(np.uint8)
+        for c in notcolors:
+            #set equal to cs
+            tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
+            tbin = tbin.astype(np.uint8)
+            mybin = mybin & tbin
 
-        * Outputs
-            * Normalized WL1 value
-        """
+        #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
+        dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+        weights=dImg.astype(np.uint8)
 
-        rmat = self.matrix.astype(np.float64)
-        smat = sys.matrix.astype(np.float64)
-
-        wL1=np.multiply(w,abs(rmat-smat)/255.)
-        wL1=np.sum(wL1)
-        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
-        norm_wL1=wL1/n
-        return norm_wL1
-
-    def hingeL1(self,sys,w,e=0.1):
-        """
-         *Description: this function calculates Hinge L1 loss
-                                     and normalize the value with the no score zone
-                      This metric is no longer called when 'all' is selected in getMetrics.
-
-        * Inputs
-        *     sys: system output mask object, with binary or grayscale matrix data
-        *     w: binary data from weighted table generated from reference mask
-        *     e: epsilon (default = 0.1)
-
-        * Outputs
-            * Normalized HL1 value"
-        """
-
-        #if ((len(w) != len(r)) or (len(w) != len(s))):
-        if (e < 0):
-            print("Your chosen epsilon is negative. Setting to 0.")
-            e=0
-        rmat = self.matrix
-        rArea=np.sum(rmat==0) #mask area
-        wL1 = self.weightedL1(sys,w)
-        n=np.sum(w)
-        hL1=max(0,wL1-e*rArea/n)
-        return hL1
-
-    #computes metrics running over the set of thresholds
-    def runningThresholds(self,sys,erodeKernSize,dilateKernSize,kern='box',popt=0):
-        smat = sys.matrix
-        uniques=np.unique(smat.astype(float))
-        if len(uniques) == 1:
-            #if mask is uniformly black or uniformly white, assess as is
-            if (uniques[0] == 255) or (uniques[0] == 0):
-                thresMets = pd.DataFrame({'Reference Mask':self.name,
-                                           'System Output Mask':sys.name,
-                                           'Threshold':127.,
-                                           'NMM':[-1024.],
-                                           'MCC':[-1024.],
-                                           'WL1':[-1024.]})
-                mets = self.getMetrics(sys,erodeKernSize,dilateKernSize,kern=kern,popt=popt)
-                for m in ['NMM','MCC','WL1']:
-                    thresMets.set_value(0,m,mets[m])
-            else:
-                #assess for both cases where we treat as all black or all white
-                thresMets = pd.DataFrame({'Reference Mask':self.name,
-                                           'System Output Mask':sys.name,
-                                           'Threshold':127.,
-                                           'NMM':[-1024.]*2,
-                                           'MCC':[-1024.]*2,
-                                           'WL1':[-1024.]*2})
-                rownum=0
-                for th in [uniques[0]-1,uniques[0]+1]:
-                    tmask = sys.get_copy()
-                    tmask.matrix = tmask.bw(th)
-                    mets = self.confusion_measures(tmask,w)
-                    thresMets.set_value(rownum,'Threshold',th)
-                    thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(mets,w))
-                    thresMets.set_value(rownum,'MCC',self.matthews(mets,w))
-                    thresMets.set_value(rownum,'WL1',self.weightedL1(tmask,w))
-                    rownum=rownum+1
-        else:
-            thresholds=map(lambda x,y: (x+y)/2.,uniques[:-1],uniques[1:]) #list of thresholds
-            thresMets = pd.DataFrame({'Reference Mask':self.name,
-                                       'System Output Mask':sys.name,
-                                       'Threshold':127.,
-                                       'NMM':[-1024.]*len(thresholds),
-                                       'MCC':[-1024.]*len(thresholds),
-                                       'WL1':[-1024.]*len(thresholds)})
-            #for all thresholds
-            noScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)
-            w = noScore['wimg']
-            rownum=0
-            for th in thresholds:
-                tmask = sys.get_copy()
-                tmask.matrix = tmask.bw(th)
-                mets = self.confusion_measures(tmask,w)
-                thresMets.set_value(rownum,'Threshold',th)
-                thresMets.set_value(rownum,'NMM',self.NimbleMaskMetric(mets,w))
-                thresMets.set_value(rownum,'MCC',self.matthews(mets,w))
-                thresMets.set_value(rownum,'WL1',self.weightedL1(tmask,w))
-                rownum=rownum+1
-        return thresMets
-
-#    def getPlot(self,thresMets,metric='all',display=True,multi_fig=False):
-#        """
-#        *Description: this function plots a curve of the running threshold values
-#			obtained from the above runningThreshold function
-#
-#        *Inputs
-#            * thresMets: the DataFrame of metrics computed in the runningThreshold function
-#            * metric: a string denoting the metrics to trace out on the plot. Default: 'all'
-#            * display: whether or not to display the plot in a window. Default: True
-#            * multi_fig: whether or not to save the plots for each metric on separate images. Default: False
-#
-#        * Outputs
-#            * path where the plots for the function are saved
-#        """
-#        import Render as p
-#        import json
-#        from collections import OrderedDict
-#        from itertools import cycle
-#
-#        #TODO: put this in Render.py. Combine later.
-#        #generate plot options
-#        ptitle = 'Running Thresholds'
-#        if metric!='all':
-#            ptitle=metric
-#        mon_dict = OrderedDict([
-#            ('title', ptitle),
-#            ('plot_type', ptitle),
-#            ('title_fontsize', 15),
-#            ('xticks_size', 'medium'),
-#            ('yticks_size', 'medium'),
-#            ('xlabel', "Thresholds"),
-#            ('xlabel_fontsize', 12),
-#            ('ylabel', "Metric values"),
-#            ('ylabel_fontsize', 12)])
-#        with open('./plot_options.json', 'w') as f:
-#            f.write(json.dumps(mon_dict).replace(',', ',\n'))
-#
-#        plot_opts = p.load_plot_options()
-#        Curve_opt = OrderedDict([('color', 'red'),
-#                                 ('linestyle', 'solid'),
-#                                 ('marker', '.'),
-#                                 ('markersize', 8),
-#                                 ('markerfacecolor', 'red'),
-#                                 ('label',None),
-#                                 ('antialiased', 'False')])
-#
-#        opts_list = list() #do the same as in DetectionScorer.py. Generate defaults.
-#        colors = ['red','blue','green','cyan','magenta','yellow','black']
-#        linestyles = ['solid','dashed','dashdot','dotted']
-#        # Give a random rainbow color to each curve
-#        #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
-#        color = cycle(colors)
-#        lty = cycle(linestyles)
-#
-#        #TODO: make the metric plot option a list instead?
-#        if metric=='all':
-#            metvals = [thresMets[m] for m in ['NMM','MCC','HAM','WL1','HL1']]
-#        else:
-#            metvals = [thresMets[metric]]
-#        thresholds = thresMets['Threshold']
-#
-#        for i in range(len(metvals)):
-#            new_curve_option = OrderedDict(Curve_opt)
-#            col = next(color)
-#            new_curve_option['color'] = col
-#            new_curve_option['markerfacecolor'] = col
-#            new_curve_option['linestyle'] = next(lty)
-#            opts_list.append(new_curve_option)
-#
-#        #a function defined to serve as the main plotter for getPlot. Put as separate function rather than nested?
-#        def plot_fig(metvals,fig_number,opts_list,plot_opts,display, multi_fig=False):
-#            fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
-#
-#            xtick_labels = range(0,256,15)
-#            xtick = xtick_labels
-#            x_tick_labels = [str(x) for x in xtick_labels]
-#            ytick_labels = np.linspace(metvals.min(),metvals.max(),17)
-#            ytick = ytick_labels
-#            y_tick_labels = [str(y) for y in ytick_labels]
-#
-#            #TODO: faulty curve function. Get help.
-#            print(len(opts_list))
-#            print(len(metvals))
-#            if multi_fig:
-#                plt.plot(thresholds, metvals, **opts_list[fig_number])
-#            else:
-#                for i in range(len(metvals)):
-#                    plt.plot(thresholds, metvals[i], **opts_list[i])
-#
-#            plt.plot((0, 1), '--', lw=0.5) # plot bisector
-#            plt.xlim([0, 255])
-#
-#            #plot formatting options.
-#            plt.xticks(xtick, x_tick_labels, size=plot_opts['xticks_size'])
-#            plt.yticks(ytick, y_tick_labels, size=plot_opts['yticks_size'])
-#            plt.suptitle(plot_opts['title'], fontsize=plot_opts['title_fontsize'])
-#            plt.xlabel(plot_opts['xlabel'], fontsize=plot_opts['xlabel_fontsize'])
-#            plt.ylabel(plot_opts['ylabel'], fontsize=plot_opts['ylabel_fontsize'])
-#            plt.grid()
-#
-#    #        plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
-#    #        fig.tight_layout(pad=7)
-#
-#            if opts_list[0]['label'] != None:
-#                plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
-#                # Put a nicer background color on the legend.
-#                #legend.get_frame().set_facecolor('#00FFCC')
-#                #plt.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
-#                fig.tight_layout(pad=7)
-#
-#            if display:
-#                plt.show()
-#
-#            return fig
-#
-#        #different plotting options depending on multi_fig
-#        if multi_fig:
-#            fig_list = list()
-#            for i,mm in enumerate(metvals):
-#                fig = plot_fig(mm,i,opts_list,plot_opts,display,multi_fig)
-#                fig_list.append(fig)
-#            return fig_list
-#        else:
-#            fig = plot_fig(metvals[0],1,opts_list,plot_opts,display,multi_fig)
-#            return fig
-
-
-    def getMetrics(self,sys,erodeKernSize,dilateKernSize,thres=0,kern='box',popt=0):
-
-        #preset values
-        nmm = -999
-        mcc = -999
-        #ham = -999
-        wL1 = -999
-        #hL1 = -999
-
-        noScore = self.noScoreZone(erodeKernSize,dilateKernSize,kern)
-        eImg = noScore['eimg']
-        dImg = noScore['dimg']
-        w = noScore['wimg']
-
-        if thres > 0:
-            if popt==1:
-                print("Converting mask to binary with threshold %0.2f" % thres)
-            sys.matrix=sys.bw(thres)
-            mets = self.confusion_measures(sys,w)
-        else:
-            if popt==1:
-                print("No valid threshold detected. Proceeding with grayscale evaluation.")
-            mets = self.confusion_measures_gs(sys,w)
-
-        nmm = self.NimbleMaskMetric(mets,w)
-        if popt==1:
-            #for nicer printout
-            if (nmm==1) or (nmm==-1):
-                print("NMM: %d" % nmm)
-            else:
-                print("NMM: %0.9f" % nmm)
-        mcc = self.matthews(mets,w)
-        if popt==1:
-            if (mcc==1) or (mcc==-1):
-                print("MCC: %d" % mcc)
-            else:
-                print("MCC (Matthews correlation coeff.): %0.9f" % mcc)
-#        ham = self.hamming(sys)
-#        if popt==1:
-#            if (ham==1) or (ham==0):
-#                print("HAM: %d" % ham)
-#            else:
-#                print("Hamming Loss: %0.9f" % ham)
-        wL1 = self.weightedL1(sys,w)
-        if popt==1:
-            if (wL1==1) or (wL1==0):
-                print("WL1: %d" % mcc)
-            else:
-                print("Weighted L1: %0.9f" % wL1)
-#        hL1 = self.hingeL1(sys,w)
-#        if popt==1:
-#            if (hL1==1) or (hL1==0):
-#                print("MCC: %d" % mcc)
-#            else:
-#                print("Hinge Loss L1: %0.9f" % hL1)
-
-        return {'mask':sys.matrix,'wimg':w,'eImg':eImg,'dImg':dImg,'NMM':nmm,'MCC':mcc,'WL1':wL1}
-
-    #prints out the aggregate mask, reference and other data
-    def coloredMask_opt1(self,sysImgName, maniImgName, sData, wData, eData, dData, outputMaskPath):
-        #set new image as some RGB
-        mydims = self.get_dims()
-        mycolor = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
-
-        #flip all because black is 0 by default. Use the regions to determine where to color.
-        b_sImg = 1-sData/255
-        b_wImg = 1-wData
-        b_eImg = 1-eData/255
-
-        b_sImg[b_sImg != 0] = 1
-        b_eImg[b_eImg != 0] = 2
-        b_wImg[b_wImg != 0] = 4
-
-        mImg = b_eImg + b_wImg + b_sImg
-
-        #set pixels equal to some value:
-        #red to false accept and false reject
-        #blue to no-score zone
-        #pink to no-score zone that intersects with system mask
-        #yellow to system mask intersect with GT
-        #black to true negatives
-
-        mycolor[(mImg==1) | (mImg==2)] = [0,0,255] #either only system (FP) or only erode image (FN)
-        mycolor[mImg==4] = [255,51,51] #no-score zone
-        mycolor[mImg==5] = [255,51,255] #system intersecting with no-score zone
-        mycolor[mImg==3] = [0,255,255] #system and erode image coincide (TP)
-
-        #return path to mask
-        outputMaskName = sysImgName.split('/')[-1]
-        outputMaskBase = outputMaskName.split('.')[0]
-        finalMaskName=outputMaskBase + "_colored.jpg"
-        path=os.path.join(outputMaskPath,finalMaskName)
-        #write the aggregate mask to file
-        cv2.imwrite(path,mycolor)
-
-        #also aggregate over the grayscale maniImgName for direct comparison
-        maniImg = mask(maniImgName)
-        mData = maniImg.matrix
-        myagg = np.zeros((mydims[0],mydims[1],3),dtype=np.uint8)
-        m3chan = np.reshape(np.kron(mData,np.uint8([1,1,1])),(mData.shape[0],mData.shape[1],3))
-        myagg[mImg==0]=m3chan[mImg==0]
-
-        #for modified images, weighted sum the colored mask with the grayscale
-        alpha=0.7
-        mData = np.kron(mData,np.uint8([1,1,1]))
-        mData.shape=(mydims[0],mydims[1],3)
-        modified = cv2.addWeighted(mycolor,alpha,mData,1-alpha,0)
-        myagg[mImg!=0]=modified[mImg!=0]
-
-        compositeMaskName=outputMaskBase + "_composite.jpg"
-        compositePath = os.path.join(outputMaskPath,compositeMaskName)
-        cv2.imwrite(compositePath,myagg)
-
-        return {'mask':path,'agg':compositePath}
+        return weights

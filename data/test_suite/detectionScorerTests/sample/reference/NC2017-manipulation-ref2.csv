@@ -1,0 +1,3 @@
+TaskID|ProbeFileID|ProbeFileName|IsTarget|ProbeMaskFileName|BaseFileName|JournalName|ProjectDescription|ManipulationCategory|ManMade|Face|People|Remove|Splice|Clone|BlurLocal|Cropping,,,
+manipulation|43e1d6f0a9306a629a51062729549d76|probe/43e1d6f0a9306a629a51062729549d76.jpg|Y|reference/manipulation/mask/77232d3f2f9e866ad7bbc5faccd25119.png|world/a71ee79143c09d264fc4d3ebf7449249.jpg|1e205633945e55593066eb5835c8e294|added feet, leaves, changed colors, moved rocks||no|no|yes|yes||yes|no|
+manipulation|07e65ca7be451f9fc756e9cc7a458eb6|probe/07e65ca7be451f9fc756e9cc7a458eb6.jpg|N|reference/manipulation/mask/f50af0d7f4480386c12494f1146cdf39.png|world/414c1f66804a0f8de50142b6665d9d14.jpg|414c1f66804a0f8de50142b6665d9d14|Add a car to the scene||yes|no|no|no||no|no|,,,

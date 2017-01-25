@@ -47,75 +47,74 @@ from validator import SSD_Validator,DSD_Validator
 
 class TestValidator(ut.TestCase):
 
-    # namechecking of system output file is deprecated. functions to be commented out.
-#    def testSSDName(self):
-#        import StringIO
-#        #This code taken from the following site: http://stackoverflow.com/questions/14197009/how-can-i-redirect-print-output-of-a-function-in-python
-#        @contextlib.contextmanager
-#        def stdout_redirect(where):
-#            sys.stdout = where
-#            try:
-#                yield where
-#            finally:
-#                sys.stdout = sys.__stdout__
-#        validatorRoot = '../../data/test_suite/validatorTests/'
-#        global verbose
-#        verbose = 1
-#
-#        print("BASIC FUNCTIONALITY validation of SSDValidator.r beginning...")
-#        myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_1/foo_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
-#        self.assertEqual(myval.fullCheck(),0)
-#        print("BASIC FUNCTIONALITY validated.")
-#        
-#        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
-#        print("CASE 0: Validating behavior when files don't exist.")
-#        
-#        myval = SSD_Validator(validatorRoot + 'emptydir_NC2016_Splice_ImgOnly_p-baseline_1/foo__NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index0.csv')
-#        
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck() 
-#            
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read() #NOTE: len(errmsg.read())==0, but when you set it equal, you get the entire string. What gives?
-#        self.assertTrue("ERROR: I can't find your system output" in errstr)
-#        errmsg.close()
-#        
-#        print("CASE 0 validated.")
-#        
-#        print("\nCASE 1: Validating behavior when detecting consecutive underscores ('_') in name...")
-#        myval = SSD_Validator(validatorRoot + 'foo__NC2016_Manipulation_ImgOnly_p-baseline_1/foo__NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
-#        
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 1 validated.")
-#        
-#        print("\nCASE 2: Validating behavior when detecting excessive underscores elsewhere...")
-#        myval = SSD_Validator(validatorRoot + 'fo_o_NC2016_Manipulation_ImgOnly_p-baseline_1/fo_o_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
-#        
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 2 validated.")
-#        
-#        print("\nCASE 3: Validating behavior when detecting '+' in file name and an unrecognized task...")
-#        myval = SSD_Validator(validatorRoot + 'foo+_NC2016_Manip_ImgOnly_p-baseline_1/foo+_NC2016_Manip_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
-#        
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: The team name must not include characters" in errstr)
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 3 validated.")
+    def testSSDName(self):
+        import StringIO
+        #This code taken from the following site: http://stackoverflow.com/questions/14197009/how-can-i-redirect-print-output-of-a-function-in-python
+        @contextlib.contextmanager
+        def stdout_redirect(where):
+            sys.stdout = where
+            try:
+                yield where
+            finally:
+                sys.stdout = sys.__stdout__
+        validatorRoot = '../../data/test_suite/validatorTests/'
+        global verbose
+        verbose = 1
+
+        print("BASIC FUNCTIONALITY validation of SSDValidator.r beginning...")
+        myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_1/foo_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
+        self.assertEqual(myval.fullCheck(True),0)
+        print("BASIC FUNCTIONALITY validated.")
+        
+        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
+        print("CASE 0: Validating behavior when files don't exist.")
+        
+        myval = SSD_Validator(validatorRoot + 'emptydir_NC2016_Splice_ImgOnly_p-baseline_1/foo__NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index0.csv')
+        
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True) 
+            
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read() #NOTE: len(errmsg.read())==0, but when you set it equal, you get the entire string. What gives?
+        self.assertTrue("ERROR: I can't find your system output" in errstr)
+        errmsg.close()
+        
+        print("CASE 0 validated.")
+        
+        print("\nCASE 1: Validating behavior when detecting consecutive underscores ('_') in name...")
+        myval = SSD_Validator(validatorRoot + 'foo__NC2016_Manipulation_ImgOnly_p-baseline_1/foo__NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
+        
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 1 validated.")
+        
+        print("\nCASE 2: Validating behavior when detecting excessive underscores elsewhere...")
+        myval = SSD_Validator(validatorRoot + 'fo_o_NC2016_Manipulation_ImgOnly_p-baseline_1/fo_o_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
+        
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 2 validated.")
+        
+        print("\nCASE 3: Validating behavior when detecting '+' in file name and an unrecognized task...")
+        myval = SSD_Validator(validatorRoot + 'foo+_NC2016_Manip_ImgOnly_p-baseline_1/foo+_NC2016_Manip_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
+        
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: The team name must not include characters" in errstr)
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 3 validated.")
  
     def testSSDContent(self):
         import StringIO
@@ -133,7 +132,7 @@ class TestValidator(ut.TestCase):
         print("CASE 4a: Validating behavior for incorrect headers")
         myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_2/foo_NC2016_Manipulation_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv') 
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -142,7 +141,7 @@ class TestValidator(ut.TestCase):
         print("CASE 4b: Validating behavior for duplicate rows and different number of rows than in index file...")
         myval = SSD_Validator(validatorRoot + 'foob_NC2016_Manipulation_ImgOnly_p-baseline_2/foob_NC2016_Manipulation_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -154,7 +153,7 @@ class TestValidator(ut.TestCase):
         myval = SSD_Validator(validatorRoot + 'bar_NC2016_Removal_ImgOnly_p-baseline_1/bar_NC2016_Removal_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -165,7 +164,7 @@ class TestValidator(ut.TestCase):
         myval = SSD_Validator(validatorRoot + 'baz_NC2016_Manipulation_ImgOnly_p-baseline_1/baz_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -178,7 +177,7 @@ class TestValidator(ut.TestCase):
         myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_3/foo_NC2016_Manipulation_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -189,7 +188,7 @@ class TestValidator(ut.TestCase):
         myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_4/foo_NC2016_Manipulation_ImgOnly_p-baseline_4.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -199,68 +198,68 @@ class TestValidator(ut.TestCase):
         
         print("\nALL SSD VALIDATION TESTS SUCCESSFULLY PASSED.")
                 
-#    def testDSDName(self):
-#        import StringIO
-#        @contextlib.contextmanager
-#        def stdout_redirect(where):
-#            sys.stdout = where
-#            try:
-#                yield where
-#            finally:
-#                sys.stdout = sys.__stdout__
-#        validatorRoot = '../../data/test_suite/validatorTests/'
-#        global verbose
-#        verbose = None
-#        
-#        print("BASIC FUNCTIONALITY validation of DSDValidator.py beginning...")
-#        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_1/lorem_NC2016_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
-#        self.assertEqual(myval.fullCheck(),0)
-#        print("BASIC FUNCTIONALITY validated.")
-#        
-#        errmsg = ""
-#        #Same checks as Validate SSD, but applied to different files
-#        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
-#        print("\nCASE 0: Validating behavior when files don't exist.") 
-#        myval = DSD_Validator(validatorRoot + 'emptydir_NC2016_Splice_ImgOnly_p-baseline_1/emptydir_NC2016_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index0.csv')
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: I can't find your system output" in errstr)
-#        self.assertTrue("ERROR: I can't find your index file" in errstr)
-#        print("CASE 0 validated.")
-#        
-#        print("\nCASE 1: Validating behavior when detecting consecutive underscores ('_') in name...")
-#        myval = DSD_Validator(validatorRoot + 'lorem__NC2016_Spl_ImgOnly_p-baseline_1/lorem__NC2016_Spl_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 1 validated.")
-#        
-#        print("\nCASE 2: Validating behavior when detecting excessive underscores elsewhere...")
-#        myval = DSD_Validator(validatorRoot + 'lor_em_NC2016_Manipulation_ImgOnly_p-baseline_1/lor_em_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 2 validated.")
-#        
-#        print("\nCASE 3: Validating behavior when detecting '+' in file name and an unrecogized task...\n")
-#        myval = DSD_Validator(validatorRoot + 'lorem+_NC2016_Removal_ImgOnly_p-baseline_1/lorem+_NC2016_Removal_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
-#        with stdout_redirect(StringIO.StringIO()) as errmsg:
-#            result=myval.fullCheck()
-#        errmsg.seek(0)
-#        self.assertEqual(result,1)
-#        errstr = errmsg.read()
-#        self.assertTrue("ERROR: The team name must not include characters" in errstr)
-#        self.assertTrue("ERROR: What kind of task is" in errstr)
-#        print("CASE 3 validated.")
+    def testDSDName(self):
+        import StringIO
+        @contextlib.contextmanager
+        def stdout_redirect(where):
+            sys.stdout = where
+            try:
+                yield where
+            finally:
+                sys.stdout = sys.__stdout__
+        validatorRoot = '../../data/test_suite/validatorTests/'
+        global verbose
+        verbose = None
+        
+        print("BASIC FUNCTIONALITY validation of DSDValidator.py beginning...")
+        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_1/lorem_NC2016_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
+        self.assertEqual(myval.fullCheck(True),0)
+        print("BASIC FUNCTIONALITY validated.")
+        
+        errmsg = ""
+        #Same checks as Validate SSD, but applied to different files
+        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
+        print("\nCASE 0: Validating behavior when files don't exist.") 
+        myval = DSD_Validator(validatorRoot + 'emptydir_NC2016_Splice_ImgOnly_p-baseline_1/emptydir_NC2016_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index0.csv')
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: I can't find your system output" in errstr)
+        self.assertTrue("ERROR: I can't find your index file" in errstr)
+        print("CASE 0 validated.")
+        
+        print("\nCASE 1: Validating behavior when detecting consecutive underscores ('_') in name...")
+        myval = DSD_Validator(validatorRoot + 'lorem__NC2016_Spl_ImgOnly_p-baseline_1/lorem__NC2016_Spl_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 1 validated.")
+        
+        print("\nCASE 2: Validating behavior when detecting excessive underscores elsewhere...")
+        myval = DSD_Validator(validatorRoot + 'lor_em_NC2016_Manipulation_ImgOnly_p-baseline_1/lor_em_NC2016_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 2 validated.")
+        
+        print("\nCASE 3: Validating behavior when detecting '+' in file name and an unrecogized task...\n")
+        myval = DSD_Validator(validatorRoot + 'lorem+_NC2016_Removal_ImgOnly_p-baseline_1/lorem+_NC2016_Removal_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
+        with stdout_redirect(StringIO.StringIO()) as errmsg:
+            result=myval.fullCheck(True)
+        errmsg.seek(0)
+        self.assertEqual(result,1)
+        errstr = errmsg.read()
+        self.assertTrue("ERROR: The team name must not include characters" in errstr)
+        self.assertTrue("ERROR: What kind of task is" in errstr)
+        print("CASE 3 validated.")
      
     def testDSDContent(self):
         import StringIO
@@ -278,7 +277,7 @@ class TestValidator(ut.TestCase):
         print("CASE 4a: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...")
         myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_2/lorem_NC2016_Splice_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -286,7 +285,7 @@ class TestValidator(ut.TestCase):
         print("CASE 4b: Validating behavior for duplicate rows and different number of rows than in index file...")
         myval = DSD_Validator(validatorRoot + 'loremb_NC2016_Splice_ImgOnly_p-baseline_2/loremb_NC2016_Splice_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -297,7 +296,7 @@ class TestValidator(ut.TestCase):
         print("\nCase 5: Validating behavior when the number of columns in the system output is not equal to 5.")
         myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_4/lorem_NC2016_Splice_ImgOnly_p-baseline_4.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -307,7 +306,7 @@ class TestValidator(ut.TestCase):
         print("\nCASE 6: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...")
         myval = DSD_Validator(validatorRoot + 'ipsum_NC2016_Splice_ImgOnly_p-baseline_1/ipsum_NC2016_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
@@ -330,7 +329,7 @@ class TestValidator(ut.TestCase):
         print("\nCASE 7: Validating behavior when at least one mask file is not present...") 
         myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_3/lorem_NC2016_Splice_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
-            result=myval.fullCheck()
+            result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()

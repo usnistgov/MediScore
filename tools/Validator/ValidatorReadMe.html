@@ -11815,7 +11815,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Validator-Type">Validator Type<a class="anchor-link" href="#Validator-Type">&#182;</a></h3>
+<h3 id="Validation-Modes">Validation Modes<a class="anchor-link" href="#Validation-Modes">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -11827,6 +11827,19 @@ div#notebook {
 <p>-vt --valtype</p>
 <ul>
 <li>Specify the validation type for the relevant task: Single-Source Detection or Double-Source Detection (i.e. 'SSD' or 'DSD').</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-nc --nameCheck</p>
+<ul>
+<li>Whether or not to check the naming format of the file according to the ENBF (Extended Backus-Naur Form) <TEAM><em>NC17</em><DATA><em><TASK></em><CONDITION><em><SYS></em><VERSION>. Selecting the option will run the name checker. Further information on the meaning of the ENBF is available in the evaluation plan.</li>
 </ul>
 
 </div>
@@ -11861,7 +11874,7 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-s --inSys</p>
 <ul>
-<li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and ProbeOutputMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, ProbeOutputMaskFileName, and DonorOutputMaskFileName fields, in that order. The ProbeOutputMaskFileNames and DonorOutputMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
+<li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and ProbeOutputMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, OutputProbeMaskFileName, and OutputDonorMaskFileName fields, in that order. The OutputProbeMaskFileNames and OutputDonorMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
 </ul>
 
 </div>

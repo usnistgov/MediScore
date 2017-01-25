@@ -26,10 +26,11 @@ import copy
 import numpy as np
 import unittest as ut
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import os
 import random
-from masks import *
+import masks
+import maskMetrics as mm
 from decimal import Decimal
 
 class TestImageMethods(ut.TestCase):
@@ -46,7 +47,7 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',testimg,params)
 
         #read it back in as an image
-        mytest=refmask('testImg.png')
+        mytest=masks.refmask('testImg.png',readopt=0)
         #test if image is grayscale
         self.assertEqual(len(mytest.matrix.shape),2)
         #mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
@@ -58,6 +59,16 @@ class TestImageMethods(ut.TestCase):
         #test if total number of 0 and 255 pixels total to pixel number
         totalpix=10000
         self.assertEqual(np.sum(mytestbw==255)+np.sum(mytestbw==0),totalpix)
+
+        #test for boundary case for a threshold, less than or equal to
+        testimg = 255*np.ones((100,100),dtype=np.uint8)
+        testimg[45:55,45:55] = 128
+        cv2.imwrite('testImg.png',testimg,params)
+        mytest=masks.mask('testImg.png')
+        self.assertEqual(len(mytest.matrix.shape),2)
+        mytest.binarize(128)
+        testimg[testimg==128] = 0
+        self.assertTrue(np.array_equal(mytest.bwmat,testimg))
 
     def test_color(self):
         #Set existing image. Safer test.
@@ -83,11 +94,11 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg_color.png',testimg_color,params)
 
         #read it back in as a color mask image
-        mytest_color=refmask('testImg_color.png',1)
+        mytest_color=masks.refmask('testImg_color.png')
         self.assertEqual(len(mytest_color.matrix.shape),3) #test if image is color
         mytest_color.matrix = mytest_color.binarize(254) #fully binarize the mask for some threshold
 
-        mytest_bw=refmask('testImg_color.png')
+        mytest_bw=masks.refmask('testImg_color.png',readopt=0)
         self.assertEqual(len(mytest_bw.matrix.shape),2) #test if image is grayscale
         mytest_bw.matrix = mytest_bw.binarize(254)
 
@@ -104,14 +115,14 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',testimg,params)
 
         #read it back in as an image. Also test erode and dilate images.
-        mytest=refmask('testImg.png')
-        mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
-        zones=mytest.noScoreZone(0,0,'gaussian')
+        mytest=masks.refmask('testImg.png',readopt=0)
+        #mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
+        zones=mytest.boundaryNoScoreRegion(0,0,'gaussian')
         self.assertTrue(np.array_equal(zones['wimg'],np.ones((100,100))))
         self.assertTrue(np.array_equal(zones['rimg'],mytest.matrix))
 
-        #add for nonzero kernel
-        zones=mytest.noScoreZone(3,3,'box')
+        #test for nonzero kernel
+        zones=mytest.boundaryNoScoreRegion(3,3,'box')
         dmat=255*np.ones((100,100),dtype=np.uint8)
         emat=255*np.ones((100,100),dtype=np.uint8)
         dmat[60:81,30:46]=0
@@ -122,28 +133,60 @@ class TestImageMethods(ut.TestCase):
         self.assertTrue(np.array_equal(zones['eimg'],emat))
         self.assertTrue(np.array_equal(zones['wimg'],wmat))
 
+        #test for selective dilated color
+        testimg = 255*np.ones((100,100,3))
+        testimg[11:20,11:20,1:3]=0 #blue
+        testimg[11:20,81:90,0] = 0 #green
+        testimg[11:20,81:90,2] = 0
+        testimg[81:90,81:90,0:2]=0 #red
+        testimg = testimg.astype(np.uint8)
+        params=list()
+        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(0)
+        cv2.imwrite('testImgC.png',testimg,params)
+        mytest=masks.refmask('testImgC.png',cs=['255 0 0','0 255 0'],purposes='remove') #red,green
+        
+        #generate masks
+        baseNoScore = mytest.boundaryNoScoreRegion(3,5,'box')['wimg']
+        distractionNoScore = mytest.unselectedNoScoreRegion(5,'box')
+
+        #generate comparators
+        baseNScompare = np.ones((100,100),dtype=np.uint8)
+        baseNScompare[9:22,79:92] = 0
+        baseNScompare[12:19,82:89] = 1
+        baseNScompare[79:92,79:92] = 0
+        baseNScompare[82:89,82:89] = 1
+
+        distractionNScompare = np.ones((100,100),dtype=np.uint8)
+        distractionNScompare[9:22,9:22] = 0
+
+        self.assertTrue(np.array_equal(baseNoScore,baseNScompare))
+        self.assertTrue(np.array_equal(distractionNoScore,distractionNScompare))
+        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box')
+        self.assertTrue(np.array_equal(aggwts,baseNoScore & distractionNoScore))
+
     def test_metrics(self):
         random.seed(1998)
         eps=10**-10 #account for floating point errors
         print("CASE 1: Testing metrics under the same mask shape...")
         #create an image and save it
-        testimg = 255*(np.random.uniform(0,2,(100,100)).round())
-        testimg = testimg.astype(np.uint8)
+        testimg = 255*(np.floor(np.random.uniform(0,1.9,(100,100))).astype(np.uint8))
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(0)
         cv2.imwrite('testImg2.png',testimg,params)
 
         #read it back in as an image
-        rImg=refmask('testImg2.png')
-        rImg.matrix = rImg.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
-        sImg=mask('testImg2.png')  #test copy is absolutely equal
-        sImg.matrix = sImg.bw(230)
+        rImg=masks.refmask('testImg2.png',readopt=0)
+#        rImg.matrix = rImg.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
+        sImg=masks.mask('testImg2.png')  #test copy is absolutely equal
+#        sImg.matrix = sImg.bw(230)
         
         def absoluteEquality(r,s):
             w=np.ones(r.get_dims())
             #get measures
-            m1img = r.confusion_measures(s,w)
+            m1measures = mm.maskMetrics(r,s,w)
+            m1img = m1measures.conf
             m1imgtp = m1img['TP']
             m1imgtn = m1img['TN']
             m1imgfp = m1img['FP']
@@ -158,15 +201,15 @@ class TestImageMethods(ut.TestCase):
 
             #randomized weights. Should be equal no matter what weights are applied.
             #self.assertEqual(r.hamming(s),0)
-            self.assertEqual(r.weightedL1(s,w),0)
+            self.assertEqual(m1measures.bwL1,0)
             #self.assertEqual(r.hingeL1(s,m1w,0),0)
             #self.assertEqual(r.hingeL1(s,m1w,-1),0)
-            self.assertTrue(abs(r.matthews(m1img,w) - 1) < eps)
-            self.assertEqual(r.NimbleMaskMetric(m1img,w),1)
+            self.assertTrue(abs(m1measures.mcc - 1) < eps)
+            self.assertEqual(m1measures.nmm,1)
 
         absoluteEquality(rImg,sImg)
 
-#Temporarily commented out because not using grayscale test for the time being
+#Commented out because not using grayscale test for the time being
         ##### CASE 1b: Test for grayscale ###################################
 #        print("CASE 1b: Testing for grayscale cases...")
 #        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
@@ -224,23 +267,23 @@ class TestImageMethods(ut.TestCase):
         print("CASE 1c: Testing for equality under rotation and reflection...")
 
         ### rotate by 90 degrees #######################
-        rImgr = copy.deepcopy(rImg)
-        rImgr.matrix = np.rot90(rImgr.matrix)
-        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
-        sImg.matrix = np.copy(rImgr.matrix)
-        absoluteEquality(rImgr,sImg)
+        rImg=masks.refmask('testImg2.png',readopt=0)
+        rImg.matrix = np.rot90(rImg.matrix)
+        sImg=masks.mask('testImg2.png')
+        sImg.matrix = np.rot90(sImg.matrix)
+        absoluteEquality(rImg,sImg)
 
         ### flip horizontally
-        rImgf = copy.deepcopy(rImg)
-        rImgf.matrix = np.fliplr(rImgf.matrix)
-        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
-        sImg.matrix = np.copy(rImgf.matrix)
-        absoluteEquality(rImgf,sImg)
+        rImg=masks.refmask('testImg2.png',readopt=0)
+        rImg.matrix = np.fliplr(rImg.matrix)
+        sImg=masks.mask('testImg2.png')
+        sImg.matrix = np.fliplr(sImg.matrix)
+        absoluteEquality(rImg,sImg)
 
         print("CASE 1 testing complete.\n")
 
         ##### CASE 2: Erode only. ###################################
-        print("CASE 2: Testing for resulting mask having been only eroded and behavior of other library functions. You should expect to see ERROR messages pop up as we test the behavior of the functions, from the library functions being tested and the RUnit test package. This should happen in the test run.")
+        print("CASE 2: Testing for resulting mask having been only eroded and behavior of other library functions.")
     
         #use this rImg for all subsequent cases
         rImg = 255*np.ones((100,100))
@@ -248,132 +291,145 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',rImg,params)
 
         #read it back in as an image
-        rImg=refmask('testImg.png')
-        rImg.matrix = rImg.bw(230).astype(np.uint8) #reading the image back in doesn't automatically make it 0 or 255.
+        rImg=masks.refmask('testImg.png',readopt=0)
+#        rImg.matrix = rImg.bw(230).astype(np.uint8) #reading the image back in doesn't automatically make it 0 or 255.
  
         #erode by small amount so that we still get 0
-        wtlist = rImg.noScoreZone(3,3,'disc')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'disc')
         wts = wtlist['wimg'].astype(np.uint8)
-        eKern=getKern('disc',3)
-        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
+        eKern=masks.getKern('disc',3)
+
+        sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
-        self.assertEqual(rImg.hingeL1(sImg,wts,0),0)
+        m2measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m2measures.bwL1,0)
+        #self.assertEqual(m2measures.hingeL1(),0)
 
         #erode by a larger amount.
 
-        wtlist = rImg.noScoreZone(3,3,'box')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'box')
         wts = wtlist['wimg']
-        eKern=getKern('box',5)
-        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
+        eKern=masks.getKern('box',5)
+        sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
         #should throw exception on differently-sized image
         errImg = copy.deepcopy(sImg)
         errImg.matrix=np.zeros((10,100))
         with self.assertRaises(ValueError):
-            rImg.weightedL1(errImg,wts)
+            mEmeasures = mm.maskMetrics(rImg,errImg,wts)
+            mEmeasures.bwL1
         with self.assertRaises(ValueError):
-            rImg.weightedL1(sImg,wts[:,51:100])
+            mEmeasures = mm.maskMetrics(rImg,sImg,wts[:,51:100])
+            mEmeasures.bwL1
         with self.assertRaises(ValueError):
             wts2 = np.copy(wts)
             wts2 = np.reshape(wts2,(200,50))
-            rImg.weightedL1(sImg,wts2)
-        with self.assertRaises(ValueError):
-            rImg.hingeL1(errImg,wts,0.5)
+            mEmeasures = mm.maskMetrics(rImg,sImg,wts2)
+            mEmeasures.bwL1
 
         #want both to be greater than 0
-        if (rImg.weightedL1(sImg,wts) == 0):
-            print("Case 2: weightedL1 is not greater than 0. Are you too forgiving?")
+        m2measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m2measures.bwL1 == 0):
+            print("Case 2: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 2: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+#commenting out because hinge is not being used
+#        if (rImg.hingeL1(sImg,wts,0.005) == 0):
+#            print("Case 2: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
 
         print("CASE 2 testing complete.\n")
 
         ##### CASE 3: Dilate only. ###################################
         print("CASE 3: Testing for resulting mask having been only dilated.")
-        wtlist = rImg.noScoreZone(3,3,'disc')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'disc')
         wts = wtlist['wimg']
-        dKern=getKern('disc',3)
-        sImg = mask('../../data/test_suite/maskScorerTests/ref1.png')
+        dKern=masks.getKern('disc',3)
+        sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
         #dilate by small amount so that we still get 0
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
-        self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
+        self.assertEqual(m3measures.bwL1,0)
+        #self.assertEqual(m3measures.hingeL1(0.5),0)
 
         #dilate by a larger amount.
-        wtlist = rImg.noScoreZone(3,3,'box')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'box')
         wts = wtlist['wimg']
-        dKern=getKern('box',5)
+        dKern=masks.getKern('box',5)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
         #want both to be greater than 0
-        if (rImg.weightedL1(sImg,wts) == 0):
-            print("Case 3: weightedL1 is not greater than 0. Are you too forgiving?")
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m3measures.bwL1 == 0):
+            print("Case 3: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 3: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+#        if (rImg.hingeL1(0.005) == 0):
+#            print("Case 3: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
 
         #dilate by small amount so that we still get 0
-        dKern=getKern('diamond',3)
+        dKern=masks.getKern('diamond',3)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
-        wtlist = rImg.noScoreZone(3,3,'diamond')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'diamond')
         wts = wtlist['wimg']
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
-        self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
+
+        self.assertEqual(m3measures.bwL1,0)
+        #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
 
         #dilate by a larger amount
-        dKern=getKern('box',5)
+        dKern=masks.getKern('box',5)
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
-        wtlist = rImg.noScoreZone(3,3,'diamond')
+        wtlist = rImg.boundaryNoScoreRegion(3,3,'diamond')
         wts = wtlist['wimg']
 
         #want both to be greater than 0
-        if (rImg.weightedL1(sImg,wts) == 0):
-            print("Case 3: weightedL1 is not greater than 0. Are you too forgiving?")
+        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m3measures.bwL1 == 0):
+            print("Case 3: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 3: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+#        if (rImg.hingeL1(sImg,wts,0.005) == 0):
+#            print("Case 3: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
 
         print("CASE 3 testing complete.\n")
 
         ##### CASE 4: Erode + dilate. ###################################
         print("CASE 4: Testing for resulting mask having been eroded and then dilated...")
-        kern = getKern('gaussian',3)
+        kern = masks.getKern('gaussian',3)
         sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
-        wtlist=rImg.noScoreZone(3,3,'gaussian')
+        wtlist=rImg.boundaryNoScoreRegion(3,3,'gaussian')
         wts=wtlist['wimg']
 
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures.bwL1,0)
         #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
         
         #erode and dilate by larger amount
-        kern = getKern('gaussian',9)
+        kern = masks.getKern('gaussian',9)
         sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures.bwL1,0)
 
         #erode and dilate by very large amount
-        kern = getKern('gaussian',21)
+        kern = masks.getKern('gaussian',21)
         sImg.matrix = cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix = cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix = 255-sImg.matrix
         #want both to be greater than 0
-        if (rImg.weightedL1(sImg,wts) == 0):
-            print("Case 4: weightedL1 is not greater than 0. Are you too forgiving?")
+        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m4measures.bwL1 == 0):
+            print("Case 4: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 4: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+#        if (rImg.hingeL1(sImg,wts,0.005) == 0):
+#            print("Case 4: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
 
         print("CASE 4 testing complete.\n")
 
@@ -383,28 +439,31 @@ class TestImageMethods(ut.TestCase):
         #move close
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[59:79,33:48] = 0 #translate a small 20 x 15 square
-        wtlist=rImg.noScoreZone(5,5,'gaussian')
+        wtlist=rImg.boundaryNoScoreRegion(5,5,'gaussian')
         wts=wtlist['wimg']
-        self.assertEqual(rImg.weightedL1(sImg,wts),0)
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures.bwL1,0)
 
         #move further
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[51:71,36:51] = 0 #translate a small 20 x 15 square
-        if (rImg.weightedL1(sImg,wts) == 0):
-            print("Case 5: weightedL1 is not greater than 0. Are you too forgiving?")
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        if (m5measures.bwL1 == 0):
+            print("Case 5: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 5: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+#        if (rImg.hingeL1(sImg,wts,0.005) == 0):
+#            print("Case 5: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
  
         #print (wts[55:85,25:55])
         #move completely out of range
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[31:46,61:81] = 0 #translate a small 20 x 15 square
-        self.assertEqual(rImg.weightedL1(sImg,wts),476./9720)
-        if (rImg.hingeL1(sImg,wts,0.005) == 0):
-            print("Case 5, translate out of range: hingeL1 is not greater than 0. Are you too forgiving?")
-            exit(1)
+        m5measures = mm.maskMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures.bwL1,476./9720)
+#        if (rImg.hingeL1(sImg,wts,0.005) == 0):
+#            print("Case 5, translate out of range: hingeL1 is not greater than 0. Are you too forgiving?")
+#            exit(1)
 
         print("CASE 5 testing complete.\n\nAll mask scorer unit tests successfully complete.")
 
