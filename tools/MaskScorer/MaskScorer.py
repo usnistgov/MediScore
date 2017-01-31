@@ -84,8 +84,8 @@ help="Filter the data by given queries before evaluation. Each query will result
 
 parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
-parser.add_argument('--dks',type=int,default=9,
-help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
+parser.add_argument('--dks',type=int,default=11,
+help="Dilation kernel size number must be odd, [default=11]",metavar='integer')
 parser.add_argument('--ntdks',type=int,default=15,
 help="Non-target dilation kernel for distraction no-score regions. Size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('-k','--kernel',type=str,default='box',
