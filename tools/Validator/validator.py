@@ -339,7 +339,7 @@ class DSD_Validator(validator):
             donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
 
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-                printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping it.")
+                printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping this pair.")
                 continue
             maskFlag = maskFlag | maskCheck2(sysPath + "/" + probeOutputMaskFileName,sysPath + "/" + donorOutputMaskFileName,sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i)
         
@@ -478,5 +478,6 @@ if __name__ == '__main__':
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
+            exit(1)
     else:
         parser.print_help()

@@ -150,19 +150,21 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
 
     return merged_df
 
-def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
+def createReportDSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for double source detection, specifically the splice task
      * Description: this function calls each metric function and
                     return the metric value and the colored mask output as a report
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
+     *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
      *     sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
      *     erodekernSize: Kernel size for Erosion
      *     dilatekernSize: Kernel size for Dilation
+     *     distractionkernSize: Kernel size for dilation for the distraction no-score regions
      *     kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
      *     outputRoot: the directory for outputs to be written
      *     html: whether or not to output an HTML report
@@ -179,10 +181,10 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=1)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,mode=1)
     probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=2) #donor images
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,mode=2) #donor images
     donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",

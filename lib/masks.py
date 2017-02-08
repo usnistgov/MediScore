@@ -290,7 +290,7 @@ class refmask(mask):
         self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in cs]
         self.purposes = purposes
 
-    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode):
         """
         * Description: this function calculates and generates the aggregate no score zone of the mask
                        by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
@@ -300,11 +300,13 @@ class refmask(mask):
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: total length of the dilation kernel matrix for the distraction no-score zone
         *     kern: kernel shape to be used
+        *     mode: determines the task used. 0 denotes the evaluation of the  manipulation task, 1 denotes the evaluation
+                    of the probe image in the splice task, 2 denotes the evaluation of the donor image in the splice task.
         """
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
-        if (distractionKernSize > 0) and (self.purposes is not 'all'):
+        if (distractionKernSize > 0) and (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
             distractionNoScore = self.unselectedNoScoreRegion(distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
