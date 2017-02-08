@@ -104,19 +104,19 @@ class Render:
                 plt.plot(DM.fpr, DM.tpr+DM.ci_tpr, 'k--')
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
                 plt.annotate("AUC = %.2f at FAR = %.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.3), xycoords='data', xytext=(0.7,0.3), textcoords='data',
-                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
 #                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
                 plt.annotate("d' = %.2f" %(DM.d),xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data',
                              xytext=(DM.dpoint[0]+0.1, DM.dpoint[1]+0.1), textcoords='data',
                              arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
-                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
-                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
-                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',
-                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
-                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+#                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
+#                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',
+#                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
+#                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
 
 #                plt.annotate("beta = %.2f" %(DM.b),xy=(DM.bpoint[0], DM.bpoint[1]), xycoords='data',
 #                             xytext=(DM.bpoint[0]+0.1, DM.bpoint[1]+0.1), textcoords='data',
