@@ -44,6 +44,8 @@ class detMetrics:
 #                     np.array_equal(self.thres, thres2)))
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
+        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr)
+        self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
         #print ("fpr_stop test:".format(fpr_stop))
 
         self.ci_lower = 0
@@ -195,7 +197,7 @@ class Metrics:
         eer = np.mean([fpr[idx], fnr[idx]])
         return eer
 
-    # TODO: need to validate this
+    # TODO: need to validate this and make command-line inputs
     @staticmethod
     def compute_ci(score, gt, lower_bound =0.05, upper_bound=0.95):
         """ compute the confidence interval for AUC
@@ -249,3 +251,124 @@ class Metrics:
         ci_tpr = 0 #TODO: after calculating CI for each TPR
         #print("Confidence interval for AUC: [{:0.5f} - {:0.5f}]".format(ci_lower, ci_upper))
         return ci_lower, ci_upper, ci_tpr
+
+    # Calculate d-prime and beta
+    @staticmethod
+    def compute_dprime(fpr, tpr):
+        """ computes the d-prime given TPR and FPR values
+        tpr: true positive rates
+        fpr: false positive rates"""
+        from scipy.stats import norm
+        from math import exp
+
+        Z = norm.ppf
+        d = []
+        beta = []
+        for i in range(0, len(fpr)):
+            # Starting d' calculation
+            #avoid d' infinity
+            if tpr[i] == 1: tpr[i] =0.9975
+            if fpr[i] == 1: fpr[i] =0.9975
+            if tpr[i] == 0: tpr[i] =0.0025
+            if fpr[i] == 0: fpr[i] =0.0025
+            d.append(Z(tpr[i]) - Z(fpr[i]))
+            beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
+
+        #d = [ Z(tpr[i]) - Z(fpr[i]) for i in range(0, len(fpr)) ]
+        #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
+        #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
+        d_idx = d.index(max(d))
+        d_max_point = (fpr[d_idx], tpr[d_idx])
+
+        b_idx = beta.index(max(beta))
+        b_max_point = (fpr[b_idx], tpr[b_idx])
+
+        #print("beta{}".format(beta))
+        print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
+        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
+#        print("tpr{}".format(tpr))
+#        print("fpr{}".format(fpr))
+
+        return max(d), d_max_point, max(beta), b_max_point
+
+
+    @staticmethod
+    def compute_aprime(fpr, tpr):
+        """ computes the d-prime given TPR and FPR values
+        tpr: true positive rates
+        fpr: false positive rates"""
+        from scipy.stats import norm
+        from math import exp
+
+        Z = norm.ppf
+        a = []
+        for i in range(0, len(fpr)):
+
+            # Starting a' calculation
+            if(fpr[i] <=0.5 and tpr[i] >=0.5):
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - fpr[i]*(1.0-tpr[i]))
+            elif(fpr[i] <= tpr[i] and tpr[i] <=0.5):
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - fpr[i]/(4.0*tpr[i]))
+            else:
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - (1.0-tpr[i])/(4.0*(1.0-fpr[i])))
+
+
+        a_idx = a.index(max(a))
+        a_max_point = (fpr[a_idx], tpr[a_idx])
+
+        print("a- {} amax- {} idx- {} apoint- {}".format(a, max(a), a_idx, a_max_point))
+#        print("tpr{}".format(tpr))
+#        print("fpr{}".format(fpr))
+
+        return max(a), a_max_point
+
+
+#            # Calculate d-prime and beta
+#    @staticmethod
+#    def compute_dprime2(tpr, fpr):
+#        """ computes the d-prime given TPR and FPR values
+#        tpr: true positive rates
+#        fpr: false positive rates"""
+#        from scipy import stats
+#        z_tpr = stats.zscore(tpr)
+#        z_fpr = stats.zscore(fpr)
+#
+#        d = [ z_tpr[i] - z_fpr[i] for i in range(0, len(fpr)) ]
+#        beta = [ exp(z_fpr[i]**2 - z_tpr[i]**2)/2 for i in range(0, len(fpr)) ]
+#        c = [ -(z_tpr[i] - z_fpr[i])/2 for i in range(0, len(fpr)) ]
+#        idx = d.index(max(d))
+#        d_max_point = (tpr[idx], fpr[idx])
+#        print("d-prime max points {},{}".format(tpr[idx], fpr[idx]))
+#        return d, beta, z_tpr, z_fpr, d_max_point
+#
+#
+#
+#        # Test
+#
+#import numpy as np
+#m1 = np.mean(tpr1)
+#m2 = np.mean(fpr1)
+#s1 = np.std(tpr1)
+#s2 = np.std(fpr1)
+#
+#z1 = [ (tpr1[i] - m1)/s1 for i in range(0, len(tpr1)) ]
+#z2 = [ (fpr1[i] - m2)/s2 for i in range(0, len(fpr1)) ]
+#
+#a = [ z1[i]-z2[i] for i in range(0, len(fpr1)) ]
+#
+#from scipy import stats
+#zz1 = stats.zscore(tpr)
+#
+#
+#from scipy import stats
+#z_tpr = stats.zscore(tpr)
+#z_fpr = stats.zscore(fpr)
+#
+#d = [ z_tpr[i] - z_fpr[i] for i in range(0, len(fpr)) ]
+#beta = [ exp(z_fpr[i]**2 - z_tpr[i]**2)/2 for i in range(0, len(fpr)) ]
+#c = [ -(z_tpr[i] - z_fpr[i])/2 for i in range(0, len(fpr)) ]
+#idx = d.index(max(d))
+#d_max_point = [tpr[idx], fpr[idx]]
+#
+#fpr1 = [.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987]
+#tpr1 = [0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772]

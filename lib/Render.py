@@ -30,6 +30,7 @@ class Render:
             fig = self.plot_fig(self.DM_list,1,display)
             return fig
 
+    #TODO: add auc values to each legend
     def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
@@ -104,6 +105,23 @@ class Render:
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
                 plt.annotate("AUC = %.2f at FAR = %.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.3), xycoords='data', xytext=(0.7,0.3), textcoords='data',
                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+
+#                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
+#                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                plt.annotate("d' = %.2f" %(DM.d),xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data',
+                             xytext=(DM.dpoint[0]+0.1, DM.dpoint[1]+0.1), textcoords='data',
+                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
+                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+
+                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
+                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',
+                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
+                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+
+#                plt.annotate("beta = %.2f" %(DM.b),xy=(DM.bpoint[0], DM.bpoint[1]), xycoords='data',
+#                             xytext=(DM.bpoint[0]+0.1, DM.bpoint[1]+0.1), textcoords='data',
+#                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+#                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
                 #TODO: how to add variable here for fpr_stop
 #                plt.annotate("PAUC = %.2f%% at FAR=" %(pauc*100), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
 #                     size=12, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
@@ -121,6 +139,7 @@ class Render:
 
 #        plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
 #        fig.tight_layout(pad=7)
+
 
         if self.opts_list[0]['label'] != None:
             plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')

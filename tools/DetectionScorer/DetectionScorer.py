@@ -49,28 +49,28 @@ if __name__ == '__main__':
             if x == '':
                 raise argparse.ArgumentTypeError("{0} not provided".format(x))
             return x
-            
+
         def restricted_float(x):
             x = float(x)
             if x < 0.0 or x > 1.0:
                 raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
             return x
-        
+
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
         #Task Type Options
-        parser.add_argument('-t','--task', default='manipulation', 
+        parser.add_argument('-t','--task', default='manipulation',
                             choices=['manipulation','splice'], # add provenanceFiltering and provenance in future
                             help='Define the target manipulation task type for evaluation:[manipulation] and [splice] (default: %(default)s)',metavar='character')
-        
+
         #Input Options
         parser.add_argument('--refDir', default='.',
                             help='Specify the reference and index data path: [e.g., ../NC2016_Test] (default: %(default)s)', metavar='character')
                             #type=lambda x: is_dir(parser, x))#Optional
 
         parser.add_argument('-r','--inRef', default='', type=is_file_specified,
-                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character') 
-                            #type=lambda x: is_file(parser, x))# Mandatory     
+                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character')
+                            #type=lambda x: is_file(parser, x))# Mandatory
 
         parser.add_argument('-x','--inIndex',default='', type=is_file_specified,
                             help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
@@ -79,12 +79,12 @@ if __name__ == '__main__':
                             help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character') #Optional
 
         parser.add_argument('-s','--inSys',default='', type=is_file_specified,
-                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')    
+                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
 
         # Metric Options
         parser.add_argument('--farStop',type=restricted_float, default = 1,
                             help="Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
-        
+
         parser.add_argument('--ci', action='store_true',
                             help="Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.")
 
@@ -94,17 +94,17 @@ if __name__ == '__main__':
 
         parser.add_argument('--dump', action='store_true',
                             help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
-        
+
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Print output with procedure messages on the command-line if this option is specified.")
-        
+
         # Plot Options
         parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
-    
+
         parser.add_argument('--display', action='store_true',
                             help="Display a window with the plot (s) on the command-line if this option is specified.")
-        
+
         parser.add_argument('--multiFigs', action='store_true',
                             help="Generate plots (with only one curve) per a partition ")
         # Custom Plot Options
@@ -298,15 +298,15 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        
-                       
+
+
         if os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
         else:
             p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        
+
         # opening of the plot_options json config file from command-line
         if args.configPlot:
             p.open_plot_options(dict_plot_options_path_name)
@@ -377,21 +377,21 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
- #       queryManipulation = None
-        arg_query = None
-        queryPartition = None
+        args_queryManipulation = None
+        args_query = None
+        args_queryPartition = None
 #        queryManipulation = "Purpose ==['remove', 'splice', 'add']"
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
 #        factor = "Purpose ==['remove']"
-        queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
+        #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
 #        print("f query {}".format(factor))
 
 #        queryPartition = "Purpose ==['remove', 'splice']"
 
-        if (not query) and (not queryPartition) and (multiFigs is True):
+        if (not args_query) and (not args_queryPartition) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without querys options.")
             exit(1)
 
@@ -409,7 +409,7 @@ if __name__ == '__main__':
             inIndex = "NC2017-1215/NC2017-manipulation-index.csv"
             inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
             inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-            inSys = "baseline/NC17_copymove01.csv"
+            inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
 
 
         # Loading the reference file
@@ -503,7 +503,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if args_query or queryPartition or queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args_query or args_queryPartition or args_queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
 
@@ -566,6 +566,7 @@ if __name__ == '__main__':
         # No partitions
         else:
             DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci)
+            #print("*****d-prime {} dpoint{}".format(DM.d, DM.dpoint))
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -585,14 +586,14 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-                
+
         if os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
         else:
             p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        
+
         # opening of the plot_options json config file from command-line
         configPlot = False
         if configPlot:
