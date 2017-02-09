@@ -1,4 +1,3 @@
-#TODO: try __version__
 """
 * File: validator.py
 * Date: 09/23/2016
@@ -57,16 +56,29 @@ else:
 class validator:
     __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def __init__(self,sysfname,idxfname): pass
+    def __init__(self,sysfname,idxfname):
+        self.sysname=sysfname
+        self.idxname=idxfname
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
     def contentCheck(self): pass
-    def fullCheck(self):
-        #TODO: option to do a namecheck?
-#        if self.nameCheck() == 1:
-#            return 1
+    def fullCheck(self,nc):
+        #check for existence of files
+        eflag = False
+        if not os.path.isfile(self.sysname):
+            printq("ERROR: I can't find your system output " + self.sysname + "! Where is it?",True)
+            eflag = True
+        if not os.path.isfile(self.idxname):
+            printq("ERROR: I can't find your index file " + self.idxname + "! Where is it?",True)
+            eflag = True
+        if eflag:
+            return 1
+
+        #option to do a namecheck
+        if nc:
+            if self.nameCheck() == 1:
+                return 1
 
         printq("Checking if index file is a pipe-separated csv...")
         idx_pieces = self.idxname.split('.')
@@ -84,22 +96,8 @@ class validator:
 
 
 class SSD_Validator(validator):
-    def __init__(self,sysfname,idxfname):
-        self.sysname=sysfname
-        self.idxname=idxfname
-
     def nameCheck(self):
         printq('Validating the name of the system file...')
-
-        eflag = False
-        if not os.path.isfile(self.sysname):
-            printq("ERROR: I can't find your system output " + self.sysname + "! Where is it?",True)
-            eflag = True
-        if not os.path.isfile(self.idxname):
-            printq("ERROR: I can't find your index file " + self.idxname + "! Where is it?",True)
-            eflag = True
-        if eflag:
-            return 1
 
         sys_pieces = self.sysname.split('.')
         sys_ext = sys_pieces[-1]
@@ -218,22 +216,8 @@ class SSD_Validator(validator):
             return 1
 
 class DSD_Validator(validator):
-    def __init__(self,sysfname,idxfname):
-        self.sysname=sysfname
-        self.idxname=idxfname
-
     def nameCheck(self):
         printq('Validating the name of the system file...')
-
-        eflag = False
-        if not os.path.isfile(self.sysname):
-            printq("ERROR: I can't find your system output " + self.sysname + "! Where is it?",True)
-            eflag = True
-        if not os.path.isfile(self.idxname):
-            printq("ERROR: I can't find your index file " + self.idxname + "! Where is it?",True)
-            eflag = True
-        if eflag:
-            return 1
 
         sys_pieces = self.sysname.split('.')
         sys_ext = sys_pieces[-1]
@@ -476,6 +460,8 @@ if __name__ == '__main__':
     help='required validator type',metavar='character')
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
+    parser.add_argument('-nc','--nameCheck',action="store_true",\
+    help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
 
     if (len(sys.argv) > 1):
 
@@ -484,11 +470,11 @@ if __name__ == '__main__':
 
         if (args.valtype == 'SSD'):
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck()
+            ssd_validation.fullCheck(args.nameCheck)
 
         elif (args.valtype == 'DSD'):
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck()
+            dsd_validation.fullCheck(args.nameCheck)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")

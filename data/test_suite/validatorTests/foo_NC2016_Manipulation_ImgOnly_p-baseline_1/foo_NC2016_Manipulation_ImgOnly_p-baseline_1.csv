@@ -1,4 +1,4 @@
-ProbeFileID|ConfidenceScore|ProbeOutputMaskFileName
+ProbeFileID|ConfidenceScore|OutputProbeMaskFileName
 "NC2016_1893"|"6749"|""
 "NC2016_4281"|"0"|"mask/NC2016_4281.png"
 "NC2016_5847"|"398077"|

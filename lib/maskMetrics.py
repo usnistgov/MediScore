@@ -47,7 +47,7 @@ class maskMetricList:
                  refBin,
                  sysBin,
                  journaldf=0,
-                 mode='Probe',
+                 mode=0,
                  colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
         """
         Constructor
@@ -78,7 +78,7 @@ class maskMetricList:
         self.mode=mode
         self.colordict=colordict
        
-    def readMasks(self,refMaskFName,sysMaskFName,targetManiType,verbose):
+    def readMasks(self,refMaskFName,sysMaskFName,verbose):
         """
         * Description: reads both the reference and system output masks and caches the binarized image
                        into the reference mask. If the journal dataframe is provided, the color and purpose
@@ -86,7 +86,6 @@ class maskMetricList:
         * Inputs:
         *     refMaskFName: the name of the reference mask to be parsed
         *     sysMaskFName: the name of the system output mask to be parsed
-        *     targetManiType: the target types to search to be manipulated
         *     verbose: permit printout from metrics
         * Outputs:
         *     rImg: the reference mask object
@@ -109,34 +108,37 @@ class maskMetricList:
         elif self.rbin == -1:
             #only need colors if selectively scoring
             myProbeID = self.maskData.query("ProbeMaskFileName=='{}' & OutputProbeMaskFileName=='{}'".format(refMaskFName,sysMaskFName))['ProbeFileID'].iloc[0]
-            colorlist = list(self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))['Color']) #get the target colors
-            purposes = list(self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))['Purpose'])
+            if verbose: print("Fetching ProbeFileID {} from maskData...".format(myProbeID))
+
+            color_purpose = self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))[['Color','Purpose']] #get the target colors
+            colorlist = list(color_purpose['Color'])
+            purposes = list(color_purpose['Purpose'])
             purposes_unique = []
             [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
-            rImg = masks.refmask(refMaskName,cs=colorlist,tmt=purposes_unique)
+            if verbose: print("Initializing reference mask {} with colors {}.".format(refMaskName,colorlist))
+
+            rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
             rImg.binarize(254)
 
             #check to see if the color in question is even present
-            if targetManiType is not 'all':
-                presence = 0
-                for c in rImg.colors:
-                    rmat = rImg.matrix
-                    presence = presence + np.sum((rmat[:,:,0]==c[0]) & (rmat[:,:,1]==c[1]) & (rmat[:,:,2]==c[2]))
-                    if presence > 0:
-                        break
-                if presence == 0:
-                    if verbose:
-                        print("The region you are looking for is not in reference mask {}. Scoring neglected.".format(refMaskFName))
-                    return 0,0
+            presence = 0
+            for c in rImg.colors:
+                rmat = rImg.matrix
+                presence = presence + np.sum((rmat[:,:,0]==c[0]) & (rmat[:,:,1]==c[1]) & (rmat[:,:,2]==c[2]))
+                if presence > 0:
+                    break
+            if presence == 0:
+                if verbose:
+                    print("The region you are looking for is not in reference mask {}. Scoring neglected.".format(refMaskFName))
+                return 0,0
 
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
 
-    def getMetricList(self,targetManiType,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,maniImageFName='',precision=16):
+    def getMetricList(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,maniImageFName='',precision=16):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
-        *     targetManiType: the target types to search to be manipulated
         *     erodeKernSize: length of the erosion kernel matrix
         *     dilateKernSize: length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
@@ -151,16 +153,20 @@ class maskMetricList:
         *     df: a dataframe of the computed metrics
         """
         #reflist and syslist should come from the same dataframe, so length checking is not required
-        reflist = self.maskData['{}MaskFileName'.format(self.mode)]
-        syslist = self.maskData['Output{}MaskFileName'.format(self.mode)]
+        mymode='Probe'
+        if self.mode==2:
+            mymode='Donor'
 
-        manip_ids = self.maskData['{}FileID'.format(self.mode)]
+        reflist = self.maskData['{}MaskFileName'.format(mymode)]
+        syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
+
+        manip_ids = self.maskData['{}FileID'.format(mymode)]
         if html:
-            maniImageFName = self.maskData['{}FileName'.format(self.mode)]
+            maniImageFName = self.maskData['{}FileName'.format(mymode)]
 
         nrow = len(reflist) 
         #initialize empty frame to minimum scores 
-        df=pd.DataFrame({'{}FileID'.format(self.mode):manip_ids,
+        df=pd.DataFrame({'{}FileID'.format(mymode):manip_ids,
                          'NMM':[-1.]*nrow,
                          'MCC': 0.,
                          'BWL1': 1.,
@@ -172,11 +178,10 @@ class maskMetricList:
 
         for i,row in df.iterrows():
             if syslist[i] in [None,'',np.nan]:
-                if verbose:
-                    print("Empty system mask file at index %d" % i)
+                if verbose: print("Empty system mask file at index %d" % i)
                 continue
             else:
-                rImg,sImg = self.readMasks(reflist[i],syslist[i],targetManiType,verbose)
+                rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
                     self.journalData.set_value(i,'Evaluated','N')
@@ -184,13 +189,14 @@ class maskMetricList:
                     continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     #Likely this could be FP or FN. Set scores as usual.
-                    if verbose:
-                        print("The index is at %d." % i)
+                    if verbose: print("The index is at %d." % i)
                     continue
 
                 #save all images in their own directories instead, rather than pool it all in one subdirectory.
                 #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
+
                 if task == 'manipulation':
+                    if verbose: print "Index: {}".format(i)
                     subdir_name = self.maskData['ProbeFileID'].iloc[i]
                 elif task == 'splice':
                     subdir_name = "{}_{}".format(self.maskData['ProbeFileID'].iloc[i],self.maskData['DonorFileID'].iloc[i])
@@ -199,8 +205,16 @@ class maskMetricList:
                 subOutRoot = os.path.join(outputRoot,subdir_name)
                 if not os.path.isdir(subOutRoot):
                     os.system('mkdir ' + subOutRoot)
+                #further subdirectories for the splice task
+                if self.mode == 1:
+                    subOutRoot = os.path.join(subOutRoot,'probe')
+                elif self.mode == 2:
+                    subOutRoot = os.path.join(subOutRoot,'donor')
+                if not os.path.isdir(subOutRoot):
+                    os.system('mkdir ' + subOutRoot)
 
                 #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
+                sbin_name = ''
                 if self.sbin >= 0:
                     sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=self.sbin)
@@ -222,7 +236,8 @@ class maskMetricList:
                 mymeas = 0
                 threshold = 0
                 metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
-                gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
+                #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
+                gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
                 if self.sbin >= 0:
                     #just get scores in one run if threshold is chosen
                     mets = metricRunner.getMetrics(popt=verbose)
@@ -254,8 +269,8 @@ class maskMetricList:
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
-                    #TODO: trim the arguments here down a little?
-                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,targetManiType,colMaskName,aggImgName)
+                    #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
+                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         return df
 
@@ -294,7 +309,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,targetManiType,colMaskName,aggImgName):
+    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -311,10 +326,10 @@ class maskMetricList:
         *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
         *     metrics: the dictionary of mask scores
         *     confmeasures: truth table measures evaluated between the reference and system output masks
-        *     targetManiType: the target types to search to be manipulated
         *     colMaskName: the aggregate mask image of the ground truth, system output, and no-score regions
                            for the HTML report
         *     aggImgName: the above colored mask superimposed on a grayscale of the reference image
+        *     verbose: whether or not to exercise printout
         """
         if not os.path.isdir(outputRoot):
             os.system('mkdir ' + outputRoot)
@@ -364,7 +379,7 @@ class maskMetricList:
         totalsns = np.sum(swts==0)
 
         thresString = ''
-        if thresMets is not '':
+        if len(thresMets) > 1:
             thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
             thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
@@ -373,9 +388,14 @@ class maskMetricList:
         rBase = os.path.basename(rImg_name)
         sBase = os.path.basename(sImg_name)
 
-        mPathNew = os.path.join(outputRoot,mBase)
-        rPathNew = os.path.join(outputRoot,rBase)
-        sPathNew = os.path.join(outputRoot,sBase)
+        #change to donor depending on mode
+        mpfx = 'probe'
+        if self.mode==2:
+            mpfx = 'donor'
+
+        mPathNew = os.path.join(outputRoot,mpfx+'File' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
+        rPathNew = os.path.join(outputRoot,'refMask.png') #os.path.join(outputRoot,rBase)
+        sPathNew = os.path.join(outputRoot,'sysMask.png') #os.path.join(outputRoot,sBase)
 
         try:
             os.remove(mPathNew)
@@ -390,15 +410,19 @@ class maskMetricList:
         except OSError:
             None
 
+        if verbose: print "Creating link for " + mPathNew
         os.symlink(os.path.abspath(mPath),mPathNew)
+        if verbose: print "Creating link for " + rPathNew
         os.symlink(os.path.abspath(rImg_name),rPathNew)
+        if verbose: print "Creating link for " + sPathNew
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
-        htmlstr = htmlstr.substitute({'probeFname': mBase,
+        if verbose: print("Writing HTML...")
+        htmlstr = htmlstr.substitute({'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
-                                      'refMask' : rBase,
-                                      'sysMask' : sBase,
+                                      'refMask' : 'refMask.png',#rBase,
+                                      'sysMask' : 'sysMask.png',#sBase,
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
                                       'systh' : sys_threshold,
@@ -433,7 +457,6 @@ class maskMetricList:
                                       'percfn':round(float(confmeasures['FN'])/totalpx,3),
                                       'percbns':round(float(totalbns)/totalpx,3),
                                       'percsns':round(float(totalsns)/totalpx,3),
-                                      'tmt':targetManiType,
                                       'jtable':jtable,
                                       'th_table':thresString}) #add journal operations and set bg color to the html
 
@@ -582,15 +605,15 @@ class maskMetrics:
             if (self.nmm==1) or (self.nmm==-1):
                 print("NMM: %d" % self.nmm)
             else:
-                print("NMM: %0.9f" % self.nmm)
+                print("NMM: %0.3f" % self.nmm)
             if (self.mcc==1) or (self.mcc==-1):
                 print("MCC: %d" % self.mcc)
             else:
-                print("MCC (Matthews correlation coeff.): %0.9f" % self.mcc)
+                print("MCC (Matthews correlation coeff.): %0.3f" % self.mcc)
             if (self.bwL1==1) or (self.bwL1==0):
                 print("BWL1: %d" % self.bwL1)
             else:
-                print("Binary Weighted L1: %0.9f" % self.bwL1)
+                print("Binary Weighted L1: %0.3f" % self.bwL1)
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
@@ -716,9 +739,10 @@ class maskMetrics:
         fn = conf['FN']
         n = conf['N']
 
-        s=np.float64(tp+fn)/n
-        p=np.float64(tp+fp)/n
-        if (s==1) or (p==1) or (s==0) or (p==0):
+        s=tp+fn
+        p=tp+fp
+
+        if (s==n) or (p==n) or (s==0) or (p==0):
             score=0.0
         else:
             score=Decimal(tp*tn-fp*fn)/Decimal((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)).sqrt()
@@ -929,10 +953,7 @@ class maskMetrics:
             #for all thresholds
             rownum=0
             for th in thresholds:
-                tmask = sys.get_copy()
-                tmask.matrix = tmask.binarize(th)
-                thismet = maskMetrics(ref,tmask,w,th)
-
+                thismet = maskMetrics(ref,sys,w,th)
                 thresMets.set_value(rownum,'Threshold',th)
                 thresMets.set_value(rownum,'NMM',thismet.nmm)
                 thresMets.set_value(rownum,'MCC',thismet.mcc)
@@ -947,6 +968,25 @@ class maskMetrics:
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
         thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
+        if popt==1:
+            maxMets = thresMets.query("Threshold=={}".format(tmax))
+            maxNMM = maxMets.iloc[0]['NMM']
+            maxMCC = maxMets.iloc[0]['MCC']
+            maxBWL1 = maxMets.iloc[0]['BWL1']
+            if (maxNMM==1) or (maxNMM==-1):
+                print("NMM: %d" % maxNMM)
+            else:
+                print("NMM: %0.3f" % maxNMM)
+            if (maxMCC==1) or (maxMCC==-1):
+                print("MCC: %d" % maxMCC)
+            else:
+                print("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
+            if (maxBWL1==1) or (maxBWL1==0):
+                print("BWL1: %d" % maxBWL1)
+            else:
+                print("Binary Weighted L1: %0.3f" % maxBWL1)
+            
+
         return thresMets,tmax
 
 
