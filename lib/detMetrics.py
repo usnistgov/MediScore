@@ -258,10 +258,10 @@ class Metrics:
         for i in range(0, len(fpr)):
             # Starting d' calculation
             #avoid d' infinity
-            if tpr[i] == 1: tpr[i] =0.9975
-            if fpr[i] == 1: fpr[i] =0.9975
-            if tpr[i] == 0: tpr[i] =0.0025
-            if fpr[i] == 0: fpr[i] =0.0025
+#            if tpr[i] == 1: tpr[i] =0.9975
+#            if fpr[i] == 1: fpr[i] =0.9975
+#            if tpr[i] == 0: tpr[i] =0.0025
+#            if fpr[i] == 0: fpr[i] =0.0025
             d.append(Z(tpr[i]) - Z(fpr[i]))
             beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
 

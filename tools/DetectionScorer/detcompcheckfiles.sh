@@ -156,7 +156,7 @@ fi
 
 if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c1_flag5 == 0 ]) ; then
 	echo
-	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 1."
+	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED."
 	echo
   if [ $clean = "TRUE" ] ; then
     rm -rf testcases
@@ -164,7 +164,7 @@ if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c
 	fi
 else
 	echo
-	echo "DETECTION SCORER TESTS FAILED FOR CASE 1 !!!"
+	echo "DETECTION SCORER TESTS FAILED!!!"
 	echo
 fi
 

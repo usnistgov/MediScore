@@ -145,6 +145,7 @@ if __name__ == '__main__':
 
 
         args = parser.parse_args()
+        #print("Namespace :\n{}\n".format(args))
 
         # Verbosity option
         if args.verbose:
@@ -160,9 +161,7 @@ if __name__ == '__main__':
 
         if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
             print("ERROR: The multiFigs option is not available without query options.")
-            exit(1)
-
-        print("Namespace :\n{}\n".format(args))
+            exit(1)  
 
         # Loading the reference file
         try:
