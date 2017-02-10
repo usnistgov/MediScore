@@ -56,6 +56,16 @@ if __name__ == '__main__':
                 raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
             return x
 
+        def restricted_ci_value(x):
+            if x == '':
+                raise argparse.ArgumentTypeError("{0} not provided".format(x))
+
+            x = float(x)
+            if x <= 0.8 or x >= 0.99:
+                raise argparse.ArgumentTypeError("%r not in range [0.80, 0.99]"%(x,))
+
+            return x
+
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
         #Task Type Options
@@ -72,21 +82,26 @@ if __name__ == '__main__':
                             help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character')
                             #type=lambda x: is_file(parser, x))# Mandatory
 
-        parser.add_argument('-x','--inIndex',default='', type=is_file_specified,
+        parser.add_argument('-x','--inIndex', default='', type=is_file_specified,
                             help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
 
-        parser.add_argument('--sysDir',default='.',
+        parser.add_argument('--sysDir', default='.',
                             help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character') #Optional
 
-        parser.add_argument('-s','--inSys',default='', type=is_file_specified,
+        parser.add_argument('-s','--inSys', default='', type=is_file_specified,
                             help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
 
         # Metric Options
-        parser.add_argument('--farStop',type=restricted_float, default = 1,
+        parser.add_argument('--farStop', type=restricted_float, default = 1,
                             help="Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
 
+        #TODO: relation between ci and ciLevel
         parser.add_argument('--ci', action='store_true',
                             help="Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.")
+
+        parser.add_argument('--ciLevel', type=restricted_ci_value, default = 0.9,
+                            help="Calculate the lower and upper confidence interval with the specified confidence level, The option will slowdown the speed due to the bootstrapping method.", metavar='float')
+
 
         # Output Options
         parser.add_argument('--outRoot',default='.',
@@ -147,7 +162,7 @@ if __name__ == '__main__':
             print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
-        #print("Namespace :\n{}\n".format(args))
+        print("Namespace :\n{}\n".format(args))
 
         # Loading the reference file
         try:
@@ -259,7 +274,7 @@ if __name__ == '__main__':
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI=args.ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -278,7 +293,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI=args.ci)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -344,8 +359,8 @@ if __name__ == '__main__':
 
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
-            for curve_opts,query in zip(opts_list,selection.part_query_list):
-                curve_opts["label"] = query
+            for curve_opts, query, dm in zip(opts_list,selection.part_query_list, DM_List):
+                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
@@ -371,7 +386,8 @@ if __name__ == '__main__':
         task = 'manipulation'
         outRoot = './test/sys_01'
         farStop = 1
-        ci = False
+        ci = True
+        ciLevel = 0.9
         plotType = 'roc'
         display = True
         multiFigs = False
@@ -379,8 +395,8 @@ if __name__ == '__main__':
         verbose = False
         args_queryManipulation = None
         args_query = None
-        args_queryPartition = None
-#        queryManipulation = "Purpose ==['remove', 'splice', 'add']"
+        #args_queryPartition = None
+        args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
@@ -394,15 +410,6 @@ if __name__ == '__main__':
         if (not args_query) and (not args_queryPartition) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without querys options.")
             exit(1)
-
-#        if task == 'manipulation':
-#            refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
-#            indexFname = "indexes/NC2016-manipulation-index.csv"
-#            sysFname = "../../data/SystemOutputs/results/dct02.csv"
-#        if task == 'splice':
-#            refFname = "reference/splice/NC2016-splice-ref.csv"
-#            indexFname = "indexes/NC2016-splice-index.csv"
-#            sysFname = "../../data/SystemOutputs/splice0608/results.csv"
 
         if task == 'manipulation':
             inRef = "NC2017-1215/NC2017-manipulation-ref.csv"
@@ -547,7 +554,7 @@ if __name__ == '__main__':
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
@@ -565,7 +572,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel)
             #print("*****d-prime {} dpoint{}".format(DM.d, DM.dpoint))
 
             DM_List = [DM]
@@ -629,10 +636,16 @@ if __name__ == '__main__':
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
 
+#        # Renaming the curves for the legend
+#        if args_query or args_queryPartition or args_queryManipulation:
+#            for curve_opts,query in zip(opts_list,selection.part_query_list):
+#                curve_opts["label"] = query
+
         # Renaming the curves for the legend
         if args_query or args_queryPartition or args_queryManipulation:
-            for curve_opts,query in zip(opts_list,selection.part_query_list):
-                curve_opts["label"] = query
+            for curve_opts, query, dm in zip(opts_list,selection.part_query_list, DM_List):
+                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ")"
+                print("DM {}".format(curve_opts["label"]))
 
 
         # Creation of the object setRender (~DetMetricSet)
