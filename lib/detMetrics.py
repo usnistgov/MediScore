@@ -17,7 +17,7 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
@@ -31,17 +31,6 @@ class detMetrics:
 #        self.fpr2, self.tpr2, self.fnr2, self.thres2 = self.compute_points_donotuse(score, gt)
 #        print("({0:.1f}s)".format(time.time() - s))
 
-#        s = time.time()
-#        print("Computing points with sk...")
-#        sys.stdout.flush()
-#        self.fpr, self.tpr, self.fnr, self.thres = self.compute_points_sk(score, gt)
-#        fpr2, tpr2, fnr2, thres2 = self.compute_points_sk(score, gt)
-#        print("({0:.1f}s)".format(time.time() - s))
-#        print("Comparison : fpr({}), tpr({}), fnr({}), thres({})".
-#              format(np.array_equal(self.fpr, fpr2),
-#                     np.array_equal(self.tpr, tpr2),
-#                     np.array_equal(self.fnr, fnr2),
-#                     np.array_equal(self.thres, thres2)))
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
         self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr)
@@ -53,7 +42,7 @@ class detMetrics:
         self.ci_tpr = 0
 
         if isCI:
-            self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(score, gt)
+            self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(score, gt, ciLevel)
 
         self.fpr_stop = fpr_stop
 #        detMetrics.dm_id += 1
@@ -199,7 +188,7 @@ class Metrics:
 
     # TODO: need to validate this and make command-line inputs
     @staticmethod
-    def compute_ci(score, gt, lower_bound =0.05, upper_bound=0.95):
+    def compute_ci(score, gt, ci_level):
         """ compute the confidence interval for AUC
         score: system output scores
         gt: ground-truth for given trials
@@ -211,7 +200,9 @@ class Metrics:
 #        mean = np.mean(score)
 #        size = len(score) - 1
 #        return abs(mean - st.t.interval(prob, size, loc=mean, scale=st.sem(score))[1])
-#
+
+        lower_bound = round((1.0 - float(ci_level))/2.0, 3)
+        upper_bound = round((1.0 - lower_bound), 3)
         n_bootstraps = 500
         rng_seed = 77  # control reproducibility
         bootstrapped_auc = []
@@ -242,7 +233,7 @@ class Metrics:
         sorted_aucs = sorted(bootstrapped_auc)
         #print("sorted AUCS {}".format(sorted_aucs))
 
-        # Computing the lower and upper bound of the 90% confidence interval
+        # Computing the lower and upper bound of the 90% confidence interval (default)
         # You can change the bounds percentiles to 0.025 and 0.975 to get
         # a 95% confidence interval instead.
         ci_lower = sorted_aucs[int(lower_bound * len(sorted_aucs))]
@@ -284,10 +275,8 @@ class Metrics:
         b_max_point = (fpr[b_idx], tpr[b_idx])
 
         #print("beta{}".format(beta))
-        print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
-        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
-#        print("tpr{}".format(tpr))
-#        print("fpr{}".format(fpr))
+#        print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
+#        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
 
         return max(d), d_max_point, max(beta), b_max_point
 
@@ -316,59 +305,11 @@ class Metrics:
         a_idx = a.index(max(a))
         a_max_point = (fpr[a_idx], tpr[a_idx])
 
-        print("a- {} amax- {} idx- {} apoint- {}".format(a, max(a), a_idx, a_max_point))
+        #print("a- {} amax- {} idx- {} apoint- {}".format(a, max(a), a_idx, a_max_point))
 #        print("tpr{}".format(tpr))
 #        print("fpr{}".format(fpr))
 
         return max(a), a_max_point
 
-
-#            # Calculate d-prime and beta
-#    @staticmethod
-#    def compute_dprime2(tpr, fpr):
-#        """ computes the d-prime given TPR and FPR values
-#        tpr: true positive rates
-#        fpr: false positive rates"""
-#        from scipy import stats
-#        z_tpr = stats.zscore(tpr)
-#        z_fpr = stats.zscore(fpr)
-#
-#        d = [ z_tpr[i] - z_fpr[i] for i in range(0, len(fpr)) ]
-#        beta = [ exp(z_fpr[i]**2 - z_tpr[i]**2)/2 for i in range(0, len(fpr)) ]
-#        c = [ -(z_tpr[i] - z_fpr[i])/2 for i in range(0, len(fpr)) ]
-#        idx = d.index(max(d))
-#        d_max_point = (tpr[idx], fpr[idx])
-#        print("d-prime max points {},{}".format(tpr[idx], fpr[idx]))
-#        return d, beta, z_tpr, z_fpr, d_max_point
-#
-#
-#
-#        # Test
-#
-#import numpy as np
-#m1 = np.mean(tpr1)
-#m2 = np.mean(fpr1)
-#s1 = np.std(tpr1)
-#s2 = np.std(fpr1)
-#
-#z1 = [ (tpr1[i] - m1)/s1 for i in range(0, len(tpr1)) ]
-#z2 = [ (fpr1[i] - m2)/s2 for i in range(0, len(fpr1)) ]
-#
-#a = [ z1[i]-z2[i] for i in range(0, len(fpr1)) ]
-#
-#from scipy import stats
-#zz1 = stats.zscore(tpr)
-#
-#
-#from scipy import stats
-#z_tpr = stats.zscore(tpr)
-#z_fpr = stats.zscore(fpr)
-#
-#d = [ z_tpr[i] - z_fpr[i] for i in range(0, len(fpr)) ]
-#beta = [ exp(z_fpr[i]**2 - z_tpr[i]**2)/2 for i in range(0, len(fpr)) ]
-#c = [ -(z_tpr[i] - z_fpr[i])/2 for i in range(0, len(fpr)) ]
-#idx = d.index(max(d))
-#d_max_point = [tpr[idx], fpr[idx]]
-#
 #fpr1 = [.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987]
 #tpr1 = [0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772]
