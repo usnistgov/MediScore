@@ -359,7 +359,7 @@ if __name__ == '__main__':
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts, query, dm in zip(opts_list,selection.part_query_list, DM_List):
-                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ")"
+                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ", T#: "+ str(dm.t_num) + ", NT#: "+ str(dm.nt_num) + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)

@@ -22,7 +22,7 @@ class detMetrics:
 #        s = time.time()
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
-        self.fpr, self.tpr, self.fnr, self.thres = self.compute_points_sk(score, gt)
+        self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = self.compute_points_sk(score, gt)
 #        print("({0:.1f}s)".format(time.time() - s))
 
 #        s = time.time()
@@ -107,7 +107,7 @@ class detMetrics:
 
         fpr, tpr, thres = roc_curve(label, score)
         fnr = 1 - tpr
-        return fpr, tpr, fnr, thres
+        return fpr, tpr, fnr, thres, target_num, nontarget_num
 
     def write(self, file_name):
         """ Save the Dump files (formatted in a binary) that contains
@@ -245,50 +245,55 @@ class Metrics:
 
     # Calculate d-prime and beta
     @staticmethod
-    def compute_dprime(fpr, tpr):
+    def compute_dprime(fpr_a, tpr_a):
         """ computes the d-prime given TPR and FPR values
         tpr: true positive rates
         fpr: false positive rates"""
         from scipy.stats import norm
         from math import exp
 
+        fpr = list(fpr_a)
+        tpr = list(tpr_a)
         Z = norm.ppf
         d = []
         beta = []
         for i in range(0, len(fpr)):
             # Starting d' calculation
             #avoid d' infinity
-#            if tpr[i] == 1: tpr[i] =0.9975
-#            if fpr[i] == 1: fpr[i] =0.9975
-#            if tpr[i] == 0: tpr[i] =0.0025
-#            if fpr[i] == 0: fpr[i] =0.0025
+            if tpr[i] == 1: tpr[i] =0.9975
+            if fpr[i] == 1: fpr[i] =0.9975
+            if tpr[i] == 0: tpr[i] =0.0025
+            if fpr[i] == 0: fpr[i] =0.0025
             d.append(Z(tpr[i]) - Z(fpr[i]))
             beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
 
         #d = [ Z(tpr[i]) - Z(fpr[i]) for i in range(0, len(fpr)) ]
         #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
         #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
-        d_idx = d.index(max(d))
+
+        d_idx = d.index(max(d))       
         d_max_point = (fpr[d_idx], tpr[d_idx])
 
         b_idx = beta.index(max(beta))
         b_max_point = (fpr[b_idx], tpr[b_idx])
 
         #print("beta{}".format(beta))
-#        print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
+#       print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
 #        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
 
         return max(d), d_max_point, max(beta), b_max_point
 
 
     @staticmethod
-    def compute_aprime(fpr, tpr):
+    def compute_aprime(fpr_a, tpr_a):
         """ computes the d-prime given TPR and FPR values
         tpr: true positive rates
         fpr: false positive rates"""
         from scipy.stats import norm
         from math import exp
 
+        fpr = list(fpr_a)
+        tpr = list(tpr_a)
         Z = norm.ppf
         a = []
         for i in range(0, len(fpr)):
@@ -311,5 +316,5 @@ class Metrics:
 
         return max(a), a_max_point
 
-#fpr1 = [.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987]
-#tpr1 = [0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772]
+#fpr1 = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
+#tpr1 = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]

@@ -104,7 +104,7 @@ class Render:
                 plt.plot(DM.fpr, DM.tpr+DM.ci_tpr, 'k--')
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
                 #TODO: add number of data
-                plt.annotate("AUC = %.2f at FAR = %.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.3), xycoords='data', xytext=(0.7,0.3), textcoords='data',
+                plt.annotate("AUC=%.2f at FAR=%.2f\n(Target#: %d, NonTarget#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
