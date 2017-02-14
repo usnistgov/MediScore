@@ -1,5 +1,5 @@
-ProbeFileID|DonorFileID|ConfidenceScore|OutputProbeMaskFileName|OutputDonorMaskFileName
-"NC2016_1893"|"NC2016_1993"|"6749"|"mask/NC2016_1893.jpg"|"mask/NC2016_1993-mask.png"
-"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"
-"NC2016_5847"|"NC2016_6847"|"398077"|"mask/NC2016_5847-mask.png"|"mask/NC2016_6847-mask.jpg"
-"NC2016_7432"|"NC2016_7442"|"0"|"mask/foo.png"|"mask/bar.png"
+ProbeFileID|DonorFileID|ConfidenceScore|OutputProbeMaskFileName|OutputDonorMaskFileName|OptOut
+"NC2016_1893"|"NC2016_1993"|"6749"|"mask/NC2016_1893.jpg"|"mask/NC2016_1993-mask.png"|n
+"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"|n
+"NC2016_5847"|"NC2016_6847"|"398077"|"mask/NC2016_5847-mask.png"|"mask/NC2016_6847-mask.jpg"|n
+"NC2016_7432"|"NC2016_7442"|"0"|"mask/foo.png"|"mask/bar.png"|n

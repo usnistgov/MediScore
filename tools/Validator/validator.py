@@ -149,25 +149,28 @@ class SSD_Validator(validator):
         scoreFlag = 0
         maskFlag = 0
         
-        if sysfile.shape[1] != 3:
-            printq("ERROR: The number of columns of the system output file must be equal to 3. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 4:
+            printq("ERROR: The number of columns of the system output file must be at least 4. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
 
         for i in range(0,len(truelist)):
-            allClear = allClear and (truelist[i] == sysHeads[i])
+            allClear = allClear and (truelist[i] in sysHeads)
+            if not allClear:
+#                headlist = []
+#                properhl = []
+#                for i in range(0,len(truelist)):
+#                    if sysHeads[i] != truelist[i]:
+#                        headlist.append(sysHeads[i])
+#                        properhl.append(truelist[i]) 
+#                printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
+                printq("ERROR: the required column {} is absent.".format(truelist[i]),True)
+                return 1
 
         if not allClear:
-            headlist = []
-            properhl = []
-            for i in range(0,len(truelist)):
-                if sysHeads[i] != truelist[i]:
-                    headlist.append(sysHeads[i])
-                    properhl.append(truelist[i]) 
-            printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
             return 1
         
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
@@ -268,25 +271,27 @@ class DSD_Validator(validator):
         scoreFlag = 0
         maskFlag = 0
         
-        if sysfile.shape[1] != 5:
+        if sysfile.shape[1] < 6:
             printq("ERROR: The number of columns of the system output file must be equal to 5. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
+        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","OptOut"]
 
         for i in range(0,len(truelist)):
-            allClear = allClear and (truelist[i] == sysHeads[i])
+            allClear = allClear and (truelist[i] in sysHeads)
+            if not allClear:
+    #            headlist = []
+    #            properhl = []
+    #            for i in range(0,len(truelist)):
+    #                if (sysHeads[i] != truelist[i]):
+    #                    headlist.append(sysHeads[i])
+    #                    properhl.append(truelist[i]) 
+    #            printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
+                printq("ERROR: the required column {} is absent.".format(truelist[i]),True)
 
         if not allClear:
-            headlist = []
-            properhl = []
-            for i in range(0,len(truelist)):
-                if (sysHeads[i] != truelist[i]):
-                    headlist.append(sysHeads[i])
-                    properhl.append(truelist[i]) 
-            printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
             return 1
         
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:

@@ -116,12 +116,16 @@ class maskMetricList:
             myProbeID = self.maskData.query("{}MaskFileName=='{}' & Output{}MaskFileName=='{}'".format(mymode,refMaskFName,mymode,sysMaskFName))[mymode + 'FileID'].iloc[0]
             if verbose: print("Fetching {}FileID {} from maskData...".format(mymode,myProbeID))
 
-            color_purpose = self.journalData.query("{}FileID=='{}' & Evaluated=='Y'".format(mymode,myProbeID))[['Color','Purpose']] #get the target colors
-            colorlist = list(color_purpose['Color'])
-            purposes = list(color_purpose['Purpose'])
-            purposes_unique = []
-            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
-            if verbose: print("Initializing reference mask {} with colors {}.".format(refMaskName,colorlist))
+            if self.mode != 2:
+                color_purpose = self.journalData.query("{}FileID=='{}' & Evaluated=='Y'".format(mymode,myProbeID))[['Color','Purpose']] #get the target colors
+                colorlist = list(color_purpose['Color'])
+                purposes = list(color_purpose['Purpose'])
+                purposes_unique = []
+                [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+                if verbose: print("Initializing reference mask {} with colors {}.".format(refMaskName,colorlist))
+            else:
+                colorlist = ['0 0 0']
+                purposes_unique = ['add']
 
             rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
             rImg.binarize(254)

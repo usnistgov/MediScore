@@ -173,7 +173,7 @@ class TestValidator(ut.TestCase):
         self.assertTrue("is not single-channel. Make it single-channel." in errstr)
         print("CASE 6 validated.")
         
-        print("\nCASE 7: Validating behavior when system output column number is not equal to 3.") 
+        print("\nCASE 7: Validating behavior when system output column number is less than 4.") 
         myval = SSD_Validator(validatorRoot + 'foo_NC2016_Manipulation_ImgOnly_p-baseline_3/foo_NC2016_Manipulation_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
         
         with stdout_redirect(StringIO.StringIO()) as errmsg:
@@ -181,7 +181,7 @@ class TestValidator(ut.TestCase):
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
-        self.assertTrue("ERROR: The number of columns of the system output file must be equal to 3. Are you using '|' to separate your columns?" in errstr)
+        self.assertTrue("ERROR: The number of columns of the system output file must be at least 4. Are you using '|' to separate your columns?" in errstr)
         print("CASE 7 validated.")
         
         print("\nCASE 8: Validating behavior when mask file is not present.") 
@@ -293,14 +293,14 @@ class TestValidator(ut.TestCase):
         self.assertTrue("ERROR: The number of rows in the system output does not match the number of rows in the index file." in errstr)
         print("CASE 4 validated.")
         
-        print("\nCase 5: Validating behavior when the number of columns in the system output is not equal to 5.")
+        print("\nCase 5: Validating behavior when the number of columns in the system output is less than 6.")
         myval = DSD_Validator(validatorRoot + 'lorem_NC2016_Splice_ImgOnly_p-baseline_4/lorem_NC2016_Splice_ImgOnly_p-baseline_4.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         with stdout_redirect(StringIO.StringIO()) as errmsg:
             result=myval.fullCheck(True)
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
-        self.assertTrue("ERROR: The number of columns of the system output file must be equal to 5. Are you using '|' to separate your columns?" in errstr)
+        self.assertTrue("ERROR: The number of columns of the system output file must be at least 6. Are you using '|' to separate your columns?" in errstr)
         print("CASE 5 validated.")
         
         print("\nCASE 6: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...")
