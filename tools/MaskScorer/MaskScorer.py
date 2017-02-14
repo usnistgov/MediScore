@@ -102,6 +102,8 @@ parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 
+#TODO: add option for OptOut
+
 args = parser.parse_args()
 verbose=args.verbose
 

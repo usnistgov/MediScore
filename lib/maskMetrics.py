@@ -375,17 +375,18 @@ class maskMetricList:
         mymode = 'Probe'
         if self.mode == 2:
             mymode = 'Donor'
+        else:
+            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color','Evaluated']]
+            jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
-        jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color','Evaluated']]
-       
-        #make those color cells empty with only the color as demonstration
-        jDataColors = list(jdata['Color'])
-        jDataColArrays = [x[::-1] for x in [c.split(' ') for c in jDataColors]]
-        jDataColArrays = [[int(x) for x in c] for c in jDataColArrays]
-        jDataHex = pd.Series([self.num2hex(c) for c in jDataColArrays],index=jdata.index) #match the indices
-        jdata['Color'] = 'td bgcolor="#' + jDataHex + '"btd'
-        jtable = jdata.to_html(index=False)
-        jtable = jtable.replace('<td>td','<td').replace('btd','>') #TODO: eventually substitute with a plot from matplotlib based off of jtable for MCC
+            #make those color cells empty with only the color as demonstration
+            jDataColors = list(jdata['Color'])
+            jDataColArrays = [x[::-1] for x in [c.split(' ') for c in jDataColors]]
+            jDataColArrays = [[int(x) for x in c] for c in jDataColArrays]
+            jDataHex = pd.Series([self.num2hex(c) for c in jDataColArrays],index=jdata.index) #match the indices
+            jdata['Color'] = 'td bgcolor="#' + jDataHex + '"btd'
+            jtable = jdata.to_html(index=False)
+            jtable = jtable.replace('<td>td','<td').replace('btd','>')
         
         totalpx = np.sum(mywts==1)
         totalbns = np.sum(bwts==0)
@@ -393,7 +394,7 @@ class maskMetricList:
 
         thresString = ''
         if len(thresMets) > 1:
-            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3}) #TODO: eventually substitute with a plot from matplotlib based off of thresMets for MCC
             thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
