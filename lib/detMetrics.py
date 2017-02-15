@@ -34,7 +34,7 @@ class detMetrics:
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
         self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr)
-        self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
+        #self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
         #print ("fpr_stop test:".format(fpr_stop))
 
         self.ci_lower = 0
@@ -271,7 +271,7 @@ class Metrics:
         #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
         #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
 
-        d_idx = d.index(max(d))       
+        d_idx = d.index(max(d))
         d_max_point = (fpr[d_idx], tpr[d_idx])
 
         b_idx = beta.index(max(beta))

@@ -138,6 +138,11 @@ if __name__ == '__main__':
         factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
                                   help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
+
+        parser.add_argument('--optOut', action='store_true',
+                            help="measure algorithm performance on trials in where the IsOptOut valuse is Y ")
+
+
         #TBD: may need this one for provenance filtering
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
@@ -161,7 +166,7 @@ if __name__ == '__main__':
 
         if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
             print("ERROR: The multiFigs option is not available without query options.")
-            exit(1)  
+            exit(1)
 
         # Loading the reference file
         try:
@@ -238,7 +243,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
          # Partition Mode
-        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args.query or args.queryPartition or args.queryManipulation or args.optOut: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
@@ -270,6 +275,12 @@ if __name__ == '__main__':
             elif args.queryManipulation:
                 query_mode = 'qm'
                 query = args.queryManipulation
+
+            if args.optOut:
+                query_mode = 'q'
+                query = ["IsOptOut ==['Y']"]
+                print("optout {}".format(query))
+
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
