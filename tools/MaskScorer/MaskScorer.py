@@ -434,9 +434,11 @@ elif args.task == 'splice':
     for qnum,q in enumerate(queryM):
         m_dfc = m_df.copy()
         if args.queryManipulation:
-            journalData0['Evaluated'] = pd.Series(['N']*n_journals)
+            journalData0['ProbeEvaluated'] = pd.Series(['N']*n_journals)
+            journalData0['DonorEvaluated'] = pd.Series(['N']*n_journals)
         else:
-            journalData0['Evaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
+            journalData0['ProbeEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
+            journalData0['DonorEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
 
         journalData = journalData0.copy()
 
@@ -449,14 +451,17 @@ elif args.task == 'splice':
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
 
-            #do a join with the big dataframe and filter out the stuff that doesn't show up
+            #do a join with the big dataframe and filter out the stuff that doesn't show up by pairs
             m_dfc = pd.merge(m_dfc,big_df[['ProbeFileID','DonorFileID']],how='left',on=['ProbeFileID','DonorFileID','JournalID']).dropna().drop('JournalID',1)
-            journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
-            journalData0.loc[journalData0.query("ProbeFileID=={} & DonorFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.ProbeFileID),\
-                                                                                                                           list(big_df.DonorFileID),\
+            journalData = pd.merge(journalData,big_df[['ProbeFileID','DonorFileID','JournalID']],how='left',on=['ProbeFileID','DonorFileID','JournalID'])
+            journalData0.loc[journalData0.query("ProbeFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.ProbeFileID),\
                                                                                                                            list(big_df.JournalID),\
                                                                                                                            list(big_df.StartNodeID),\
-                                                                                                                           list(big_df.EndNodeID))).index,'Evaluated'] = 'Y'
+                                                                                                                           list(big_df.EndNodeID))).index,'ProbeEvaluated'] = 'Y'
+            journalData0.loc[journalData0.query("DonorFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.DonorFileID),\
+                                                                                                                           list(big_df.JournalID),\
+                                                                                                                           list(big_df.StartNodeID),\
+                                                                                                                           list(big_df.EndNodeID))).index,'DonorEvaluated'] = 'Y'
             m_dfc.index = range(0,len(m_dfc))
             journalData.index = range(0,len(journalData))
 
@@ -472,6 +477,9 @@ elif args.task == 'splice':
                 os.system('mkdir ' + outRootQuery)
    
         r_df = mr.createReportDSD(m_dfc,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('pMCC == -2')['ProbeFileID'].tolist()),'ProbeEvaluated'] = 'N'
+        journalData0.loc[journalData0.DonorFileID.isin(r_df.query('dMCC == -2')['DonorFileID'].tolist()),'DonorEvaluated'] = 'N'
+        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
     
         #reorder r_df's columns. Names first, then scores, then other metadata

@@ -116,8 +116,12 @@ class maskMetricList:
             myProbeID = self.maskData.query("{}MaskFileName=='{}' & Output{}MaskFileName=='{}'".format(mymode,refMaskFName,mymode,sysMaskFName))[mymode + 'FileID'].iloc[0]
             if verbose: print("Fetching {}FileID {} from maskData...".format(mymode,myProbeID))
 
+            evalcol='Evaluated'
             if self.mode != 2:
-                color_purpose = self.journalData.query("{}FileID=='{}' & Evaluated=='Y'".format(mymode,myProbeID))[['Color','Purpose']] #get the target colors
+                if self.mode == 1:
+                    evalcol='ProbeEvaluated'
+
+                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']] #get the target colors
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -167,6 +171,12 @@ class maskMetricList:
         if self.mode==2:
             mymode='Donor'
 
+        evalcol='Evaluated'
+        if self.mode == 1:
+            evalcol='ProbeEvaluated'
+        elif self.mode == 2:
+            evalcol='DonorEvaluated'
+
         reflist = self.maskData[mymode+'MaskFileName']
         syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
 
@@ -194,7 +204,7 @@ class maskMetricList:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
-                    self.journalData.set_value(i,'Evaluated','N')
+                    self.journalData.set_value(i,evalcol,'N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
@@ -376,7 +386,11 @@ class maskMetricList:
         if self.mode == 2:
             mymode = 'Donor'
         else:
-            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color','Evaluated']]
+            evalcol='Evaluated'
+            if self.mode == 1:
+                evalcol='ProbeEvaluated'
+
+            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color',evalcol]]
             jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration

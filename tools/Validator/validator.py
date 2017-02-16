@@ -39,19 +39,8 @@ import sys
 import os
 import cv2
 import numpy as np
-import pandas as pd
+import pandas as pd #TODO: read as csv stream instead?
 from abc import ABCMeta, abstractmethod
-
-verbose=None
-if verbose==1:
-    def printq(mystring,iserr=False):
-        print(mystring)
-elif verbose==0:
-    printq = lambda *x : None
-else:
-    def printq(mystring,iserr=False):
-        if iserr:
-            print(mystring)
 
 class validator:
     __metaclass__ = ABCMeta
@@ -116,21 +105,14 @@ class SSD_Validator(validator):
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
-        arrSplit = sysfName.split('_')
-        #team,ncid,task,condition,sys,version = sysfName.split('_')
-        team = arrSplit[0]
-        ncid = arrSplit[1]
-        task = arrSplit[2]
-        condition = arrSplit[3]
-        sys = arrSplit[4]
-        version = arrSplit[5] 
+        team,ncid,data,task,condition,sys,version = sysfName.split('_')
     
         if ('+' in team) or (team == ''):
             printq("ERROR: The team name must not include characters + or _",True)
             teamFlag = 1
-    
-        if (task != 'Manipulation') and (task != 'Removal') and (task != 'Clone'):
-            printq('ERROR: What kind of task is ' + task + '? It should be Manipulation, Removal, or Clone!',True)
+        task = task.lower()
+        if (task != 'manipulation') and (task != 'provenance') and (task != 'provenancefiltering'):
+            printq('ERROR: What kind of task is ' + task + '? It should be manipulation, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
         if (taskFlag == 0) and (teamFlag == 0):
@@ -149,13 +131,14 @@ class SSD_Validator(validator):
         scoreFlag = 0
         maskFlag = 0
         
-        if sysfile.shape[1] < 4:
-            printq("ERROR: The number of columns of the system output file must be at least 4. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 3:
+            printq("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
+#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
+        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -209,7 +192,7 @@ class SSD_Validator(validator):
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                 continue
-            maskFlag = maskFlag | maskCheck1(sysPath + "/" + sysfile['OutputProbeMaskFileName'][i],sysfile['ProbeFileID'][i],idxfile)
+            maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile)
         
         #final validation
         if (scoreFlag == 0) and (maskFlag == 0):
@@ -239,20 +222,15 @@ class DSD_Validator(validator):
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
-        arrSplit = sysfName.split('_')
-        team = arrSplit[0]
-        ncid = arrSplit[1]
-        task = arrSplit[2]
-        condition = arrSplit[3]
-        sys = arrSplit[4]
-        version = arrSplit[5] 
+        team,ncid,data,task,condition,sys,version = sysfName.split('_')
     
         if '+' in team or team == '':
             printq("ERROR: The team name must not include characters + or _",True)
             teamFlag = 1
     
-        if task != 'Splice':
-            printq('ERROR: What kind of task is ' + task + '? It should be Splice!',True)
+        task = task.lower()
+        if task != 'splice':
+            printq('ERROR: What kind of task is ' + task + '? It should be splice!',True)
             taskFlag = 1
     
         if (taskFlag == 0) and (teamFlag == 0):
@@ -261,6 +239,7 @@ class DSD_Validator(validator):
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
+    #TODO: revise contentcheck to read csv line by line
     def contentCheck(self):
         printq('Validating the syntactic content of the system output.')
         idxfile = pd.read_csv(self.idxname,sep='|')
@@ -271,13 +250,14 @@ class DSD_Validator(validator):
         scoreFlag = 0
         maskFlag = 0
         
-        if sysfile.shape[1] < 6:
-            printq("ERROR: The number of columns of the system output file must be equal to 5. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 5:
+            printq("ERROR: The number of columns of the system output file must be at least 5. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","OptOut"]
+        #truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","OptOut"]
+        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -346,7 +326,7 @@ class DSD_Validator(validator):
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
                 printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping this pair.")
                 continue
-            maskFlag = maskFlag | maskCheck2(sysPath + "/" + probeOutputMaskFileName,sysPath + "/" + donorOutputMaskFileName,sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i)
+            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i)
         
         #final validation
         if (scoreFlag == 0) and (maskFlag == 0):
@@ -472,6 +452,15 @@ if __name__ == '__main__':
 
         args = parser.parse_args()
         verbose = args.verbose
+        if verbose==1:
+            def printq(mystring,iserr=False):
+                print(mystring)
+        elif verbose==0:
+            printq = lambda *x : None
+        else:
+            def printq(mystring,iserr=False):
+                if iserr:
+                    print(mystring)
 
         if (args.valtype == 'SSD'):
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
