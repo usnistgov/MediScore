@@ -110,9 +110,9 @@ class Render:
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
 #                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
                 plt.annotate("d' = %.2f" %(DM.d),xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data',
-                             xytext=(DM.dpoint[0]+0.1, DM.dpoint[1]+0.1), textcoords='data',
-                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
-                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                             xytext=(DM.dpoint[0]+0.2, DM.dpoint[1]+0.2), textcoords='data',
+                             arrowprops=dict(arrowstyle="->",connectionstyle="angle3,angleA=0,angleB=-90"), #http://matplotlib.org/examples/pylab_examples/annotation_demo2.html
+                             size=8, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 #                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
 #                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',

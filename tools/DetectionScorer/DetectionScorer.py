@@ -114,7 +114,7 @@ if __name__ == '__main__':
                             help="Print output with procedure messages on the command-line if this option is specified.")
 
         # Plot Options
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
+        parser.add_argument('--plotType',default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
 
         parser.add_argument('--display', action='store_true',
@@ -138,9 +138,8 @@ if __name__ == '__main__':
         factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
                                   help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
-
         parser.add_argument('--optOut', action='store_true',
-                            help="measure algorithm performance on trials in where the IsOptOut valuse is Y ")
+                            help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
 
         #TBD: may need this one for provenance filtering
@@ -232,6 +231,10 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+        ## if OptOut has chosen, all of queries should be applied
+        if args.optOut:
+            m_df = m_df.query(" IsOptOut=='N' ")
+
         # the performers' result directory
         if '/' not in args.outRoot:
             root_path = '.'
@@ -243,7 +246,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
          # Partition Mode
-        if args.query or args.queryPartition or args.queryManipulation or args.optOut: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
@@ -275,11 +278,6 @@ if __name__ == '__main__':
             elif args.queryManipulation:
                 query_mode = 'qm'
                 query = args.queryManipulation
-
-            if args.optOut:
-                query_mode = 'q'
-                query = ["IsOptOut ==['Y']"]
-                print("optout {}".format(query))
 
 
             v_print("Query : {}\n".format(query))
@@ -325,12 +323,17 @@ if __name__ == '__main__':
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
 
 
-        if os.path.isfile(dict_plot_options_path_name):
+        # Fixed: if plotType is indicated, then should be generated.
+        if args.plotType =='' and os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            args.plotType = plot_opts['plot_type']
         else:
+            if args.plotType =='':
+                args.plotType = 'roc'
             p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+
 
         # opening of the plot_options json config file from command-line
         if args.configPlot:
@@ -369,7 +372,7 @@ if __name__ == '__main__':
 
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
-            for curve_opts, query, dm in zip(opts_list,selection.part_query_list, DM_List):
+            for curve_opts, query, dm in zip(opts_list, selection.part_query_list, DM_List):
                 curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ", T#: "+ str(dm.t_num) + ", NT#: "+ str(dm.nt_num) + ")"
 
         # Creation of the object setRender (~DetMetricSet)
@@ -394,7 +397,7 @@ if __name__ == '__main__':
         refDir = '/Users/yunglee/YYL/MEDIFOR/data'
         sysDir = '../../data/test_suite/detectionScorerTests'
         task = 'manipulation'
-        outRoot = './test/sys_01'
+        outRoot = './testcases/sys_01'
         farStop = 1
         ci = True
         ciLevel = 0.9
@@ -403,10 +406,11 @@ if __name__ == '__main__':
         multiFigs = False
         dump = False
         verbose = False
+        args_optOut =True
         args_queryManipulation = None
         args_query = None
-        #args_queryPartition = None
-        args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
+        args_queryPartition = None
+        #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
@@ -426,7 +430,9 @@ if __name__ == '__main__':
             inIndex = "NC2017-1215/NC2017-manipulation-index.csv"
             inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
             inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-            inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+            #inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+            inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01_optout.csv"
+            #inSys = "Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv"
 
 
         # Loading the reference file
@@ -508,6 +514,9 @@ if __name__ == '__main__':
         m_df[pd.isnull(m_df['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+
+        if args_optOut:
+            m_df = m_df.query(" IsOptOut=='N' ")
 
         # the performers' result directory
         if '/' not in outRoot:
