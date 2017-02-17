@@ -312,6 +312,7 @@ class DSD_Validator(validator):
                         #check number of headers
                         printq("ERROR: The number of columns of the system output file must be at least 5. Are you using '|' to separate your columns?",True)
                         return 1
+                    s_headnames[-1] = s_headnames[-1].replace("\n","").replace("\r","")
                     allClear = True
                     truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
                     for th in truelist:
@@ -360,8 +361,8 @@ class DSD_Validator(validator):
                             with open("row.txt") as row:
                                 for m in row:
                                     m_content = m.split('|')
-                                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']].replace("\"","")
-                                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']].replace("\"","")
+                                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
+                                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
                                     probeWidth = int(m_content[i_heads['ProbeWidth']].replace("\"",""))
                                     probeHeight = int(m_content[i_heads['ProbeHeight']].replace("\"",""))
                                     donorWidth = int(m_content[i_heads['DonorWidth']].replace("\"",""))
@@ -519,15 +520,13 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
     printq("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
 
     #check to see if index file input image files are consistent with system output
-    pmask_pieces = pmaskname.split('.')
-    pmask_ext = pmask_pieces[-1]
-    if pmask_ext != 'png':
+    pmask_pieces,pmask_ext = os.path.splitext(pmaskname)
+    if pmask_ext != '.png':
         printq('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum),True)
         return 1
 
-    dmask_pieces = dmaskname.split('.')
-    dmask_ext = dmask_pieces[-1]
-    if dmask_ext != 'png':
+    dmask_pieces,dmask_ext = os.path.splitext(dmaskname)
+    if dmask_ext != '.png':
         printq('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum),True)
         return 1
 
