@@ -357,7 +357,7 @@ class DSD_Validator(validator):
                     try:
                         indRec = ind[key]
                     except KeyError:
-                        printq("ERROR: The pair ({},{}) does not exist in the index file.",format(probeID,donorID),True)
+                        printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
                         keyFlag = 1
                         continue
 
@@ -365,7 +365,6 @@ class DSD_Validator(validator):
                     probeHeight = int(indRec[i_heads['ProbeHeight']])
                     donorWidth = int(indRec[i_heads['DonorWidth']])
                     donorHeight = int(indRec[i_heads['DonorHeight']])
-
 
                     maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx)
 
@@ -509,7 +508,6 @@ class DSD_Validator(validator):
         #final validation
         if maskFlag==0:
             printq("The contents of your file are valid!")
-            os.system("rm tmp.txt row.txt") #cleanup
         else:
             printq("The contents of your file are not valid!",True)
             return 1
