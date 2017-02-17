@@ -361,7 +361,6 @@ class DSD_Validator(validator):
                         keyFlag = 1
                         continue
 
-
                     probeWidth = int(indRec[i_heads['ProbeWidth']])
                     probeHeight = int(indRec[i_heads['ProbeHeight']])
                     donorWidth = int(indRec[i_heads['DonorWidth']])
