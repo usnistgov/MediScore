@@ -275,6 +275,7 @@ class DSD_Validator(validator):
         dupFlag = 0
         xrowFlag = 0
         maskFlag = 0
+        keyFlag = 0
 
         i_len = 0
         s_len = 0 #number of elements in iterator
@@ -301,18 +302,35 @@ class DSD_Validator(validator):
                         i_heads[h.replace('\n','')] = i
                 else: break
 
+        idxPath = os.path.dirname(self.idxname)
+        ind = {}
+        with open(self.idxname) as idxfile:
+            for idx,l in enumerate(idxfile):
+                #print "Process index " + str(idx) + " " + l
+                if idx == 0:
+                    i_headnames = l.rstrip().split('|')
+                    for i,h in enumerate(i_headnames):
+                        i_heads[h.replace('\n','')] = i
+                else:
+                    i_data = l.rstrip().split('|')
+                    #print i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]
+                    ind[i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]] = i_data                    
+
+        printq("Index read")
+
         sysPath = os.path.dirname(self.sysname)
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
+                printq("Process {} ".format(idx) + l)
+
                 if idx == 0:
                     #parse headers
-                    s_headnames = l.split('|')
+                    s_headnames = l.rstrip().split('|')
                     #header checking
                     if len(s_headnames) < 5:
                         #check number of headers
                         printq("ERROR: The number of columns of the system output file must be at least 5. Are you using '|' to separate your columns?",True)
                         return 1
-                    s_headnames[-1] = s_headnames[-1].replace("\n","").replace("\r","")
                     allClear = True
                     truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
                     for th in truelist:
@@ -324,61 +342,80 @@ class DSD_Validator(validator):
             
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
-                        s_heads[h.replace('\n','')] = i
+                        s_heads[h] = i
                 else:
                     #for non-headers
-                    if l not in s_lines:
-                        #check for duplicate rows. Append to empty list at every opportunity for now
-                        s_lines.append(l)
-                    else:
-                        l_content = l.split('|')
-                        probeID = l_content[s_heads['ProbeFileID']]
-                        donorID = l_content[s_heads['DonorFileID']]
-                        printq("ERROR: Row {} with ProbeFileID and DonorFileID pair ({},{}) is a duplicate. Please delete it.".format(idx,probeID,donorID),True)
-                        dupFlag = 1
+                    l_content = l.rstrip().replace("\"","").split('|')
+                    probeID = l_content[s_heads['ProbeFileID']]
+                    donorID = l_content[s_heads['DonorFileID']]
+                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
+                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
+ 
+                    key = l_content[s_heads['ProbeFileID']] + ":" + l_content[s_heads['DonorFileID']]
 
-                    if dupFlag == 0:
-                        #only point in checking masks is if index file doesn't have duplicates in the first place
-                        l_content = l.split('|')
-                        probeID = l_content[s_heads['ProbeFileID']]
-                        donorID = l_content[s_heads['DonorFileID']]
+                    #try catch the key lookup
+                    try:
+                        indRec = ind[key]
+                    except KeyError:
+                        printq("ERROR: The pair ({},{}) does not exist in the index file.",format(probeID,donorID),True)
+                        keyFlag = 1
+                        continue
+
+
+                    probeWidth = int(indRec[i_heads['ProbeWidth']])
+                    probeHeight = int(indRec[i_heads['ProbeHeight']])
+                    donorWidth = int(indRec[i_heads['DonorWidth']])
+                    donorHeight = int(indRec[i_heads['DonorHeight']])
+
+
+                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx)
+
+#                     if l not in s_lines:
+#                         #check for duplicate rows. Append to empty list at every opportunity for now
+#                         s_lines.append(l)
+#                     else:
+#                         printq("ERROR: Row {} with ProbeFileID and DonorFileID pair ({},{}) is a duplicate. Please delete it.".format(idx,probeID,donorID),True)
+#                         dupFlag = 1
+
+#                     if dupFlag == 0:
+#                         #only point in checking masks is if index file doesn't have duplicates in the first place
     
-                        os.system("grep -i {} {} > tmp.txt".format(probeID,self.idxname)) #grep to temporary file
-                        os.system("grep -i {} tmp.txt > row.txt".format(donorID))
-                        qlen = 0
+#                         os.system("grep -i {} {} > tmp.txt".format(probeID,self.idxname)) #grep to temporary file
+#                         os.system("grep -i {} tmp.txt > row.txt".format(donorID))
+#                         qlen = 0
     
-                        with open("row.txt") as row:
-                            qlen = sum(1 for m in row)
-                        if qlen > 0:
-                            #if it yields at least one row, look for masks.
-                            m_content = ''
-                            probeOutputMaskFileName = ''
-                            donorOutputMaskFileName = ''
-                            probeWidth = 0
-                            probeHeight = 0
-                            donorWidth = 0
-                            donorHeight = 0
-                            with open("row.txt") as row:
-                                for m in row:
-                                    m_content = m.split('|')
-                                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
-                                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
-                                    probeWidth = int(m_content[i_heads['ProbeWidth']].replace("\"",""))
-                                    probeHeight = int(m_content[i_heads['ProbeHeight']].replace("\"",""))
-                                    donorWidth = int(m_content[i_heads['DonorWidth']].replace("\"",""))
-                                    donorHeight = int(m_content[i_heads['DonorHeight']].replace("\"",""))
-                            if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-                                printq("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeOutputMaskFileName,donorOutputMaskFileName))
-                                continue
-                            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx)
-                        else:
-                            #if no row, no match and throw error
-                            printq("ERROR: The pair ({},{}) does not exist in the index file.",format(probeID,donorID),True)
-                            printq("The contents of your file are not valid!",True)
-                            return 1
+#                         with open("row.txt") as row:
+#                             qlen = sum(1 for m in row)
+#                         if qlen > 0:
+#                             #if it yields at least one row, look for masks.
+#                             m_content = ''
+#                             probeOutputMaskFileName = ''
+#                             donorOutputMaskFileName = ''
+#                             probeWidth = 0
+#                             probeHeight = 0
+#                             donorWidth = 0
+#                             donorHeight = 0
+#                             with open("row.txt") as row:
+#                                 for m in row:
+#                                     m_content = m.split('|')
+#                                     probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
+#                                     donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']].replace("\"","").replace("\n","").replace("\r","")
+#                                     probeWidth = int(m_content[i_heads['ProbeWidth']].replace("\"",""))
+#                                     probeHeight = int(m_content[i_heads['ProbeHeight']].replace("\"",""))
+#                                     donorWidth = int(m_content[i_heads['DonorWidth']].replace("\"",""))
+#                                     donorHeight = int(m_content[i_heads['DonorHeight']].replace("\"",""))
+#                             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
+#                                 printq("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeOutputMaskFileName,donorOutputMaskFileName))
+#                                 continue
+#                             maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx)
+#                         else:
+#                             #if no row, no match and throw error
+#                             printq("ERROR: The pair ({},{}) does not exist in the index file.",format(probeID,donorID),True)
+#                             printq("The contents of your file are not valid!",True)
+#                             return 1
 
         #final validation
-        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0):
+        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (keyFlag == 0):
             printq("The contents of your file are valid!")
         else:
             printq("The contents of your file are not valid!",True)
