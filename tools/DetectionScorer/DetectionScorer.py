@@ -49,44 +49,59 @@ if __name__ == '__main__':
             if x == '':
                 raise argparse.ArgumentTypeError("{0} not provided".format(x))
             return x
-            
+
         def restricted_float(x):
             x = float(x)
             if x < 0.0 or x > 1.0:
                 raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
             return x
-        
+
+        def restricted_ci_value(x):
+            if x == '':
+                raise argparse.ArgumentTypeError("{0} not provided".format(x))
+
+            x = float(x)
+            if x <= 0.8 or x >= 0.99:
+                raise argparse.ArgumentTypeError("%r not in range [0.80, 0.99]"%(x,))
+
+            return x
+
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
         #Task Type Options
-        parser.add_argument('-t','--task', default='manipulation', 
+        parser.add_argument('-t','--task', default='manipulation',
                             choices=['manipulation','splice'], # add provenanceFiltering and provenance in future
                             help='Define the target manipulation task type for evaluation:[manipulation] and [splice] (default: %(default)s)',metavar='character')
-        
+
         #Input Options
         parser.add_argument('--refDir', default='.',
                             help='Specify the reference and index data path: [e.g., ../NC2016_Test] (default: %(default)s)', metavar='character')
                             #type=lambda x: is_dir(parser, x))#Optional
 
         parser.add_argument('-r','--inRef', default='', type=is_file_specified,
-                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character') 
-                            #type=lambda x: is_file(parser, x))# Mandatory     
+                            help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character')
+                            #type=lambda x: is_file(parser, x))# Mandatory
 
-        parser.add_argument('-x','--inIndex',default='', type=is_file_specified,
+        parser.add_argument('-x','--inIndex', default='', type=is_file_specified,
                             help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)',metavar='character')
 
-        parser.add_argument('--sysDir',default='.',
+        parser.add_argument('--sysDir', default='.',
                             help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)',metavar='character') #Optional
 
-        parser.add_argument('-s','--inSys',default='', type=is_file_specified,
-                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')    
+        parser.add_argument('-s','--inSys', default='', type=is_file_specified,
+                            help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)',metavar='character')
 
         # Metric Options
-        parser.add_argument('--farStop',type=restricted_float, default = 1,
+        parser.add_argument('--farStop', type=restricted_float, default = 1,
                             help="Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) for full AUC)",metavar='float')
-        
+
+        #TODO: relation between ci and ciLevel
         parser.add_argument('--ci', action='store_true',
                             help="Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.")
+
+        parser.add_argument('--ciLevel', type=restricted_ci_value, default = 0.9,
+                            help="Calculate the lower and upper confidence interval with the specified confidence level, The option will slowdown the speed due to the bootstrapping method.", metavar='float')
+
 
         # Output Options
         parser.add_argument('--outRoot',default='.',
@@ -94,17 +109,17 @@ if __name__ == '__main__':
 
         parser.add_argument('--dump', action='store_true',
                             help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
-        
+
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Print output with procedure messages on the command-line if this option is specified.")
-        
+
         # Plot Options
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
+        parser.add_argument('--plotType',default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
-    
+
         parser.add_argument('--display', action='store_true',
                             help="Display a window with the plot (s) on the command-line if this option is specified.")
-        
+
         parser.add_argument('--multiFigs', action='store_true',
                             help="Generate plots (with only one curve) per a partition ")
         # Custom Plot Options
@@ -123,6 +138,10 @@ if __name__ == '__main__':
         factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
                                   help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
+        parser.add_argument('--optOut', action='store_true',
+                            help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+
+
         #TBD: may need this one for provenance filtering
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
@@ -130,6 +149,7 @@ if __name__ == '__main__':
 
 
         args = parser.parse_args()
+        #print("Namespace :\n{}\n".format(args))
 
         # Verbosity option
         if args.verbose:
@@ -147,8 +167,6 @@ if __name__ == '__main__':
             print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
 
-        #print("Namespace :\n{}\n".format(args))
-
         # Loading the reference file
         try:
             myRefFname = args.refDir + "/" + args.inRef
@@ -160,10 +178,12 @@ if __name__ == '__main__':
             exit(1)
 
         # Loading the JTjoin and JTmask file
-        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
-        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-        myJTJoinFname = myRefDir + "/" + inJTJoin
-        myJTMaskFname = myRefDir + "/" + inJTMask
+        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
+        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+#        print("myRefFname {}".format(myRefFname))
+#        print("JTJoinFname {}".format(myJTJoinFname))
+#        print("JTMaskFname {}".format(myJTMaskFname))
+
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
@@ -213,6 +233,10 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+        ## if OptOut has chosen, all of queries should be applied
+        if args.optOut:
+            m_df = m_df.query(" IsOptOut=='N' ")
+
         # the performers' result directory
         if '/' not in args.outRoot:
             root_path = '.'
@@ -239,7 +263,7 @@ if __name__ == '__main__':
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
             #DSD
@@ -257,9 +281,10 @@ if __name__ == '__main__':
                 query_mode = 'qm'
                 query = args.queryManipulation
 
+
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI=args.ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -278,7 +303,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI=args.ci)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -298,15 +323,20 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        
-                       
-        if os.path.isfile(dict_plot_options_path_name):
+
+
+        # Fixed: if plotType is indicated, then should be generated.
+        if args.plotType =='' and os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            args.plotType = plot_opts['plot_type']
         else:
+            if args.plotType =='':
+                args.plotType = 'roc'
             p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        
+
+
         # opening of the plot_options json config file from command-line
         if args.configPlot:
             p.open_plot_options(dict_plot_options_path_name)
@@ -344,8 +374,8 @@ if __name__ == '__main__':
 
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
-            for curve_opts,query in zip(opts_list,selection.part_query_list):
-                curve_opts["label"] = query
+            for curve_opts, query, dm in zip(opts_list, selection.part_query_list, DM_List):
+                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ", T#: "+ str(dm.t_num) + ", NT#: "+ str(dm.nt_num) + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
@@ -369,47 +399,42 @@ if __name__ == '__main__':
         refDir = '/Users/yunglee/YYL/MEDIFOR/data'
         sysDir = '../../data/test_suite/detectionScorerTests'
         task = 'manipulation'
-        outRoot = './test/sys_01'
+        outRoot = './testcases/sys_01'
         farStop = 1
-        ci = False
+        ci = True
+        ciLevel = 0.9
         plotType = 'roc'
         display = True
         multiFigs = False
         dump = False
         verbose = False
- #       queryManipulation = None
-        arg_query = None
-        queryPartition = None
-#        queryManipulation = "Purpose ==['remove', 'splice', 'add']"
+        args_optOut =True
+        args_queryManipulation = None
+        args_query = None
+        args_queryPartition = None
+        #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
 #        queryManipulation = "SemanticLevel ==['PasteSplice', 'FillContentAwareFill']"targetFilter
 #        factor = "Purpose ==['remove']"
-        queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
+        #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #        factor = ["Purpose ==['remove', 'splice', 'add']","Operation ==['PasteSplice', 'FillContentAwareFill']"]
 #        print("f query {}".format(factor))
 
 #        queryPartition = "Purpose ==['remove', 'splice']"
 
-        if (not query) and (not queryPartition) and (multiFigs is True):
+        if (not args_query) and (not args_queryPartition) and (multiFigs is True):
             print("ERROR: The multiFigs option is not available without querys options.")
             exit(1)
-
-#        if task == 'manipulation':
-#            refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
-#            indexFname = "indexes/NC2016-manipulation-index.csv"
-#            sysFname = "../../data/SystemOutputs/results/dct02.csv"
-#        if task == 'splice':
-#            refFname = "reference/splice/NC2016-splice-ref.csv"
-#            indexFname = "indexes/NC2016-splice-index.csv"
-#            sysFname = "../../data/SystemOutputs/splice0608/results.csv"
 
         if task == 'manipulation':
             inRef = "NC2017-1215/NC2017-manipulation-ref.csv"
             inIndex = "NC2017-1215/NC2017-manipulation-index.csv"
             inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
             inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-            inSys = "baseline/NC17_copymove01.csv"
+            #inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+            inSys = "baseline/Base_NC2017_Manipulation_ImgOnly_p-copymove_01_optout.csv"
+            #inSys = "Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv"
 
 
         # Loading the reference file
@@ -440,17 +465,20 @@ if __name__ == '__main__':
 #            print("ERROR: There was an error opening the JournalMask csv file")
 #            exit(1)
         # check existence of the JTjoin csv file and then load the file
-        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
-        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-        myJTJoinFname = myRefDir + "/" + inJTJoin
-        myJTMaskFname = myRefDir + "/" + inJTMask
+        #inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+        #inJTMask = "NC2017-manipulation-ref-journalmask.csv"
+
+        #myJTJoinFname = myRefDir + "/" + inJTJoin
+        #myJTMaskFname = myRefDir + "/" + inJTMask
+
+        myJTJoinFname = refDir + "/" + str(inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
+        myJTMaskFname = refDir + "/" + str(inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
         else:
             print("Note: either JTjoin or JTmask csv file do not exist and merging with the reference file will be skipped")
-
-
 
         try:
 
@@ -492,6 +520,9 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+        if args_optOut:
+            m_df = m_df.query(" IsOptOut=='N' ")
+
         # the performers' result directory
         if '/' not in outRoot:
             root_path = '.'
@@ -503,7 +534,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
         # Partition Mode
-        if args_query or queryPartition or queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args_query or args_queryPartition or args_queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             print("Partition Mode \n")
             partition_mode = True
 
@@ -518,7 +549,7 @@ if __name__ == '__main__':
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName')
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
@@ -547,7 +578,7 @@ if __name__ == '__main__':
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
@@ -565,7 +596,8 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel)
+            #print("*****d-prime {} dpoint{}".format(DM.d, DM.dpoint))
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -585,14 +617,20 @@ if __name__ == '__main__':
         if not os.path.exists(p_json_path):
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-                
-        if os.path.isfile(dict_plot_options_path_name):
+
+        # Fixed: if plotType is indicated, then should be generated.
+        if plotType =='' and os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            plotType = plot_opts['plot_type']
         else:
-            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            if plotType =='':
+                plotType = 'roc'
+            p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        
+
+
+
         # opening of the plot_options json config file from command-line
         configPlot = False
         if configPlot:
@@ -628,10 +666,16 @@ if __name__ == '__main__':
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
 
+#        # Renaming the curves for the legend
+#        if args_query or args_queryPartition or args_queryManipulation:
+#            for curve_opts,query in zip(opts_list,selection.part_query_list):
+#                curve_opts["label"] = query
+
         # Renaming the curves for the legend
         if args_query or args_queryPartition or args_queryManipulation:
-            for curve_opts,query in zip(opts_list,selection.part_query_list):
-                curve_opts["label"] = query
+            for curve_opts, query, dm in zip(opts_list,selection.part_query_list, DM_List):
+                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ")"
+                print("DM {}".format(curve_opts["label"]))
 
 
         # Creation of the object setRender (~DetMetricSet)

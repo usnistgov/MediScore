@@ -94,25 +94,32 @@ echo "Testing with one target and one non-target trial"
 python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2017-manipulation-ref2.csv -x NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2017_Manipulation_ImgOnly_c-me_2/D_NC2017_Manipulation_ImgOnly_c-me_2.csv --outRoot ./testcases/NC17_C1_05
 echo
 
+echo "Testing with the manipulation OptOut case"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_3/D_NC2016_Manipulation_ImgOnly_p-me_3.csv --outRoot ./testcases/NC16_C1_06 --optOut
+echo
+
 diff testcases/NC16_C1_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_01_all_test.csv > comp_NC16_C1_01_all.txt
 diff testcases/NC16_C1_02_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_02_all_test.csv > comp_NC16_C1_02_all.txt
 diff testcases/NC16_C1_03_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_03_all_test.csv > comp_NC16_C1_03_all.txt
 diff testcases/NC17_C1_04_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_04_all_test.csv > comp_NC17_C1_04_all.txt
 diff testcases/NC17_C1_05_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_05_all_test.csv > comp_NC17_C1_05_all.txt
+diff testcases/NC16_C1_06_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_06_all_test.csv > comp_NC16_C1_06_all.txt
 
 c1_res1="cat comp_NC16_C1_01_all.txt | grep -v CVS"
 c1_res2="cat comp_NC16_C1_02_all.txt | grep -v CVS"
 c1_res3="cat comp_NC16_C1_03_all.txt | grep -v CVS"
 c1_res4="cat comp_NC17_C1_04_all.txt | grep -v CVS"
 c1_res5="cat comp_NC17_C1_05_all.txt | grep -v CVS"
+c1_res6="cat comp_NC16_C1_06_all.txt | grep -v CVS"
 
 c1_flag1=1
 c1_flag2=1
 c1_flag3=1
 c1_flag4=1
 c1_flag5=1
+c1_flag6=1
 
-if ([ ! -e comp_NC16_C1_01_all.txt -o ! -e comp_NC16_C1_02_all.txt -o ! -e comp_NC16_C1_03_all.txt -o ! -e comp_NC17_C1_04_all.txt -o ! -e comp_NC17_C1_05_all.txt ]); then
+if ([ ! -e comp_NC16_C1_01_all.txt -o ! -e comp_NC16_C1_02_all.txt -o ! -e comp_NC16_C1_03_all.txt -o ! -e comp_NC17_C1_04_all.txt -o ! -e comp_NC17_C1_05_all.txt -o ! -e comp_NC16_C1_06_all.txt ]); then
   echo
   echo "DETECTION SCORER TESTS FAILED FOR CASE 0 !!! "
   echo
@@ -154,9 +161,16 @@ else
 	cat comp_NC17_C1_05_all.txt
 fi
 
-if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c1_flag5 == 0 ]) ; then
+if test "`eval $c1_res6`" = "" ; then
+  c1_flag6=0
+	rm comp_NC16_C1_06_all.txt
+else
+	cat comp_NC16_C1_06_all.txt
+fi
+
+if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c1_flag5 == 0 -a $c1_flag6 == 0 ]) ; then
 	echo
-	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 1."
+	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED."
 	echo
   if [ $clean = "TRUE" ] ; then
     rm -rf testcases
@@ -164,7 +178,7 @@ if ([ $c1_flag1 == 0 -a $c1_flag2 == 0 -a $c1_flag3 == 0 -a $c1_flag4 == 0 -a $c
 	fi
 else
 	echo
-	echo "DETECTION SCORER TESTS FAILED FOR CASE 1 !!!"
+	echo "DETECTION SCORER TESTS FAILED!!!"
 	echo
 fi
 
