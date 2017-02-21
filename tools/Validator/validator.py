@@ -599,7 +599,7 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
         printq("ERROR: The mask image's length and width do not seem to be the same as the base image's.",True)
         flag = 1
  
-    if (flag == 0):
+    if flag == 0:
         printq("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
     return flag
 
@@ -660,7 +660,7 @@ def maskCheck2_0(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
         printq("ERROR: The mask image's length and width do not seem to be the same as the base image's.",True)
         flag = 1
  
-    if (flag == 0):
+    if flag == 0:
         printq("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
     return flag
 
@@ -679,7 +679,7 @@ if __name__ == '__main__':
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
 
-    if (len(sys.argv) > 1):
+    if len(sys.argv) > 1:
 
         args = parser.parse_args()
         verbose = args.verbose
@@ -693,11 +693,11 @@ if __name__ == '__main__':
                 if iserr:
                     print(mystring)
 
-        if (args.valtype == 'SSD'):
+        if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
             ssd_validation.fullCheck(args.nameCheck)
 
-        elif (args.valtype == 'DSD'):
+        elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
             dsd_validation.fullCheck(args.nameCheck)
 

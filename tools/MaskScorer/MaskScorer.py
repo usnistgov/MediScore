@@ -138,8 +138,8 @@ if args.inRef is None:
 if args.inSys is None:
     printerr("ERROR: Input file name for system output must be supplied.")
 
-if args.inIndex is None:
-    printerr("ERROR: Input file name for index files must be supplied.")
+#if args.inIndex is None:
+#    printerr("ERROR: Input file name for index files must be supplied.")
 
 #create the folder and save the mask outputs
 #set.seed(1)
@@ -245,11 +245,11 @@ elif args.task == 'splice':
              'OutputProbeMaskFileName':str,
              'OutputDonorMaskFileName':str}
 
-mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
+mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys)) #TODO: read it all in as a filestream object?
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
 mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
+#myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype) #TODO: delete this? We never use it for mask scorer
 
 factor_mode = ''
 query = ['']
@@ -416,6 +416,8 @@ if args.task == 'manipulation':
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
+    #TODO: read in index file differently
+
     m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
     # get rid of inf values from the merge
