@@ -65,7 +65,8 @@ class maskMetricList:
                   threshold yielding the maximum MCC picked.
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
-        - mode: determines the data to access. In most cases, it will be 'Probe', but
+        - mode: determines the data to access. 0 denotes the default 'manipulation' task. 1 denotes the 'splice' task
+                with the probe image, 2 denotes the 'splice' task with the donor image.
         - colordict: the dictionary of colors to use for the HTML output, in BGR array format,
                      to be used as reference
         """
@@ -100,6 +101,10 @@ class maskMetricList:
   
         if (self.journalData is 0) and (self.rbin == -1): #no journal saved and rbin not set
             self.rbin = 254 #automatically set binary threshold if no journalData provided.
+
+        mymode = 'Probe'
+        if self.mode==2:
+            mymode = 'Donor'
  
         #read in the reference mask
         if self.rbin >= 0:
@@ -107,15 +112,24 @@ class maskMetricList:
             rImg.binarize(self.rbin)
         elif self.rbin == -1:
             #only need colors if selectively scoring
-            myProbeID = self.maskData.query("ProbeMaskFileName=='{}' & OutputProbeMaskFileName=='{}'".format(refMaskFName,sysMaskFName))['ProbeFileID'].iloc[0]
-            if verbose: print("Fetching ProbeFileID {} from maskData...".format(myProbeID))
+            #TODO: next time take the probeFileID in as input
+            myProbeID = self.maskData.query("{}MaskFileName=='{}' & Output{}MaskFileName=='{}'".format(mymode,refMaskFName,mymode,sysMaskFName))[mymode + 'FileID'].iloc[0]
+            if verbose: print("Fetching {}FileID {} from maskData...".format(mymode,myProbeID))
 
-            color_purpose = self.journalData.query("ProbeFileID=='{}' & Evaluated=='Y'".format(myProbeID))[['Color','Purpose']] #get the target colors
-            colorlist = list(color_purpose['Color'])
-            purposes = list(color_purpose['Purpose'])
-            purposes_unique = []
-            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
-            if verbose: print("Initializing reference mask {} with colors {}.".format(refMaskName,colorlist))
+            evalcol='Evaluated'
+            if self.mode != 2:
+                if self.mode == 1:
+                    evalcol='ProbeEvaluated'
+
+                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']] #get the target colors
+                colorlist = list(color_purpose['Color'])
+                purposes = list(color_purpose['Purpose'])
+                purposes_unique = []
+                [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+                if verbose: print("Initializing reference mask {} with colors {}.".format(refMaskName,colorlist))
+            else:
+                colorlist = ['0 0 0']
+                purposes_unique = ['add']
 
             rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
             rImg.binarize(254)
@@ -157,16 +171,22 @@ class maskMetricList:
         if self.mode==2:
             mymode='Donor'
 
-        reflist = self.maskData['{}MaskFileName'.format(mymode)]
+        evalcol='Evaluated'
+        if self.mode == 1:
+            evalcol='ProbeEvaluated'
+        elif self.mode == 2:
+            evalcol='DonorEvaluated'
+
+        reflist = self.maskData[mymode+'MaskFileName']
         syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
 
-        manip_ids = self.maskData['{}FileID'.format(mymode)]
+        manip_ids = self.maskData[mymode+'FileID']
         if html:
-            maniImageFName = self.maskData['{}FileName'.format(mymode)]
+            maniImageFName = self.maskData[mymode+'FileName']
 
         nrow = len(reflist) 
         #initialize empty frame to minimum scores 
-        df=pd.DataFrame({'{}FileID'.format(mymode):manip_ids,
+        df=pd.DataFrame({mymode+'FileID':manip_ids,
                          'NMM':[-1.]*nrow,
                          'MCC': 0.,
                          'BWL1': 1.,
@@ -184,7 +204,7 @@ class maskMetricList:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
-                    self.journalData.set_value(i,'Evaluated','N')
+                    self.journalData.set_value(i,evalcol,'N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
                 if (rImg.matrix is None) or (sImg.matrix is None):
@@ -220,7 +240,7 @@ class maskMetricList:
                     sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
-                wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
+                wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
 
                 #do a 3-channel combine with bns and sns for their colors before saving
                 rImgbin = rImg.get_copy()
@@ -270,7 +290,7 @@ class maskMetricList:
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    self.manipReport(task,subOutRoot,maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
+                    self.manipReport(task,subOutRoot,self.maskData[mymode+'FileID'].iloc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         return df
 
@@ -309,12 +329,13 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
+    def manipReport(self,task,outputRoot,probeFileID,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
         *     task: the task over which the scorer is run
         *     outputRoot: the directory to deposit the weight image and the HTML file
+        *     probeFileID: the ID of the image to be considered
         *     maniImageFName: the manipulated probe file name, relative to the reference directory (self.refDir) 
         *     rImg_name: the name of the unmodified reference image used for the mask evaluation
         *     sImg_name: the name of the unmodified system output image used for the mask evaluation
@@ -361,10 +382,17 @@ class maskMetricList:
         hexs = self.nums2hex(cols.values()) #get hex strings from the BGR cols
 
         jtable = ''
-        if task=='manipulation':
-            myProbeID = self.maskData.query("ProbeFileName=='{}'".format(maniImageFName))['ProbeFileID'].iloc[0]
-            jdata = self.journalData.query("ProbeFileID=='{}'".format(myProbeID))[['Purpose','Color','Evaluated']]
-           
+        mymode = 'Probe'
+        if self.mode == 2:
+            mymode = 'Donor'
+        else:
+            evalcol='Evaluated'
+            if self.mode == 1:
+                evalcol='ProbeEvaluated'
+
+            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color',evalcol]]
+            jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
+
             #make those color cells empty with only the color as demonstration
             jDataColors = list(jdata['Color'])
             jDataColArrays = [x[::-1] for x in [c.split(' ') for c in jDataColors]]
@@ -380,7 +408,7 @@ class maskMetricList:
 
         thresString = ''
         if len(thresMets) > 1:
-            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3}) #TODO: eventually substitute with a plot from matplotlib based off of thresMets for MCC
             thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all

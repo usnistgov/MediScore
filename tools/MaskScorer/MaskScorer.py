@@ -84,8 +84,8 @@ help="Filter the data by given queries before evaluation. Each query will result
 
 parser.add_argument('--eks',type=int,default=15,
 help="Erosion kernel size number must be odd, [default=15]",metavar='integer')
-parser.add_argument('--dks',type=int,default=9,
-help="Dilation kernel size number must be odd, [default=9]",metavar='integer')
+parser.add_argument('--dks',type=int,default=11,
+help="Dilation kernel size number must be odd, [default=11]",metavar='integer')
 parser.add_argument('--ntdks',type=int,default=15,
 help="Non-target dilation kernel for distraction no-score regions. Size number must be odd, [default=15]",metavar='integer')
 parser.add_argument('-k','--kernel',type=str,default='box',
@@ -101,6 +101,8 @@ help="Control print output. Select 1 to print all non-error print output and 0 t
 parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
+
+#TODO: add option for OptOut
 
 args = parser.parse_args()
 verbose=args.verbose
@@ -136,8 +138,8 @@ if args.inRef is None:
 if args.inSys is None:
     printerr("ERROR: Input file name for system output must be supplied.")
 
-if args.inIndex is None:
-    printerr("ERROR: Input file name for index files must be supplied.")
+#if args.inIndex is None:
+#    printerr("ERROR: Input file name for index files must be supplied.")
 
 #create the folder and save the mask outputs
 #set.seed(1)
@@ -243,11 +245,11 @@ elif args.task == 'splice':
              'OutputProbeMaskFileName':str,
              'OutputDonorMaskFileName':str}
 
-mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
+mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys)) #TODO: read it all in as a filestream object?
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
 mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
+#myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype) #TODO: delete this? We never use it for mask scorer
 
 factor_mode = ''
 query = ['']
@@ -278,24 +280,26 @@ if args.precision < 1:
 
 sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 
+#update accordingly along with ProbeJournalJoin and JournalMask csv's in refDir
+refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
+#try/catch this
+try:
+    probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0)
+except IOError:
+    print("No probeJournalJoin file is present. This run will terminate.")
+    exit(1)
+
+try:
+    journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0)
+except IOError:
+    print("No journalMask file is present. This run will terminate.")
+    exit(1)
+    
+journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
+n_journals = len(journalData0)
+
 # Merge the reference and system output for SSD/DSD reports
 if args.task == 'manipulation':
-    #update accordingly along with ProbeJournalJoin and JournalMask csv's in refDir
-    refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
-    #try/catch this
-    try:
-        probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0)
-    except IOError:
-        print("No probeJournalJoin file is present. This run will terminate.")
-        exit(1)
-
-    try:
-        journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0)
-    except IOError:
-        print("No journalMask file is present. This run will terminate.")
-        exit(1)
-        
-
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['OutputProbeMaskFileName'])
@@ -304,9 +308,6 @@ if args.task == 'manipulation':
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-
-    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalID','StartNodeID','EndNodeID'])
-    n_journals = len(journalData0)
 
     if args.queryManipulation:
         queryM = query
@@ -415,6 +416,8 @@ if args.task == 'manipulation':
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
+    #TODO: read in index file differently
+
     m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
     # get rid of inf values from the merge
@@ -432,17 +435,41 @@ elif args.task == 'splice':
 
     for qnum,q in enumerate(queryM):
         m_dfc = m_df.copy()
+        if args.queryManipulation:
+            journalData0['ProbeEvaluated'] = pd.Series(['N']*n_journals)
+            journalData0['DonorEvaluated'] = pd.Series(['N']*n_journals)
+        else:
+            journalData0['ProbeEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
+            journalData0['DonorEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
 
+        journalData = journalData0.copy()
+
+        #use big_df to filter from the list as a temporary thing
         if q is not '':
+            #exit if query does not match
             try:
-                m_dfc = m_dfc.query(q)
+                big_df = pd.merge(m_df,journalData0,how='left',on=['ProbeFileID','DonorFileID']).query(q)
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
-            m_dfc.index = range(0,len(m_dfc))
 
-        if len(m_dfc)==0:
-            print("The query '{}' yielded no journal data.".format(q))
+            #do a join with the big dataframe and filter out the stuff that doesn't show up by pairs
+            m_dfc = pd.merge(m_dfc,big_df[['ProbeFileID','DonorFileID']],how='left',on=['ProbeFileID','DonorFileID','JournalID']).dropna().drop('JournalID',1)
+            journalData = pd.merge(journalData,big_df[['ProbeFileID','DonorFileID','JournalID']],how='left',on=['ProbeFileID','DonorFileID','JournalID'])
+            journalData0.loc[journalData0.query("ProbeFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.ProbeFileID),\
+                                                                                                                           list(big_df.JournalID),\
+                                                                                                                           list(big_df.StartNodeID),\
+                                                                                                                           list(big_df.EndNodeID))).index,'ProbeEvaluated'] = 'Y'
+            journalData0.loc[journalData0.query("DonorFileID=={} & JournalID=={} & StartNodeID=={} & EndNodeID=={}".format(list(big_df.DonorFileID),\
+                                                                                                                           list(big_df.JournalID),\
+                                                                                                                           list(big_df.StartNodeID),\
+                                                                                                                           list(big_df.EndNodeID))).index,'DonorEvaluated'] = 'Y'
+            m_dfc.index = range(0,len(m_dfc))
+            journalData.index = range(0,len(journalData))
+
+        #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
+        if len(pd.merge(m_df,journalData,how='left',on=['ProbeFileID','DonorFileID'])) == 0:
+            print("The query '{}' yielded no journal data over which computation may take place.".format(q))
             continue
 
         outRootQuery = outRoot
@@ -450,8 +477,11 @@ elif args.task == 'splice':
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
-    
-        r_df = mr.createReportDSD(m_dfc, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, kern=args.kernel, outputRoot=outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+   
+        r_df = mr.createReportDSD(m_dfc,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('pMCC == -2')['ProbeFileID'].tolist()),'ProbeEvaluated'] = 'N'
+        journalData0.loc[journalData0.DonorFileID.isin(r_df.query('dMCC == -2')['DonorFileID'].tolist()),'DonorEvaluated'] = 'N'
+        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
     
         #reorder r_df's columns. Names first, then scores, then other metadata
