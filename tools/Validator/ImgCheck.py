@@ -15,14 +15,22 @@ help='Control print output. Select 1 to print all non-error print output and 0 t
 if len(sys.argv) > 1:
     args = parser.parse_args()
     dims = cv2.imread(args.image,cv2.IMREAD_UNCHANGED).shape
+
+    height = args.height
+    width = args.width
+    imgName = args.image 
+
+    if (height is None) or (width is None):
+        print("ERROR: No width and height specified.")
+        exit(1)
     
-    if (args.height != dims[0]) | (args.width != dims[1]):
+    if (height != dims[0]) | (width != dims[1]):
         print("Dimensions of image: {} x {}".format(dims[0],dims[1]))
-        print("Queried dimensions: {} x {}".format(args.height,args.width))
-        print("Image file {} is not valid!".format(args.image))
+        print("Queried dimensions: {} x {}".format(height,width))
+        print("Image file {} is not valid!".format(imgName))
         exit(1)
     else:
-        print("Image file {} is valid.".format(args.image))
+        print("Image file {} is valid.".format(imgName))
         exit(0)
 else:
     parser.print_help()
