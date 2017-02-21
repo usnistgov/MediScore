@@ -115,7 +115,7 @@ def store_avg(querydf,metlist,store_df,index,precision):
 #
 #    return df_avg
 
-def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+def createReportSSD(m_df, journalData, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for single source detection, specifically for the manipulation task
      * Description: this function calls each metric function and
@@ -123,6 +123,7 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
      *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
+     *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
@@ -143,14 +144,14 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,index)
     df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     merged_df = pd.merge(m_df,df,how='left',on='ProbeFileID')
 
     return merged_df
 
-def createReportDSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+def createReportDSD(m_df, journalData, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for double source detection, specifically the splice task
      * Description: this function calls each metric function and
@@ -158,6 +159,7 @@ def createReportDSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
      *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
+     *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
@@ -181,10 +183,10 @@ def createReportDSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,mode=1)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,index,mode=1)
     probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,mode=2) #donor images
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,index,mode=2) #donor images
     donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",

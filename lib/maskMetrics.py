@@ -46,7 +46,8 @@ class maskMetricList:
                  sysD,
                  refBin,
                  sysBin,
-                 journaldf=0,
+                 journaldf,
+                 index,
                  mode=0,
                  colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
         """
@@ -65,6 +66,7 @@ class maskMetricList:
                   threshold yielding the maximum MCC picked.
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
+        - index: the index file dataframe to be saved. Used solely for dimensionality validation of reference mask.
         - mode: determines the data to access. 0 denotes the default 'manipulation' task. 1 denotes the 'splice' task
                 with the probe image, 2 denotes the 'splice' task with the donor image.
         - colordict: the dictionary of colors to use for the HTML output, in BGR array format,
@@ -76,6 +78,7 @@ class maskMetricList:
         self.rbin = refBin
         self.sbin = sysBin
         self.journalData = journaldf
+        self.index = index
         self.mode=mode
         self.colordict=colordict
        
@@ -207,6 +210,17 @@ class maskMetricList:
                     self.journalData.set_value(i,evalcol,'N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
+
+                rdims = rImg.get_dims()
+                idxdims = self.index.query("{}FileID=='{}'".format(mymode,manip_ids[i])).iloc[0]
+                idxW = idxdims[mymode+'Width']
+                idxH = idxdims[mymode+'Height']
+
+                if (rdims[0] != idxH) or (rdims[1] != idxW):
+                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
+ Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,rdims[0],rdims[1],idxH,idxW,i))
+                    continue
+
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     #Likely this could be FP or FN. Set scores as usual.
                     if verbose: print("The index is at %d." % i)
@@ -390,7 +404,7 @@ class maskMetricList:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Purpose','Color',evalcol]]
+            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Operation','Purpose','Color',evalcol]]
             jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -608,7 +622,7 @@ class maskMetrics:
         self.sys_threshold = systh
         if systh >= 0:
             sys.binarize(systh)
-        elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform
+        else: #if len(np.unique(sys.matrix)) <= 2: #already binarized or uniform, relies on external pipeline
             sys.bwmat = sys.matrix
 
         self.conf = self.confusion_measures(ref,sys,w)
@@ -945,9 +959,10 @@ class maskMetrics:
                                            'SNS':stotal,
                                            'N':[0]*2})
                 rownum=0
+                sys.binarize(0)
                 for th in [uniques[0],255]:
-                    sys.binarize(th)
-                    thismet = maskMetrics(ref,sys,w,th)
+                    sys.bwmat[sys.matrix==th] = 0
+                    thismet = maskMetrics(ref,sys,w,-1) #avoid binarizing too much
 
                     thresMets.set_value(rownum,'Threshold',th)
                     thresMets.set_value(rownum,'NMM',thismet.nmm)
@@ -980,8 +995,10 @@ class maskMetrics:
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
+            sys.binarize(0)
             for th in thresholds:
-                thismet = maskMetrics(ref,sys,w,th)
+                sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
+                thismet = maskMetrics(ref,sys,w,-1)
                 thresMets.set_value(rownum,'Threshold',th)
                 thresMets.set_value(rownum,'NMM',thismet.nmm)
                 thresMets.set_value(rownum,'MCC',thismet.mcc)
@@ -1013,7 +1030,6 @@ class maskMetrics:
                 print("BWL1: %d" % maxBWL1)
             else:
                 print("Binary Weighted L1: %0.3f" % maxBWL1)
-            
 
         return thresMets,tmax
 

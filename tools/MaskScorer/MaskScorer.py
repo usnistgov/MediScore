@@ -138,8 +138,8 @@ if args.inRef is None:
 if args.inSys is None:
     printerr("ERROR: Input file name for system output must be supplied.")
 
-#if args.inIndex is None:
-#    printerr("ERROR: Input file name for index files must be supplied.")
+if args.inIndex is None:
+    printerr("ERROR: Input file name for index files must be supplied.")
 
 #create the folder and save the mask outputs
 #set.seed(1)
@@ -249,7 +249,7 @@ mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys)) #TODO: read it 
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
 mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
-#myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype) #TODO: delete this? We never use it for mask scorer
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
 
 factor_mode = ''
 query = ['']
@@ -352,7 +352,7 @@ if args.task == 'manipulation':
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
     
-        r_df = mr.createReportSSD(m_dfc,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = mr.createReportSSD(m_dfc,journalData0, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('MCC == -2')['ProbeFileID'].tolist()),'Evaluated'] = 'N'
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
@@ -478,7 +478,7 @@ elif args.task == 'splice':
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
    
-        r_df = mr.createReportDSD(m_dfc,journalData0, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = mr.createReportDSD(m_dfc,journalData0, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         journalData0.loc[journalData0.ProbeFileID.isin(r_df.query('pMCC == -2')['ProbeFileID'].tolist()),'ProbeEvaluated'] = 'N'
         journalData0.loc[journalData0.DonorFileID.isin(r_df.query('dMCC == -2')['DonorFileID'].tolist()),'DonorEvaluated'] = 'N'
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
