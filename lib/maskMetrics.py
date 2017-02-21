@@ -218,7 +218,7 @@ class maskMetricList:
 
                 if (rdims[0] != idxH) or (rdims[1] != idxW):
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
- Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,rdims[0],rdims[1],idxH,idxW,i))
+ Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
                     continue
 
                 if (rImg.matrix is None) or (sImg.matrix is None):
