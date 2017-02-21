@@ -178,10 +178,12 @@ if __name__ == '__main__':
             exit(1)
 
         # Loading the JTjoin and JTmask file
-        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
-        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-        myJTJoinFname = myRefDir + "/" + inJTJoin
-        myJTMaskFname = myRefDir + "/" + inJTMask
+        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
+        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+#        print("myRefFname {}".format(myRefFname))
+#        print("JTJoinFname {}".format(myJTJoinFname))
+#        print("JTMaskFname {}".format(myJTMaskFname))
+
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
@@ -261,7 +263,7 @@ if __name__ == '__main__':
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
             #DSD
@@ -463,17 +465,20 @@ if __name__ == '__main__':
 #            print("ERROR: There was an error opening the JournalMask csv file")
 #            exit(1)
         # check existence of the JTjoin csv file and then load the file
-        inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
-        inJTMask = "NC2017-manipulation-ref-journalmask.csv"
-        myJTJoinFname = myRefDir + "/" + inJTJoin
-        myJTMaskFname = myRefDir + "/" + inJTMask
+        #inJTJoin = "NC2017-manipulation-ref-probejournaljoin.csv"
+        #inJTMask = "NC2017-manipulation-ref-journalmask.csv"
+
+        #myJTJoinFname = myRefDir + "/" + inJTJoin
+        #myJTMaskFname = myRefDir + "/" + inJTMask
+
+        myJTJoinFname = refDir + "/" + str(inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
+        myJTMaskFname = refDir + "/" + str(inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
             myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
             myJTMask = pd.read_csv(myJTMaskFname, sep='|')
         else:
             print("Note: either JTjoin or JTmask csv file do not exist and merging with the reference file will be skipped")
-
-
 
         try:
 
@@ -544,7 +549,7 @@ if __name__ == '__main__':
                     # merge the reference and index csv
                     df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalID')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName')
                     # merge the dataframes above
                     pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
@@ -613,12 +618,18 @@ if __name__ == '__main__':
             os.makedirs(p_json_path)
         dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
 
-        if os.path.isfile(dict_plot_options_path_name):
+        # Fixed: if plotType is indicated, then should be generated.
+        if plotType =='' and os.path.isfile(dict_plot_options_path_name):
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            plotType = plot_opts['plot_type']
         else:
-            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            if plotType =='':
+                plotType = 'roc'
+            p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+
+
 
         # opening of the plot_options json config file from command-line
         configPlot = False
