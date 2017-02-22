@@ -245,11 +245,17 @@ elif args.task == 'splice':
              'OutputProbeMaskFileName':str,
              'OutputDonorMaskFileName':str}
 
-mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys)) #TODO: read it all in as a filestream object?
+mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
-myRef = pd.read_csv(os.path.join(myRefDir,args.inRef),sep='|',header=0)
-mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype)
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype)
+myRefFile = os.path.join(myRefDir,args.inRef)
+
+ref_dtype = {}
+with open(myRefFile,'r') as ref:
+    ref_dtype = {h:str for h in ref.readline().rstrip().split('|')} #treat it as string
+
+myRef = pd.read_csv(myRefFile,sep='|',header=0,dtype=ref_dtype,na_filter=False) #TODO: read it all in as a filestream object?
+mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype,na_filter=False)
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype,na_filter=False)
 
 factor_mode = ''
 query = ['']
@@ -416,8 +422,7 @@ if args.task == 'manipulation':
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
-    #TODO: read in index file differently
-
+    #TODO: read in index file differently?
     m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
 
     # get rid of inf values from the merge

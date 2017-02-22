@@ -198,8 +198,10 @@ class maskMetricList:
                          'AggMaskFileName':['']*nrow})
 
         task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
+        ilog = open('index_log.txt','w+')
 
         for i,row in df.iterrows():
+            if verbose: print("Evaluating mask {} out of {}...".format(i,nrow))
             if syslist[i] in [None,'',np.nan]:
                 if verbose: print("Empty system mask file at index %d" % i)
                 continue
@@ -220,9 +222,7 @@ class maskMetricList:
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
  Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
                     #write mask name, mask dimensions, and image dimensions to index_log.txt
-                    ilog = open('index_log.txt','w+')
-                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
-                    ilog.close()
+                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
                     continue
 
                 if (rImg.matrix is None) or (sImg.matrix is None):
@@ -310,6 +310,7 @@ class maskMetricList:
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
                     self.manipReport(task,subOutRoot,self.maskData[mymode+'FileID'].iloc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
+        ilog.close()
         return df
 
     def num2hex(self,color):
