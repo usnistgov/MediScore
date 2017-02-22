@@ -350,6 +350,10 @@ class DSD_Validator(validator):
                     donorID = l_content[s_heads['DonorFileID']]
                     probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
                     donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
+
+                    if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
+                        printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                        continue
  
                     key = l_content[s_heads['ProbeFileID']] + ":" + l_content[s_heads['DonorFileID']]
 
