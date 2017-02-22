@@ -219,6 +219,10 @@ class maskMetricList:
                 if (rdims[0] != idxH) or (rdims[1] != idxW):
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
  Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
+                    #write mask name, mask dimensions, and image dimensions to index_log.txt
+                    ilog = open('index_log.txt','w+')
+                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
+                    ilog.close()
                     continue
 
                 if (rImg.matrix is None) or (sImg.matrix is None):
@@ -622,7 +626,7 @@ class maskMetrics:
         self.sys_threshold = systh
         if systh >= 0:
             sys.binarize(systh)
-        else: #if len(np.unique(sys.matrix)) <= 2: #already binarized or uniform, relies on external pipeline
+        elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform, relies on external pipeline
             sys.bwmat = sys.matrix
 
         self.conf = self.confusion_measures(ref,sys,w)
@@ -959,10 +963,11 @@ class maskMetrics:
                                            'SNS':stotal,
                                            'N':[0]*2})
                 rownum=0
-                sys.binarize(0)
+                #sys.binarize(0)
                 for th in [uniques[0],255]:
-                    sys.bwmat[sys.matrix==th] = 0
-                    thismet = maskMetrics(ref,sys,w,-1) #avoid binarizing too much
+                    #sys.bwmat[sys.matrix==th] = 0
+                    #thismet = maskMetrics(ref,sys,w,-1) #avoid binarizing too much
+                    thismet = maskMetrics(ref,sys,w,th) #avoid binarizing too much
 
                     thresMets.set_value(rownum,'Threshold',th)
                     thresMets.set_value(rownum,'NMM',thismet.nmm)
@@ -995,10 +1000,11 @@ class maskMetrics:
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
-            sys.binarize(0)
+            #sys.binarize(0)
             for th in thresholds:
-                sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
-                thismet = maskMetrics(ref,sys,w,-1)
+                #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
+                #thismet = maskMetrics(ref,sys,w,-1)
+                thismet = maskMetrics(ref,sys,w,th)
                 thresMets.set_value(rownum,'Threshold',th)
                 thresMets.set_value(rownum,'NMM',thismet.nmm)
                 thresMets.set_value(rownum,'MCC',thismet.mcc)
