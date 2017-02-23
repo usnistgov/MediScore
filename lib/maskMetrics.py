@@ -120,7 +120,7 @@ class maskMetricList:
             if verbose: print("Fetching {}FileID {} from maskData...".format(mymode,myProbeID))
 
             evalcol='Evaluated'
-            if self.mode != 2:
+            if self.mode == 0: #TODO: temporary measure until we get splice sorted out
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
@@ -404,7 +404,7 @@ class maskMetricList:
         mymode = 'Probe'
         if self.mode == 2:
             mymode = 'Donor'
-        else:
+        elif self.mode == 0: #TODO: temporary measure until we get splice sorted out
             evalcol='Evaluated'
             if self.mode == 1:
                 evalcol='ProbeEvaluated'

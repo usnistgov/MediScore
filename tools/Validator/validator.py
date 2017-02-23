@@ -39,9 +39,10 @@ import sys
 import os
 import cv2
 import numpy as np
-import pandas as pd #TODO: read as csv stream instead for SSD too?
+import pandas as pd
 import contextlib
 import StringIO
+import subprocess
 from abc import ABCMeta, abstractmethod
 
 @contextlib.contextmanager
@@ -145,8 +146,13 @@ class SSD_Validator(validator):
 
     def contentCheck(self):
         printq('Validating the syntactic content of the system output.')
-        idxfile = pd.read_csv(self.idxname,sep='|')
-        sysfile = pd.read_csv(self.sysname,sep='|')
+        index_dtype = {'TaskID':str,
+                 'ProbeFileID':str,
+                 'ProbeFileName':str,
+                 'ProbeWidth':np.int64,
+                 'ProbeHeight':np.int64}
+        idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
+        sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
     
         dupFlag = 0
         xrowFlag = 0
@@ -269,7 +275,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self):
+    def contentCheck_1(self):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -423,9 +429,18 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck_0(self):
-        idxfile = pd.read_csv(self.idxname,sep='|')
-        sysfile = pd.read_csv(self.sysname,sep='|')
+    def contentCheck(self):
+        index_dtype = {'TaskID':str,
+                 'ProbeFileID':str,
+                 'ProbeFileName':str,
+                 'ProbeWidth':np.int64,
+                 'ProbeHeight':np.int64,
+                 'DonorFileID':str,
+                 'DonorFileName':str,
+                 'DonorWidth':np.int64,
+                 'DonorHeight':np.int64}
+        idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
+        sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
 
         dupFlag = 0
         xrowFlag = 0
@@ -518,6 +533,7 @@ class DSD_Validator(validator):
 
 ######### Functions that don't depend on validator ####################################################
 
+#TODO: use subprocess to run identify and capture output
 def maskCheck1(maskname,fileid,indexfile):
     #check to see if index file input image files are consistent with system output
     flag = 0
@@ -552,7 +568,7 @@ def maskCheck1(maskname,fileid,indexfile):
 
     return flag
 
-def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum):
+def maskCheck2_1(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum):
     #check to see if index file input image files are consistent with system output
     flag = 0
     printq("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
@@ -607,7 +623,7 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
         printq("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
     return flag
 
-def maskCheck2_0(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
+def maskCheck2(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
     #check to see if index file input image files are consistent with system output
     flag = 0
     printq("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
@@ -682,6 +698,7 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
+    #TODO: add option to use imageMagick (identify) or openCV. openCV by default
 
     if len(sys.argv) > 1:
 
