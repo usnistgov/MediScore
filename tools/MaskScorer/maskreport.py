@@ -123,7 +123,7 @@ def createReportSSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
      *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
-     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalID's, joining probe image information with journal information
+     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalNames, joining probe image information with journal information
      *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
@@ -160,7 +160,7 @@ def createReportDSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
      *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
-     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalID's, joining probe image information with journal information
+     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalNames, joining probe image information with journal information
      *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory

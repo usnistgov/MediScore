@@ -130,8 +130,8 @@ class maskMetricList:
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
-                joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalID','StartNodeID','EndNodeID']]
-                color_purpose = pd.merge(self.journalData.query("{}=='Y'".format(evalcol)),joins,how='left',on=['JournalID','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
+                joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
+                color_purpose = pd.merge(self.journalData.query("{}=='Y'".format(evalcol)),joins,how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -419,8 +419,8 @@ class maskMetricList:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalID'].iloc[0]
-            jdata = self.journalData.query("JournalID=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
+            jdata = self.journalData.query("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
