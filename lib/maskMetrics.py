@@ -47,6 +47,7 @@ class maskMetricList:
                  refBin,
                  sysBin,
                  journaldf,
+                 joindf,
                  index,
                  mode=0,
                  colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
@@ -66,6 +67,7 @@ class maskMetricList:
                   threshold yielding the maximum MCC picked.
         - journaldf: the journal dataframe to be saved. Contains information matching
                      the color of the manipulated region to the task in question
+        - joindf: the dataframe joining information between the reference file and journal
         - index: the index file dataframe to be saved. Used solely for dimensionality validation of reference mask.
         - mode: determines the data to access. 0 denotes the default 'manipulation' task. 1 denotes the 'splice' task
                 with the probe image, 2 denotes the 'splice' task with the donor image.
@@ -78,6 +80,7 @@ class maskMetricList:
         self.rbin = refBin
         self.sbin = sysBin
         self.journalData = journaldf
+        self.joinData = joindf
         self.index = index
         self.mode=mode
         self.colordict=colordict
@@ -105,7 +108,10 @@ class maskMetricList:
         if (self.journalData is 0) and (self.rbin == -1): #no journal saved and rbin not set
             self.rbin = 254 #automatically set binary threshold if no journalData provided.
 
+        binpfx = ''
         mymode = 'Probe'
+        if self.mode==1:
+            binpfx = 'Binary'
         if self.mode==2:
             mymode = 'Donor'
  
@@ -116,15 +122,16 @@ class maskMetricList:
         elif self.rbin == -1:
             #only need colors if selectively scoring
             #TODO: next time take the probeFileID in as input
-            myProbeID = self.maskData.query("{}MaskFileName=='{}' & Output{}MaskFileName=='{}'".format(mymode,refMaskFName,mymode,sysMaskFName))[mymode + 'FileID'].iloc[0]
+            myProbeID = self.maskData.query("{}{}MaskFileName=='{}' & Output{}MaskFileName=='{}'".format(binpfx,mymode,refMaskFName,mymode,sysMaskFName))[mymode + 'FileID'].iloc[0]
             if verbose: print("Fetching {}FileID {} from maskData...".format(mymode,myProbeID))
 
             evalcol='Evaluated'
-            if self.mode == 0: #TODO: temporary measure until we get splice sorted out
+            if self.mode == 0: #TODO: temporary measure until we get splice sorted out. Originally mode != 2
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
-                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']] #get the target colors
+                joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalID','StartNodeID','EndNodeID']]
+                color_purpose = pd.merge(self.journalData.query("{}=='Y'".format(evalcol)),joins,how='left',on=['JournalID','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -174,13 +181,15 @@ class maskMetricList:
         if self.mode==2:
             mymode='Donor'
 
+        binpfx = ''
         evalcol='Evaluated'
         if self.mode == 1:
+            binpfx = 'Binary'
             evalcol='ProbeEvaluated'
         elif self.mode == 2:
             evalcol='DonorEvaluated'
 
-        reflist = self.maskData[mymode+'MaskFileName']
+        reflist = self.maskData['{}{}MaskFileName'.format(binpfx,mymode)]
         syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
 
         manip_ids = self.maskData[mymode+'FileID']
@@ -201,8 +210,9 @@ class maskMetricList:
         ilog = open('index_log.txt','w+')
 
         for i,row in df.iterrows():
-            if verbose: print("Evaluating mask {} out of {}...".format(i,nrow))
+            if verbose: print("Scoring mask {} out of {}...".format(i+1,nrow))
             if syslist[i] in [None,'',np.nan]:
+                self.journalData.set_value(i,evalcol,'N')
                 if verbose: print("Empty system mask file at index %d" % i)
                 continue
             else:
@@ -219,6 +229,7 @@ class maskMetricList:
                 idxH = idxdims[mymode+'Height']
 
                 if (rdims[0] != idxH) or (rdims[1] != idxW):
+                    self.journalData.set_value(i,evalcol,'N')
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
  Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
                     #write mask name, mask dimensions, and image dimensions to index_log.txt
@@ -234,7 +245,6 @@ class maskMetricList:
                 #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
 
                 if task == 'manipulation':
-                    if verbose: print "Index: {}".format(i)
                     subdir_name = self.maskData['ProbeFileID'].iloc[i]
                 elif task == 'splice':
                     subdir_name = "{}_{}".format(self.maskData['ProbeFileID'].iloc[i],self.maskData['DonorFileID'].iloc[i])
@@ -409,8 +419,9 @@ class maskMetricList:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            jdata = self.journalData.query("{}FileID=='{}'".format(mymode,probeFileID))[['Operation','Purpose','Color',evalcol]]
-            jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
+            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalID'].iloc[0]
+            jdata = self.journalData.query("JournalID=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
             jDataColors = list(jdata['Color'])

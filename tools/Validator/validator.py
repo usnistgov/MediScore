@@ -66,8 +66,8 @@ class validator:
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
-    def contentCheck(self): pass
-    def fullCheck(self,nc):
+    def contentCheck(self,identify): pass
+    def fullCheck(self,nc,identify):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -94,7 +94,7 @@ class validator:
 
         printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
 
-        if self.contentCheck() == 1:
+        if self.contentCheck(identify) == 1:
             return 1
         return 0
 
@@ -144,7 +144,7 @@ class SSD_Validator(validator):
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
-    def contentCheck(self):
+    def contentCheck(self,identify):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -219,7 +219,7 @@ class SSD_Validator(validator):
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                 continue
-            maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile)
+            maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
         
         #final validation
         if maskFlag == 0:
@@ -275,7 +275,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck_1(self):
+    def contentCheck(self,identify):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -376,7 +376,7 @@ class DSD_Validator(validator):
                     donorWidth = int(indRec[i_heads['DonorWidth']])
                     donorHeight = int(indRec[i_heads['DonorHeight']])
 
-                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx)
+                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -429,7 +429,7 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck(self):
+    def contentCheck_0(self,identify):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -522,7 +522,7 @@ class DSD_Validator(validator):
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
                 printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping this pair.")
                 continue
-            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i)
+            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
         
         #final validation
         if maskFlag==0:
@@ -534,7 +534,7 @@ class DSD_Validator(validator):
 ######### Functions that don't depend on validator ####################################################
 
 #TODO: use subprocess to run identify and capture output
-def maskCheck1(maskname,fileid,indexfile):
+def maskCheck1(maskname,fileid,indexfile,identify):
     #check to see if index file input image files are consistent with system output
     flag = 0
     printq("Validating {} for file {}...".format(maskname,fileid))
@@ -548,6 +548,8 @@ def maskCheck1(maskname,fileid,indexfile):
         return 1
     baseHeight = list(map(int,indexfile['ProbeHeight'][indexfile['ProbeFileID'] == fileid]))[0] 
     baseWidth = list(map(int,indexfile['ProbeWidth'][indexfile['ProbeFileID'] == fileid]))[0]
+
+    #TODO: subprocess with imagemagick identify for speed
     dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(dims)>2:
@@ -568,7 +570,7 @@ def maskCheck1(maskname,fileid,indexfile):
 
     return flag
 
-def maskCheck2_1(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum):
+def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum,identify):
     #check to see if index file input image files are consistent with system output
     flag = 0
     printq("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
@@ -595,6 +597,7 @@ def maskCheck2_1(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbas
     if eflag:
         return 1
 
+    #TODO: subprocess with imagemagick identify for speed
     pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(pdims)>2:
@@ -623,7 +626,7 @@ def maskCheck2_1(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbas
         printq("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
     return flag
 
-def maskCheck2(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
+def maskCheck2_0(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
     #check to see if index file input image files are consistent with system output
     flag = 0
     printq("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
@@ -698,7 +701,8 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
-    #TODO: add option to use imageMagick (identify) or openCV. openCV by default
+    parser.add_argument('-id','--identify',action="store_true",\
+    help='use ImageMagick\'s identify to get dimensions of mask. OpenCV reading is used by default.')
 
     if len(sys.argv) > 1:
 
@@ -716,11 +720,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck)
+            ssd_validation.fullCheck(args.nameCheck,args.identify)
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck)
+            dsd_validation.fullCheck(args.nameCheck,args.identify)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
