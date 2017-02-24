@@ -533,7 +533,6 @@ class DSD_Validator(validator):
 
 ######### Functions that don't depend on validator ####################################################
 
-#TODO: use subprocess to run identify and capture output
 def maskCheck1(maskname,fileid,indexfile,identify):
     #check to see if index file input image files are consistent with system output
     flag = 0
@@ -549,8 +548,12 @@ def maskCheck1(maskname,fileid,indexfile,identify):
     baseHeight = list(map(int,indexfile['ProbeHeight'][indexfile['ProbeFileID'] == fileid]))[0] 
     baseWidth = list(map(int,indexfile['ProbeWidth'][indexfile['ProbeFileID'] == fileid]))[0]
 
-    #TODO: subprocess with imagemagick identify for speed
-    dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
+    #subprocess with imagemagick identify for speed
+    if identify:
+        dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",maskname]).rstrip().replace("'","").split('|')
+        dims = (int(dimoutput[2]),int(dimoutput[1]))
+    else:
+        dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(dims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(maskname),True)
@@ -589,16 +592,20 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
     #check to see if png files exist before doing anything with them.
     eflag = False
     if not os.path.isfile(pmaskname):
-        printq("ERROR: " + pmaskname + " does not exist! Did you name it wrong?",True)
+        printq("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname),True)
         eflag = True
     if not os.path.isfile(dmaskname):
-        printq("ERROR: " + dmaskname + " does not exist! Did you name it wrong?",True)
+        printq("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname),True)
         eflag = True
     if eflag:
         return 1
 
-    #TODO: subprocess with imagemagick identify for speed
-    pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
+    #subprocess with imagemagick identify for speed
+    if identify:
+        dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",pmaskname]).rstrip().replace("'","").split('|')
+        pdims = (int(dimoutput[2]),int(dimoutput[1]))
+    else:
+        pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(pdims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(pmaskname),True)
@@ -609,8 +616,12 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
         printq("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]),True)
         printq("ERROR: The mask image's length and width do not seem to be the same as the base image's.",True)
         flag = 1
-     
-    ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
+
+    if identify:
+        dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",dmaskname]).rstrip().replace("'","").split('|')
+        ddims = (int(dimoutput[2]),int(dimoutput[1]))
+    else: 
+        ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(ddims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(dmaskname),True)
