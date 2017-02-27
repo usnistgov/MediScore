@@ -1,8 +1,8 @@
-ProbeFileID|DonorFileID|ConfidenceScore|ProbeOutputMaskFName|DonorDoutputMaskFName
-F18|F166|0.034|mask/F18-mask.png|mask/F166-mask.png
-F166|F165|0.021|mask/F166-mask.png|mask/F165-mask.png
-F165|F86|0.021|mask/F165-mask.png|mask/F86-mask.png
-F86|F87|0.016|mask/F86-mask.png|mask/F87-mask.png
-F87|F88|0.016|mask/F87-mask.png|mask/F88-mask.png
-F88|F172|0.016|mask/F88-mask.png|mask/F172-mask.png
-F172|F18|0.015|mask/F172-mask.png|mask/F18-mask.png
+"ProbeFileID"|"DonorFileID"|"ConfidenceScore"|"ProbeOutputMaskFName"|"DonorDoutputMaskFName"|"IsOptOut"
+"F18"|"F166"|0.034|"mask/F18-mask.png"|"mask/F166-mask.png"|"Y"
+"F166"|"F165"|0.021|"mask/F166-mask.png"|"mask/F165-mask.png"|"Y"
+"F165"|"F86"|0.021|"mask/F165-mask.png"|"mask/F86-mask.png"|"Y"
+"F86"|"F87"|0.016|"mask/F86-mask.png"|"mask/F87-mask.png"|"Y"
+"F87"|"F88"|0.016|"mask/F87-mask.png"|"mask/F88-mask.png"|"Y"
+"F88"|"F172"|0.016|"mask/F88-mask.png"|"mask/F172-mask.png"|"Y"
+"F172"|"F18"|0.015|"mask/F172-mask.png"|"mask/F18-mask.png"|"Y"

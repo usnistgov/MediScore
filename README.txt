@@ -31,7 +31,7 @@ INSTALLATION
   Prior to running the Scorer, the following packages need to be installed :
   - opencv (tested in version 2.4.13)
   - numpy  (tested in version 1.11.1)
-  - pandas (tested in version 0.18.1)
+  - pandas (tested in version 0.18.1) - make sure to use the latest version.
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
