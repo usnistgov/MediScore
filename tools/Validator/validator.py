@@ -316,11 +316,11 @@ class DSD_Validator(validator):
                 if idx == 0:
                     i_headnames = l.rstrip().split('|')
                     for i,h in enumerate(i_headnames):
-                        i_heads[h.replace('\n','')] = i
+                        i_heads[h] = i
                 else:
-                    i_data = l.rstrip().split('|')
+                    i_data = l.rstrip().replace("\"","").split('|')
                     #print i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]
-                    ind[i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]] = i_data                    
+                    ind[i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]] = i_data
 
         printq("Index read")
 
@@ -555,7 +555,12 @@ def maskCheck1(maskname,fileid,indexfile,identify):
     else:
         dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
 
-    if len(dims)>2:
+    if identify:
+        channel = subprocess.check_output(["identify","-format","%[channels]",maskname])
+        if channel != "gray\n":
+            printq("ERROR: {} is not single-channel. Make it single-channel.".format(maskname),True)
+            flag = 1
+    elif len(dims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(maskname),True)
         flag = 1
 
@@ -607,7 +612,12 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
     else:
         pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
 
-    if len(pdims)>2:
+    if identify:
+        channel = subprocess.check_output(["identify","-format","%[channels]",pmaskname])
+        if channel != "gray\n":
+            printq("ERROR: {} is not single-channel. Make it single-channel.".format(pmaskname),True)
+            flag = 1
+    elif len(pdims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(pmaskname),True)
         flag = 1
 
@@ -623,7 +633,12 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
     else: 
         ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
 
-    if len(ddims)>2:
+    if identify:
+        channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname])
+        if channel != "gray\n":
+            printq("ERROR: {} is not single-channel. Make it single-channel.".format(dmaskname),True)
+            flag = 1
+    elif len(ddims)>2:
         printq("ERROR: {} is not single-channel. Make it single-channel.".format(dmaskname),True)
         flag = 1
 
