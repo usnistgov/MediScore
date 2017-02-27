@@ -103,13 +103,13 @@ class SSD_Validator(validator):
     def nameCheck(self):
         printq('Validating the name of the system file...')
 
-        sys_pieces = self.sysname.split('.')
-        sys_ext = sys_pieces[-1]
+        sys_pieces = self.sysname.rsplit('.',1)
+        sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
             printq('ERROR: Your system output is not a csv!',True)
             return 1
     
-        fileExpid = sys_pieces[-2].split('/')
+        fileExpid = sys_pieces[0].split('/')
         dirExpid = fileExpid[-2]
         fileExpid = fileExpid[-1]
         if fileExpid != dirExpid:
@@ -232,13 +232,13 @@ class DSD_Validator(validator):
     def nameCheck(self):
         printq('Validating the name of the system file...')
 
-        sys_pieces = self.sysname.split('.')
-        sys_ext = sys_pieces[-1]
+        sys_pieces = self.sysname.rsplit('.',1)
+        sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
             printq('ERROR: Your system output is not a csv!',True)
             return 1
     
-        fileExpid = sys_pieces[-2].split('/')
+        fileExpid = sys_pieces[0].split('/')
         dirExpid = fileExpid[-2]
         fileExpid = fileExpid[-1]
         if fileExpid != dirExpid:
