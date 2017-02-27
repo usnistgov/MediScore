@@ -11,6 +11,7 @@ check:
 	(python2 -W ignore ../../lib/ProvenanceMetricsUnitTest.py)
 	@(echo "** Running integration tests **\n")
 	@(./run_integration_tests.sh)
+	@(echo "PROVENANCE SCORER TESTS SUCCESSFULLY PASSED")
 
 makecheckfiles:
 	(./make_checkfiles.sh)

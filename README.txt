@@ -11,6 +11,8 @@ example data for the following tools:
                           Scorer
   MaskScorer       V2.1 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
+  ProvenanceFilteringScorer      V1.0
+  ProvenanceGraphBuildingScorer  V1.0
 
 This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
@@ -58,6 +60,7 @@ INSTALLATION
    - ALL SSD VALIDATION TESTS SUCCESSFULLY PASSED
    - MASK SCORER TESTS SUCCESSFULLY PASSED
    - DETECTION SCORER TESTS SUCCESSFULLY PASSED
+   - PROVENANCE SCORER TESTS SUCCESSFULLY PASSED
 
    Due to the sheer volume of the mask scorer's test cases and the enormous amount of computation
    involved for each test case, the make check passes through only two test cases. For a thorough
@@ -74,8 +77,12 @@ the option '--help'.  For example:
   $ cd MediScore/tools/DetectionScorer
   $ python2 DetectionScorer.py --help
 
-Both DetectionScorer and MaskScorer scripts have additional
-HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more detailed information on their usage.
+DetectionScorer, MaskScorer, ProvenanceFilteringScorer, and
+ProvenanceGraphBuildingScorer scripts have additional HTML files
+(DetectionScorerReadMe.html, MaskScorerReadMe.html,
+ProvenanceFilteringScorerReadMe.html, and
+ProvenanceGraphBuildingScorerReadMe.html) with more detailed
+information on their usage.
 
 To try some command lines with data files, go to the testing
 directories in 'MediScore/tools/DetectionScorer', and run the command
@@ -149,6 +156,7 @@ Andrew Delgado
 Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
+David Joy
 
 
 COPYRIGHT
