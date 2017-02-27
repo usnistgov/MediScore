@@ -14,18 +14,18 @@
       <th>BWL1</th>
       <th>GWL1</th>
       <th>Scored</th>
+      <th>ProbePostProcessed</th>
+      <th>DonorPostProcessed</th>
+      <th>ManipulationQuality</th>
+      <th>IsManipulationTypeRemoval</th>
+      <th>IsManipulationTypeSplice</th>
+      <th>IsManipulationTypeCopyClone</th>
+      <th>Collection</th>
       <th>BaseFileName</th>
-      <th>JournalName</th>
-      <th>ProjectDescription</th>
-      <th>ManipulationCategory</th>
-      <th>ManMade</th>
-      <th>Face</th>
-      <th>People</th>
-      <th>Remove</th>
-      <th>Splice</th>
-      <th>Clone</th>
-      <th>BlurLocal</th>
-      <th>Cropping</th>
+      <th>Lighting</th>
+      <th>IsControl</th>
+      <th>CorrespondingControlFileName</th>
+      <th>SemanticConsistency</th>
       <th>AggMaskFileName</th>
       <th>ColMaskFileName</th>
     </tr>
@@ -34,118 +34,31 @@
     <tr>
       <th>0</th>
       <td>manipulation</td>
-      <td>43e1d6f0a9306a629a51062729549d76</td>
-      <td><a href="43e1d6f0a9306a629a51062729549d76/43e1d6f0a9306a629a51062729549d76.html">43e1d6f0a9306a629a51062729549d76.jpg</a></td>
-      <td>reference/manipulation/mask/77232d3f2f9e866ad7bbc5faccd25119.png</td>
+      <td>morelight</td>
+      <td><a href="morelight/morelight.html">morelight.jpg</a></td>
+      <td>reference/manipulation/mask/light-mask.png</td>
       <td>Y</td>
-      <td>mask/leaves-mask.png</td>
-      <td>0.70</td>
-      <td>0.109</td>
-      <td>0.650</td>
-      <td>0.092</td>
-      <td>0.092</td>
+      <td>mask/sys-light.png</td>
+      <td>1.0</td>
+      <td>-1.0</td>
+      <td>0.273</td>
+      <td>0.028</td>
+      <td>0.028</td>
       <td>Y</td>
-      <td>world/a71ee79143c09d264fc4d3ebf7449249.jpg</td>
-      <td>1e205633945e55593066eb5835c8e294</td>
-      <td>added feet, leaves, changed colors, moved rocks</td>
-      <td>NaN</td>
-      <td>no</td>
-      <td>no</td>
-      <td>yes</td>
-      <td>yes</td>
-      <td>NaN</td>
-      <td>yes</td>
-      <td>no</td>
-      <td>NaN</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76/leaves-mask_composite.jpg</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76/leaves-mask_colored.jpg</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>manipulation</td>
-      <td>07e65ca7be451f9fc756e9cc7a458eb6</td>
-      <td><a href="07e65ca7be451f9fc756e9cc7a458eb6/07e65ca7be451f9fc756e9cc7a458eb6.html">07e65ca7be451f9fc756e9cc7a458eb6.jpg</a></td>
-      <td>reference/manipulation/mask/f50af0d7f4480386c12494f1146cdf39.png</td>
-      <td>Y</td>
-      <td>mask/plus-mask.png</td>
-      <td>0.30</td>
-      <td>-1.000</td>
-      <td>0.418</td>
-      <td>0.061</td>
-      <td>0.061</td>
-      <td>Y</td>
-      <td>world/414c1f66804a0f8de50142b6665d9d14.jpg</td>
-      <td>414c1f66804a0f8de50142b6665d9d14</td>
-      <td>Add a car to the scene</td>
-      <td>NaN</td>
-      <td>yes</td>
-      <td>no</td>
-      <td>no</td>
-      <td>no</td>
-      <td>NaN</td>
-      <td>no</td>
-      <td>no</td>
-      <td>NaN</td>
-      <td>outputs/maniptest/07e65ca7be451f9fc756e9cc7a458eb6/plus-mask_composite.jpg</td>
-      <td>outputs/maniptest/07e65ca7be451f9fc756e9cc7a458eb6/plus-mask_colored.jpg</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>manipulation</td>
-      <td>43e1d6f0a9306a629a51062729549d76-2</td>
-      <td><a href="43e1d6f0a9306a629a51062729549d76-2/43e1d6f0a9306a629a51062729549d76-2.html">43e1d6f0a9306a629a51062729549d76-2.jpg</a></td>
-      <td>reference/manipulation/mask/77232d3f2f9e866ad7bbc5faccd25119-2.png</td>
-      <td>Y</td>
-      <td>mask/leaves-mask-graydient.png</td>
-      <td>0.71</td>
-      <td>0.109</td>
-      <td>0.650</td>
-      <td>0.092</td>
-      <td>0.267</td>
-      <td>Y</td>
-      <td>world/a71ee79143c09d264fc4d3ebf7449249.jpg</td>
-      <td>1e205633945e55593066eb5835c8e294</td>
-      <td>added feet, leaves, changed colors, moved rocks</td>
-      <td>NaN</td>
-      <td>no</td>
-      <td>no</td>
-      <td>yes</td>
-      <td>yes</td>
-      <td>NaN</td>
-      <td>yes</td>
-      <td>no</td>
-      <td>NaN</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76-2/leaves-mask-graydient_composite.jpg</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76-2/leaves-mask-graydient_colored.jpg</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>manipulation</td>
-      <td>43e1d6f0a9306a629a51062729549d76-3</td>
-      <td><a href="43e1d6f0a9306a629a51062729549d76-3/43e1d6f0a9306a629a51062729549d76-3.html">43e1d6f0a9306a629a51062729549d76-3.jpg</a></td>
-      <td>reference/manipulation/mask/77232d3f2f9e866ad7bbc5faccd25119-3.png</td>
-      <td>Y</td>
-      <td>mask/leaves-mask.png</td>
-      <td>0.70</td>
-      <td>0.109</td>
-      <td>0.650</td>
-      <td>0.092</td>
-      <td>0.092</td>
-      <td>Y</td>
-      <td>world/a71ee79143c09d264fc4d3ebf7449249.jpg</td>
-      <td>1e205633945e55593066eb5835c8e294</td>
-      <td>added feet, leaves, changed colors, moved rocks</td>
-      <td>NaN</td>
-      <td>no</td>
-      <td>no</td>
-      <td>yes</td>
-      <td>yes</td>
-      <td>NaN</td>
-      <td>yes</td>
-      <td>no</td>
-      <td>NaN</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76-3/leaves-mask_composite.jpg</td>
-      <td>outputs/maniptest/43e1d6f0a9306a629a51062729549d76-3/leaves-mask_colored.jpg</td>
+      <td>none</td>
+      <td>none</td>
+      <td></td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>Nimble-WEB</td>
+      <td>bar.jpg</td>
+      <td>same</td>
+      <td>False</td>
+      <td>baz.jpg</td>
+      <td></td>
+      <td>outputs/maniptest/morelight/sys-light_composite.jpg</td>
+      <td>outputs/maniptest/morelight/sys-light_colored.jpg</td>
     </tr>
   </tbody>
 </table>
@@ -155,7 +68,6 @@
     <tr style="text-align: center;">
       <th></th>
       <th>TaskID</th>
-      <th>Query</th>
       <th>NMM</th>
       <th>MCC</th>
       <th>BWL1</th>
@@ -166,20 +78,10 @@
     <tr>
       <th>0</th>
       <td>manipulation</td>
-      <td>ConfidenceScore &lt; 0.5</td>
-      <td>-1.000</td>
-      <td>0.418</td>
-      <td>0.061</td>
-      <td>0.061</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>manipulation</td>
-      <td>ManMade==['no']</td>
-      <td>0.109</td>
-      <td>0.650</td>
-      <td>0.092</td>
-      <td>0.151</td>
+      <td>-1.0</td>
+      <td>0.273</td>
+      <td>0.028</td>
+      <td>0.028</td>
     </tr>
   </tbody>
 </table>

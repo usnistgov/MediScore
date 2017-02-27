@@ -303,7 +303,7 @@ except IOError:
     
 # Merge the reference and system output for SSD/DSD reports
 if args.task == 'manipulation':
-    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+    journalData0 = journalMask #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
     n_journals = len(journalData0)
 
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
@@ -327,6 +327,7 @@ if args.task == 'manipulation':
         else:
             journalData0['Evaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
 
+        journalData_df = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
         journalData = journalData0.copy()
 
         #use big_df to filter from the list as a temporary thing
@@ -340,13 +341,14 @@ if args.task == 'manipulation':
 
             m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
             journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+            journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData0.loc[pd.merge(journalData0,bigdf[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('ProbeFileID',1).index,'Evaluated'] = 'Y'
             m_dfc.index = range(0,len(m_dfc))
             journalData.index = range(0,len(journalData))
 
         #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
-        if (len(journalData) == 0) or not (True in journalData['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
+        if (len(journalData) == 0) or not (True in journalData_df['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
             print("The query '{}' yielded no journal data over which computation may take place.".format(q))
             continue
 
