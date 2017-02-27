@@ -7,3 +7,4 @@ check:
 	(cd tools/Validator; python2 -m unittest validatorUnitTest)
 	(cd tools/MaskScorer; make check)
 	(cd tools/DetectionScorer; make check)
+	(cd tools/ProvenanceScorer; make check)
