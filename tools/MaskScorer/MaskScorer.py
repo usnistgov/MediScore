@@ -299,6 +299,7 @@ except IOError:
 
 try:
     journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0,na_filter=False)
+except IOError:
     print("No journalMask file is present. This run will terminate.")
     exit(1)
     
@@ -320,7 +321,7 @@ if args.task == 'manipulation':
 
     for qnum,q in enumerate(queryM):
         journalData0 = journalMask.copy() #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-        journalData_df0 = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+        journalData_df = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
         n_journals = len(journalData0)
 
         m_dfc = m_df.copy()
@@ -334,14 +335,14 @@ if args.task == 'manipulation':
         if q is not '':
             #exit if query does not match
             try:
-                big_df = pd.merge(m_df,journalData_df0,how='left',on=['ProbeFileID','JournalName']).query(q)
+                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','JournalName']).query(q)
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
 
             m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
             #journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
-            journalData_df = journalData_df0.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+            journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeFileID',1).index,'Evaluated'] = 'Y'
             m_dfc.index = range(0,len(m_dfc))
