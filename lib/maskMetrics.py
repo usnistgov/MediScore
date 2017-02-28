@@ -131,7 +131,7 @@ class maskMetricList:
                     evalcol='ProbeEvaluated'
 
                 joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
-                color_purpose = pd.merge(self.journalData.query("{}=='Y'".format(evalcol)),joins,how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
+                color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
