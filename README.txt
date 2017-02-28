@@ -2,8 +2,6 @@ File: README.txt
 Date: January 6, 2017
 MediScore Version: 1.0.2
 
-NEW Python
-
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
 example data for the following tools:
