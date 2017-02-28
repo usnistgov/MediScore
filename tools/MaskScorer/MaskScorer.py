@@ -125,6 +125,8 @@ else:
             print(string)
             exit(exitcode)
 
+#TODO: write merge on multi-index for two dataframes
+
 if args.task not in ['manipulation','splice']:
     printerr("ERROR: Task type must be supplied.")
 if args.refDir is None:
@@ -297,15 +299,11 @@ except IOError:
 
 try:
     journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0,na_filter=False)
-except IOError:
     print("No journalMask file is present. This run will terminate.")
     exit(1)
     
 # Merge the reference and system output for SSD/DSD reports
 if args.task == 'manipulation':
-    journalData0 = journalMask #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-    n_journals = len(journalData0)
-
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['OutputProbeMaskFileName'])
@@ -321,34 +319,36 @@ if args.task == 'manipulation':
         queryM = ['']
 
     for qnum,q in enumerate(queryM):
+        journalData0 = journalMask.copy() #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+        journalData_df0 = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+        n_journals = len(journalData0)
+
         m_dfc = m_df.copy()
         if args.queryManipulation:
             journalData0['Evaluated'] = pd.Series(['N']*n_journals)
         else:
             journalData0['Evaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
 
-        journalData_df = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-        journalData = journalData0.copy()
-
+        #journalData = journalData0.copy()
         #use big_df to filter from the list as a temporary thing
         if q is not '':
             #exit if query does not match
             try:
-                big_df = pd.merge(m_df,journalData0,how='left',on='ProbeFileID').query(q)
+                big_df = pd.merge(m_df,journalData_df0,how='left',on=['ProbeFileID','JournalName']).query(q)
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
 
             m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
-            journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
-            journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
-            journalData0.loc[pd.merge(journalData0,bigdf[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('ProbeFileID',1).index,'Evaluated'] = 'Y'
+            #journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+            journalData_df = journalData_df0.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
+                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeFileID',1).index,'Evaluated'] = 'Y'
             m_dfc.index = range(0,len(m_dfc))
-            journalData.index = range(0,len(journalData))
+            #journalData.index = range(0,len(journalData))
 
         #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
-        if (len(journalData) == 0) or not (True in journalData_df['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
+        if (len(journalData_df) == 0) or not (True in journalData_df['ProbeFileID'].isin(m_df['ProbeFileID']).unique()):
             print("The query '{}' yielded no journal data over which computation may take place.".format(q))
             continue
 
@@ -361,7 +361,7 @@ if args.task == 'manipulation':
         r_df = mr.createReportSSD(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('MCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
-        p_idx = pd.merge(journalData0,pjoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('ProbeFileID',1).index
+        p_idx = journalData0.reset_index().merge(pjoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeFileID',1).index
 
         #set where the rows are the same in the join
         journalData0.loc[p_idx,'Evaluated'] = 'N'
@@ -459,7 +459,7 @@ elif args.task == 'splice':
 
         #use big_df to filter from the list as a temporary thing
         journalData_df = pd.merge(probeJournalJoin,journalData0,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-        journalData = journalData0.copy()
+        #journalData = journalData0.copy()
 
         if q is not '':
             #exit if query does not match
@@ -472,13 +472,13 @@ elif args.task == 'splice':
             #do a join with the big dataframe and filter out the stuff that doesn't show up by pairs
             m_dfc = pd.merge(m_dfc,big_df[['ProbeFileID','DonorFileID']],how='left',on=['ProbeFileID','DonorFileID','JournalName']).dropna().drop('JournalName',1)
             #journalData = pd.merge(journalData0,big_df[['ProbeFileID','DonorFileID','JournalName']],how='left',on=['ProbeFileID','DonorFileID','JournalName'])
-            journalData0.loc[pd.merge(journalData0,bigdf[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('ProbeFileID',1).index,'ProbeEvaluated'] = 'Y'
-            journalData0.loc[pd.merge(journalData0,bigdf[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('DonorFileID',1).index,'DonorEvaluated'] = 'Y'
+            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
+                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeFileID',1).index,'ProbeEvaluated'] = 'Y'
+            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID']],\
+                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorFileID',1).index,'DonorEvaluated'] = 'Y'
 
             m_dfc.index = range(0,len(m_dfc))
-            journalData.index = range(0,len(journalData))
+            #journalData.index = range(0,len(journalData))
 
         #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
         if len(pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','DonorFileID'])) == 0:
@@ -497,8 +497,8 @@ elif args.task == 'splice':
         djoins = probeJournalJoin.query("DonorFileID=={}".format(r_df.query('dMCC == -2')['DonorFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','DonorFileID']]
 
         #set where the rows are the same in the join
-        p_idx = pd.merge(journalData0,pjoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('ProbeFileID',1).index
-        d_idx = pd.merge(journalData0,djoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).dropna().drop('DonorFileID',1).index
+        p_idx = journalData0.reset_index().merge(pjoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeFileID',1).index
+        d_idx = journalData0.reset_index().merge(djoins,how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorFileID',1).index
         journalData0.loc[p_idx,'ProbeEvaluated'] = 'N'
         journalData0.loc[d_idx,'DonorEvaluated'] = 'N'
         journalcols = ['ProbeFileID','DonorFileID']
