@@ -2,31 +2,34 @@
 
 export testsuite_directory=../../data/test_suite/provenanceScorerTests
 
-run_test() {
-    test=$1
-    checkfile=$2
-    checkfile_basename=`basename $checkfile`
-    compcheck_outdir=${3-compcheckfiles}
-    compcheckfile="$compcheck_outdir/$checkfile_basename"
-
-    echo "** Running integration test '$test' **"
-    $test "$compcheckfile"
-    diff "$checkfile" "$compcheckfile"
+check_status() {
     status=$?
     if [ $status -ne 0 ]; then
 	echo "*** FAILED ***"
 	exit $status
-    else
-	echo "*** OK ***"
     fi
+}
+
+run_test() {
+    test=$1
+    checkfile_outdir=$2
+    checkfile_outdir_basename=`basename $checkfile_outdir`
+    compcheck_outdir=${3-compcheckfiles}
+    compcheckfile_outdir="$compcheck_outdir/$checkfile_outdir_basename"
+
+    echo "** Running integration test '$test' **"
+    $test "$compcheckfile_outdir"
+    check_status
+    
+    diff -r "$checkfile_outdir" "$compcheckfile_outdir"
+    check_status
+    
+    echo "*** OK ***"
 }
 
 # Graph Building test 1_0
 test_1_0() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py $outarg \
+    ./ProvenanceGraphBuildingScorer.py -o "$1" \
 				       -x "$testsuite_directory/test_case_1-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_1-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_1-provenance-node.csv" \
@@ -38,10 +41,7 @@ test_1_0() {
 
 # Graph Building test 1_0_direct
 test_1_0_direct() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py -d $outarg \
+    ./ProvenanceGraphBuildingScorer.py -d -o "$1" \
 				       -x "$testsuite_directory/test_case_1-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_1-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_1-provenance-node.csv" \
@@ -53,10 +53,7 @@ test_1_0_direct() {
 
 # Graph Building test 1_0_direct
 test_1_0and1_direct() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py -d -t $outarg \
+    ./ProvenanceGraphBuildingScorer.py -d -t -o "$1" \
 				       -x "$testsuite_directory/test_case_1-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_1-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_1-provenance-node.csv" \
@@ -68,10 +65,7 @@ test_1_0and1_direct() {
 
 # Graph Building test 1_0_direct
 test_1_1_direct() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py -d $outarg \
+    ./ProvenanceGraphBuildingScorer.py -d -o "$1" \
 				       -x "$testsuite_directory/test_case_1-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_1-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_1-provenance-node.csv" \
@@ -83,10 +77,7 @@ test_1_1_direct() {
 
 # Graph Building test 2_0
 test_2_0() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py $outarg \
+    ./ProvenanceGraphBuildingScorer.py -o "$1" \
 				       -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_2-provenance-node.csv" \
@@ -98,10 +89,7 @@ test_2_0() {
 
 # Graph Building test 2_1
 test_2_1() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceGraphBuildingScorer.py $outarg \
+    ./ProvenanceGraphBuildingScorer.py -o "$1" \
 				       -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
 				       -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
 				       -n "$testsuite_directory/test_case_2-provenance-node.csv" \
@@ -113,10 +101,7 @@ test_2_1() {
 
 # Filtering test 0 (2_0)
 filtering_test_0() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceFilteringScorer.py $outarg \
+    ./ProvenanceFilteringScorer.py -o "$1" \
 				   -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
 				   -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
 				   -n "$testsuite_directory/test_case_2-provenance-node.csv" \
@@ -128,10 +113,7 @@ filtering_test_0() {
 
 # Filtering test 1 (2_1)
 filtering_test_1() {
-    if [ -n "$1" ]; then
-	outarg="-o $1"
-    fi
-    ./ProvenanceFilteringScorer.py $outarg \
+    ./ProvenanceFilteringScorer.py -o "$1" \
 				   -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
 				   -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
 				   -n "$testsuite_directory/test_case_2-provenance-node.csv" \

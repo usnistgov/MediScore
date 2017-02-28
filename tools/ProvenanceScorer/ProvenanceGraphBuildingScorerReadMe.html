@@ -11800,7 +11800,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script performs scoring for the Medifor Provenance Graph Building task.  The script produces output in the form of a pipe-separated csv file, and returns an exit status of 0 if scoring was successful.  If the script aborts due to an error, the error will be written to standard out, and the script will exit with a status of 1.</p>
+<p>This script performs scoring for the Medifor Provenance Graph Building task.  The script produces output files in the form of a pipe-separated csv files, and returns an exit status of 0 if scoring was successful.  If the script aborts due to an error, the error will be written to standard out, and the script will exit with a status of 1.  The script produces two output files, 'trial_scores.csv', which reports scores at the trial (probe) level, and 'scores.csv', which aggregates metrics over trials.</p>
 <p>The script reports the following metrics:</p>
 <ul>
 <li>SimNLO - Similarity of node link overlap</li>
@@ -11819,7 +11819,11 @@ Sim_{LO}(G, G') = 2\frac{|L \cap L'|}{|L| + |L'|}
 \end{equation*}$$$$\begin{equation*}
 recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 \end{equation*}$$<p>The script also reports various counts, such as the number of correct nodes and links.  See the examples section for sample output.</p>
-<h2 id="Command-line-interface">Command-line interface<a class="anchor-link" href="#Command-line-interface">&#182;</a></h2><h3 id="Required-Arguments">Required Arguments<a class="anchor-link" href="#Required-Arguments">&#182;</a></h3><p>-x, --index-file INDEX_FILE</p>
+<h2 id="Command-line-interface">Command-line interface<a class="anchor-link" href="#Command-line-interface">&#182;</a></h2><h3 id="Required-Arguments">Required Arguments<a class="anchor-link" href="#Required-Arguments">&#182;</a></h3><p>-o, --output-dir OUTPUT_DIR</p>
+<ul>
+<li>Output directory, where you want the script to write results</li>
+</ul>
+<p>-x, --index-file INDEX_FILE</p>
 <ul>
 <li>Index file (e.g. NC2017_Beta/indexes/NC2017_Dev2-provenancefiltering-index.csv)</li>
 </ul>
@@ -11855,10 +11859,6 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 <ul>
 <li>Toggles on direct path scoring</li>
 </ul>
-<p>-o, --output-file OUTPUT_FILE</p>
-<ul>
-<li>By default the scoring script writes results to standard output.  If this option is provided, results instead are written to OUTPUT_FILE</li>
-</ul>
 <h2 id="Example-Usage">Example Usage<a class="anchor-link" href="#Example-Usage">&#182;</a></h2><p>The following example uses the test case files included with the tool</p>
 
 </div>
@@ -11866,17 +11866,21 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
-./ProvenanceGraphBuildingScorer.py -x <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-provenancegraphbuilding-index.csv&quot;</span> <span class="se">\</span>
+./ProvenanceGraphBuildingScorer.py -o <span class="s2">&quot;compcheckfiles/graphbuilding_example/&quot;</span> <span class="se">\</span>
+                                   -x <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-provenancegraphbuilding-index.csv&quot;</span> <span class="se">\</span>
                                    -r <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-provenance-ref.csv&quot;</span> <span class="se">\</span>
                                    -n <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-provenance-node.csv&quot;</span> <span class="se">\</span>
                                    -w <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-provenancegraphbuilding-world.csv&quot;</span> <span class="se">\</span>
                                    -R <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/&quot;</span> <span class="se">\</span>
                                    -s <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/test_case_2-system_output_1_index.csv&quot;</span> <span class="se">\</span>
                                    -S <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/&quot;</span>
+                                   
+head compcheckfiles/graphbuilding_example/scores.csv <span class="se">\</span>
+     compcheckfiles/graphbuilding_example/trial_scores.csv
 </pre></div>
 
 </div>
@@ -11891,7 +11895,12 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 <div class="prompt"></div>
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|NumSysNodes|NumSysLinks|NumRefNodes|NumRefLinks|NumCorrectNodes|NumMissingNodes|NumFalseAlarmNodes|NumCorrectLinks|NumMissingLinks|NumFalseAlarmLinks|SimNLO|SimNO|SimLO|NodeRecall
+<pre>==&gt; compcheckfiles/graphbuilding_example/scores.csv &lt;==
+Direct|MeanSimNLO|MeanSimNO|MeanSimLO|MeanNodeRecall
+False|0.545454545455|0.789473684211|0.307692307692|0.833333333333
+
+==&gt; compcheckfiles/graphbuilding_example/trial_scores.csv &lt;==
+JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|NumSysNodes|NumSysLinks|NumRefNodes|NumRefLinks|NumCorrectNodes|NumMissingNodes|NumFalseAlarmNodes|NumCorrectLinks|NumMissingLinks|NumFalseAlarmLinks|SimNLO|SimNO|SimLO|NodeRecall
 c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|20|21|18|18|15|3|5|6|12|15|0.545454545455|0.789473684211|0.307692307692|0.833333333333
 </pre>
 </div>

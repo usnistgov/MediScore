@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 
 import sys
-lib_path = "../../lib"
+import os
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 
 import json
 import argparse
 import pandas as pd
-import os.path
+import errno
 
 from ProvenanceGraphBuilding import *
 from ProvenanceMetrics import *
@@ -29,6 +30,15 @@ def load_csv(csv_fn, sep="|"):
     except IOError as ioerr:
         err_quit("{}. Aborting!".format(ioerr))
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            err_quit("{}. Aborting!".format(exc))
+        
 def antiforensic_donor_filter(edge_list):
     ins = group_by_fun(lambda e: e["target"], edge_list)
 
@@ -45,6 +55,26 @@ def system_out_to_scorable(system_out):
     node_set = { n["file"] for n in system_out["nodes"] }
     edge_set = { (node_lookup[edge["source"]]["file"], node_lookup[edge["target"]]["file"]) for edge in system_out["links"] }
     return (node_set, edge_set)
+
+def build_provenancegraphbuilding_agg_output_df():
+    df = pd.DataFrame(columns=["Direct",
+                               "MeanSimNLO",
+                               "MeanSimNO",
+                               "MeanSimLO",
+                               "MeanNodeRecall"])
+
+    dtypes = { "Direct": bool,
+               "MeanSimNLO": float,
+               "MeanSimNO": float,
+               "MeanSimLO": float,
+               "MeanNodeRecall": float }
+
+    # Setting column data type one by one as pandas doesn't offer a
+    # convenient way to do this
+    for col, t in dtypes.items():
+        df[col] = df[col].astype(t)
+
+    return df
 
 def build_provenancegraphbuilding_output_df():
     df = pd.DataFrame(columns=["JournalName",
@@ -95,7 +125,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceGraphBuilding task output")
     parser.add_argument("-d", "--direct", help="toggle direct path scoring", action="store_true")
     parser.add_argument("-t", "--skip-trial-disparity-check", help="Skip check for trial disparity between INDEX_FILE and SYSTEM_OUTPUT_FILE", action="store_true")
-    parser.add_argument("-o", "--output-file", help="Output file for scores, default prints to stdout", type=str)
+    parser.add_argument("-o", "--output-dir", help="Output directory for scores", type=str, required=True)
     parser.add_argument("-x", "--index-file", help="Task Index file", type=str, required=True)
     parser.add_argument("-r", "--reference-file", help="Reference file", type=str, required=True)
     parser.add_argument("-n", "--node-file", help="Node file", type=str, required=True)
@@ -218,11 +248,22 @@ if __name__ == '__main__':
             
             output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
-    if args.output_file:
-        try:
-            with open(args.output_file, 'w') as out_f:
-                output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-        except IOError as ioerr:
-            err_quit("{}. Aborting!".format(ioerr))
-    else:
-        output_records.to_csv(path_or_buf=sys.stdout, sep="|", index=False)
+    output_agg_records = build_provenancegraphbuilding_agg_output_df()
+    aggregated = { "Direct": args.direct,
+                   "MeanSimNLO": output_records["SimNLO"].mean(),
+                   "MeanSimNO": output_records["SimNO"].mean(),
+                   "MeanSimLO": output_records["SimLO"].mean(),
+                   "MeanNodeRecall": output_records["NodeRecall"].mean() }
+    output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
+    
+    mkdir_p(args.output_dir)
+    try:
+        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
+            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
+    except IOError as ioerr:
+        err_quit("{}. Aborting!".format(ioerr))
+    try:
+        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
+            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
+    except IOError as ioerr:
+        err_quit("{}. Aborting!".format(ioerr))

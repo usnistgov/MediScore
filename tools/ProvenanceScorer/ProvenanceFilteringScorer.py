@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 
 import sys
-lib_path = "../../lib"
+import os
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 
 import json
 import argparse
 import pandas as pd
-import os.path
+import errno
 import collections
 
 from ProvenanceMetrics import *
@@ -29,12 +30,36 @@ def load_csv(csv_fn, sep="|"):
     except IOError as ioerr:
         err_quit("{}. Aborting!".format(ioerr))
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            err_quit("{}. Aborting!".format(exc))
+        
 # Returns ordered array of named tuples representing nodes
 def system_out_to_ordered_nodes(system_out):
     node_w_confidence = collections.namedtuple('node_w_confidence', [ 'confidence', 'file' ])
     node_set_w_confidence = [ node_w_confidence(n["nodeConfidenceScore"], n["file"]) for n in system_out["nodes"] ]
     node_set_w_confidence.sort(reverse=True)
     return node_set_w_confidence
+
+def build_provenancefiltering_agg_output_df():
+    df = pd.DataFrame(columns=["MeanNodeRecall@50",
+                               "MeanNodeRecall@100",
+                               "MeanNodeRecall@200"])
+    dtypes = { "MeanNodeRecall@50": float,
+               "MeanNodeRecall@100": float,
+               "MeanNodeRecall@200": float }
+
+    # Setting column data type one by one as pandas doesn't offer a
+    # convenient way to do this
+    for col, t in dtypes.items():
+        df[col] = df[col].astype(t)
+
+    return df
 
 def build_provenancefiltering_output_df():
     df = pd.DataFrame(columns=["JournalName",
@@ -82,7 +107,7 @@ def build_provenancefiltering_output_df():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
     parser.add_argument("-t", "--skip-trial-disparity-check", help="Skip check for trial disparity between INDEX_FILE and SYSTEM_OUTPUT_FILE", action="store_true")
-    parser.add_argument("-o", "--output-file", help="Output file for scores, default prints to stdout", type=str)
+    parser.add_argument("-o", "--output-dir", help="Output directory for scores", type=str, required=True)
     parser.add_argument("-x", "--index-file", help="Task Index file", type=str, required=True)
     parser.add_argument("-r", "--reference-file", help="Reference file", type=str, required=True)
     parser.add_argument("-n", "--node-file", help="Node file", type=str, required=True)
@@ -155,11 +180,20 @@ if __name__ == '__main__':
             
         output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
-    if args.output_file:
-        try:
-            with open(args.output_file, 'w') as out_f:
-                output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-        except IOError as ioerr:
-            err_quit("{}. Aborting!".format(ioerr))
-    else:
-        output_records.to_csv(path_or_buf=sys.stdout, sep="|", index=False)
+    output_agg_records = build_provenancefiltering_agg_output_df()
+    aggregated = { "MeanNodeRecall@50": output_records["NodeRecall@50"].mean(),
+                   "MeanNodeRecall@100": output_records["NodeRecall@100"].mean(),
+                   "MeanNodeRecall@200": output_records["NodeRecall@200"].mean() }
+    output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
+
+    mkdir_p(args.output_dir)
+    try:
+        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
+            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
+    except IOError as ioerr:
+        err_quit("{}. Aborting!".format(ioerr))
+    try:
+        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
+            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
+    except IOError as ioerr:
+        err_quit("{}. Aborting!".format(ioerr))
