@@ -158,14 +158,14 @@ class SSD_Validator(validator):
         xrowFlag = 0
         maskFlag = 0
         
-        if sysfile.shape[1] < 3:
-            printq("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 2:
+            printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        truelist = ["ProbeFileID","ConfidenceScore"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -178,10 +178,13 @@ class SSD_Validator(validator):
 #                        properhl.append(truelist[i]) 
 #                printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
                 printq("ERROR: The required column {} is absent.".format(truelist[i]),True)
-                return 1
 
         if not allClear:
             return 1
+
+        testMask = False
+        if "OutputProbeMaskFileName" in sysHeads:
+            testMask = True
         
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
             rowlist = range(0,sysfile.shape[0])
@@ -200,11 +203,12 @@ class SSD_Validator(validator):
         
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str)
         sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
-        sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
+        if testMask:
+            sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
 
-        idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
-        idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 
-        idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.float64) 
+#        idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
+#        idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 
+#        idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.float64) 
 
         sysPath = os.path.dirname(self.sysname)
     
@@ -215,11 +219,12 @@ class SSD_Validator(validator):
                 return 1
 
             #check mask validation
-            probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
-            if probeOutputMaskFileName in [None,'',np.nan,'nan']:
-                printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
-                continue
-            maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
+            if testMask:
+                probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
+                if probeOutputMaskFileName in [None,'',np.nan,'nan']:
+                    printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
+                    continue
+                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
         
         #final validation
         if maskFlag == 0:

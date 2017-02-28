@@ -181,7 +181,7 @@ class TestValidator(ut.TestCase):
         errmsg.seek(0)
         self.assertEqual(result,1)
         errstr = errmsg.read()
-        self.assertTrue("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?" in errstr)
+        self.assertTrue("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?" in errstr)
         print("CASE 7 validated.")
         
         print("\nCASE 8: Validating behavior when mask file is not present.") 
