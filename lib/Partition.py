@@ -11,7 +11,7 @@ class Partition:
        It generates and stores each dataframe and their corresponding
        DetMetric objects.
     """
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 1.0):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query

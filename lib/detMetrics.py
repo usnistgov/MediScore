@@ -17,7 +17,7 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=1.0):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=0.0):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
@@ -245,7 +245,7 @@ class Metrics:
 
     # Calculate d-prime and beta
     @staticmethod
-    def compute_dprime(fpr_a, tpr_a, d_level = 1.0):
+    def compute_dprime(fpr_a, tpr_a, d_level = 0.0):
         """ computes the d-prime given TPR and FPR values
         tpr: true positive rates
         fpr: false positive rates"""
@@ -254,39 +254,42 @@ class Metrics:
 
         #fpr_a = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
         #tpr_a = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
-        #d_level = 1
-        lower_bound = round((1.0 - float(d_level))/2.0, 3)
-        upper_bound = round((1.0 - lower_bound), 3)
+        #d_level = 0.2
 
         fpr = list(fpr_a)
         tpr = list(tpr_a)
+        print("fpr {}, tpr {}".format(len(fpr), len(tpr)))
+        # condition for no value
+        fpr_idx = [idx for idx, x in enumerate(fpr) if x >= d_level and x <= (1.0-d_level)]
+        #tpr_idx = [idx for idx, x in enumerate(tpr) if x >= d_level and x <= (1.0-d_level)]
+        print("fpr_idx:{}".format(fpr_idx))
+        print("first idx: {}, sencond idx{}".format(fpr_idx[0], fpr_idx[len(fpr_idx)-1]))
 
-        start_range = int(lower_bound * len(fpr))
-        end_range = int(upper_bound * len(fpr))
 
         Z = norm.ppf
         d = []
         beta = []
-        #for i in range(0, len(fpr)):
-        for i in range(start_range, end_range):
-            # Starting d' calculation
-            #avoid d' infinity
-            if tpr[i] == 1: tpr[i] =0.9975
-            if fpr[i] == 1: fpr[i] =0.9975
-            if tpr[i] == 0: tpr[i] =0.0025
-            if fpr[i] == 0: fpr[i] =0.0025
-            d.append(Z(tpr[i]) - Z(fpr[i]))
-            beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
+        if(len(fpr_idx) > 0):
+            #for i in range(0, len(fpr)):
+            for i in range(fpr_idx[0], fpr_idx[len(fpr_idx)-1]):
+                # Starting d' calculation
+                #avoid d' infinity
+                if tpr[i] == 1: tpr[i] =0.9975
+                if fpr[i] == 1: fpr[i] =0.9975
+                if tpr[i] == 0: tpr[i] =0.0025
+                if fpr[i] == 0: fpr[i] =0.0025
+                d.append(Z(tpr[i]) - Z(fpr[i]))
+                beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
 
-        #d = [ Z(tpr[i]) - Z(fpr[i]) for i in range(0, len(fpr)) ]
-        #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
-        #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
+            #d = [ Z(tpr[i]) - Z(fpr[i]) for i in range(0, len(fpr)) ]
+            #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
+            #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
 
-        d_idx = d.index(max(d)) + start_range # actual position
-        d_max_point = (fpr[d_idx], tpr[d_idx])
+            d_idx = d.index(max(d)) + fpr_idx[0] # actual position
+            d_max_point = (fpr[d_idx], tpr[d_idx])
 
-        b_idx = beta.index(max(beta))
-        b_max_point = (fpr[b_idx], tpr[b_idx])
+            b_idx = beta.index(max(beta))
+            b_max_point = (fpr[b_idx], tpr[b_idx])
 
         #print("beta{}".format(beta))
 #       print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))

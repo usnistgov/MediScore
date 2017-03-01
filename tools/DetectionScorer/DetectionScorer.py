@@ -71,8 +71,8 @@ if __name__ == '__main__':
                 raise argparse.ArgumentTypeError("{0} not provided".format(x))
 
             x = float(x)
-            if x < 0.5 or x > 1.0:
-                raise argparse.ArgumentTypeError("%r not in range [0.5, 1.0]"%(x,))
+            if x > 0.3 or x < 0:
+                raise argparse.ArgumentTypeError("%r not in range [0.0, 0.3]"%(x,))
 
             return x
 
@@ -112,8 +112,8 @@ if __name__ == '__main__':
         parser.add_argument('--ciLevel', type=restricted_ci_value, default = 0.9,
                             help="Calculate the lower and upper confidence interval with the specified confidence level, The option will slowdown the speed due to the bootstrapping method.", metavar='float')
 
-        parser.add_argument('--dLevel', type=restricted_dprime_level, default = 1.0,
-                            help="Define the lower and upper exception for d-prime calculation", metavar='float')
+        parser.add_argument('--dLevel', type=restricted_dprime_level, default = 0.0,
+                            help="Define the lower and upper exclusions for d-prime calculation", metavar='float')
 
         # Output Options
         parser.add_argument('--outRoot',default='.',
@@ -305,12 +305,12 @@ if __name__ == '__main__':
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
             elif args.queryPartition:
-                table_df.to_csv(args.outRoot + '_qp_query.csv')
+                table_df.to_csv(args.outRoot + '_qp_query_report.csv')
             elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
 
 
         # No partitions
@@ -319,7 +319,7 @@ if __name__ == '__main__':
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(args.outRoot + '_all.csv', index = False)
+            table_df.to_csv(args.outRoot + '_all_report.csv', index = False)
 
         if isinstance(table_df,list):
             print("\nReport tables:\n")
@@ -415,7 +415,7 @@ if __name__ == '__main__':
         farStop = 1
         ci = True
         ciLevel = 0.9
-        dLevel = 1
+        dLevel = 0
         plotType = 'roc'
         display = True
         multiFigs = False
@@ -600,12 +600,12 @@ if __name__ == '__main__':
                 print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args_query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_q_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
             elif args_queryPartition:
-                table_df[0].to_csv(outRoot + '_qp_query.csv') #table_df is List type
+                table_df[0].to_csv(outRoot + '_qp_query_report.csv') #table_df is List type
             elif args_queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_qm_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
 
         # No partitions
         else:
@@ -614,7 +614,7 @@ if __name__ == '__main__':
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(outRoot + '_all.csv', index = False)
+            table_df.to_csv(outRoot + '_all_report.csv', index = False)
 
         if isinstance(table_df,list):
             print("\nReport tables...\n")
