@@ -11,7 +11,7 @@ class Partition:
        It generates and stores each dataframe and their corresponding
        DetMetric objects.
     """
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 1.0):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -49,7 +49,7 @@ class Partition:
             self.n_partitions = len(self.part_values_list)
 
         self.part_df_list = self.gen_part_df_list(dataframe)
-        self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel)
+        self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel, dLevel)
 
 
     def gen_index_factor(self,list_factors):
@@ -156,7 +156,7 @@ class Partition:
 
         return df_list
 
-    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel):
+    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel, dLevel):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -167,7 +167,7 @@ class Partition:
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
                 print("Current query: {}".format(query))
-                dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI, ciLevel))
+                dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI, ciLevel, dLevel))
             else:
                 print('#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
         return dm_list

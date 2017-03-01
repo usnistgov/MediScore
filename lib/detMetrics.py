@@ -17,7 +17,7 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=1.0):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
@@ -33,7 +33,7 @@ class detMetrics:
 
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
-        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr)
+        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr, dLevel)
         #self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
         #print ("fpr_stop test:".format(fpr_stop))
 
@@ -245,19 +245,30 @@ class Metrics:
 
     # Calculate d-prime and beta
     @staticmethod
-    def compute_dprime(fpr_a, tpr_a):
+    def compute_dprime(fpr_a, tpr_a, d_level = 1.0):
         """ computes the d-prime given TPR and FPR values
         tpr: true positive rates
         fpr: false positive rates"""
         from scipy.stats import norm
         from math import exp
 
+        #fpr_a = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
+        #tpr_a = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
+        #d_level = 1
+        lower_bound = round((1.0 - float(d_level))/2.0, 3)
+        upper_bound = round((1.0 - lower_bound), 3)
+
         fpr = list(fpr_a)
         tpr = list(tpr_a)
+
+        start_range = int(lower_bound * len(fpr))
+        end_range = int(upper_bound * len(fpr))
+
         Z = norm.ppf
         d = []
         beta = []
-        for i in range(0, len(fpr)):
+        #for i in range(0, len(fpr)):
+        for i in range(start_range, end_range):
             # Starting d' calculation
             #avoid d' infinity
             if tpr[i] == 1: tpr[i] =0.9975
@@ -271,7 +282,7 @@ class Metrics:
         #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
         #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
 
-        d_idx = d.index(max(d))
+        d_idx = d.index(max(d)) + start_range # actual position
         d_max_point = (fpr[d_idx], tpr[d_idx])
 
         b_idx = beta.index(max(beta))
@@ -316,5 +327,4 @@ class Metrics:
 
         return max(a), a_max_point
 
-#fpr1 = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
-#tpr1 = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
+
