@@ -38,6 +38,8 @@ lib_path='../../lib'
 sys.path.append(lib_path)
 import maskMetrics as mm
 
+#TODO: revise pipeline. Eventually bring all mask scoring functionality to MaskScorer.py
+
 def store_avg(querydf,metlist,store_df,index,precision):
     """
      Average Lists
