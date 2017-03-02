@@ -348,7 +348,7 @@ if args.task == 'manipulation':
             journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','ProbeMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'Evaluated'] = 'Y'
-            m_dfc.index = range(len(m_dfc))
+        m_dfc.index = range(len(m_dfc))
             #journalData.index = range(0,len(journalData))
 
         #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
@@ -488,7 +488,7 @@ elif args.task == 'splice':
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','DonorMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
 
-            m_dfc.index = range(0,len(m_dfc))
+        m_dfc.index = range(0,len(m_dfc))
             #journalData.index = range(0,len(journalData))
 
         #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
