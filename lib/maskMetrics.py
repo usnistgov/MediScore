@@ -130,8 +130,17 @@ class maskMetricList:
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
-                joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
-                color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
+                #joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalID','StartNodeID','EndNodeID']]
+                #get the target colors
+                #TODO: dropping duplicates is a temporary measure
+                #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalID','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
+                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalol))[['Color','Purpose']]
+                #TODO: debug
+                print joins
+                print self.journalData.query("JournalID=='{}'".format(joins['JournalID'].iloc[0]))
+                #print pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalID','StartNodeID','EndNodeID'])
+                print color_purpose
+
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -212,14 +221,17 @@ class maskMetricList:
         for i,row in df.iterrows():
             if verbose: print("Scoring mask {} out of {}...".format(i+1,nrow))
             if syslist[i] in [None,'',np.nan]:
-                self.journalData.set_value(i,evalcol,'N')
+                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                #self.journalData.set_value(i,evalcol,'N')
                 if verbose: print("Empty system mask file at index %d" % i)
                 continue
             else:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
-                    self.journalData.set_value(i,evalcol,'N')
+                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                    #self.journalData.loc[self.journalData.query("JournalID=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalID"].iloc[0])).index,evalcol] = 'N'
+                    #self.journalData.set_value(i,evalcol,'N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
 
@@ -229,7 +241,9 @@ class maskMetricList:
                 idxH = idxdims[mymode+'Height']
 
                 if (rdims[0] != idxH) or (rdims[1] != idxW):
-                    self.journalData.set_value(i,evalcol,'N')
+                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                    #self.journalData.loc[self.journalData.query("JournalID=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalID"].iloc[0])).index,evalcol] = 'N'
+                    #self.journalData.set_value(i,evalcol,'N')
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
  Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
                     #write mask name, mask dimensions, and image dimensions to index_log.txt
@@ -414,13 +428,13 @@ class maskMetricList:
         mymode = 'Probe'
         if self.mode == 2:
             mymode = 'Donor'
-        elif self.mode == 0: #TODO: temporary measure until we get splice sorted out
+        elif self.mode == 0: #TODO: temporary measure until we get splice sorted out, originally self.mode != 2
             evalcol='Evaluated'
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalID'].iloc[0]
+            jdata = self.journalData.query("JournalID=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -468,19 +482,19 @@ class maskMetricList:
         except OSError:
             None
 
-        if verbose: print "Creating link for " + mPathNew
+        if verbose: print "Creating link for " + maniImageFName
         os.symlink(os.path.abspath(mPath),mPathNew)
-        if verbose: print "Creating link for " + rPathNew
+        if verbose: print "Creating link for " + rImg_name
         os.symlink(os.path.abspath(rImg_name),rPathNew)
-        if verbose: print "Creating link for " + sPathNew
+        if verbose: print "Creating link for " + sImg_name
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         if verbose: print("Writing HTML...")
-        htmlstr = htmlstr.substitute({'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
+        htmlstr = htmlstr.substitute({'probeFname': maniImageFName, #mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
-                                      'refMask' : 'refMask.png',#rBase,
-                                      'sysMask' : 'sysMask.png',#sBase,
+                                      'refMask' : rImg_name, #'refMask.png',#rBase,
+                                      'sysMask' : sImg_name, #'sysMask.png',#sBase,
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
                                       'systh' : sys_threshold,
