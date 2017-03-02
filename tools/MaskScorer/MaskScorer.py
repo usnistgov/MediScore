@@ -172,7 +172,7 @@ if args.html:
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
-            myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;"))
+            myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;").encode('utf-8'))
             myf.write('\n')
             #write the query if manipulated
             if queryManipulation:
@@ -203,7 +203,7 @@ if args.html:
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
-            myf.write(html_out.to_html(escape=False))
+            myf.write(html_out.to_html(escape=False).encode('utf-8'))
             myf.write('\n')
             #write the query if manipulated
             if queryManipulation:
@@ -348,7 +348,7 @@ if args.task == 'manipulation':
             journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','ProbeMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'Evaluated'] = 'Y'
-            m_dfc.index = range(0,len(m_dfc))
+            m_dfc.index = range(len(m_dfc))
             #journalData.index = range(0,len(journalData))
 
         #if get empty journalData or if no ProbeFileID's match between the two, there is nothing to be scored.
