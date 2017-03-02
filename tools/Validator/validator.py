@@ -122,6 +122,10 @@ class SSD_Validator(validator):
         sysfName = os.path.basename(self.sysname)
 
         arrSplit = sysfName.split('_')
+        if len(arrSplit) < 7:
+            printq("ERROR: There are not enough arguments to verify in the name.")
+            return 1
+
         team = arrSplit[0]
         ncid = arrSplit[1]
         data = arrSplit[2]
@@ -330,6 +334,7 @@ class DSD_Validator(validator):
         printq("Index read")
 
         sysPath = os.path.dirname(self.sysname)
+        testMask = False
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 printq("Process {} ".format(idx) + l)
@@ -351,6 +356,9 @@ class DSD_Validator(validator):
                     if not allClear:
                         return 1
             
+                    if ("OutputProbeMaskFileName" in sysHeads) and ("OutputDonorMaskFileName" in sysHeads):
+                        testMask = True
+
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
                         s_heads[h] = i
@@ -359,14 +367,7 @@ class DSD_Validator(validator):
                     l_content = l.rstrip().replace("\"","").split('|')
                     probeID = l_content[s_heads['ProbeFileID']]
                     donorID = l_content[s_heads['DonorFileID']]
-                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
-                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
-
-                    if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
-                        printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
-                        continue
- 
-                    key = l_content[s_heads['ProbeFileID']] + ":" + l_content[s_heads['DonorFileID']]
+                    key = probeID + ":" + donorID
 
                     #try catch the key lookup
                     try:
@@ -376,12 +377,20 @@ class DSD_Validator(validator):
                         keyFlag = 1
                         continue
 
-                    probeWidth = int(indRec[i_heads['ProbeWidth']])
-                    probeHeight = int(indRec[i_heads['ProbeHeight']])
-                    donorWidth = int(indRec[i_heads['DonorWidth']])
-                    donorHeight = int(indRec[i_heads['DonorHeight']])
-
-                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
+                    if testMask:
+                        probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
+                        donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
+    
+                        if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
+                            printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                            continue
+     
+                        probeWidth = int(indRec[i_heads['ProbeWidth']])
+                        probeHeight = int(indRec[i_heads['ProbeHeight']])
+                        donorWidth = int(indRec[i_heads['DonorWidth']])
+                        donorHeight = int(indRec[i_heads['DonorHeight']])
+    
+                        maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now

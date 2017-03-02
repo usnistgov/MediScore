@@ -199,19 +199,28 @@ class maskMetricList:
             maniImageFName = self.maskData[mymode+'FileName']
 
         nrow = len(reflist) 
-        #initialize empty frame to minimum scores 
-        df=pd.DataFrame({mymode+'FileID':manip_ids,
-                         'NMM':[-1.]*nrow,
-                         'MCC': 0.,
-                         'BWL1': 1.,
-                         'GWL1': 1.,
-                         'ColMaskFileName':['']*nrow,
-                         'AggMaskFileName':['']*nrow})
+
+        #initialize empty frame to minimum scores
+#        df=pd.DataFrame({mymode+'FileID':manip_ids,
+#                         'NMM':[-1.]*nrow,
+#                         'MCC': 0.,
+#                         'BWL1': 1.,
+#                         'GWL1': 1.,
+#                         'ColMaskFileName':['']*nrow,
+#                         'AggMaskFileName':['']*nrow})
+
+        df=self.maskData[[mymode+'FileID',mymode+'MaskFileName']].copy()
+        df['NMM'] = [-1.]*nrow
+        df['MCC'] = [0.]*nrow
+        df['BWL1'] = [1.]*nrow
+        df['GWL1'] = [1.]*nrow
+        df['ColMaskFileName'] = ['']*nrow
+        df['AggMaskFileName'] = ['']*nrow
 
         task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
         ilog = open('index_log.txt','w+')
 
-        for i,row in df.iterrows():
+        for i,row in self.maskData.iterrows():
             if verbose: print("Scoring mask {} out of {}...".format(i+1,nrow))
             if syslist[i] in [None,'',np.nan]:
                 self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
@@ -233,15 +242,15 @@ class maskMetricList:
                 idxW = idxdims[mymode+'Width']
                 idxH = idxdims[mymode+'Height']
 
-                if (rdims[0] != idxH) or (rdims[1] != idxW):
-                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
-                    #self.journalData.set_value(i,evalcol,'N')
-                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
- Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
-                    #write mask name, mask dimensions, and image dimensions to index_log.txt
-                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
-                    continue
+#                if (rdims[0] != idxH) or (rdims[1] != idxW):
+#                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+#                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
+#                    #self.journalData.set_value(i,evalcol,'N')
+#                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
+# Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
+#                    #write mask name, mask dimensions, and image dimensions to index_log.txt
+#                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
+#                    continue
 
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     #Likely this could be FP or FN. Set scores as usual.
@@ -252,7 +261,7 @@ class maskMetricList:
                 #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
 
                 if task == 'manipulation':
-                    subdir_name = self.maskData['ProbeFileID'].iloc[i]
+                    subdir_name = manip_ids[i]
                 elif task == 'splice':
                     subdir_name = "{}_{}".format(self.maskData['ProbeFileID'].iloc[i],self.maskData['DonorFileID'].iloc[i])
                 
@@ -328,7 +337,7 @@ class maskMetricList:
                     self.manipReport(task,subOutRoot,self.maskData[mymode+'FileID'].iloc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
-        return df
+        return df.drop(mymode+'MaskFileName',1)
 
     def num2hex(self,color):
         """
