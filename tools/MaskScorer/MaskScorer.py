@@ -326,7 +326,6 @@ if args.task == 'manipulation':
     for qnum,q in enumerate(queryM):
         #journalData0 = journalMask.copy() #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
         journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-        n_journals = len(journalData0)
 
         m_dfc = m_df.copy()
         if args.queryManipulation:
@@ -339,7 +338,7 @@ if args.task == 'manipulation':
         if q is not '':
             #exit if query does not match
             try:
-                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','JournalName']).query(q)
+                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID']).query(q) #TODO: test on sample with a print?
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
