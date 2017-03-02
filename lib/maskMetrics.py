@@ -130,17 +130,10 @@ class maskMetricList:
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
-                #joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalID','StartNodeID','EndNodeID']]
                 #get the target colors
-                #TODO: dropping duplicates is a temporary measure
-                #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalID','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
-                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalol))[['Color','Purpose']]
-                #TODO: debug
-                print joins
-                print self.journalData.query("JournalID=='{}'".format(joins['JournalID'].iloc[0]))
-                #print pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalID','StartNodeID','EndNodeID'])
-                print color_purpose
-
+                #joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
+                #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
+                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']]
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -230,7 +223,7 @@ class maskMetricList:
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
                     self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                    #self.journalData.loc[self.journalData.query("JournalID=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalID"].iloc[0])).index,evalcol] = 'N'
+                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
                     #self.journalData.set_value(i,evalcol,'N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
@@ -242,7 +235,7 @@ class maskMetricList:
 
                 if (rdims[0] != idxH) or (rdims[1] != idxW):
                     self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                    #self.journalData.loc[self.journalData.query("JournalID=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalID"].iloc[0])).index,evalcol] = 'N'
+                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
                     #self.journalData.set_value(i,evalcol,'N')
                     print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
  Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
@@ -433,8 +426,8 @@ class maskMetricList:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalID'].iloc[0]
-            jdata = self.journalData.query("JournalID=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
+            jdata = self.journalData.query("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -490,11 +483,12 @@ class maskMetricList:
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         if verbose: print("Writing HTML...")
-        htmlstr = htmlstr.substitute({'probeFname': maniImageFName, #mpfx + 'File' + maniImageFName[-4:],#mBase,
+        htmlstr = htmlstr.substitute({'probeName': maniImageFName,
+                                      'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
-                                      'refMask' : rImg_name, #'refMask.png',#rBase,
-                                      'sysMask' : sImg_name, #'sysMask.png',#sBase,
+                                      'refMask' : 'refMask.png',#rBase,
+                                      'sysMask' : 'sysMask.png',#sBase,
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
                                       'systh' : sys_threshold,
