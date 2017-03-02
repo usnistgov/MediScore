@@ -258,12 +258,13 @@ class Metrics:
 
         fpr = list(fpr_a)
         tpr = list(tpr_a)
-        print("fpr {}, tpr {}".format(len(fpr), len(tpr)))
         # condition for no value
         fpr_idx = [idx for idx, x in enumerate(fpr) if x >= d_level and x <= (1.0-d_level)]
+        if not fpr_idx:
+            print("Warning: there is no point for ROC")
+            return None, (0,0), None, (0,0)
         #tpr_idx = [idx for idx, x in enumerate(tpr) if x >= d_level and x <= (1.0-d_level)]
-        print("fpr_idx:{}".format(fpr_idx))
-        print("first idx: {}, sencond idx{}".format(fpr_idx[0], fpr_idx[len(fpr_idx)-1]))
+        #print("first idx: {}, sencond idx{}".format(fpr_idx[0], fpr_idx[len(fpr_idx)-1]))
 
 
         Z = norm.ppf
@@ -291,8 +292,8 @@ class Metrics:
             b_idx = beta.index(max(beta))
             b_max_point = (fpr[b_idx], tpr[b_idx])
 
-        #print("beta{}".format(beta))
-#       print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
+        #print("original idx:{}".format(d.index(max(d))))
+        print("d- {} \ndmax- {} \nidx- {} \ndpoint- {}".format(d, max(d), d_idx, d_max_point))
 #        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
 
         return max(d), d_max_point, max(beta), b_max_point
