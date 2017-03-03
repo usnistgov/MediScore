@@ -161,6 +161,7 @@ class SSD_Validator(validator):
         dupFlag = 0
         xrowFlag = 0
         maskFlag = 0
+        matchFlag = 0
         
         if sysfile.shape[1] < 2:
             printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
@@ -219,8 +220,12 @@ class SSD_Validator(validator):
         for i in range(0,sysfile.shape[0]):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
-                printq("The contents of your file are not valid!",True)
-                return 1
+                matchFlag = 1
+#                printq("The contents of your file are not valid!",True)
+#                return 1
+            if not (idxfile['ProbeFileID'].unique() in sysfile['ProbeFileID'][i]):
+                printq("ERROR: " + idxfile['ProbeFileID'][i] + " seems to have been missed by the system file.",True)
+                matchFlag = 1
 
             #check mask validation
             if testMask:
@@ -231,7 +236,7 @@ class SSD_Validator(validator):
                 maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
         
         #final validation
-        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0):
+        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
             printq("The contents of your file are valid!")
         else:
             printq("The contents of your file are not valid!",True)

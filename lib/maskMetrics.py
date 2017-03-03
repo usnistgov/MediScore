@@ -209,7 +209,7 @@ class maskMetricList:
 #                         'ColMaskFileName':['']*nrow,
 #                         'AggMaskFileName':['']*nrow})
 
-        df=self.maskData[[mymode+'FileID',mymode+'MaskFileName']].copy()
+        df=self.maskData[[mymode+'FileID',mymode+'MaskFileName','Scored']].copy()
         df['NMM'] = [-1.]*nrow
         df['MCC'] = [0.]*nrow
         df['BWL1'] = [1.]*nrow

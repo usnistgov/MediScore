@@ -365,7 +365,7 @@ if args.task == 'manipulation':
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
-        m_dfc['Scored'] = pd.Series(['Y']*len(m_dfc))
+        m_dfc['Scored'] = ['Y']*len(m_dfc)
     
         r_df = mr.createReportSSD(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
@@ -386,11 +386,11 @@ if args.task == 'manipulation':
         journalData0 = journalData0[journalcols]
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
     
-        r_df['Scored'] = pd.Series(['Y']*len(r_df))
-        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+#        r_df['Scored'] = pd.Series(['Y']*len(r_df))
+#        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
+#        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
+#        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
+#        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata
