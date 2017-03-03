@@ -231,7 +231,7 @@ class SSD_Validator(validator):
                 maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
         
         #final validation
-        if maskFlag == 0:
+        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0):
             printq("The contents of your file are valid!")
         else:
             printq("The contents of your file are not valid!",True)
