@@ -171,7 +171,7 @@ if args.html:
 
             #final filtering
             html_out.loc[html_out.query("MCC == -2").index,'MCC'] = ''
-            html_out.loc[html_out.query("MCC == -1 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("MCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
 
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
