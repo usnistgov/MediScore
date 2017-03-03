@@ -169,6 +169,10 @@ if args.html:
             html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
 
+            #final filtering
+            html_out.loc[html_out.query("MCC == -2").index,'MCC'] = ''
+            html_out.loc[html_out.query("MCC == -1 & Scored == 'N'").index,'Scored'] = 'Y'
+
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -361,6 +365,7 @@ if args.task == 'manipulation':
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
+        m_dfc['Scored'] = pd.Series(['Y']*len(m_dfc))
     
         r_df = mr.createReportSSD(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
@@ -386,7 +391,6 @@ if args.task == 'manipulation':
         r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
         r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
         r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata

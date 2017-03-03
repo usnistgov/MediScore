@@ -225,6 +225,7 @@ class maskMetricList:
             if syslist[i] in [None,'',np.nan]:
                 self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
                 #self.journalData.set_value(i,evalcol,'N')
+                df.set_value(i,'Scored','N')
                 if verbose: print("Empty system mask file at index %d" % i)
                 continue
             else:
@@ -234,6 +235,7 @@ class maskMetricList:
                     self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
                     #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
                     #self.journalData.set_value(i,evalcol,'N')
+                    df.set_value(i,'Scored','N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
 
