@@ -437,8 +437,8 @@ class maskMetricList:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+#            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
+            jdata = self.journalData.query("ProbeFileID=='{}'".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
