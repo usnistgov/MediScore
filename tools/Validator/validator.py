@@ -221,11 +221,13 @@ class SSD_Validator(validator):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
                 matchFlag = 1
+                continue
 #                printq("The contents of your file are not valid!",True)
 #                return 1
-            if not (idxfile['ProbeFileID'].unique() in sysfile['ProbeFileID'][i]):
+            if not (idxfile['ProbeFileID'][i] in sysfile['ProbeFileID'].unique()):
                 printq("ERROR: " + idxfile['ProbeFileID'][i] + " seems to have been missed by the system file.",True)
                 matchFlag = 1
+                continue
 
             #check mask validation
             if testMask:
