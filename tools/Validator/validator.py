@@ -198,7 +198,7 @@ class SSD_Validator(validator):
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
-            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+            printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0],idxfile.shape[0]),True)
             xrowFlag = 1
         
         if not ((dupFlag == 0) and (xrowFlag == 0)):
@@ -306,7 +306,8 @@ class DSD_Validator(validator):
             #check for row number matchup with index file.
 
             if i_len != s_len:
-                printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+#                printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+                printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(s_len,i_len),True)
                 xrowFlag = 1
 
         with open(self.idxname) as idxfile:
@@ -356,7 +357,7 @@ class DSD_Validator(validator):
                     if not allClear:
                         return 1
             
-                    if ("OutputProbeMaskFileName" in sysHeads) and ("OutputDonorMaskFileName" in sysHeads):
+                    if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
                         testMask = True
 
                     for i,h in enumerate(s_headnames):
@@ -491,7 +492,8 @@ class DSD_Validator(validator):
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
-            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+#            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+            printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0],idxfile.shape[0]),True)
             xrowFlag = 1
         
         if not ((dupFlag == 0) and (xrowFlag == 0)):

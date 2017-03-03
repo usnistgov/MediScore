@@ -146,7 +146,7 @@ class TestValidator(ut.TestCase):
         self.assertEqual(result,1)
         errstr = errmsg.read()
         self.assertTrue("ERROR: Your system output contains duplicate rows" in errstr)
-        self.assertTrue("ERROR: The number of rows in your system output does not match the number of rows in the index file." in errstr)
+        self.assertTrue("ERROR: The number of rows in your system output (5) does not match the number of rows in the index file (4)." in errstr)
         print("CASE 4 validated.")
         
         print("\nCASE 5: Validating behavior when mask is not a png...")
@@ -290,7 +290,7 @@ class TestValidator(ut.TestCase):
         self.assertEqual(result,1)
         errstr = errmsg.read()
 #        self.assertTrue("ERROR: Row" in errstr) #TODO: temporary measure until we get duplicates back
-        self.assertTrue("ERROR: The number of rows in your system output does not match the number of rows in the index file." in errstr)
+        self.assertTrue("ERROR: The number of rows in your system output (6) does not match the number of rows in the index file (5)." in errstr)
         print("CASE 4 validated.")
         
 #        print("\nCase 5: Validating behavior when the number of columns in the system output is less than 5.")
