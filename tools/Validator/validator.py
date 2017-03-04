@@ -66,8 +66,8 @@ class validator:
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
-    def contentCheck(self,identify): pass
-    def fullCheck(self,nc,identify):
+    def contentCheck(self,identify,neglectMask): pass
+    def fullCheck(self,nc,identify,neglectMask):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -94,7 +94,7 @@ class validator:
 
         printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
 
-        if self.contentCheck(identify) == 1:
+        if self.contentCheck(identify,neglectMask) == 1:
             return 1
         return 0
 
@@ -148,7 +148,7 @@ class SSD_Validator(validator):
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
-    def contentCheck(self,identify):
+    def contentCheck(self,identify,neglectMask):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -230,7 +230,7 @@ class SSD_Validator(validator):
                 continue
 
             #check mask validation
-            if testMask:
+            if testMask and not neglectMask:
                 probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
                 if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                     printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
@@ -291,7 +291,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self,identify):
+    def contentCheck(self,identify,neglectMask):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -385,7 +385,7 @@ class DSD_Validator(validator):
                         keyFlag = 1
                         continue
 
-                    if testMask:
+                    if testMask and not neglectMask:
                         probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
                         donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
     
@@ -451,7 +451,7 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck_0(self,identify):
+    def contentCheck_0(self,identify,neglectMask):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -746,12 +746,14 @@ if __name__ == '__main__':
     help='required system output file',metavar='character')
     parser.add_argument('-vt','--valtype',type=str,default=None,\
     help='required validator type',metavar='character')
-    parser.add_argument('-v','--verbose',type=int,default=None,\
-    help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
     help='use ImageMagick\'s identify to get dimensions of mask. OpenCV reading is used by default.')
+    parser.add_argument('-v','--verbose',type=int,default=None,\
+    help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
+    parser.add_argument('-nm','--neglectMask',action="store_true",\
+    help="neglect mask dimensionality validation.")
 
     if len(sys.argv) > 1:
 
@@ -769,11 +771,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify)
+            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify)
+            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
