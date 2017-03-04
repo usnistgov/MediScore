@@ -506,6 +506,8 @@ elif args.task == 'splice':
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
    
+        m_dfc['Scored'] = ['Y']*len(m_dfc)
+
         r_df = mr.createReportDSD(m_dfc,journalData0,probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
 
         #set where the rows are the same in the join
