@@ -127,6 +127,8 @@ else:
 
 #TODO: write merge on multi-index for two dataframes
 
+args.task = args.task.lower()
+
 if args.task not in ['manipulation','splice']:
     printerr("ERROR: Task type must be supplied.")
 if args.refDir is None:
@@ -342,7 +344,7 @@ if args.task == 'manipulation':
         if q is not '':
             #exit if query does not match
             try:
-                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID']).query(q) #TODO: test on sample with a print?
+                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','JournalName']).query(q) #TODO: test on sample with a print?
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
@@ -568,7 +570,7 @@ elif args.task == 'splice':
 
 if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
     precision = args.precision
-    if args.task in ['manipulation']:
+    if args.task == 'manipulation':
         myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
     
         allmets = "Avg NMM: {}, Avg MCC: {}, Avg BWL1: {}, Avg GWL1: {}".format(round(myavgs[0],precision),
