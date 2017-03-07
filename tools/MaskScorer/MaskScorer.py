@@ -101,8 +101,7 @@ help="Control print output. Select 1 to print all non-error print output and 0 t
 parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
-
-#TODO: add option for OptOut
+parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
 args = parser.parse_args()
 verbose=args.verbose
@@ -237,6 +236,7 @@ if args.task == 'manipulation':
     sys_dtype = {'ProbeFileID':str,
              'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
              'OutputProbeMaskFileName':str}
+
 elif args.task == 'splice':
     index_dtype = {'TaskID':str,
              'ProbeFileID':str,
@@ -257,12 +257,18 @@ mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRefFile = os.path.join(myRefDir,args.inRef)
 
+mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype,na_filter=False)
+if args.optOut:
+    if not ('IsOptOut' in list(mySys)):
+        print("No IsOptOut column detected. Filtration is meaningless.")
+        exit(1)
+    mySys = mySys.query("IsOptOut=='N'")
+    
 ref_dtype = {}
 with open(myRefFile,'r') as ref:
     ref_dtype = {h:str for h in ref.readline().rstrip().split('|')} #treat it as string
 
 myRef = pd.read_csv(myRefFile,sep='|',header=0,dtype=ref_dtype,na_filter=False)
-mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype,na_filter=False)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype,na_filter=False)
 
 factor_mode = ''
