@@ -66,6 +66,16 @@ if __name__ == '__main__':
 
             return x
 
+        def restricted_dprime_level(x):
+            if x == '':
+                raise argparse.ArgumentTypeError("{0} not provided".format(x))
+
+            x = float(x)
+            if x > 0.3 or x < 0:
+                raise argparse.ArgumentTypeError("%r not in range [0.0, 0.3]"%(x,))
+
+            return x
+
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
         #Task Type Options
@@ -102,6 +112,8 @@ if __name__ == '__main__':
         parser.add_argument('--ciLevel', type=restricted_ci_value, default = 0.9,
                             help="Calculate the lower and upper confidence interval with the specified confidence level, The option will slowdown the speed due to the bootstrapping method.", metavar='float')
 
+        parser.add_argument('--dLevel', type=restricted_dprime_level, default = 0.0,
+                            help="Define the lower and upper exclusions for d-prime calculation", metavar='float')
 
         # Output Options
         parser.add_argument('--outRoot',default='.',
@@ -233,9 +245,13 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+
+        #TODO: Error for partitions
+        # to calculate TRR
+        total_num = m_df.shape[0]
+        v_print("Original total data number: {}".format(total_num))
         ## if OptOut has chosen, all of queries should be applied
-        if args.optOut:
-            m_df = m_df.query(" IsOptOut=='N' ")
+        
 
         # the performers' result directory
         if '/' not in args.outRoot:
@@ -281,10 +297,12 @@ if __name__ == '__main__':
                 query_mode = 'qm'
                 query = args.queryManipulation
 
+            if args.optOut:
+                pm_df = pm_df.query(" IsOptOut=='N' ")
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -293,21 +311,25 @@ if __name__ == '__main__':
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
             elif args.queryPartition:
-                table_df.to_csv(args.outRoot + '_qp_query.csv')
+                table_df.to_csv(args.outRoot + '_qp_query_report.csv')
             elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
 
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
+            
+            if args.optOut:
+                m_df = m_df.query(" IsOptOut=='N' ")
+            
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(args.outRoot + '_all.csv', index = False)
+            table_df.to_csv(args.outRoot + '_all_report.csv', index = False)
 
         if isinstance(table_df,list):
             print("\nReport tables:\n")
@@ -374,15 +396,32 @@ if __name__ == '__main__':
 
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
-            for curve_opts, query, dm in zip(opts_list, selection.part_query_list, DM_List):
-                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ", T#: "+ str(dm.t_num) + ", NT#: "+ str(dm.nt_num) + ")"
+            for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
+                trr_str = ""
+                print("plottype {}".format(plot_opts['plot_type']))
+                if plot_opts['plot_type'] == 'ROC':
+                    met_str = " (AUC: " + str(round(dm_list.auc,2))
+                elif plot_opts['plot_type'] == 'DET':
+                    met_str = " (EER: " + str(round(dm_list.eer,2))
+                        
+                if args.optOut:
+                    trr_str = ", TRR: " + str(dm_list.trr)
+                    if plot_opts['plot_type'] == 'ROC':
+                        plot_opts['title'] = "trROC"
+                        met_str = " (trAUC: " + str(round(dm_list.auc,2))
+                    elif plot_opts['plot_type'] == 'DET':
+                        plot_opts['title'] = "trDET"
+                        met_str = " (trEER: " + str(round(dm_list.eer,2))
+                    
+        
+                curve_opts["label"] = query + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + trr_str + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
         # Creation of the Renderer
         myRender = p.Render(configRender)
         # Plotting
-        myfigure = myRender.plot_curve(args.display,multi_fig=args.multiFigs)
+        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut)
 
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):
@@ -403,6 +442,7 @@ if __name__ == '__main__':
         farStop = 1
         ci = True
         ciLevel = 0.9
+        dLevel = 0
         plotType = 'roc'
         display = True
         multiFigs = False
@@ -520,8 +560,11 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+        total_num = m_df.shape[0]
+        ## if OptOut has chosen, all of queries should be applied
         if args_optOut:
             m_df = m_df.query(" IsOptOut=='N' ")
+            optout_num = m_df.shape[0]
 
         # the performers' result directory
         if '/' not in outRoot:
@@ -578,7 +621,7 @@ if __name__ == '__main__':
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel, total_num = total_num)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
@@ -587,21 +630,21 @@ if __name__ == '__main__':
                 print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args_query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_q_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
             elif args_queryPartition:
-                table_df[0].to_csv(outRoot + '_qp_query.csv') #table_df is List type
+                table_df[0].to_csv(outRoot + '_qp_query_report.csv') #table_df is List type
             elif args_queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(outRoot + '_qm_query_' + str(i) + '.csv', index = False)
+                    df.to_csv(outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel, dLevel = dLevel, total_num = total_num)
             #print("*****d-prime {} dpoint{}".format(DM.d, DM.dpoint))
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(outRoot + '_all.csv', index = False)
+            table_df.to_csv(outRoot + '_all_report.csv', index = False)
 
         if isinstance(table_df,list):
             print("\nReport tables...\n")
@@ -670,6 +713,7 @@ if __name__ == '__main__':
 #        if args_query or args_queryPartition or args_queryManipulation:
 #            for curve_opts,query in zip(opts_list,selection.part_query_list):
 #                curve_opts["label"] = query
+
 
         # Renaming the curves for the legend
         if args_query or args_queryPartition or args_queryManipulation:
