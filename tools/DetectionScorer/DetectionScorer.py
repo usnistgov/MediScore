@@ -249,10 +249,9 @@ if __name__ == '__main__':
         #TODO: Error for partitions
         # to calculate TRR
         total_num = m_df.shape[0]
-        print("Original total data number: {}".format(total_num))
+        v_print("Original total data number: {}".format(total_num))
         ## if OptOut has chosen, all of queries should be applied
-        if args.optOut:
-            m_df = m_df.query(" IsOptOut=='N' ")
+        
 
         # the performers' result directory
         if '/' not in args.outRoot:
@@ -298,6 +297,8 @@ if __name__ == '__main__':
                 query_mode = 'qm'
                 query = args.queryManipulation
 
+            if args.optOut:
+                pm_df = pm_df.query(" IsOptOut=='N' ")
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
@@ -320,6 +321,10 @@ if __name__ == '__main__':
 
         # No partitions
         else:
+            
+            if args.optOut:
+                m_df = m_df.query(" IsOptOut=='N' ")
+            
             DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
 
             DM_List = [DM]
