@@ -657,7 +657,9 @@ class maskMetrics:
         self.sys_threshold = systh
         if systh >= 0:
             sys.binarize(systh)
-        elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform, relies on external pipeline
+        else:
+            distincts = np.unique(sys.matrix)
+            if (distincts == [0,255]) or (distincts == [0]) or (distincts == [255]): #already binarized or uniform, relies on external pipeline
             sys.bwmat = sys.matrix
 
         self.conf = self.confusion_measures(ref,sys,w)
@@ -767,11 +769,14 @@ class maskMetrics:
             sys.binarize(254)
 
         s = sys.bwmat.astype(int)
+        print np.sum((s != 0) & (s != 255))
+
         x = (r+s)/255.
-        tp = np.float64(np.sum((x==0) & (w==1)))
-        fp = np.float64(np.sum((x==1) & (r==255) & (w==1)))
-        fn = np.float64(np.sum((x==1) & (w==1)) - fp)
-        tn = np.float64(np.sum((x==2) & (w==1)))
+
+        tp = np.float64(np.sum((x==0.) & (w==1)))
+        fp = np.float64(np.sum((x==1.) & (r==255) & (w==1)))
+        fn = np.float64(np.sum((x==1.) & (w==1)) - fp)
+        tn = np.float64(np.sum((x==2.) & (w==1)))
         n = np.sum(w==1)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
