@@ -395,21 +395,33 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
-        #auc_str = " (AUC: "
-        if args.optOut:
-            #auc_str = " (trAUC: "
-            plot_opts['title'] = "trROC"
-
         if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
-                curve_opts["label"] = query + " (AUC: " + str(round(dm_list.auc,2)) +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + ", TRR: " + str(dm_list.trr) + ")"
+                trr_str = ""
+                print("plottype {}".format(plot_opts['plot_type']))
+                if plot_opts['plot_type'] == 'ROC':
+                    met_str = " (AUC: " + str(round(dm_list.auc,2))
+                elif plot_opts['plot_type'] == 'DET':
+                    met_str = " (EER: " + str(round(dm_list.eer,2))
+                        
+                if args.optOut:
+                    trr_str = ", TRR: " + str(dm_list.trr)
+                    if plot_opts['plot_type'] == 'ROC':
+                        plot_opts['title'] = "trROC"
+                        met_str = " (trAUC: " + str(round(dm_list.auc,2))
+                    elif plot_opts['plot_type'] == 'DET':
+                        plot_opts['title'] = "trDET"
+                        met_str = " (trEER: " + str(round(dm_list.eer,2))
+                    
+        
+                curve_opts["label"] = query + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + trr_str + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
         # Creation of the Renderer
         myRender = p.Render(configRender)
         # Plotting
-        myfigure = myRender.plot_curve(args.display,multi_fig=args.multiFigs)
+        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut)
 
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):

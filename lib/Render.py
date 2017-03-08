@@ -15,7 +15,7 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self, display=True, multi_fig=False):
+    def plot_curve(self, display=True, multi_fig=False, isOptOut=False):
         """ Return single figure or a list of figures depending on the multi_fig option
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
@@ -23,15 +23,15 @@ class Render:
         if multi_fig is True:
             fig_list = list()
             for i,dm in enumerate(self.DM_list):
-                fig = self.plot_fig([dm],i,display,multi_fig)
+                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut)
                 fig_list.append(fig)
             return fig_list
         else:
-            fig = self.plot_fig(self.DM_list,1,display)
+            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut)
             return fig
 
     #TODO: add auc values to each legend
-    def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False):
+    def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False, isOptOut=False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
         fig_number: a number of plot figures
@@ -72,10 +72,16 @@ class Render:
                 norm_fpr = list(map(norm.ppf, DM.fpr))
                 plt.plot(norm_fpr, norm_fnrs_pos_ci, 'k--')
                 plt.plot(norm_fpr, norm_fnrs_neg_ci, 'k--')
-                plt.annotate("EER = %.2f%%" %(DM.eer*100),xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
-                             xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
-                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
-                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                if isOptOut:
+                    plt.annotate("trEER = %.2f (TRR: %.2f)" %(DM.eer*100, DM.trr), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                else:
+                    plt.annotate("EER = %.2f%%" %(DM.eer*100), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
 
 
         # ROC curve settings
@@ -104,8 +110,14 @@ class Render:
                 plt.plot(DM.fpr, DM.tpr+DM.ci_tpr, 'k--')
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
                 #TODO: add number of data
-                plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
-                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                if isOptOut:
+                    plt.annotate("trAUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                else:
+                    plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+              
+                    
 
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
 #                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
