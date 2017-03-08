@@ -245,6 +245,11 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+
+        #TODO: Error for partitions
+        # to calculate TRR
+        total_num = m_df.shape[0]
+        print("Original total data number: {}".format(total_num))
         ## if OptOut has chosen, all of queries should be applied
         if args.optOut:
             m_df = m_df.query(" IsOptOut=='N' ")
@@ -296,7 +301,7 @@ if __name__ == '__main__':
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -315,7 +320,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -385,9 +390,14 @@ if __name__ == '__main__':
             opts_list.append(new_curve_option)
 
         # Renaming the curves for the legend
+        #auc_str = " (AUC: "
+        if args.optOut:
+            #auc_str = " (trAUC: "
+            plot_opts['title'] = "trROC"
+
         if args.query or args.queryPartition or args.queryManipulation:
-            for curve_opts, query, dm in zip(opts_list, selection.part_query_list, DM_List):
-                curve_opts["label"] = query + " (AUC: " + str(round(dm.auc,2)) + ", T#: "+ str(dm.t_num) + ", NT#: "+ str(dm.nt_num) + ")"
+            for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
+                curve_opts["label"] = query + " (AUC: " + str(round(dm_list.auc,2)) +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + ", TRR: " + str(dm_list.trr) + ")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
@@ -533,8 +543,11 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
+        total_num = m_df.shape[0]
+        ## if OptOut has chosen, all of queries should be applied
         if args_optOut:
             m_df = m_df.query(" IsOptOut=='N' ")
+            optout_num = m_df.shape[0]
 
         # the performers' result directory
         if '/' not in outRoot:
@@ -591,7 +604,7 @@ if __name__ == '__main__':
 
             print("Query : {}\n".format(query))
             print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel)
+            selection = f.Partition(pm_df, query, query_mode, fpr_stop=farStop, isCI=ci, ciLevel=ciLevel, total_num = total_num)
             DM_List = selection.part_dm_list
             print("Number of partitions generated = {}\n".format(len(DM_List)))
             print("Rendering csv tables...\n")
@@ -609,7 +622,7 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel, dLevel = dLevel)
+            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = farStop, isCI=ci, ciLevel=ciLevel, dLevel = dLevel, total_num = total_num)
             #print("*****d-prime {} dpoint{}".format(DM.d, DM.dpoint))
 
             DM_List = [DM]
@@ -683,6 +696,7 @@ if __name__ == '__main__':
 #        if args_query or args_queryPartition or args_queryManipulation:
 #            for curve_opts,query in zip(opts_list,selection.part_query_list):
 #                curve_opts["label"] = query
+
 
         # Renaming the curves for the legend
         if args_query or args_queryPartition or args_queryManipulation:

@@ -17,12 +17,14 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=0.0):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
         self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = self.compute_points_sk(score, gt)
+        self.trr = round(float((self.t_num + self.nt_num))/total_num, 2)
+        #print("T# {}, NT# {}, TRR: {}".format(self.t_num, self.nt_num, self.trr))
 #        print("({0:.1f}s)".format(time.time() - s))
 
 #        s = time.time()
@@ -281,7 +283,7 @@ class Metrics:
             else:
                 mask.append(0)
 #        print("d_level- {} \ntpr- {} \nfpr- {} \nmask- {} \nd- {} \ndmax- {} \nidx- {} \n".format(d_level, fpr, tpr, mask, d, d_max, d_max_idx))
-        
+
         if (d_max_idx == None):
             return None, (0,0), None, (0,0)
         return d_max, (fpr[d_max_idx], tpr[d_max_idx]), beta_max, (fpr[beta_max_idx], tpr[beta_max_idx])
