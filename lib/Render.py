@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
+
+
 class Render:
     """Class implementing a renderer for DET and ROC curves:
     """
@@ -15,7 +17,7 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self, display=True, multi_fig=False, isOptOut=False):
+    def plot_curve(self, display=False, multi_fig=False, isOptOut=False):
         """ Return single figure or a list of figures depending on the multi_fig option
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
@@ -31,13 +33,18 @@ class Render:
             return fig
 
     #TODO: add auc values to each legend
-    def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False, isOptOut=False):
+    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
         fig_number: a number of plot figures
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
+        if display:
+            plt.ion()
+        else:
+            plt.ioff()
+
         fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
         # DET curve settings
@@ -116,8 +123,8 @@ class Render:
                 else:
                     plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                  size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
-              
-                    
+
+
 
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
 #                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)

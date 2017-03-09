@@ -251,7 +251,7 @@ if __name__ == '__main__':
         total_num = m_df.shape[0]
         v_print("Original total data number: {}".format(total_num))
         ## if OptOut has chosen, all of queries should be applied
-        
+
 
         # the performers' result directory
         if '/' not in args.outRoot:
@@ -321,10 +321,10 @@ if __name__ == '__main__':
 
         # No partitions
         else:
-            
+
             if args.optOut:
                 m_df = m_df.query(" IsOptOut=='N' ")
-            
+
             DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
 
             DM_List = [DM]
@@ -394,6 +394,13 @@ if __name__ == '__main__':
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
 
+        if args.optOut:
+            if plot_opts['plot_type'] == 'ROC':
+                plot_opts['title'] = "trROC"
+            elif plot_opts['plot_type'] == 'DET':
+                plot_opts['title'] = "trDET"
+
+
         # Renaming the curves for the legend
         if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
@@ -403,17 +410,16 @@ if __name__ == '__main__':
                     met_str = " (AUC: " + str(round(dm_list.auc,2))
                 elif plot_opts['plot_type'] == 'DET':
                     met_str = " (EER: " + str(round(dm_list.eer,2))
-                        
+
                 if args.optOut:
                     trr_str = ", TRR: " + str(dm_list.trr)
                     if plot_opts['plot_type'] == 'ROC':
-                        plot_opts['title'] = "trROC"
+                        #plot_opts['title'] = "trROC"
                         met_str = " (trAUC: " + str(round(dm_list.auc,2))
                     elif plot_opts['plot_type'] == 'DET':
-                        plot_opts['title'] = "trDET"
+                        #plot_opts['title'] = "trDET"
                         met_str = " (trEER: " + str(round(dm_list.eer,2))
-                    
-        
+
                 curve_opts["label"] = query + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + trr_str + ")"
 
         # Creation of the object setRender (~DetMetricSet)
