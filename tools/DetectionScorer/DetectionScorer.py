@@ -23,7 +23,7 @@ import pandas as pd
 import os # os.system("pause") for windows command line
 import sys
 
-from matplotlib.pyplot import cm
+#from matplotlib.pyplot import cm
 from collections import OrderedDict
 from itertools import cycle
 
@@ -174,12 +174,6 @@ if __name__ == '__main__':
 
         global v_print
         v_print = _v_print
-
-
-        if args.display:
-            cm.ion()
-        else:
-            cm.ioff()
 
 
         if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
