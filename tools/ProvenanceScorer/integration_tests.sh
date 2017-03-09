@@ -122,3 +122,15 @@ filtering_test_1() {
 				   -s "$testsuite_directory/test_case_2-filtering-system_output_1_index.csv" \
 				   -S "$testsuite_directory/"
 }
+
+# Filtering test 2 (3_1)
+filtering_test_2() {
+    ./ProvenanceFilteringScorer.py -o "$1" \
+				   -x "$testsuite_directory/test_case_3-provenancegraphbuilding-index.csv" \
+				   -r "$testsuite_directory/test_case_3-provenance-ref.csv" \
+				   -n "$testsuite_directory/test_case_3-provenance-node.csv" \
+				   -w "$testsuite_directory/test_case_3-provenancegraphbuilding-world.csv" \
+				   -R "$testsuite_directory/" \
+				   -s "$testsuite_directory/test_case_3-filtering-system_output_1_index.csv" \
+				   -S "$testsuite_directory/"
+}
