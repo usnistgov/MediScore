@@ -119,6 +119,8 @@ HISTORY
     - Python release
   Jan. 6, 2017 - MediScore Version 1.1.0:
     - Started to support Selective Manipulation Scoring. This is a roll out of the new DetectionScorer.  Note the filter options changed
+  Mar. 9, 2017 - MediScore Version ?.?.?:
+    - Updated Provenance scoring test files to adhere to the latest version of the Provenance output json schemas (v 1.2)
 
 CONTACT
 -------
