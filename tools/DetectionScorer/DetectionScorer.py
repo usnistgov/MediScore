@@ -175,6 +175,13 @@ if __name__ == '__main__':
         global v_print
         v_print = _v_print
 
+
+        if args.display:
+            cm.ion()
+        else:
+            cm.ioff()
+
+
         if (not args.query) and (not args.queryPartition) and (not args.queryManipulation) and (args.multiFigs is True):
             print("ERROR: The multiFigs option is not available without query options.")
             exit(1)
