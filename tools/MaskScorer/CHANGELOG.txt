@@ -1,1 +1,0 @@
-2017-03-08: Bug found in lib/maskMetrics.py. Masks with two or less distinct colors were accepted as binary regardless of whether the colors were black and/or white. Fixed. 

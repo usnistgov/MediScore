@@ -6,10 +6,10 @@ This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
 example data for the following tools:
 
-  Validator        V2.0 - Single/Double Source Detection Validator
+  Validator        V2.1 - Single/Double Source Detection Validator
   DetectionScorer  V2.1 - Single/Double Source Detection Evaluation
                           Scorer
-  MaskScorer       V2.1 - Single/Double Source Mask Evaluation
+  MaskScorer       V2.2.1 - Single/Double Source Mask Evaluation
                           (Localization) Scorer
 
 This distribution consists of a set of Python2.7 scripts intended to be run
@@ -115,7 +115,27 @@ HISTORY
       new DetectionScorer.  Note the filter options changed
   Jan. 25, 2017 - MediScore Version 1.0.3:
     - Add Selective Manipulation Scoring to the Mask scoring.
-    
+  Jan. 31, 2017
+    - The dilation parameter for selective Mask scoring has been changed from 9 to 11.
+  Feb. 8, 2017
+    - Donor splice reference mask is expected to be binarized. Mask Scorer now reflect these changes.
+  Feb. 14, 2017
+    - Both probe and donor reference masks are expected to be binarized. Mask Scorer now reflects these changes.
+  Feb. 17, 2017
+    - Validator now reads in a file stream for the DSD task. Major speedup applied.
+  Feb. 21, 2017
+    - JournalID now changed to JournalName in reference files. Mask Scorer now reflects this change.
+  Mar. 2, 2017
+    - Manipulation journal tables no longer duplicate rows. Indexing problem for journal table output has been fixed.
+  Mar. 3, 2017
+    - Neglect mask feature added to validator for speedup.
+  Mar. 6, 2017
+    - Bug for query scoring corrected due to a join problem between files.
+  Mar. 7, 2017
+    - IsOptOut option added to Mask Scorer. Test cases also edited to reflect this change.
+  Mar. 8, 2017
+    - Mask binarization bug fixed. System output masks with two or less distinct colors will now be tested to see if these colors are black (0) and/or white (255). 
+
 
 CONTACT
 -------
