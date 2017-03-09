@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-
-
 class Render:
     """Class implementing a renderer for DET and ROC curves:
     """
@@ -40,10 +38,10 @@ class Render:
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
-        if display:
-            plt.ion()
-        else:
-            plt.ioff()
+#        if display:
+#            plt.ion()
+#        else:
+#            plt.ioff()
 
         fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
