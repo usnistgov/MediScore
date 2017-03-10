@@ -1,0 +1,61 @@
+{ "directed": true,
+  "nodes": [
+      {
+	  "file": "world/c257f3e674aaa597784ae6f5a402c748.jpg",
+	  "id": "1",
+	  "fileid": "c257f3e674aaa597784ae6f5a402c748",
+	  "nodeConfidenceScore": 1
+      },
+      {
+	  "file": "world/ed6b6c02e6ce855d7f19a91c606f2070.jpg",
+	  "id": "2",
+	  "fileid": "ed6b6c02e6ce855d7f19a91c606f2070",
+	  "nodeConfidenceScore": 1
+      },
+      {
+	  "file": "world/6dd715c810f9e473429f47dd1e2d2cfa.png",
+	  "id": "24",
+	  "fileid": "base1-sharpen-jpg-resize-tif-splice",
+	  "nodeConfidenceScore": 1
+      },
+      {
+	  "file": "world/9f796693249720d9d4eb8f1c3347c300.jpg",
+	  "id": "25",
+	  "fileid": "base1-sharpen-jpg-resize-tif-splice_12",
+	  "nodeConfidenceScore": 1
+      },
+      {
+	  "file": "world/e87a84f23af4399b570ddc8b1941ed9e.png",
+	  "id": "12",
+	  "fileid": "base2-splice",
+	  "nodeConfidenceScore": 1
+      }
+  ],
+  "links": [
+      {
+	  "source": 0,
+	  "target": 4,
+	  "relationshipConfidenceScore": 1
+      },
+      {
+	  "source": 1,
+	  "target": 4,
+	  "relationshipConfidenceScore": 1
+      },
+      {
+	  "source": 0,
+	  "target": 2,
+	  "relationshipConfidenceScore": 1
+      },
+      {
+	  "source": 4,
+	  "target": 2,
+	  "relationshipConfidenceScore": 1
+      },
+      {
+	  "source": 2,
+	  "target": 3,
+	  "relationshipConfidenceScore": 1
+      }
+  ]
+}
