@@ -159,9 +159,6 @@ HISTORY
   Mar. 08, 2017
     - The plot title and legends are changed when using the optOut option (e.g, trROC, trDET, trAUC)
 
-  * Provenance:
-    - Updated Provenance scoring test files to adhere to the latest version of the Provenance output json schemas (v 1.2)
-
 CONTACT
 -------
 
