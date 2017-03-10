@@ -66,8 +66,8 @@ class validator:
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
-    def contentCheck(self,identify): pass
-    def fullCheck(self,nc,identify):
+    def contentCheck(self,identify,neglectMask): pass
+    def fullCheck(self,nc,identify,neglectMask):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -94,7 +94,7 @@ class validator:
 
         printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
 
-        if self.contentCheck(identify) == 1:
+        if self.contentCheck(identify,neglectMask) == 1:
             return 1
         return 0
 
@@ -122,6 +122,10 @@ class SSD_Validator(validator):
         sysfName = os.path.basename(self.sysname)
 
         arrSplit = sysfName.split('_')
+        if len(arrSplit) < 7:
+            printq("ERROR: There are not enough arguments to verify in the name.")
+            return 1
+
         team = arrSplit[0]
         ncid = arrSplit[1]
         data = arrSplit[2]
@@ -144,7 +148,7 @@ class SSD_Validator(validator):
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
-    def contentCheck(self,identify):
+    def contentCheck(self,identify,neglectMask):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -157,6 +161,7 @@ class SSD_Validator(validator):
         dupFlag = 0
         xrowFlag = 0
         maskFlag = 0
+        matchFlag = 0
         
         if sysfile.shape[1] < 2:
             printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
@@ -194,7 +199,7 @@ class SSD_Validator(validator):
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
-            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+            printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0],idxfile.shape[0]),True)
             xrowFlag = 1
         
         if not ((dupFlag == 0) and (xrowFlag == 0)):
@@ -215,11 +220,17 @@ class SSD_Validator(validator):
         for i in range(0,sysfile.shape[0]):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
-                printq("The contents of your file are not valid!",True)
-                return 1
+                matchFlag = 1
+                continue
+#                printq("The contents of your file are not valid!",True)
+#                return 1
+            if not (idxfile['ProbeFileID'][i] in sysfile['ProbeFileID'].unique()):
+                printq("ERROR: " + idxfile['ProbeFileID'][i] + " seems to have been missed by the system file.",True)
+                matchFlag = 1
+                continue
 
             #check mask validation
-            if testMask:
+            if testMask and not neglectMask:
                 probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
                 if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                     printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
@@ -227,7 +238,7 @@ class SSD_Validator(validator):
                 maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
         
         #final validation
-        if maskFlag == 0:
+        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
             printq("The contents of your file are valid!")
         else:
             printq("The contents of your file are not valid!",True)
@@ -280,7 +291,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self,identify):
+    def contentCheck(self,identify,neglectMask):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -302,7 +313,8 @@ class DSD_Validator(validator):
             #check for row number matchup with index file.
 
             if i_len != s_len:
-                printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+#                printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+                printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(s_len,i_len),True)
                 xrowFlag = 1
 
         with open(self.idxname) as idxfile:
@@ -330,6 +342,7 @@ class DSD_Validator(validator):
         printq("Index read")
 
         sysPath = os.path.dirname(self.sysname)
+        testMask = False
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 printq("Process {} ".format(idx) + l)
@@ -351,6 +364,9 @@ class DSD_Validator(validator):
                     if not allClear:
                         return 1
             
+                    if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
+                        testMask = True
+
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
                         s_heads[h] = i
@@ -359,14 +375,7 @@ class DSD_Validator(validator):
                     l_content = l.rstrip().replace("\"","").split('|')
                     probeID = l_content[s_heads['ProbeFileID']]
                     donorID = l_content[s_heads['DonorFileID']]
-                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
-                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
-
-                    if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
-                        printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
-                        continue
- 
-                    key = l_content[s_heads['ProbeFileID']] + ":" + l_content[s_heads['DonorFileID']]
+                    key = probeID + ":" + donorID
 
                     #try catch the key lookup
                     try:
@@ -376,12 +385,20 @@ class DSD_Validator(validator):
                         keyFlag = 1
                         continue
 
-                    probeWidth = int(indRec[i_heads['ProbeWidth']])
-                    probeHeight = int(indRec[i_heads['ProbeHeight']])
-                    donorWidth = int(indRec[i_heads['DonorWidth']])
-                    donorHeight = int(indRec[i_heads['DonorHeight']])
-
-                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
+                    if testMask and not neglectMask:
+                        probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
+                        donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
+    
+                        if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
+                            printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                            continue
+     
+                        probeWidth = int(indRec[i_heads['ProbeWidth']])
+                        probeHeight = int(indRec[i_heads['ProbeHeight']])
+                        donorWidth = int(indRec[i_heads['DonorWidth']])
+                        donorHeight = int(indRec[i_heads['DonorHeight']])
+    
+                        maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -434,7 +451,7 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck_0(self,identify):
+    def contentCheck_0(self,identify,neglectMask):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -482,7 +499,8 @@ class DSD_Validator(validator):
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
-            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+#            printq("ERROR: The number of rows in your system output does not match the number of rows in the index file.",True)
+            printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0],idxfile.shape[0]),True)
             xrowFlag = 1
         
         if not ((dupFlag == 0) and (xrowFlag == 0)):
@@ -728,12 +746,14 @@ if __name__ == '__main__':
     help='required system output file',metavar='character')
     parser.add_argument('-vt','--valtype',type=str,default=None,\
     help='required validator type',metavar='character')
-    parser.add_argument('-v','--verbose',type=int,default=None,\
-    help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
     help='use ImageMagick\'s identify to get dimensions of mask. OpenCV reading is used by default.')
+    parser.add_argument('-v','--verbose',type=int,default=None,\
+    help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
+    parser.add_argument('-nm','--neglectMask',action="store_true",\
+    help="neglect mask dimensionality validation.")
 
     if len(sys.argv) > 1:
 
@@ -751,11 +771,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify)
+            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify)
+            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")

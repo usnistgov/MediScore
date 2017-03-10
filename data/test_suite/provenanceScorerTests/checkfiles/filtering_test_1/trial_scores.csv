@@ -1,0 +1,2 @@
+JournalName|ProvenanceProbeFileID|ProvenanceOutputFileName|NumSysNodes|NumRefNodes|NumCorrectNodes@50|NumMissingNodes@50|NumFalseAlarmNodes@50|NumCorrectNodes@100|NumMissingNodes@100|NumFalseAlarmNodes@100|NumCorrectNodes@200|NumMissingNodes@200|NumFalseAlarmNodes@200|NodeRecall@50|NodeRecall@100|NodeRecall@200
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|18|6|12|44|12|6|88|18|0|182|0.333333333333|0.666666666667|1.0

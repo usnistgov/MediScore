@@ -15,11 +15,11 @@ echo "Testing NC2016 Splice"
 python2 DetectionScorer.py -t splice --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_C0_02
 echo
 echo "Testing NC2017 Manipulation"
-python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2017-manipulation-reference.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_C0_01
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2017-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_C0_01
 
-diff testcases/NC16_C0_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_01_all_test.csv > comp_NC16_C0_01_all.txt
-diff testcases/NC16_C0_02_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_02_all_test.csv > comp_NC16_C0_02_all.txt
-diff testcases/NC17_C0_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C0_01_all_test.csv > comp_NC17_C0_01_all.txt
+diff testcases/NC16_C0_01_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_01_all_test.csv > comp_NC16_C0_01_all.txt
+diff testcases/NC16_C0_02_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C0_02_all_test.csv > comp_NC16_C0_02_all.txt
+diff testcases/NC17_C0_01_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C0_01_all_test.csv > comp_NC17_C0_01_all.txt
 
 c0_res1="cat comp_NC16_C0_01_all.txt | grep -v CVS"
 c0_res2="cat comp_NC16_C0_02_all.txt | grep -v CVS"
@@ -98,12 +98,12 @@ echo "Testing with the manipulation OptOut case"
 python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2016_Manipulation_ImgOnly_p-me_3/D_NC2016_Manipulation_ImgOnly_p-me_3.csv --outRoot ./testcases/NC16_C1_06 --optOut
 echo
 
-diff testcases/NC16_C1_01_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_01_all_test.csv > comp_NC16_C1_01_all.txt
-diff testcases/NC16_C1_02_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_02_all_test.csv > comp_NC16_C1_02_all.txt
-diff testcases/NC16_C1_03_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_03_all_test.csv > comp_NC16_C1_03_all.txt
-diff testcases/NC17_C1_04_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_04_all_test.csv > comp_NC17_C1_04_all.txt
-diff testcases/NC17_C1_05_all.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_05_all_test.csv > comp_NC17_C1_05_all.txt
-diff testcases/NC16_C1_06_all.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_06_all_test.csv > comp_NC16_C1_06_all.txt
+diff testcases/NC16_C1_01_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_01_all_test.csv > comp_NC16_C1_01_all.txt
+diff testcases/NC16_C1_02_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_02_all_test.csv > comp_NC16_C1_02_all.txt
+diff testcases/NC16_C1_03_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_03_all_test.csv > comp_NC16_C1_03_all.txt
+diff testcases/NC17_C1_04_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_04_all_test.csv > comp_NC17_C1_04_all.txt
+diff testcases/NC17_C1_05_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C1_05_all_test.csv > comp_NC17_C1_05_all.txt
+diff testcases/NC16_C1_06_all_report.csv ../../data/test_suite/detectionScorerTests/sample/NC16_C1_06_all_test.csv > comp_NC16_C1_06_all.txt
 
 c1_res1="cat comp_NC16_C1_01_all.txt | grep -v CVS"
 c1_res2="cat comp_NC16_C1_02_all.txt | grep -v CVS"

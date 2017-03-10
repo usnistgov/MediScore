@@ -1,6 +1,6 @@
-ProbeFileID|DonorFileID|ConfidenceScore|OutputProbeMaskFileName|OutputDonorMaskFileName|OptOut|foo
-"NC2016_1893"|"NC2016_1993"|"6749"|"mask/NC2016_1893-mask.png"|"mask/NC2016_1993-mask.png"|n|"bar"
-"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"|n|"baz"
-"NC2016_5847"|"NC2016_6847"|"398077"|"mask/NC2016_5847-mask.png"|"mask/NC2016_6847-mask.png"|n|"lorem"
-"NC2016_7432"|"NC2016_7442"|"0"|"mask/foo.png"|"mask/bar.png"|n|"ipsum"
-"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"|n|"hi"
+ProbeFileID|DonorFileID|ConfidenceScore|OutputProbeMaskFileName|OutputDonorMaskFileName|IsOptOut|foo
+"NC2016_1893"|"NC2016_1993"|"6749"|"mask/NC2016_1893-mask.png"|"mask/NC2016_1993-mask.png"|N|"bar"
+"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"|N|"baz"
+"NC2016_5847"|"NC2016_6847"|"398077"|"mask/NC2016_5847-mask.png"|"mask/NC2016_6847-mask.png"|N|"lorem"
+"NC2016_7432"|"NC2016_7442"|"0"|"mask/foo.png"|"mask/bar.png"|N|"ipsum"
+"NC2016_4281"|"NC2016_4282"|"0"|"mask/NC2016_4281-mask.png"|"mask/NC2016_4282-mask.png"|N|"hi"

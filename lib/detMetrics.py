@@ -17,12 +17,14 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
         self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = self.compute_points_sk(score, gt)
+        self.trr = round(float((self.t_num + self.nt_num))/total_num, 2)
+        #print("T# {}, NT# {}, TRR: {}".format(self.t_num, self.nt_num, self.trr))
 #        print("({0:.1f}s)".format(time.time() - s))
 
 #        s = time.time()
@@ -33,7 +35,7 @@ class detMetrics:
 
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
-        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr)
+        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr, dLevel)
         #self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
         #print ("fpr_stop test:".format(fpr_stop))
 
@@ -245,43 +247,46 @@ class Metrics:
 
     # Calculate d-prime and beta
     @staticmethod
-    def compute_dprime(fpr_a, tpr_a):
+    def compute_dprime(fpr, tpr, d_level = 0.0):
         """ computes the d-prime given TPR and FPR values
         tpr: true positive rates
         fpr: false positive rates"""
         from scipy.stats import norm
         from math import exp
 
-        fpr = list(fpr_a)
-        tpr = list(tpr_a)
-        Z = norm.ppf
+        #fpr_a = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
+        #tpr_a = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
+        #d_level = 0.2
+
+        def range_limit(n, minn, maxn):
+            return max(min(maxn, n), minn)
+
         d = []
+        d_max = None;
+        d_max_idx = None;
         beta = []
-        for i in range(0, len(fpr)):
-            # Starting d' calculation
-            #avoid d' infinity
-            if tpr[i] == 1: tpr[i] =0.9975
-            if fpr[i] == 1: fpr[i] =0.9975
-            if tpr[i] == 0: tpr[i] =0.0025
-            if fpr[i] == 0: fpr[i] =0.0025
-            d.append(Z(tpr[i]) - Z(fpr[i]))
-            beta.append(exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2)
+        beta_max = None;
+        beta_max_idx = None;
+        Z = norm.ppf
+        mask = []
+        for idx, x in enumerate(fpr):
+            d.append(         Z(range_limit(tpr[idx], 0.00001, .99999))     - Z(range_limit(fpr[idx], 0.00001, 0.99999)))
+            beta.append(exp( (Z(range_limit(fpr[idx], 0.00001, 0.99999))**2 - Z(range_limit(tpr[idx], 0.00001, .99999))**2) / 2))
+            if (tpr[idx] >= d_level and tpr[idx] <= 1-d_level and fpr[idx] >= d_level and fpr[idx] <= 1-d_level):
+                if (d_max == None or d_max < d[idx]):
+                    d_max = d[idx]
+                    d_max_idx = idx
+                if (beta_max == None or beta_max < d[idx]):
+                    beta_max = d[idx]
+                    beta_max_idx = idx
+                mask.append(1)
+            else:
+                mask.append(0)
+#        print("d_level- {} \ntpr- {} \nfpr- {} \nmask- {} \nd- {} \ndmax- {} \nidx- {} \n".format(d_level, fpr, tpr, mask, d, d_max, d_max_idx))
 
-        #d = [ Z(tpr[i]) - Z(fpr[i]) for i in range(0, len(fpr)) ]
-        #beta = [ exp(Z(fpr[i])**2 - Z(tpr[i])**2)/2 for i in range(0, len(fpr)) ]
-        #c = [ -(Z(tpr[i]) - Z(fpr[i]))/2 for i in range(0, len(fpr)) ]
-
-        d_idx = d.index(max(d))
-        d_max_point = (fpr[d_idx], tpr[d_idx])
-
-        b_idx = beta.index(max(beta))
-        b_max_point = (fpr[b_idx], tpr[b_idx])
-
-        #print("beta{}".format(beta))
-#       print("d- {} dmax- {} idx- {} bpoint- {}".format(d, max(d), d_idx, d_max_point))
-#        print("b- {} amax- {} idx- {} bpoint- {}".format(beta, max(beta), b_idx, b_max_point))
-
-        return max(d), d_max_point, max(beta), b_max_point
+        if (d_max_idx == None):
+            return None, (0,0), None, (0,0)
+        return d_max, (fpr[d_max_idx], tpr[d_max_idx]), beta_max, (fpr[beta_max_idx], tpr[beta_max_idx])
 
 
     @staticmethod
@@ -316,5 +321,4 @@ class Metrics:
 
         return max(a), a_max_point
 
-#fpr1 = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
-#tpr1 = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
+
