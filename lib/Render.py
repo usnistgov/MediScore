@@ -3,7 +3,8 @@
 
 import json
 import numpy as np
-import matplotlib.pyplot as plt
+## the following two lines are necessary for remote access.
+
 from scipy.stats import norm
 
 class Render:
@@ -15,28 +16,37 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self, display=True, multi_fig=False):
+    def plot_curve(self, display=False, multi_fig=False, isOptOut=False):
         """ Return single figure or a list of figures depending on the multi_fig option
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
+
         if multi_fig is True:
             fig_list = list()
             for i,dm in enumerate(self.DM_list):
-                fig = self.plot_fig([dm],i,display,multi_fig)
+                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut)
                 fig_list.append(fig)
             return fig_list
         else:
-            fig = self.plot_fig(self.DM_list,1,display)
+            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut)
             return fig
 
-    def plot_fig(self, dm_list, fig_number, display=True, multi_fig=False):
+    #TODO: add auc values to each legend
+    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
         fig_number: a number of plot figures
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
+
+        if not display:
+            import matplotlib
+            matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
+
         fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
         # DET curve settings
@@ -71,10 +81,16 @@ class Render:
                 norm_fpr = list(map(norm.ppf, DM.fpr))
                 plt.plot(norm_fpr, norm_fnrs_pos_ci, 'k--')
                 plt.plot(norm_fpr, norm_fnrs_neg_ci, 'k--')
-                plt.annotate("EER = %.2f%%" %(DM.eer*100),xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
-                             xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
-                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
-                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                if isOptOut:
+                    plt.annotate("trEER = %.2f (TRR: %.2f)" %(DM.eer*100, DM.trr), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                else:
+                    plt.annotate("EER = %.2f%%" %(DM.eer*100), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
 
 
         # ROC curve settings
@@ -102,8 +118,35 @@ class Render:
                 DM = dm_list[0]
                 plt.plot(DM.fpr, DM.tpr+DM.ci_tpr, 'k--')
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
-                plt.annotate("AUC = %.2f at FAR = %.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.3), xycoords='data', xytext=(0.7,0.3), textcoords='data',
-                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                #TODO: add number of data
+                if isOptOut:
+                    plt.annotate("trAUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                else:
+                    plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
+
+
+#                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
+#                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                if DM.d is not None:
+                    x = DM.dpoint[0]
+                    y = DM.dpoint[1]
+                    if (             y <= .5): x += .1;
+                    elif (.5 < y and y < .9): x -= .1;
+                    elif (         y >= .9): y -= .1;
+
+                    plt.annotate("d' = %.2f" %(DM.d),xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data',
+                                 xytext=(x, y), textcoords='data',
+                                 arrowprops=dict(arrowstyle="->",connectionstyle="arc3,rad=0"), #http://matplotlib.org/examples/pylab_examples/annotation_demo2.html
+                                 size=8, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
+#                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
+#                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',
+#                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
+#                             size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+
                 #TODO: how to add variable here for fpr_stop
 #                plt.annotate("PAUC = %.2f%% at FAR=" %(pauc*100), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
 #                     size=12, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
@@ -118,9 +161,6 @@ class Render:
         else:
             plt.ylabel(self.plot_opts['ylabel'], fontsize=self.plot_opts['ylabel_fontsize'])
         plt.grid()
-
-#        plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
-#        fig.tight_layout(pad=7)
 
         if self.opts_list[0]['label'] != None:
             plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')

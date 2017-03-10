@@ -162,7 +162,7 @@ class TestImageMethods(ut.TestCase):
 
         self.assertTrue(np.array_equal(baseNoScore,baseNScompare))
         self.assertTrue(np.array_equal(distractionNoScore,distractionNScompare))
-        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box')
+        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box',0)
         self.assertTrue(np.array_equal(aggwts,baseNoScore & distractionNoScore))
 
     def test_metrics(self):

@@ -1,0 +1,5 @@
+ProbeFileID|ConfidenceScore|OutputProbeMaskFileName|IsOptOut
+"NC2016_1893"|"6749"|"mask/NC2016_1893.png"|N
+"NC2016_4281"|"0"|"mask/NC2016_4281.png"|N
+"NC2016_5847"|"398077"|"mask/NC2016_5847.png"|N
+"NC2016_7432"|"0"|"mask/foo.jpg"|Y

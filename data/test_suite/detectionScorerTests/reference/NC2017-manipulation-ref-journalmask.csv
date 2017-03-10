@@ -1,4 +1,4 @@
-JournalID|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument
+JournalName|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument
 414c1f66804a0f8de50142b6665d9d14|414c1f66804a0f8de50142b6665d9d14-TGT-05-FLIP|414c1f66804a0f8de50142b6665d9d14-TGT-06-FILL|FillContentAwareFill|255 0 0|remove|
 414c1f66804a0f8de50142b6665d9d14|414c1f66804a0f8de50142b6665d9d14-TGT-01|414c1f66804a0f8de50142b6665d9d14-TGT-02-PASTERC|PasteSplice|0 255 0|add|man-made object
 594d73ff744eb83f2e544c57acb525d7|594d73ff744eb83f2e544c57acb525d7-TGT-13-BLUR|594d73ff744eb83f2e544c57acb525d7-TGT-14-STAMP|PasteSampled|255 0 240|remove|

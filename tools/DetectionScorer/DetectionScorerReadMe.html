@@ -11945,6 +11945,19 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>--ciLevel</p>
+<ul>
+<li>Specify the confidence level (range [0.8, 0.99]) to calculate the lower and upper confidence interval for AUC. The default is 0.9. </li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Output-Options:">Output Options:<a class="anchor-link" href="#Output-Options:">&#182;</a></h3>
 </div>
 </div>
@@ -12069,6 +12082,28 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
  <span class="nt">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;Miss Detection Rate [%]&quot;</span><span class="p">,</span>
  <span class="nt">&quot;ylabel_fontsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
 </pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="OptOut-Options:">OptOut Options:<a class="anchor-link" href="#OptOut-Options:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--optOut</p>
+<ul>
+<li>Evaluate algorithm performance on trials where the IsOptOut value is 'N'.</li>
+</ul>
 
 </div>
 </div>
@@ -12216,7 +12251,7 @@ Examples:
 <code>
 python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_001 --ci --display
 </code>
-<img src="./notebookImgs/NC16_001_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/NC16_001_roc_all1.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12297,6 +12332,22 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_002 --plotType det --display
 </code>
 <img src="./notebookImgs/NC16_002_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>OptOut (IsOptOut =='N') scoring
+<code>
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv --outRoot ./testcases/NC16_101 --optOut --ci --display
+</code>
+<img src="./notebookImgs/NC16_101_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12895,7 +12946,7 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
 <ul>
 <li>Full scoring: rendering ROC curve
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_001 --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_001 --ci --display
 </code>
 <img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
 </ul>
@@ -12973,7 +13024,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
 </ul>
@@ -12989,7 +13040,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "Purpose"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
 </ul>
@@ -13005,7 +13056,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "OperationArgument"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
 </ul>
@@ -13021,7 +13072,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the mixed of factors
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-reference.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
 </code>
 <img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
 </ul>

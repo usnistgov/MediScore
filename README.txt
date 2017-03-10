@@ -1,18 +1,19 @@
 File: README.txt
-Date: February 28, 2017
-MediScore Version: 1.0.4
+Date: March 10, 2017
+MediScore Version: 1.1.1
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
 example data for the following tools:
 
-  Validator        V2.0 - Single/Double Source Detection Validator
-  DetectionScorer  V2.1 - Single/Double Source Detection Evaluation
-                          Scorer
-  MaskScorer       V2.1 - Single/Double Source Mask Evaluation
-                          (Localization) Scorer
-  ProvenanceFilteringScorer      V1.0
-  ProvenanceGraphBuildingScorer  V1.0
+  Validator                       - Single/Double Source Detection Validator
+  DetectionScorer                 - Single/Double Source Detection Evaluation
+                                    Scorer
+  MaskScorer                      - Single/Double Source Mask Evaluation
+                                    (Localization) Scorer
+  ProvenanceFilteringScorer       - Scorer for Provenance Filtering
+  ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
+		     
 
 This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
@@ -33,7 +34,7 @@ INSTALLATION
   Prior to running the Scorer, the following packages need to be installed :
   - opencv (tested in version 2.4.13)
   - numpy  (tested in version 1.11.1)
-  - pandas (tested in version 0.18.1)
+  - pandas (tested in version 0.18.1) - make sure to use the latest version.
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
@@ -60,7 +61,6 @@ INSTALLATION
    - ALL SSD VALIDATION TESTS SUCCESSFULLY PASSED
    - MASK SCORER TESTS SUCCESSFULLY PASSED
    - DETECTION SCORER TESTS SUCCESSFULLY PASSED
-   - PROVENANCE SCORER TESTS SUCCESSFULLY PASSED
 
    Due to the sheer volume of the mask scorer's test cases and the enormous amount of computation
    involved for each test case, the make check passes through only two test cases. For a thorough
@@ -77,12 +77,8 @@ the option '--help'.  For example:
   $ cd MediScore/tools/DetectionScorer
   $ python2 DetectionScorer.py --help
 
-DetectionScorer, MaskScorer, ProvenanceFilteringScorer, and
-ProvenanceGraphBuildingScorer scripts have additional HTML files
-(DetectionScorerReadMe.html, MaskScorerReadMe.html,
-ProvenanceFilteringScorerReadMe.html, and
-ProvenanceGraphBuildingScorerReadMe.html) with more detailed
-information on their usage.
+Both DetectionScorer and MaskScorer scripts have additional
+HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more detailed information on their usage.
 
 To try some command lines with data files, go to the testing
 directories in 'MediScore/tools/DetectionScorer', and run the command
@@ -117,14 +113,42 @@ HISTORY
 
   Oct. 28, 2016 - MediScore Version 1.0.0:
     - Python release
+
   Jan. 6, 2017 - MediScore Version 1.0.2:
     - Started to support Selective Manipulation Scoring. This is a roll out of the
       new DetectionScorer.  Note the filter options changed
+
   Jan. 25, 2017 - MediScore Version 1.0.3:
     - Added Selective Manipulation Scoring to the Mask scoring.
-  Feb. 28, 2017 - MediScore Version 1.0.4:
+
+  Feb. 28, 2017 - MediScore Version 1.1.0:
     - Added the Provenance scorers.
-    
+    - Add Selective Manipulation Scoring to the Mask scoring.
+
+  Mar 10, 2017 - MediScore Version 1.1.1:
+    * Validator:
+      - Validator now reads in a file stream for the DSD task. Major speedup applied.
+      - Neglect mask feature added to validator for speedup.
+    * MaskScorer:
+      - The dilation parameter for selective Mask scoring has been changed from 9 to 11.
+      - Donor splice reference mask is expected to be binarized. Mask Scorer now reflect these changes.
+      - Both probe and donor reference masks are expected to be binarized. Mask Scorer now reflects these changes.
+      - JournalID now changed to JournalName in reference files. Mask Scorer now reflects this change.
+      - Manipulation journal tables no longer duplicate rows. Indexing problem for journal table output has been fixed.
+      - Bug for query scoring corrected due to a join problem between files.
+      - IsOptOut option added to Mask Scorer. Test cases also edited to reflect this change.
+      - Mask binarization bug fixed. System output masks with two or less distinct colors will now be tested to see if these colors are black (0) and/or white (255).
+    * DetectionScorer:
+      - The d-prime metric has been added to DetectionScorer
+      - Confidence level option(--ciLevel) for calculating confidence interval has been added (e.g., --ciLevel .95)
+      - The number of target and non-target trials has been added to the plot legend and commands
+      - The optOut option (--optOut) and its test cases have been added.
+      - Based on the reference file name, DetectionScorer checks existence of JournalID/JournalName and loads the files automatically.
+      - The lower and upper bound option (--dLevel) for d-prime calculation have been added
+      - AUC and number of target/non-target trials have been added to the plot legend
+      - The plot title and legends are changed when using the optOut option (e.g, trROC, trDET, trAUC)
+    * Provenance:
+      - Updated Provenance scoring test files to adhere to the latest version of the Provenance output json schemas (v 1.2)
 
 CONTACT
 -------
@@ -162,7 +186,6 @@ Andrew Delgado
 Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
-David Joy
 
 
 COPYRIGHT

@@ -160,7 +160,7 @@ if __name__ == '__main__':
         system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
         
         probe_node_wfn = trial.ProvenanceProbeFileName_x
-        world_set_nodes = { node.WorldFileName_x for node in world_nodes.itertuples() }
+        world_set_nodes = { node.WorldFileName_x for node in world_nodes[world_nodes.ProvenanceProbeFileID == trial.ProvenanceProbeFileID].itertuples() }
         world_set_nodes.add(probe_node_wfn)
 
         ordered_sys_nodes = system_out_to_ordered_nodes(system_out)

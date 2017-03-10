@@ -17,12 +17,14 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop = 1, isCI=False):
+    def __init__(self, score, gt, fpr_stop = 1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
-        self.fpr, self.tpr, self.fnr, self.thres = self.compute_points_sk(score, gt)
+        self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = self.compute_points_sk(score, gt)
+        self.trr = round(float((self.t_num + self.nt_num))/total_num, 2)
+        #print("T# {}, NT# {}, TRR: {}".format(self.t_num, self.nt_num, self.trr))
 #        print("({0:.1f}s)".format(time.time() - s))
 
 #        s = time.time()
@@ -31,19 +33,10 @@ class detMetrics:
 #        self.fpr2, self.tpr2, self.fnr2, self.thres2 = self.compute_points_donotuse(score, gt)
 #        print("({0:.1f}s)".format(time.time() - s))
 
-#        s = time.time()
-#        print("Computing points with sk...")
-#        sys.stdout.flush()
-#        self.fpr, self.tpr, self.fnr, self.thres = self.compute_points_sk(score, gt)
-#        fpr2, tpr2, fnr2, thres2 = self.compute_points_sk(score, gt)
-#        print("({0:.1f}s)".format(time.time() - s))
-#        print("Comparison : fpr({}), tpr({}), fnr({}), thres({})".
-#              format(np.array_equal(self.fpr, fpr2),
-#                     np.array_equal(self.tpr, tpr2),
-#                     np.array_equal(self.fnr, fnr2),
-#                     np.array_equal(self.thres, thres2)))
         self.eer = Metrics.compute_eer(self.fpr, self.fnr)
         self.auc = Metrics.compute_auc(self.fpr, self.tpr, fpr_stop)
+        self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fpr, self.tpr, dLevel)
+        #self.a, self.apoint = Metrics.compute_aprime(self.fpr, self.tpr)
         #print ("fpr_stop test:".format(fpr_stop))
 
         self.ci_lower = 0
@@ -51,7 +44,7 @@ class detMetrics:
         self.ci_tpr = 0
 
         if isCI:
-            self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(score, gt)
+            self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(score, gt, ciLevel)
 
         self.fpr_stop = fpr_stop
 #        detMetrics.dm_id += 1
@@ -116,7 +109,7 @@ class detMetrics:
 
         fpr, tpr, thres = roc_curve(label, score)
         fnr = 1 - tpr
-        return fpr, tpr, fnr, thres
+        return fpr, tpr, fnr, thres, target_num, nontarget_num
 
     def write(self, file_name):
         """ Save the Dump files (formatted in a binary) that contains
@@ -195,9 +188,9 @@ class Metrics:
         eer = np.mean([fpr[idx], fnr[idx]])
         return eer
 
-    # TODO: need to validate this
+    # TODO: need to validate this and make command-line inputs
     @staticmethod
-    def compute_ci(score, gt, lower_bound =0.05, upper_bound=0.95):
+    def compute_ci(score, gt, ci_level):
         """ compute the confidence interval for AUC
         score: system output scores
         gt: ground-truth for given trials
@@ -209,7 +202,9 @@ class Metrics:
 #        mean = np.mean(score)
 #        size = len(score) - 1
 #        return abs(mean - st.t.interval(prob, size, loc=mean, scale=st.sem(score))[1])
-#
+
+        lower_bound = round((1.0 - float(ci_level))/2.0, 3)
+        upper_bound = round((1.0 - lower_bound), 3)
         n_bootstraps = 500
         rng_seed = 77  # control reproducibility
         bootstrapped_auc = []
@@ -240,7 +235,7 @@ class Metrics:
         sorted_aucs = sorted(bootstrapped_auc)
         #print("sorted AUCS {}".format(sorted_aucs))
 
-        # Computing the lower and upper bound of the 90% confidence interval
+        # Computing the lower and upper bound of the 90% confidence interval (default)
         # You can change the bounds percentiles to 0.025 and 0.975 to get
         # a 95% confidence interval instead.
         ci_lower = sorted_aucs[int(lower_bound * len(sorted_aucs))]
@@ -249,3 +244,81 @@ class Metrics:
         ci_tpr = 0 #TODO: after calculating CI for each TPR
         #print("Confidence interval for AUC: [{:0.5f} - {:0.5f}]".format(ci_lower, ci_upper))
         return ci_lower, ci_upper, ci_tpr
+
+    # Calculate d-prime and beta
+    @staticmethod
+    def compute_dprime(fpr, tpr, d_level = 0.0):
+        """ computes the d-prime given TPR and FPR values
+        tpr: true positive rates
+        fpr: false positive rates"""
+        from scipy.stats import norm
+        from math import exp
+
+        #fpr_a = [0, .0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772,.9938,.9987, 1]
+        #tpr_a = [0, 0.0013,.0062,.0228,.0668,.1587,.3085,.5,.6915,.8413,.9332,.9772, 1]
+        #d_level = 0.2
+
+        def range_limit(n, minn, maxn):
+            return max(min(maxn, n), minn)
+
+        d = []
+        d_max = None;
+        d_max_idx = None;
+        beta = []
+        beta_max = None;
+        beta_max_idx = None;
+        Z = norm.ppf
+        mask = []
+        for idx, x in enumerate(fpr):
+            d.append(         Z(range_limit(tpr[idx], 0.00001, .99999))     - Z(range_limit(fpr[idx], 0.00001, 0.99999)))
+            beta.append(exp( (Z(range_limit(fpr[idx], 0.00001, 0.99999))**2 - Z(range_limit(tpr[idx], 0.00001, .99999))**2) / 2))
+            if (tpr[idx] >= d_level and tpr[idx] <= 1-d_level and fpr[idx] >= d_level and fpr[idx] <= 1-d_level):
+                if (d_max == None or d_max < d[idx]):
+                    d_max = d[idx]
+                    d_max_idx = idx
+                if (beta_max == None or beta_max < d[idx]):
+                    beta_max = d[idx]
+                    beta_max_idx = idx
+                mask.append(1)
+            else:
+                mask.append(0)
+#        print("d_level- {} \ntpr- {} \nfpr- {} \nmask- {} \nd- {} \ndmax- {} \nidx- {} \n".format(d_level, fpr, tpr, mask, d, d_max, d_max_idx))
+
+        if (d_max_idx == None):
+            return None, (0,0), None, (0,0)
+        return d_max, (fpr[d_max_idx], tpr[d_max_idx]), beta_max, (fpr[beta_max_idx], tpr[beta_max_idx])
+
+
+    @staticmethod
+    def compute_aprime(fpr_a, tpr_a):
+        """ computes the d-prime given TPR and FPR values
+        tpr: true positive rates
+        fpr: false positive rates"""
+        from scipy.stats import norm
+        from math import exp
+
+        fpr = list(fpr_a)
+        tpr = list(tpr_a)
+        Z = norm.ppf
+        a = []
+        for i in range(0, len(fpr)):
+
+            # Starting a' calculation
+            if(fpr[i] <=0.5 and tpr[i] >=0.5):
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - fpr[i]*(1.0-tpr[i]))
+            elif(fpr[i] <= tpr[i] and tpr[i] <=0.5):
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - fpr[i]/(4.0*tpr[i]))
+            else:
+                a.append(0.75 + (tpr[i]-fpr[i]/4.0) - (1.0-tpr[i])/(4.0*(1.0-fpr[i])))
+
+
+        a_idx = a.index(max(a))
+        a_max_point = (fpr[a_idx], tpr[a_idx])
+
+        #print("a- {} amax- {} idx- {} apoint- {}".format(a, max(a), a_idx, a_max_point))
+#        print("tpr{}".format(tpr))
+#        print("fpr{}".format(fpr))
+
+        return max(a), a_max_point
+
+

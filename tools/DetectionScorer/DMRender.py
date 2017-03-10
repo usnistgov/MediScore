@@ -172,6 +172,8 @@ if __name__ == '__main__':
             print("Please run with '--defaultOption'")
             exit(1)
         else:
+            for curve_opts, fname, d in zip(opts_list, f_list, DM_List):
+                curve_opts["label"] = fname + " (AUC: " + str(round(d.auc,2)) + ", T#: "+ str(d.t_num) + ", NT#: "+ str(d.nt_num) + ")"
             # Creation of the object setRender (~DetMetricSet)
             configRender = p.setRender(DM_List, opts_list, plot_opts)
             # Creation of the Renderer
@@ -291,6 +293,8 @@ if __name__ == '__main__':
             print("Please run with '--defaultOption'")
             exit(1)
         else:
+            for curve_opts, fname, d in zip(opts_list, f_list, DM_List):
+                curve_opts["label"] = fname + " (AUC: " + str(round(d.auc,2)) + ", T#: "+ str(d.t_num) + ", NT#: "+ str(d.nt_num) + ")"
             # Creation of the object setRender (~DetMetricSet)
             configRender = p.setRender(DM_List, opts_list, plot_opts)
             # Creation of the Renderer

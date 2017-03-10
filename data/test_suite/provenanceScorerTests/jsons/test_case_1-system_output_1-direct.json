@@ -2,37 +2,37 @@
   "nodes": [
       {
 	  "file": "world/c257f3e674aaa597784ae6f5a402c748.jpg",
-	  "id": 1,
+	  "id": "1",
 	  "fileid": "c257f3e674aaa597784ae6f5a402c748",
 	  "nodeConfidenceScore": 1
       },
       {
 	  "file": "world/3c109a9289f94a895a26a58b782ad994.jpg",
-	  "id": 23,
+	  "id": "23",
 	  "fileid": "base1-sharpen-jpg-resize-tif_13",
 	  "nodeConfidenceScore": 1
       },
       {
 	  "file": "world/ed6b6c02e6ce855d7f19a91c606f2070.jpg",
-	  "id": 2,
+	  "id": "2",
 	  "fileid": "ed6b6c02e6ce855d7f19a91c606f2070",
 	  "nodeConfidenceScore": 1
       },
       {
 	  "file": "world/9f796693249720d9d4eb8f1c3347c300.jpg",
-	  "id": 25,
+	  "id": "25",
 	  "fileid": "base1-sharpen-jpg-resize-tif-splice_12",
 	  "nodeConfidenceScore": 1
       },
       {
 	  "file": "world/e87a84f23af4399b570ddc8b1941ed9e.png",
-	  "id": 12,
+	  "id": "12",
 	  "fileid": "base2-splice",
 	  "nodeConfidenceScore": 1
       },
       {
 	  "file": "world/9e245d6ea071c715edd84e9b55649b47.jpg",
-	  "id": 20,
+	  "id": "20",
 	  "fileid": "base1-sharpen-jpg-splice_11",
 	  "nodeConfidenceScore": 1
       }
