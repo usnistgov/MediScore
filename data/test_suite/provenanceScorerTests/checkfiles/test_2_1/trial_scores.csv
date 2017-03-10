@@ -1,0 +1,2 @@
+JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|NumSysNodes|NumSysLinks|NumRefNodes|NumRefLinks|NumCorrectNodes|NumMissingNodes|NumFalseAlarmNodes|NumCorrectLinks|NumMissingLinks|NumFalseAlarmLinks|SimNLO|SimNO|SimLO|NodeRecall
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|20|21|18|18|15|3|5|6|12|15|0.545454545455|0.789473684211|0.307692307692|0.833333333333
