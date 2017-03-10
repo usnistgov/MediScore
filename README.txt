@@ -119,6 +119,10 @@ HISTORY
       new DetectionScorer.  Note the filter options changed
 
   Jan. 25, 2017 - MediScore Version 1.0.3:
+    - Added Selective Manipulation Scoring to the Mask scoring.
+
+  Feb. 28, 2017 - MediScore Version 1.1.0:
+    - Added the Provenance scorers.
     - Add Selective Manipulation Scoring to the Mask scoring.
 
   Mar 10, 2017 - MediScore Version 1.1.1:
