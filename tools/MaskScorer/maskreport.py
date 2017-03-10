@@ -38,6 +38,8 @@ lib_path='../../lib'
 sys.path.append(lib_path)
 import maskMetrics as mm
 
+#TODO: revise pipeline. Eventually bring all mask scoring functionality to MaskScorer.py
+
 def store_avg(querydf,metlist,store_df,index,precision):
     """
      Average Lists
@@ -115,7 +117,7 @@ def store_avg(querydf,metlist,store_df,index,precision):
 #
 #    return df_avg
 
-def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+def createReportSSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for single source detection, specifically for the manipulation task
      * Description: this function calls each metric function and
@@ -123,6 +125,8 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
      *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
+     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalNames, joining probe image information with journal information
+     *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
@@ -143,26 +147,30 @@ def createReportSSD(m_df, journalData, refDir, sysDir, rbin, sbin,erodeKernSize,
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index)
     df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    merged_df = pd.merge(m_df,df,how='left',on='ProbeFileID')
+    merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
 
     return merged_df
 
-def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernSize, kern,outputRoot,html,verbose,precision):
+def createReportDSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for double source detection, specifically the splice task
      * Description: this function calls each metric function and
                     return the metric value and the colored mask output as a report
      * Inputs
      *     m_df: reference dataframe merged with system output dataframe
+     *     journalData: data frame containing the journal names, the manipulations to be considered, and the RGB color codes corresponding to each manipulation per journal
+     *     probeJournalJoin: data frame containing the ProbeFileID's and JournalNames, joining probe image information with journal information
+     *     index: data frame containing the index file, to be used for internal validation
      *     refDir: reference mask file directory
      *     sysDir: system output mask file directory
      *     rbin: threshold to binarize the reference mask when read in. Select -1 to not threshold (default: 254)
      *     sbin: threshold to binarize the system output mask when read in. Select -1 to not threshold (default: -1)
      *     erodekernSize: Kernel size for Erosion
      *     dilatekernSize: Kernel size for Dilation
+     *     distractionkernSize: Kernel size for dilation for the distraction no-score regions
      *     kern: Kernel option for morphological image processing. Choose from 'box','disc','diamond','gaussian','line' (default: 'box')
      *     outputRoot: the directory for outputs to be written
      *     html: whether or not to output an HTML report
@@ -179,25 +187,27 @@ def createReportDSD(m_df, refDir, sysDir, rbin, sbin, erodeKernSize, dilateKernS
     #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=1)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
     probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,mode=2) #donor images
-    donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
+    maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
+    donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['DonorFileName'],precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",
                                        "BWL1":"pBWL1",
                                        "GWL1":"pGWL1",
                                        "ColMaskFileName":"ProbeColMaskFileName",
-                                       "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
+                                       "AggMaskFileName":"ProbeAggMaskFileName",
+                                       "Scored":"ProbeScored"},inplace=True)
 
     donor_df.rename(index=str,columns={"NMM":"dNMM",
                                        "MCC":"dMCC",
                                        "BWL1":"dBWL1",
                                        "GWL1":"dGWL1",
                                        "ColMaskFileName":"DonorColMaskFileName",
-                                       "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
+                                       "AggMaskFileName":"DonorAggMaskFileName",
+                                       "Scored":"DonorScored"},inplace=True)
 
     pd_df = pd.concat([probe_df,donor_df],axis=1)
     merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID'])
