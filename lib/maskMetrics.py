@@ -130,8 +130,10 @@ class maskMetricList:
                 if self.mode == 1:
                     evalcol='ProbeEvaluated'
 
-                joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
-                color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']] #get the target colors
+                #get the target colors
+                #joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
+                #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
+                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']]
                 colorlist = list(color_purpose['Color'])
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
@@ -197,29 +199,43 @@ class maskMetricList:
             maniImageFName = self.maskData[mymode+'FileName']
 
         nrow = len(reflist) 
-        #initialize empty frame to minimum scores 
-        df=pd.DataFrame({mymode+'FileID':manip_ids,
-                         'NMM':[-1.]*nrow,
-                         'MCC': 0.,
-                         'BWL1': 1.,
-                         'GWL1': 1.,
-                         'ColMaskFileName':['']*nrow,
-                         'AggMaskFileName':['']*nrow})
+
+        #initialize empty frame to minimum scores
+#        df=pd.DataFrame({mymode+'FileID':manip_ids,
+#                         'NMM':[-1.]*nrow,
+#                         'MCC': 0.,
+#                         'BWL1': 1.,
+#                         'GWL1': 1.,
+#                         'ColMaskFileName':['']*nrow,
+#                         'AggMaskFileName':['']*nrow})
+
+        df=self.maskData[[mymode+'FileID',mymode+'MaskFileName','Scored']].copy()
+        df['NMM'] = [-1.]*nrow
+        df['MCC'] = [0.]*nrow
+        df['BWL1'] = [1.]*nrow
+        df['GWL1'] = [1.]*nrow
+        df['ColMaskFileName'] = ['']*nrow
+        df['AggMaskFileName'] = ['']*nrow
 
         task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
         ilog = open('index_log.txt','w+')
 
-        for i,row in df.iterrows():
+        for i,row in self.maskData.iterrows():
             if verbose: print("Scoring mask {} out of {}...".format(i+1,nrow))
             if syslist[i] in [None,'',np.nan]:
-                self.journalData.set_value(i,evalcol,'N')
+                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                #self.journalData.set_value(i,evalcol,'N')
+                df.set_value(i,'Scored','N')
                 if verbose: print("Empty system mask file at index %d" % i)
                 continue
             else:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
                 if (rImg is 0) and (sImg is 0):
                     #no masks detected with score-able regions, so set to not scored
-                    self.journalData.set_value(i,evalcol,'N')
+                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
+                    #self.journalData.set_value(i,evalcol,'N')
+                    df.set_value(i,'Scored','N')
                     df.set_value(i,'MCC',-2) #for reference to filter later
                     continue
 
@@ -228,13 +244,15 @@ class maskMetricList:
                 idxW = idxdims[mymode+'Width']
                 idxH = idxdims[mymode+'Height']
 
-                if (rdims[0] != idxH) or (rdims[1] != idxW):
-                    self.journalData.set_value(i,evalcol,'N')
-                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
- Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
-                    #write mask name, mask dimensions, and image dimensions to index_log.txt
-                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
-                    continue
+#                if (rdims[0] != idxH) or (rdims[1] != idxW):
+#                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+#                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
+#                    #self.journalData.set_value(i,evalcol,'N')
+#                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
+# Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
+#                    #write mask name, mask dimensions, and image dimensions to index_log.txt
+#                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
+#                    continue
 
                 if (rImg.matrix is None) or (sImg.matrix is None):
                     #Likely this could be FP or FN. Set scores as usual.
@@ -245,7 +263,7 @@ class maskMetricList:
                 #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
 
                 if task == 'manipulation':
-                    subdir_name = self.maskData['ProbeFileID'].iloc[i]
+                    subdir_name = manip_ids[i]
                 elif task == 'splice':
                     subdir_name = "{}_{}".format(self.maskData['ProbeFileID'].iloc[i],self.maskData['DonorFileID'].iloc[i])
                 
@@ -318,10 +336,10 @@ class maskMetricList:
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    self.manipReport(task,subOutRoot,self.maskData[mymode+'FileID'].iloc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
+                    self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
-        return df
+        return df.drop(mymode+'MaskFileName',1)
 
     def num2hex(self,color):
         """
@@ -414,13 +432,13 @@ class maskMetricList:
         mymode = 'Probe'
         if self.mode == 2:
             mymode = 'Donor'
-        elif self.mode == 0: #TODO: temporary measure until we get splice sorted out
+        elif self.mode == 0: #TODO: temporary measure until we get splice sorted out, originally self.mode != 2
             evalcol='Evaluated'
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
-            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+#            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
+            jdata = self.journalData.query("ProbeFileID=='{}'".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -468,15 +486,16 @@ class maskMetricList:
         except OSError:
             None
 
-        if verbose: print "Creating link for " + mPathNew
+        if verbose: print "Creating link for " + maniImageFName
         os.symlink(os.path.abspath(mPath),mPathNew)
-        if verbose: print "Creating link for " + rPathNew
+        if verbose: print "Creating link for " + rImg_name
         os.symlink(os.path.abspath(rImg_name),rPathNew)
-        if verbose: print "Creating link for " + sPathNew
+        if verbose: print "Creating link for " + sImg_name
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         if verbose: print("Writing HTML...")
-        htmlstr = htmlstr.substitute({'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
+        htmlstr = htmlstr.substitute({'probeName': maniImageFName,
+                                      'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
                                       'aggMask' : os.path.basename(aggImgName),
                                       'refMask' : 'refMask.png',#rBase,
@@ -638,8 +657,10 @@ class maskMetrics:
         self.sys_threshold = systh
         if systh >= 0:
             sys.binarize(systh)
-        elif len(np.unique(sys.matrix)) <= 2: #already binarized or uniform, relies on external pipeline
-            sys.bwmat = sys.matrix
+        else:
+            distincts = np.unique(sys.matrix)
+            if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
+                sys.bwmat = sys.matrix
 
         self.conf = self.confusion_measures(ref,sys,w)
 
@@ -749,10 +770,11 @@ class maskMetrics:
 
         s = sys.bwmat.astype(int)
         x = (r+s)/255.
-        tp = np.float64(np.sum((x==0) & (w==1)))
-        fp = np.float64(np.sum((x==1) & (r==255) & (w==1)))
-        fn = np.float64(np.sum((x==1) & (w==1)) - fp)
-        tn = np.float64(np.sum((x==2) & (w==1)))
+
+        tp = np.float64(np.sum((x==0.) & (w==1)))
+        fp = np.float64(np.sum((x==1.) & (r==255) & (w==1)))
+        fn = np.float64(np.sum((x==1.) & (w==1)) - fp)
+        tn = np.float64(np.sum((x==2.) & (w==1)))
         n = np.sum(w==1)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}

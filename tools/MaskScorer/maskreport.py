@@ -38,6 +38,8 @@ lib_path='../../lib'
 sys.path.append(lib_path)
 import maskMetrics as mm
 
+#TODO: revise pipeline. Eventually bring all mask scoring functionality to MaskScorer.py
+
 def store_avg(querydf,metlist,store_df,index,precision):
     """
      Average Lists
@@ -148,7 +150,7 @@ def createReportSSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index)
     df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
 
-    merged_df = pd.merge(m_df,df,how='left',on='ProbeFileID')
+    merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
 
     return merged_df
 
@@ -196,14 +198,16 @@ def createReportDSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
                                        "BWL1":"pBWL1",
                                        "GWL1":"pGWL1",
                                        "ColMaskFileName":"ProbeColMaskFileName",
-                                       "AggMaskFileName":"ProbeAggMaskFileName"},inplace=True)
+                                       "AggMaskFileName":"ProbeAggMaskFileName",
+                                       "Scored":"ProbeScored"},inplace=True)
 
     donor_df.rename(index=str,columns={"NMM":"dNMM",
                                        "MCC":"dMCC",
                                        "BWL1":"dBWL1",
                                        "GWL1":"dGWL1",
                                        "ColMaskFileName":"DonorColMaskFileName",
-                                       "AggMaskFileName":"DonorAggMaskFileName"},inplace=True)
+                                       "AggMaskFileName":"DonorAggMaskFileName",
+                                       "Scored":"DonorScored"},inplace=True)
 
     pd_df = pd.concat([probe_df,donor_df],axis=1)
     merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID'])
