@@ -406,7 +406,7 @@ if __name__ == '__main__':
         if args.query or args.queryPartition or args.queryManipulation:
             for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
                 trr_str = ""
-                print("plottype {}".format(plot_opts['plot_type']))
+                #print("plottype {}".format(plot_opts['plot_type']))
                 if plot_opts['plot_type'] == 'ROC':
                     met_str = " (AUC: " + str(round(dm_list.auc,2))
                 elif plot_opts['plot_type'] == 'DET':

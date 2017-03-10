@@ -3,9 +3,8 @@
 
 import json
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+## the following two lines are necessary for remote access.
+
 from scipy.stats import norm
 
 class Render:
@@ -22,6 +21,7 @@ class Render:
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
+
         if multi_fig is True:
             fig_list = list()
             for i,dm in enumerate(self.DM_list):
@@ -40,10 +40,12 @@ class Render:
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
         """
-#        if display:
-#            plt.ion()
-#        else:
-#            plt.ioff()
+
+        if not display:
+            import matplotlib
+            matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
 
         fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
