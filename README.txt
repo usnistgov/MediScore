@@ -1,6 +1,6 @@
 File: README.txt
 Date: March 10, 2017
-MediScore Version: 1.1.0
+MediScore Version: 1.1.1
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -121,7 +121,7 @@ HISTORY
   Jan. 25, 2017 - MediScore Version 1.0.3:
     - Add Selective Manipulation Scoring to the Mask scoring.
 
-  Mar 10, 2017 - MediScore Version 1.1.0:
+  Mar 10, 2017 - MediScore Version 1.1.1:
     * Validator:
       - Validator now reads in a file stream for the DSD task. Major speedup applied.
       - Neglect mask feature added to validator for speedup.
