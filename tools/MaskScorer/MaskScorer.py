@@ -205,6 +205,10 @@ if args.html:
             html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/donor/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
+            html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
+            html_out.loc[html_out.query("pMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
+            html_out.loc[html_out.query("dMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -396,9 +400,9 @@ if args.task == 'manipulation':
     
 #        r_df['Scored'] = pd.Series(['Y']*len(r_df))
 #        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-#        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-#        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-#        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata
@@ -551,6 +555,12 @@ elif args.task == 'splice':
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
         my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
         df_list = my_partition.render_table(metrics)
+        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
     
         if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
             #use Partition for OOP niceness and to identify file to be written. 
