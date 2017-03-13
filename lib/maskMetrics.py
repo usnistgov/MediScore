@@ -483,7 +483,7 @@ class maskMetricList:
                 None
             if verbose: print "Creating link for base image " + baseImageFName
             os.symlink(os.path.abspath(bPath),bPathNew)
-            basehtml="<img src=bPathNew alt='base image' style='width:{}px;'.format(allshapes)>"
+            basehtml="<img src={} alt='base image' style='width:{}px;'>".format(bPathNew,allshapes)
 
         #TODO: condition self.mode != 2 for baseImageFName stuff
 
