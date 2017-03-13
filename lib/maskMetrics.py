@@ -161,7 +161,7 @@ class maskMetricList:
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
 
-    def getMetricList(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,maniImageFName='',precision=16):
+    def getMetricList(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,precision=16):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
@@ -173,7 +173,6 @@ class maskMetricList:
         *     outputRoot: the directory for outputs to be written
         *     verbose: permit printout from metrics
         *     html: whether or not to generate an HTML report
-        *     maniImageFName: the list of Probe File images. Only relevant if html=True
         *     precision: the number of digits to round the computed metrics to.
         * Output:
         *     df: a dataframe of the computed metrics
@@ -195,8 +194,11 @@ class maskMetricList:
         syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
 
         manip_ids = self.maskData[mymode+'FileID']
+        maniImageFName = 0
+        baseImageFName = 0
         if html:
             maniImageFName = self.maskData[mymode+'FileName']
+            baseImageFName = self.maskData['BaseFileName']
 
         nrow = len(reflist) 
 
@@ -336,7 +338,8 @@ class maskMetricList:
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
+                    #TODO: add base image
+                    self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
         return df.drop(mymode+'MaskFileName',1)
@@ -376,7 +379,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,probeFileID,maniImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
+    def manipReport(self,task,outputRoot,probeFileID,maniImageFName,baseImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -384,6 +387,7 @@ class maskMetricList:
         *     outputRoot: the directory to deposit the weight image and the HTML file
         *     probeFileID: the ID of the image to be considered
         *     maniImageFName: the manipulated probe file name, relative to the reference directory (self.refDir) 
+        *     baseImageFName: the base file name of the probe, relative to the reference directory (self.refDir) 
         *     rImg_name: the name of the unmodified reference image used for the mask evaluation
         *     sImg_name: the name of the unmodified system output image used for the mask evaluation
         *     rbin_name: the name of the binarized reference image used for the mask evaluation
@@ -465,9 +469,23 @@ class maskMetricList:
         sBase = os.path.basename(sImg_name)
 
         #change to donor depending on mode
+        basehtml = ''
         mpfx = 'probe'
         if self.mode==2:
             mpfx = 'donor'
+        else:
+            bPath = os.path.join(self.refDir,baseImageFName)
+            bBase = os.path.basename(bPath)
+            bPathNew = os.path.join(outputRoot,'baseFile' + baseImageFName[-4:])
+            try:
+                os.remove(bPathNew)
+            except OSError:
+                None
+            if verbose: print "Creating link for base image " + baseImageFName
+            os.symlink(os.path.abspath(bPath),bPathNew)
+            basehtml="<img src=bPathNew alt='base image' style='width:{}px;'.format(allshapes)>"
+
+        #TODO: condition self.mode != 2 for baseImageFName stuff
 
         mPathNew = os.path.join(outputRoot,mpfx+'File' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
         rPathNew = os.path.join(outputRoot,'refMask.png') #os.path.join(outputRoot,rBase)
@@ -486,17 +504,19 @@ class maskMetricList:
         except OSError:
             None
 
-        if verbose: print "Creating link for " + maniImageFName
+        if verbose: print "Creating link for manipulated image " + maniImageFName
         os.symlink(os.path.abspath(mPath),mPathNew)
-        if verbose: print "Creating link for " + rImg_name
+        if verbose: print "Creating link for refernce mask " + rImg_name
         os.symlink(os.path.abspath(rImg_name),rPathNew)
-        if verbose: print "Creating link for " + sImg_name
+        if verbose: print "Creating link for system output mask " + sImg_name
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         if verbose: print("Writing HTML...")
         htmlstr = htmlstr.substitute({'probeName': maniImageFName,
                                       'probeFname': mpfx + 'File' + maniImageFName[-4:],#mBase,
                                       'width': allshapes,
+                                      'baseName': baseImageFName,
+                                      'basehtml': basehtml,#mBase,
                                       'aggMask' : os.path.basename(aggImgName),
                                       'refMask' : 'refMask.png',#rBase,
                                       'sysMask' : 'sysMask.png',#sBase,
