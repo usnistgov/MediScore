@@ -138,6 +138,7 @@ HISTORY
       - Bug for query scoring corrected due to a join problem between files.
       - IsOptOut option added to Mask Scorer. Test cases also edited to reflect this change.
       - Mask binarization bug fixed. System output masks with two or less distinct colors will now be tested to see if these colors are black (0) and/or white (255).
+      - Score reporting and averaging bug fixed. Certain scores were leaking through the csv and HTML.
     * DetectionScorer:
       - The d-prime metric has been added to DetectionScorer
       - Confidence level option(--ciLevel) for calculating confidence interval has been added (e.g., --ciLevel .95)

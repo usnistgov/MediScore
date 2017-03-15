@@ -267,6 +267,10 @@ if args.optOut:
         print("No IsOptOut column detected. Filtration is meaningless.")
         exit(1)
     mySys = mySys.query("IsOptOut=='N'")
+    if len(mySys) == 0:
+        print("Everything got opted out. Exiting.")
+        exit(0)
+    
     
 ref_dtype = {}
 with open(myRefFile,'r') as ref:
@@ -418,7 +422,10 @@ if args.task == 'manipulation':
             print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
         else:
             metrics = ['NMM','MCC','BWL1','GWL1']
-            my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
+            r_dfc = r_df.copy()
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = ''
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
+            my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
             df_list = my_partition.render_table(metrics)
          
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -440,6 +447,8 @@ if args.task == 'manipulation':
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
         prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
+        r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
     
 #commenting out for the time being
@@ -545,6 +554,13 @@ elif args.task == 'splice':
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
     
+        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
+
         #reorder r_df's columns. Names first, then scores, then other metadata
         rcols = r_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
@@ -553,14 +569,13 @@ elif args.task == 'splice':
         r_df = r_df[firstcols]
     
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-        my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+        r_dfc = r_df.copy()
+        r_dfc.loc[r_dfc.query('pMCC == -2').index,'pMCC'] = ''
+        r_dfc.loc[r_dfc.query('pMCC == -2').index,'ProbeScored'] = 'N'
+        r_dfc.loc[r_dfc.query('dMCC == -2').index,'dMCC'] = ''
+        r_dfc.loc[r_dfc.query('dMCC == -2').index,'DonorScored'] = 'N'
+        my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries #TODO: move this into the query section a'la manipulation
         df_list = my_partition.render_table(metrics)
-        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
     
         if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
             #use Partition for OOP niceness and to identify file to be written. 
@@ -581,6 +596,10 @@ elif args.task == 'splice':
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
         prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.loc[r_df.query('pMCC == -2').index,'pMCC'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'ProbeScored'] = 'N'
+        r_df.loc[r_df.query('dMCC == -2').index,'dMCC'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'DonorScored'] = 'N'
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
 
 
