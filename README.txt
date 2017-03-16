@@ -1,6 +1,6 @@
 File: README.txt
-Date: March 10, 2017
-MediScore Version: 1.1.1
+Date: March 16, 2017
+MediScore Version: 1.1.2
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -19,7 +19,7 @@ This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
 following versions of Ubuntu Linux and OS X.
 
-  Mac OS X 10.11.6
+  Mac OS X 10.12.3
   Ubuntu Linux 14.04.4
 
 
@@ -129,6 +129,7 @@ HISTORY
     * Validator:
       - Validator now reads in a file stream for the DSD task. Major speedup applied.
       - Neglect mask feature added to validator for speedup.
+      - ImageMagick channel reading slightly fixed.
     * MaskScorer:
       - The dilation parameter for selective Mask scoring has been changed from 9 to 11.
       - Donor splice reference mask is expected to be binarized. Mask Scorer now reflect these changes.
@@ -149,6 +150,11 @@ HISTORY
       - The plot title and legends are changed when using the optOut option (e.g, trROC, trDET, trAUC)
     * Provenance:
       - Updated Provenance scoring test files to adhere to the latest version of the Provenance output json schemas (v 1.2)
+  Mar 16, 2017 - MediScore Version 1.1.2:
+    * Makefile:
+      - Reorganized so that detection scorer and provenance scorer are validated before mask scorer, due to taking less time.
+    * MaskScorer:
+      - Score reporting and averaging bug fixed. Certain scores were leaking through the csv and HTML.
 
 CONTACT
 -------
