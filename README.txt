@@ -129,6 +129,7 @@ HISTORY
     * Validator:
       - Validator now reads in a file stream for the DSD task. Major speedup applied.
       - Neglect mask feature added to validator for speedup.
+      - ImageMagick channel reading slightly fixed.
     * MaskScorer:
       - The dilation parameter for selective Mask scoring has been changed from 9 to 11.
       - Donor splice reference mask is expected to be binarized. Mask Scorer now reflect these changes.
