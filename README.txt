@@ -153,8 +153,11 @@ HISTORY
   Mar 16, 2017 - MediScore Version 1.1.2:
     * Makefile:
       - Reorganized so that detection scorer and provenance scorer are validated before mask scorer, due to taking less time.
+    * Validator:
+      - Validator now prints number of channels when printing error message about masks not being single-channel.
+      - Validator unit test now toggle-able with identify to hack ImageMagick behavioral discrepancies.
     * MaskScorer:
-      - Score reporting and averaging bug fixed. Certain scores were leaking through the csv and HTML.
+      - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
 
 CONTACT
 -------
