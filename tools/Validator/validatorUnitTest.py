@@ -170,7 +170,7 @@ class TestValidator(ut.TestCase):
         errstr = errmsg.read()
         self.assertEqual(errstr.count("Dimensions"),2)
         self.assertTrue("ERROR: The mask image's length and width do not seem to be the same as the base image's." in errstr)
-        self.assertTrue("is not single-channel. Make it single-channel." in errstr)
+        self.assertTrue("is not single-channel." in errstr)
         print("CASE 6 validated.")
         
         print("\nCASE 7: Validating behavior when system output column number is less than 3.") 
@@ -322,7 +322,7 @@ class TestValidator(ut.TestCase):
                 count += 1
                 idx += len("Dimensions")
         self.assertTrue("ERROR: The mask image's length and width do not seem to be the same as the base image's." in errstr)
-        self.assertTrue("is not single-channel. Make it single-channel." in errstr)
+        self.assertTrue("is not single-channel." in errstr)
         self.assertTrue("is not a png. Make it into a png!" in errstr)
         print("CASE 6 validated.")
         

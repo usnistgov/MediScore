@@ -1,5 +1,23 @@
 <h2>Manipulated Image: $probeName </h2><br/>
-<img src="$probeFname" alt="manipulated image" style="width:${width}px;">
+<table>
+  <tbody>
+    <tr>
+      <td>
+      </td>
+      <td>
+        <h3>Base Image: $baseName </h3><br/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="$probeFname" alt="manipulated image" style="width:${width}px;">
+      </td>
+      <td>
+        $basehtml
+      </td>
+    </tr>
+  </tbody>
+</table>
 <br/>
 <table>
   <tbody>

@@ -148,7 +148,7 @@ def createReportSSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index)
-    df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
+    df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,precision=precision)
 
     merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
 
@@ -188,10 +188,10 @@ def createReportDSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, 
     # convert to the str type to the float type for computations
     #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-    probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['ProbeFileName'],precision=precision)
+    probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
 
     maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
-    donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,m_df['DonorFileName'],precision=precision)
+    donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
 
     probe_df.rename(index=str,columns={"NMM":"pNMM",
                                        "MCC":"pMCC",
