@@ -205,6 +205,10 @@ if args.html:
             html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/donor/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
+            html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
+            html_out.loc[html_out.query("pMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
+            html_out.loc[html_out.query("dMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -263,6 +267,10 @@ if args.optOut:
         print("No IsOptOut column detected. Filtration is meaningless.")
         exit(1)
     mySys = mySys.query("IsOptOut=='N'")
+    if len(mySys) == 0:
+        print("Everything got opted out. Exiting.")
+        exit(0)
+    
     
 ref_dtype = {}
 with open(myRefFile,'r') as ref:
@@ -396,9 +404,9 @@ if args.task == 'manipulation':
     
 #        r_df['Scored'] = pd.Series(['Y']*len(r_df))
 #        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-#        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-#        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-#        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata
@@ -414,7 +422,10 @@ if args.task == 'manipulation':
             print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
         else:
             metrics = ['NMM','MCC','BWL1','GWL1']
-            my_partition = pt.Partition(r_df.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
+            r_dfc = r_df.copy()
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = ''
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
+            my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
             df_list = my_partition.render_table(metrics)
          
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -436,6 +447,8 @@ if args.task == 'manipulation':
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
         prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
+        r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
     
 #commenting out for the time being
@@ -541,6 +554,13 @@ elif args.task == 'splice':
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
     
+        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
+
         #reorder r_df's columns. Names first, then scores, then other metadata
         rcols = r_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
@@ -549,7 +569,12 @@ elif args.task == 'splice':
         r_df = r_df[firstcols]
     
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-        my_partition = pt.Partition(r_df,query,factor_mode,metrics) #average over queries
+        r_dfc = r_df.copy()
+        r_dfc.loc[r_dfc.query('pMCC == -2').index,'pMCC'] = ''
+        r_dfc.loc[r_dfc.query('pMCC == -2').index,'ProbeScored'] = 'N'
+        r_dfc.loc[r_dfc.query('dMCC == -2').index,'dMCC'] = ''
+        r_dfc.loc[r_dfc.query('dMCC == -2').index,'DonorScored'] = 'N'
+        my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries #TODO: move this into the query section a'la manipulation
         df_list = my_partition.render_table(metrics)
     
         if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -571,6 +596,10 @@ elif args.task == 'splice':
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
         prefix = os.path.basename(args.inSys).split('.')[0]
+        r_df.loc[r_df.query('pMCC == -2').index,'pMCC'] = ''
+        r_df.loc[r_df.query('pMCC == -2').index,'ProbeScored'] = 'N'
+        r_df.loc[r_df.query('dMCC == -2').index,'dMCC'] = ''
+        r_df.loc[r_df.query('dMCC == -2').index,'DonorScored'] = 'N'
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
 
 
