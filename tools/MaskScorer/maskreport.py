@@ -27,6 +27,8 @@ server, and makes no guarantees, expressed or implied, about its quality,
 reliability, or any other characteristic."
 """
 
+#!/usr/bin/env python2
+
 import cv2
 import pandas as pd
 import numpy as np
@@ -34,7 +36,8 @@ import sys
 import os
 import numbers
 from string import Template
-lib_path='../../lib'
+#lib_path='../../lib'
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import maskMetrics as mm
 
