@@ -182,8 +182,9 @@ if __name__ == '__main__':
 
         # Loading the reference file
         try:
-            myRefFname = args.refDir + "/" + args.inRef
-            #myRef = pd.read_csv(myRefFname, sep='|', dtype = ref_dtype)
+            #myRefFname = args.refDir + "/" + args.inRef
+            myRefFname = os.path.join(args.refDir, args.inRef)
+
             myRef = pd.read_csv(myRefFname, sep='|')
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
@@ -191,11 +192,14 @@ if __name__ == '__main__':
             exit(1)
 
         # Loading the JTjoin and JTmask file
-        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
-        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+#        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
+#        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
+        myJTJoinFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv')
+        myJTMaskFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv')
+
 #        print("myRefFname {}".format(myRefFname))
 #        print("JTJoinFname {}".format(myJTJoinFname))
-#        print("JTMaskFname {}".format(myJTMaskFname))
+ #       print("JTMaskFname {}".format(myJTMaskFname))
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
@@ -207,7 +211,8 @@ if __name__ == '__main__':
         # Loading the index file
         try:
 
-            myIndexFname = args.refDir + "/" + args.inIndex
+            #myIndexFname = args.refDir + "/" + args.inIndex
+            myIndexFname = os.path.join(args.refDir, args.inIndex)
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
             myIndex = pd.read_csv(myIndexFname, sep='|')
         except IOError:
@@ -227,7 +232,8 @@ if __name__ == '__main__':
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str,
                          'DonorOutputMaskFileName':str}
-            mySysFname = args.sysDir + "/" + args.inSys
+            #mySysFname = args.sysDir + "/" + args.inSys
+            mySysFname = os.path.join(args.sysDir, args.inSys)
             v_print("Sys File Name {}".format(mySysFname))
             mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
