@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 """
 * File: MaskScorer.py
 * Date: 08/30/2016
@@ -38,7 +38,8 @@ import numpy as np
 import maskreport as mr
 
 # loading scoring and reporting libraries
-lib_path = "../../lib"
+#lib_path = "../../lib"
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import Partition_mask as pt
 #import masks

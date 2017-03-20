@@ -425,7 +425,7 @@ class maskMetricList:
         allshapes=min(dims[1],640) #limit on width for readability of the report
 
         # generate HTML files
-        with open("html_template.txt", 'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/html_template.txt"), 'r') as f:
             htmlstr = Template(f.read())
 
         #dictionary of colors corresponding to confusion measures
