@@ -122,8 +122,8 @@ else
 	cat comp_maskreport_manipconfmanmade-journalResults.txt
 fi
 
-if ([ $flag_s == 0 -a $flag_spi == 0 -a $flag_sjr \
--a $flag_manipconfmanmade_0 == 0 -a $flag_manipconfmanmade_1 == 0 -a $flag_manipconfmanmadepi == 0 -a $flag_manipconfmanmadejr == 0 \
+if ([ $flag_s == 0 -a $flag_spi == 0 -a $flag_sjr == 0 \
+ -a $flag_manipconfmanmade_0 == 0 -a $flag_manipconfmanmade_1 == 0 -a $flag_manipconfmanmadepi == 0 -a $flag_manipconfmanmadejr == 0 \
 ]); then
   echo
   echo "MASK SCORER SUCCESSFULLY PASSED"
