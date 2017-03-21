@@ -1,6 +1,6 @@
 File: README.txt
-Date: March 17, 2017
-MediScore Version: 1.1.3
+Date: March 21, 2017
+MediScore Version: 1.1.4
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -161,6 +161,9 @@ HISTORY
   Mar 17, 2017 - MediScore Version 1.1.3:
     * MaskScorer:
       - Absolute paths added. Path dependency for the mask scorer is no longer required.
+  Mar 21, 2017 - MediScore Version 1.1.4:
+    * MaskScorer:
+      - Bug to averaging procedure for splice portion of the mask scorer is fixed.
 
 
 CONTACT
