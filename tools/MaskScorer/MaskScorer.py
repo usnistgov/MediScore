@@ -36,6 +36,7 @@ import pandas as pd
 import argparse
 import numpy as np
 import maskreport as mr
+#import pdb #debug purposes
 
 # loading scoring and reporting libraries
 #lib_path = "../../lib"
@@ -572,10 +573,10 @@ elif args.task == 'splice':
     
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
         r_dfc = r_df.copy()
-        r_dfc.loc[r_dfc.query('pMCC == -2').index,'ProbeScored'] = 'N'
-        r_dfc.loc[r_dfc.query('dMCC == -2').index,'DonorScored'] = 'N'
-        p_dummyscores = r_dfc.query("pMCC > -2").mean(axis=0)
-        d_dummyscores = r_dfc.query("dMCC > -2").mean(axis=0)
+        r_dfc.loc[p_idx,'ProbeScored'] = 'N'
+        r_dfc.loc[d_idx,'DonorScored'] = 'N'
+        p_dummyscores = r_dfc.query("pMCC > -2")[metrics].mean(axis=0)
+        d_dummyscores = r_dfc.query("dMCC > -2")[metrics].mean(axis=0)
 
         r_dfc.loc[p_idx,'pNMM'] = p_dummyscores['pNMM']
         r_dfc.loc[p_idx,'pBWL1'] = p_dummyscores['pBWL1']

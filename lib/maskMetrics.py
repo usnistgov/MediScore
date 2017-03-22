@@ -223,12 +223,12 @@ class maskMetricList:
         ilog = open('index_log.txt','w+')
 
         for i,row in self.maskData.iterrows():
-            if verbose: print("Scoring mask {} out of {}...".format(i+1,nrow))
+            if verbose: print("Scoring {} mask {} out of {}...".format(mymode.lower(),i+1,nrow))
             if syslist[i] in [None,'',np.nan]:
                 self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
                 #self.journalData.set_value(i,evalcol,'N')
                 df.set_value(i,'Scored','N')
-                if verbose: print("Empty system mask file at index %d" % i)
+                if verbose: print("Empty system {} mask file at index {}".format(mymode.lower(),i))
                 continue
             else:
                 rImg,sImg = self.readMasks(reflist[i],syslist[i],verbose)
@@ -338,7 +338,6 @@ class maskMetricList:
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    #TODO: add base image
                     self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
