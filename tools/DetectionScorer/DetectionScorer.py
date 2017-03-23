@@ -154,12 +154,6 @@ if __name__ == '__main__':
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
 
-        #TBD: may need this one for provenance filtering
-        #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
-#        parser.add_argument('-qn', '--queryNonManipulation',
-#        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
-
-
         args = parser.parse_args()
         #print("Namespace :\n{}\n".format(args))
 
@@ -182,18 +176,14 @@ if __name__ == '__main__':
 
         # Loading the reference file
         try:
-            #myRefFname = args.refDir + "/" + args.inRef
             myRefFname = os.path.join(args.refDir, args.inRef)
-
-            myRef = pd.read_csv(myRefFname, sep='|')
+            myRef = pd.read_csv(myRefFname, sep='|', low_memory=False)
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
             print("ERROR: There was an error opening the reference csv file '" + myRefFname + "'")
             exit(1)
 
         # Loading the JTjoin and JTmask file
-#        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
-#        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
         myJTJoinFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv')
         myJTMaskFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv')
 
@@ -203,8 +193,8 @@ if __name__ == '__main__':
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
-            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
-            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+            myJTJoin = pd.read_csv(myJTJoinFname, sep='|', low_memory=False)
+            myJTMask = pd.read_csv(myJTMaskFname, sep='|', low_memory=False)
         else:
             v_print("Either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
 
@@ -214,7 +204,7 @@ if __name__ == '__main__':
             #myIndexFname = args.refDir + "/" + args.inIndex
             myIndexFname = os.path.join(args.refDir, args.inIndex)
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
-            myIndex = pd.read_csv(myIndexFname, sep='|')
+            myIndex = pd.read_csv(myIndexFname, sep='|', low_memory=False)
         except IOError:
             print("ERROR: There was an error opening the index csv file")
             exit(1)
@@ -235,7 +225,7 @@ if __name__ == '__main__':
             #mySysFname = args.sysDir + "/" + args.inSys
             mySysFname = os.path.join(args.sysDir, args.inSys)
             v_print("Sys File Name {}".format(mySysFname))
-            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
+            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype, low_memory=False)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
         except IOError:
             print("ERROR: There was an error opening the system output csv file")
