@@ -1,2 +1,0 @@
-Query,auc,fpr_stop,eer,auc_ci_lower,auc_ci_upper
-(Collection==['Nimble-WEB'] and IsManipulationTypeRemoval==['Y']),0.5902064732142858,1,0.43660714285714286,0,0
