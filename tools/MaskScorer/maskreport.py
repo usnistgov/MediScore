@@ -41,21 +41,19 @@ lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import maskMetrics as mm
 
-#TODO: revise pipeline. Eventually bring all mask scoring functionality to MaskScorer.py
-
-def store_avg(querydf,metlist,store_df,index,precision):
-    """
-     Average Lists
-     * Description: this function is an auxiliary function that computes averages for a dataframe's values and stores them in another dataframe's entries
-     * Inputs
-     *     querydf: the dataframe with the metrics to be averaged
-     *     metlist: a list of metrics to average over
-     *     store_df: the dataframe in which to store the averages
-     *     index: the index in which to store the averages
-     *     precision: the number of digits to round the averages to
-    """
-    for m in metlist:
-        store_df.set_value(index,m,round(querydf[querydf[m].apply(lambda x: isinstance(x,numbers.Number))][m].mean(),precision))
+#def store_avg(querydf,metlist,store_df,index,precision):
+#    """
+#     Average Lists
+#     * Description: this function is an auxiliary function that computes averages for a dataframe's values and stores them in another dataframe's entries
+#     * Inputs
+#     *     querydf: the dataframe with the metrics to be averaged
+#     *     metlist: a list of metrics to average over
+#     *     store_df: the dataframe in which to store the averages
+#     *     index: the index in which to store the averages
+#     *     precision: the number of digits to round the averages to
+#    """
+#    for m in metlist:
+#        store_df.set_value(index,m,round(querydf[querydf[m].apply(lambda x: isinstance(x,numbers.Number))][m].mean(),precision))
 
 #def avg_scores_by_factors_SSD(df, taskType,factorList={},precision=16):
 #    """
@@ -120,6 +118,7 @@ def store_avg(querydf,metlist,store_df,index,precision):
 #
 #    return df_avg
 
+#TODO: revise pipeline. Eventually bring all mask scoring functionality to MaskScorer.py
 def createReportSSD(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
     """
      Create a CSV report for single source detection, specifically for the manipulation task
