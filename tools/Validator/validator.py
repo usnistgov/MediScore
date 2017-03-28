@@ -133,7 +133,7 @@ class SSD_Validator(validator):
         ncid = arrSplit[1]
         data = arrSplit[2]
         task = arrSplit[3]
-        condition = arrSplit[4]
+        self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
     
@@ -147,6 +147,7 @@ class SSD_Validator(validator):
     
         if (taskFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
+            return 0
         else:
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
@@ -191,9 +192,12 @@ class SSD_Validator(validator):
             return 1
 
         testMask = False
-        if "OutputProbeMaskFileName" in sysHeads:
+        if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
             testMask = True
         
+        if self.condition in ["VidOnly","VidMeta"]:
+            neglectMask = True
+
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
             rowlist = range(0,sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: "
@@ -274,7 +278,7 @@ class DSD_Validator(validator):
         ncid = arrSplit[1]
         data = arrSplit[2]
         task = arrSplit[3]
-        condition = arrSplit[4]
+        self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
     
@@ -289,6 +293,7 @@ class DSD_Validator(validator):
     
         if (taskFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
+            return 0
         else:
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
