@@ -24,7 +24,7 @@ class ProvenanceValidator(validator):
         sys_pieces = self.sysname.rsplit('.',1)
         sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
-            printq('ERROR: Your system output is not a csv!',True)
+            printq('ERROR: Your system output deos not appear to be a csv.',True)
             return 1
     
         fileExpid = sys_pieces[0].split('/')
@@ -44,7 +44,7 @@ class ProvenanceValidator(validator):
             printq("ERROR: There are not enough arguments to verify in the name.")
             return 1
         elif len(arrSplit) > 7:
-            printq("ERROR: The team name must not include characters + or _",True)
+            printq("ERROR: The team name must not include underscores '_'.",True)
             teamFlag = 1
 
         team = arrSplit[0]
@@ -55,19 +55,19 @@ class ProvenanceValidator(validator):
         sys = arrSplit[5]
         version = arrSplit[6]
     
-        if ('+' in team) or (team == ''):
-            printq("ERROR: The team name must not include characters + or _",True)
+        if team == '':
+            printq("ERROR: The team name must not include underscores '_'.",True)
             teamFlag = 1
         task = task.lower()
         self.task = task
         if (task != 'provenance') and (task != 'provenancefiltering'):
-            printq('ERROR: What kind of task is ' + task + '? It should be provenance, or provenancefiltering!',True)
+            printq("ERROR: " + task + " unrecognized. Only provenance or provenancefiltering are recognized. Make sure your team name does not include underscores '_'.",True)
             taskFlag = 1
     
         if (taskFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
         else:
-            printq('The name of the file is not valid. Please review the requirements.',True)
+            printq('The name of the file is not valid. Please review the requirements in the eval plan.',True)
             return 1 
         
     def contentCheck(self,identify=False,neglectMask=False):
@@ -86,7 +86,7 @@ class ProvenanceValidator(validator):
         matchFlag = 0
         
         if sysfile.shape[1] < 2:
-            printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
+            printq("ERROR: The number of columns of the system output file must be at least 2. Make sure you are using '|' to separate your columns.",True)
             return 1
 
         sysHeads = list(sysfile.columns)
@@ -117,7 +117,7 @@ class ProvenanceValidator(validator):
             rowlist = range(0,sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProvenanceProbeFileID's: "
                     + ' ,'.join(list(map(str,sysfile['ProvenanceProbeFileID'][sysfile.duplicated()])))    + " at row(s): "
-                    + ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).",True)
+                    + ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. Please delete these row(s).",True)
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
@@ -129,9 +129,8 @@ class ProvenanceValidator(validator):
             return 1
         
         sysfile['ProvenanceProbeFileID'] = sysfile['ProvenanceProbeFileID'].astype(str)
+        sysfile['ProvenanceOutputFileName'] = sysfile['ProvenanceOutputFileName'].astype(str) 
 #        sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
-        if testMask:
-            sysfile['ProvenanceOutputFileName'] = sysfile['ProvenanceOutputFileName'].astype(str) 
 
 #        idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
 #        idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 

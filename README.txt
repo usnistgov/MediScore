@@ -1,5 +1,5 @@
 File: README.txt
-Date: March 27, 2017
+Date: March 30, 2017
 MediScore Version: 1.1.4
 
 This directory contains MediScore, the NIST Medifor scoring and
@@ -167,13 +167,13 @@ HISTORY
   Mar 21, 2017 - MediScore Version 1.1.4:
     * MaskScorer:
       - Bug to averaging procedure for splice portion of the mask scorer is fixed.
-  Mar 27, 2017
+  Mar 30, 2017
     * Validator:
       - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the validator before it can run over the files.
     * MaskScorer:
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
-      - Provenance validator added. Still needs formal test cases for checking.
+      - Provenance validator added. Formal test cases in progress.
 
 
 CONTACT
