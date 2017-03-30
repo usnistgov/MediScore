@@ -1,6 +1,6 @@
 File: README.txt
 Date: March 30, 2017
-MediScore Version: 1.1.4
+MediScore Version: 1.1.3
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -161,16 +161,12 @@ HISTORY
       - Validator unit test now toggle-able with identify to hack ImageMagick behavioral discrepancies.
     * MaskScorer:
       - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
-  Mar 17, 2017 - MediScore Version 1.1.3:
-    * MaskScorer:
-      - Absolute paths added. Path dependency for the mask scorer is no longer required.
-  Mar 21, 2017 - MediScore Version 1.1.4:
-    * MaskScorer:
-      - Bug to averaging procedure for splice portion of the mask scorer is fixed.
-  Mar 30, 2017
+  Mar 30, 2017 - MediScore Version 1.1.3:
     * Validator:
       - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the validator before it can run over the files.
     * MaskScorer:
+      - Absolute paths added. Path dependency for the mask scorer is no longer required.
+      - Bug to averaging procedure for splice portion of the mask scorer is fixed.
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
       - Provenance validator added. Formal test cases in progress.
