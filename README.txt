@@ -163,13 +163,15 @@ HISTORY
       - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
   Mar 31, 2017 - MediScore Version 1.1.3:
     * Validator:
-      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the validator before it can run over the files.
+      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the 
+        validator before it can run over the files.
     * MaskScorer:
       - Absolute paths added. Path dependency for the mask scorer is no longer required.
       - Bug to averaging procedure for splice portion of the mask scorer is fixed.
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
-      - Provenance validator and formal test cases added. Error messages should be expected in testing.
+      - Provenance validator and formal test cases added. Error messages corresponding to test cases with malformed system
+        output should be expected.
 
 
 CONTACT
