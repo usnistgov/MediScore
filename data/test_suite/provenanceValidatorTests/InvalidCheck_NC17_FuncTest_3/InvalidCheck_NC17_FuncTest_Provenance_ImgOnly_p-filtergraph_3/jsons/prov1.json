@@ -1,0 +1,465 @@
+{
+  "directed": true, 
+  "graph": {
+    "username": "flowersofwonderland", 
+    "igversion": "0.3.1024", 
+    "updatetime": "2016-12-23 20:33:34", 
+    "idcount": 14, 
+    "projecttype": "image", 
+    "name": "c257f3e674aaa597784ae6f5a402c748", 
+    "semanticrefabrication": "no", 
+    "projectdescription": "example 2", 
+    "typespref": [
+      [
+        "jpeg files", 
+        "*.jpg"
+      ], 
+      [
+        "png files", 
+        "*.png"
+      ], 
+      [
+        "tiff files", 
+        "*.tiff"
+      ], 
+      [
+        "Raw NEF", 
+        ".nef"
+      ], 
+      [
+        "bmp files", 
+        "*.bmp"
+      ], 
+      [
+        "pdf files", 
+        "*.pdf"
+      ], 
+      [
+        "mpeg files", 
+        "*.mp4"
+      ], 
+      [
+        "mov files", 
+        "*.mov"
+      ], 
+      [
+        "wmv", 
+        "*.wmv"
+      ], 
+      [
+        "m4p", 
+        "*.m4p"
+      ], 
+      [
+        "m4v", 
+        "*.m4v"
+      ], 
+      [
+        "f4v", 
+        "*.flv"
+      ], 
+      [
+        "avi files", 
+        "*.avi"
+      ], 
+      [
+        "mpeg audio files", 
+        "*.m4a"
+      ], 
+      [
+        "mpeg audio files", 
+        "*.m4p"
+      ], 
+      [
+        "mpeg audio files", 
+        "*.mp3"
+      ], 
+      [
+        "raw audio files", 
+        "*.raw"
+      ], 
+      [
+        "Standard PC audio files", 
+        "*.wav"
+      ], 
+      [
+        "Windows Media  audio files", 
+        "*.wma"
+      ]
+    ], 
+    "validatedby": "thedoorknob", 
+    "exporttime": "2016-12-23 20:33:37", 
+    "qacomment": "\n", 
+    "jt_upgrades": [
+      "0.3.1115", 
+      "0.3.1213"
+    ], 
+    "semanticrestaging": "no", 
+    "validationdate": "12/23/2016", 
+    "imagereformat": "no", 
+    "organization": "Wonderland", 
+    "manipulationcategory": "Provenance", 
+    "validation": "yes", 
+    "semanticrepurposing": "no"
+  }, 
+  "nodes": [
+    {
+      "xpos": 1278, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 550, 
+      "seriesname": "base2-splice", 
+      "file": "base2-splice.tif", 
+      "id": "base2-splice_04", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 472, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 410, 
+      "seriesname": "splice", 
+      "file": "splice.png", 
+      "id": "splice_06", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1094, 
+      "nodetype": "interim", 
+      "ownership": "yes", 
+      "ypos": 587, 
+      "seriesname": "base1-sharpen", 
+      "file": "base1-sharpen_10.TIF", 
+      "id": "base1-sharpen_10", 
+      "ctime": "2016-11-16 15:31:39"
+    }, 
+    {
+      "xpos": 952, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 144, 
+      "seriesname": "base1", 
+      "file": "base1.png", 
+      "id": "base1_03", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 947, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 235, 
+      "seriesname": "base1", 
+      "file": "base1.jpg", 
+      "id": "base1", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 935, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 368, 
+      "seriesname": "base1-sharpen", 
+      "file": "base1-sharpen.jpg", 
+      "id": "base1-sharpen", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1126, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 802, 
+      "seriesname": "base1-sharpen-jpg-resize", 
+      "file": "base1-sharpen-jpg-resize.png", 
+      "id": "base1-sharpen-jpg-resize", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1273, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 341, 
+      "seriesname": "base2", 
+      "file": "base2.png", 
+      "id": "base2_05", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 679, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 425, 
+      "seriesname": "splice-donorMask-GT", 
+      "file": "splice-donorMask-GT.png", 
+      "id": "splice-donorMask-GT", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1105, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 682, 
+      "seriesname": "base1-sharpen-jpg-resize", 
+      "file": "base1-sharpen-jpg-resize.tif", 
+      "id": "base1-sharpen-jpg-resize_01", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1054, 
+      "nodetype": "final", 
+      "ctime": "2016-11-16 16:33:53", 
+      "donorbase": "c257f3e674aaa597784ae6f5a402c748", 
+      "ypos": 875, 
+      "seriesname": "base1-sharpen-jpg-resize-tif", 
+      "ownership": "yes", 
+      "file": "base1-sharpen-jpg-resize-tif_13.jpg", 
+      "id": "base1-sharpen-jpg-resize-tif_13", 
+      "pathanalysis": {
+        "manipulationcategory": "3-Unit", 
+        "healinglocal": "no", 
+        "natural": "no", 
+        "people": "no", 
+        "color": "no", 
+        "clone": "no", 
+        "contrastenhancement": "no", 
+        "manmade": "no", 
+        "blurlocal": "no", 
+        "remove": "no", 
+        "face": "no", 
+        "largemanmade": "no", 
+        "compositepixelsize": "small", 
+        "histogramnormalizationglobal": "no", 
+        "imagecompression": "yes", 
+        "otherenhancements": "no", 
+        "landscape": "no", 
+        "othersubjects": "no"
+      }
+    }, 
+    {
+      "xpos": 999, 
+      "nodetype": "final", 
+      "ctime": "2016-11-16 16:34:04", 
+      "donorbase": "c257f3e674aaa597784ae6f5a402c748", 
+      "ypos": 762, 
+      "seriesname": "base1-sharpen-jpg-remove", 
+      "ownership": "yes", 
+      "file": "base1-sharpen-jpg-remove_14.jpg", 
+      "id": "base1-sharpen-jpg-remove_14", 
+      "pathanalysis": {
+        "manipulationcategory": "3-Unit", 
+        "healinglocal": "no", 
+        "natural": "no", 
+        "people": "no", 
+        "color": "no", 
+        "clone": "no", 
+        "contrastenhancement": "no", 
+        "manmade": "no", 
+        "blurlocal": "no", 
+        "remove": "yes", 
+        "face": "no", 
+        "largemanmade": "no", 
+        "compositepixelsize": "large", 
+        "histogramnormalizationglobal": "no", 
+        "imagecompression": "yes", 
+        "otherenhancements": "no", 
+        "landscape": "no", 
+        "othersubjects": "no"
+      }
+    }, 
+    {
+      "xpos": 1286, 
+      "nodetype": "donor", 
+      "ownership": "no", 
+      "ypos": 120, 
+      "seriesname": "ed6b6c02e6ce855d7f19a91c606f2070", 
+      "file": "ed6b6c02e6ce855d7f19a91c606f2070.jpg", 
+      "id": "ed6b6c02e6ce855d7f19a91c606f2070", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 955, 
+      "nodetype": "base", 
+      "ownership": "no", 
+      "ypos": 66, 
+      "seriesname": "c257f3e674aaa597784ae6f5a402c748", 
+      "file": "c257f3e674aaa597784ae6f5a402c748.jpg", 
+      "id": "c257f3e674aaa597784ae6f5a402c748", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 242, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 483, 
+      "seriesname": "splice", 
+      "file": "splice.jpg", 
+      "id": "splice", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 77, 
+      "nodetype": "donor", 
+      "ownership": "no", 
+      "ypos": 479, 
+      "seriesname": "34a9e68f6b520cb8ed71fafbb3ca0fa0", 
+      "file": "34a9e68f6b520cb8ed71fafbb3ca0fa0.jpg", 
+      "id": "34a9e68f6b520cb8ed71fafbb3ca0fa0", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1186, 
+      "nodetype": "interim", 
+      "file": "base1-sharpen-jpg-resize-tif-splice.png", 
+      "ypos": 1035, 
+      "donorbase": "ed6b6c02e6ce855d7f19a91c606f2070", 
+      "seriesname": "base1-sharpen-jpg-resize-tif-splice", 
+      "ownership": "no", 
+      "id": "base1-sharpen-jpg-resize-tif-splice", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1280, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 754, 
+      "seriesname": "base2-splice-tif-donorMask-GT", 
+      "file": "base2-splice-tif-donorMask-GT.png", 
+      "id": "base2-splice-tif-donorMask-GT", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1460, 
+      "nodetype": "final", 
+      "ctime": "2016-11-16 16:33:43", 
+      "donorbase": "c257f3e674aaa597784ae6f5a402c748", 
+      "ypos": 1036, 
+      "seriesname": "base1-sharpen-jpg-resize-tif-splice", 
+      "ownership": "yes", 
+      "file": "base1-sharpen-jpg-resize-tif-splice_12.jpg", 
+      "id": "base1-sharpen-jpg-resize-tif-splice_12", 
+      "pathanalysis": {
+        "manipulationcategory": "4-Unit", 
+        "healinglocal": "no", 
+        "natural": "yes", 
+        "people": "no", 
+        "color": "no", 
+        "clone": "yes", 
+        "contrastenhancement": "no", 
+        "manmade": "no", 
+        "blurlocal": "no", 
+        "remove": "no", 
+        "face": "no", 
+        "largemanmade": "no", 
+        "compositepixelsize": "large", 
+        "histogramnormalizationglobal": "no", 
+        "imagecompression": "yes", 
+        "otherenhancements": "no", 
+        "landscape": "no", 
+        "othersubjects": "no"
+      }
+    }, 
+    {
+      "xpos": 739, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 955, 
+      "seriesname": "base1-sharpen-jpg-resize-tif", 
+      "file": "base1-sharpen-jpg-resize-tif.png", 
+      "id": "base1-sharpen-jpg-resize-tif", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 917, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 604, 
+      "seriesname": "base1-sharpen-jpg-remove", 
+      "file": "base1-sharpen-jpg-remove.png", 
+      "id": "base1-sharpen-jpg-remove", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 423, 
+      "nodetype": "interim", 
+      "file": "base1-sharpen-jpg-splice.png", 
+      "ypos": 606, 
+      "donorbase": "34a9e68f6b520cb8ed71fafbb3ca0fa0", 
+      "seriesname": "base1-sharpen-jpg-splice", 
+      "ownership": "no", 
+      "id": "base1-sharpen-jpg-splice", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1280, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 228, 
+      "seriesname": "base2", 
+      "file": "base2.jpg", 
+      "id": "base2", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 1272, 
+      "nodetype": "interim", 
+      "file": "base2-splice.png", 
+      "ypos": 458, 
+      "donorbase": "c257f3e674aaa597784ae6f5a402c748", 
+      "seriesname": "base2-splice", 
+      "ownership": "no", 
+      "id": "base2-splice", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 918, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 484, 
+      "seriesname": "base1-sharpen-jpg", 
+      "file": "base1-sharpen-jpg.png", 
+      "id": "base1-sharpen-jpg", 
+      "ctime": "2016-11-16 15:00:31"
+    }, 
+    {
+      "xpos": 805, 
+      "nodetype": "final", 
+      "ctime": "2016-11-16 16:33:25", 
+      "donorbase": "c257f3e674aaa597784ae6f5a402c748", 
+      "ypos": 656, 
+      "seriesname": "base1-sharpen-jpg-splice", 
+      "ownership": "yes", 
+      "file": "base1-sharpen-jpg-splice_11.jpg", 
+      "id": "base1-sharpen-jpg-splice_11", 
+      "pathanalysis": {
+        "manipulationcategory": "3-Unit", 
+        "healinglocal": "no", 
+        "natural": "yes", 
+        "people": "no", 
+        "color": "no", 
+        "clone": "yes", 
+        "contrastenhancement": "no", 
+        "manmade": "no", 
+        "blurlocal": "no", 
+        "remove": "no", 
+        "face": "no", 
+        "largemanmade": "no", 
+        "compositepixelsize": "large", 
+        "histogramnormalizationglobal": "no", 
+        "imagecompression": "yes", 
+        "otherenhancements": "no", 
+        "landscape": "no", 
+        "othersubjects": "no"
+      }
+    }, 
+    {
+      "xpos": 1283, 
+      "nodetype": "interim", 
+      "ownership": "no", 
+      "ypos": 650, 
+      "seriesname": "base2-splice-tif", 
+      "file": "base2-splice-tif.png", 
+      "id": "base2-splice-tif", 
+      "ctime": "2016-11-16 15:00:31"
+    }
+  ], 
+  "multigraph": false
+}

@@ -184,7 +184,11 @@ def jsonCheck(provfile,provID,task):
         validate(prov,schema)
         return 0
     except exceptions.ValidationError:
-        print("{} did not pass the {} schema check!".format(provfile,task))
+        provclause=''
+        if task == 'provenance':
+            provclause=' Make sure to include links!'
+
+        print("{} did not pass the {} schema check!{}".format(provfile,task,provclause))
         return 1
     
 
