@@ -1,0 +1,2 @@
+,Collection,ProbeWidth,AUC,FAR_STOP,EER,AUC_CI_LOWER,AUC_CI_UPPER
+Partition_0,'Nimble-SCI',300<=ProbeWidth,0.462995,1,0.565625,0.411921,0.502428

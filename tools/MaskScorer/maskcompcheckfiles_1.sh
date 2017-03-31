@@ -285,11 +285,11 @@ else
 fi
 
 if ([ $flag_all == 0 -a $flag_allpi == 0 -a $flag_alljr == 0 \
--a $flag_clone == 0 -a $flag_clonepi == 0 -a $flag_clonejr == 0 \
--a $flag_add == 0 -a $flag_addpi == 0 -a $flag_addjr == 0 \
--a $flag_clone_add == 0 -a $flag_clone_addpi == 0 -a $flag_clone_addjr == 0 \
--a $flag_healpi == 0 -a $flag_healjr == 0 \
--a $flag_remove == 0 -a $flag_removepi == 0 -a $flag_removejr == 0 \
+ -a $flag_clone == 0 -a $flag_clonepi == 0 -a $flag_clonejr == 0 \
+ -a $flag_add == 0 -a $flag_addpi == 0 -a $flag_addjr == 0 \
+ -a $flag_clone_add == 0 -a $flag_clone_addpi == 0 -a $flag_clone_addjr == 0 \
+ -a $flag_healpi == 0 -a $flag_healjr == 0 \
+ -a $flag_remove == 0 -a $flag_removepi == 0 -a $flag_removejr == 0 \
 ]); then
   echo
   echo "CASE 1 SUCCESSFULLY PASSED"

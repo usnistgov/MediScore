@@ -11,6 +11,8 @@ check:
 	(python2 -W ignore ../../lib/ProvenanceMetricsUnitTest.py)
 	@(echo "** Running integration tests **\n")
 	@(./run_integration_tests.sh)
+	@(echo "** Running integration tests for validator **\n")
+	@(./run_integration_tests_validator.sh)
 	@(echo "PROVENANCE SCORER TESTS SUCCESSFULLY PASSED")
 
 makecheckfiles:
@@ -19,3 +21,4 @@ makecheckfiles:
 render_readmes_to_html:
 	(jupyter-nbconvert --to html ProvenanceFilteringScorerReadMe.ipynb)
 	(jupyter-nbconvert --to html ProvenanceGraphBuildingScorerReadMe.ipynb)
+	(jupyter-nbconvert --to html ProvenanceValidatorReadMe.ipynb)

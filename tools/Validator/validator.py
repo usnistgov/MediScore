@@ -66,7 +66,7 @@ class validator:
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
-    def contentCheck(self,identify,neglectMask): pass
+    def contentCheck(self,identify=False,neglectMask=False): pass
     def fullCheck(self,nc,identify,neglectMask):
         #check for existence of files
         eflag = False
@@ -125,12 +125,15 @@ class SSD_Validator(validator):
         if len(arrSplit) < 7:
             printq("ERROR: There are not enough arguments to verify in the name.")
             return 1
+        elif len(arrSplit) > 7:
+            printq("ERROR: The team name must not include characters + or _",True)
+            teamFlag = 1
 
         team = arrSplit[0]
         ncid = arrSplit[1]
         data = arrSplit[2]
         task = arrSplit[3]
-        condition = arrSplit[4]
+        self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
     
@@ -138,12 +141,13 @@ class SSD_Validator(validator):
             printq("ERROR: The team name must not include characters + or _",True)
             teamFlag = 1
         task = task.lower()
-        if (task != 'manipulation') and (task != 'provenance') and (task != 'provenancefiltering'):
-            printq('ERROR: What kind of task is ' + task + '? It should be manipulation, provenance, or provenancefiltering!',True)
+        if (task != 'manipulation'): # and (task != 'provenance') and (task != 'provenancefiltering'):
+            printq('ERROR: What kind of task is ' + task + '? It should be manipulation!',True) #, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
         if (taskFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
+            return 0
         else:
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
@@ -188,9 +192,12 @@ class SSD_Validator(validator):
             return 1
 
         testMask = False
-        if "OutputProbeMaskFileName" in sysHeads:
+        if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
             testMask = True
         
+        if self.condition in ["VidOnly","VidMeta"]:
+            neglectMask = True
+
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
             rowlist = range(0,sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: "
@@ -271,7 +278,7 @@ class DSD_Validator(validator):
         ncid = arrSplit[1]
         data = arrSplit[2]
         task = arrSplit[3]
-        condition = arrSplit[4]
+        self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
     
@@ -286,6 +293,7 @@ class DSD_Validator(validator):
     
         if (taskFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
+            return 0
         else:
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
@@ -584,7 +592,7 @@ def maskCheck1(maskname,fileid,indexfile,identify):
             printq("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(maskname,channel),True)
             flag = 1
     elif len(dims)>2:
-        printq("ERROR: {} is not single-channel. Make it single-channel.".format(maskname),True)
+        printq("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(maskname,dims[2]),True)
         flag = 1
 
     if (baseHeight != dims[0]) or (baseWidth != dims[1]):
@@ -641,7 +649,7 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
             printq("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(pmaskname,channel),True)
             flag = 1
     elif len(pdims)>2:
-        printq("ERROR: {} is not single-channel. Make it single-channel.".format(pmaskname),True)
+        printq("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]),True)
         flag = 1
 
     if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
@@ -662,7 +670,7 @@ def maskCheck2(pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseW
             printq("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(dmaskname,channel),True)
             flag = 1
     elif len(ddims)>2:
-        printq("ERROR: {} is not single-channel. Make it single-channel.".format(dmaskname),True)
+        printq("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]),True)
         flag = 1
 
     if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
@@ -709,7 +717,7 @@ def maskCheck2_0(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
     pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(pdims)>2:
-        printq("ERROR: {} is not single-channel. Make it single-channel.".format(pmaskname),True)
+        printq("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]),True)
         flag = 1
 
     if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
@@ -723,7 +731,7 @@ def maskCheck2_0(pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
     ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
 
     if len(ddims)>2:
-        printq("ERROR: {} is not single-channel. Make it single-channel.".format(dmaskname),True)
+        printq("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]),True)
         flag = 1
 
     if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
@@ -768,6 +776,13 @@ if __name__ == '__main__':
             def printq(mystring,iserr=False):
                 if iserr:
                     print(mystring)
+
+        if args.identify:
+            try:
+                subprocess.check_output(["identify"])
+            except:
+                print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
+                exit(1)
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)

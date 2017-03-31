@@ -1,0 +1,1204 @@
+{ "directed": true,
+	"nodes": [
+		{
+			"id": "id0",
+			"file": "world/003eaa9f0f222263550b95e0ab994f33.jpg",
+			"fileid": "003eaa9f0f222263550b95e0ab994f33",
+			"nodeConfidenceScore": 0.99
+		},
+		{
+			"id": "id1",
+			"file": "world/3f05e74d056714b13e04f50babf1e653.png",
+			"fileid": "3f05e74d056714b13e04f50babf1e653",
+			"nodeConfidenceScore": 0.99
+		},
+		{
+			"id": "id2",
+			"file": "world/3421b90ec460a53a79f54f9c7154124f.png",
+			"fileid": "3421b90ec460a53a79f54f9c7154124f",
+			"nodeConfidenceScore": 0.98
+		},
+		{
+			"id": "id3",
+			"file": "world/c8450d938f268203c0e27e487cc6c54a.png",
+			"fileid": "c8450d938f268203c0e27e487cc6c54a",
+			"nodeConfidenceScore": 0.98
+		},
+		{
+			"id": "id4",
+			"file": "world/95fd64f7c412d51cc8e3d696253a0e7c.png",
+			"fileid": "95fd64f7c412d51cc8e3d696253a0e7c",
+			"nodeConfidenceScore": 0.97
+		},
+		{
+			"id": "id5",
+			"file": "world/712b38b64c4567040c4a32219cc7c767.png",
+			"fileid": "712b38b64c4567040c4a32219cc7c767",
+			"nodeConfidenceScore": 0.97
+		},
+		{
+			"id": "id6",
+			"file": "world/3e4b88589ce45bfa175a4cab8b36b82e.png",
+			"fileid": "3e4b88589ce45bfa175a4cab8b36b82e",
+			"nodeConfidenceScore": 0.96
+		},
+		{
+			"id": "id7",
+			"file": "world/0b34468809e764eef0fad5c6c5a200df.png",
+			"fileid": "0b34468809e764eef0fad5c6c5a200df",
+			"nodeConfidenceScore": 0.96
+		},
+		{
+			"id": "id8",
+			"file": "world/8e54b6d0a798b6655af7046caaaff0a6.png",
+			"fileid": "8e54b6d0a798b6655af7046caaaff0a6",
+			"nodeConfidenceScore": 0.95
+		},
+		{
+			"id": "id9",
+			"file": "world/153b6d9d5f178a1a980d12eb6392cd73.png",
+			"fileid": "153b6d9d5f178a1a980d12eb6392cd73",
+			"nodeConfidenceScore": 0.95
+		},
+		{
+			"id": "id10",
+			"file": "world/47dee64dc6263c389b26e3461e735c52.png",
+			"fileid": "47dee64dc6263c389b26e3461e735c52",
+			"nodeConfidenceScore": 0.94
+		},
+		{
+			"id": "id11",
+			"file": "world/b3a9f18c810fba498bb81775a75b53a9.png",
+			"fileid": "b3a9f18c810fba498bb81775a75b53a9",
+			"nodeConfidenceScore": 0.94
+		},
+		{
+			"id": "id12",
+			"file": "world/5286d468111e5333275cadb88db5cac0.jpg",
+			"fileid": "5286d468111e5333275cadb88db5cac0",
+			"nodeConfidenceScore": 0.94
+		},
+		{
+			"id": "id13",
+			"file": "world/dab98dfc57e1d1bf8f92bfcd9a443e09.png",
+			"fileid": "dab98dfc57e1d1bf8f92bfcd9a443e09",
+			"nodeConfidenceScore": 0.93
+		},
+		{
+			"id": "id14",
+			"file": "world/81542d111750745fcbd14bb0ed130afd.jpg",
+			"fileid": "81542d111750745fcbd14bb0ed130afd",
+			"nodeConfidenceScore": 0.93
+		},
+		{
+			"id": "id15",
+			"file": "world/652d2e990f07b7eb10c6ce4b94883955.jpg",
+			"fileid": "652d2e990f07b7eb10c6ce4b94883955",
+			"nodeConfidenceScore": 0.92
+		},
+		{
+			"id": "id16",
+			"file": "world/209187e948e0e124eb2488c5f4d9bfb2.jpg",
+			"fileid": "209187e948e0e124eb2488c5f4d9bfb2",
+			"nodeConfidenceScore": 0.92
+		},
+		{
+			"id": "id17",
+			"file": "world/2d7e930e55ad7dc7b3cc14ff152b4a93.jpg",
+			"fileid": "2d7e930e55ad7dc7b3cc14ff152b4a93",
+			"nodeConfidenceScore": 0.91
+		},
+		{
+			"id": "id18",
+			"file": "world/10bf6a9fb9142bc749966c5eea1243e3.jpg",
+			"fileid": "10bf6a9fb9142bc749966c5eea1243e3",
+			"nodeConfidenceScore": 0.91
+		},
+		{
+			"id": "id19",
+			"file": "world/c11139e43afa0c25e48274abd8402fdc.jpg",
+			"fileid": "c11139e43afa0c25e48274abd8402fdc",
+			"nodeConfidenceScore": 0.90
+		},
+		{
+			"id": "id20",
+			"file": "world/03f7b2484a737aa3f17bc1fdb19c4f32.png",
+			"fileid": "03f7b2484a737aa3f17bc1fdb19c4f32",
+			"nodeConfidenceScore": 0.90
+		},
+		{
+			"id": "id21",
+			"file": "world/6b92b771213b8ede9575bcd90a39007a.png",
+			"fileid": "6b92b771213b8ede9575bcd90a39007a",
+			"nodeConfidenceScore": 0.89
+		},
+		{
+			"id": "id22",
+			"file": "world/cc3da2b93e337abd332afaf99fbe4e5a.JPG",
+			"fileid": "cc3da2b93e337abd332afaf99fbe4e5a",
+			"nodeConfidenceScore": 0.89
+		},
+		{
+			"id": "id23",
+			"file": "world/7f7669dca2b4d9604cf7a459ef020900.jpg",
+			"fileid": "7f7669dca2b4d9604cf7a459ef020900",
+			"nodeConfidenceScore": 0.88
+		},
+		{
+			"id": "id24",
+			"file": "world/f138f838ddfac2583ee31c40e570c2e8.JPG",
+			"fileid": "f138f838ddfac2583ee31c40e570c2e8",
+			"nodeConfidenceScore": 0.88
+		},
+		{
+			"id": "id25",
+			"file": "world/8217a66f3326fa996edabfcfb59b8b54.jpg",
+			"fileid": "8217a66f3326fa996edabfcfb59b8b54",
+			"nodeConfidenceScore": 0.87
+		},
+		{
+			"id": "id26",
+			"file": "world/e200de82cdb003ea78e052df2fd3636b.JPG",
+			"fileid": "e200de82cdb003ea78e052df2fd3636b",
+			"nodeConfidenceScore": 0.86
+		},
+		{
+			"id": "id27",
+			"file": "world/e57621da6a11d88dc9bb18ee59a4a11d.jpg",
+			"fileid": "e57621da6a11d88dc9bb18ee59a4a11d",
+			"nodeConfidenceScore": 0.86
+		},
+		{
+			"id": "id28",
+			"file": "world/7c9e993f4e8b5a41009f95f702e8640b.png",
+			"fileid": "7c9e993f4e8b5a41009f95f702e8640b",
+			"nodeConfidenceScore": 0.85
+		},
+		{
+			"id": "id29",
+			"file": "world/5d54e4159b6d21530992597ce9ea8c00.JPG",
+			"fileid": "5d54e4159b6d21530992597ce9ea8c00",
+			"nodeConfidenceScore": 0.85
+		},
+		{
+			"id": "id30",
+			"file": "world/ad72a2bc7059a99218ef21b58718f4c2.jpg",
+			"fileid": "ad72a2bc7059a99218ef21b58718f4c2",
+			"nodeConfidenceScore": 0.84
+		},
+		{
+			"id": "id31",
+			"file": "world/f9bc76a91d05a62887e3615bf6ae3291.JPG",
+			"fileid": "f9bc76a91d05a62887e3615bf6ae3291",
+			"nodeConfidenceScore": 0.84
+		},
+		{
+			"id": "id32",
+			"file": "world/2dc34250c7caeb143bac193482c032f9.jpg",
+			"fileid": "2dc34250c7caeb143bac193482c032f9",
+			"nodeConfidenceScore": 0.83
+		},
+		{
+			"id": "id33",
+			"file": "world/4aaab7d5254bbc2bdd5dfd8bef5e5813.jpg",
+			"fileid": "4aaab7d5254bbc2bdd5dfd8bef5e5813",
+			"nodeConfidenceScore": 0.83
+		},
+		{
+			"id": "id34",
+			"file": "world/b3dfcbc54ae02093678a3a009800af35.jpg",
+			"fileid": "b3dfcbc54ae02093678a3a009800af35",
+			"nodeConfidenceScore": 0.82
+		},
+		{
+			"id": "id35",
+			"file": "world/269bc80dd62a5fa112c3970a28ee3496.jpg",
+			"fileid": "269bc80dd62a5fa112c3970a28ee3496",
+			"nodeConfidenceScore": 0.82
+		},
+		{
+			"id": "id36",
+			"file": "world/515b594b29272876c3c07ca898cfc537.JPG",
+			"fileid": "515b594b29272876c3c07ca898cfc537",
+			"nodeConfidenceScore": 0.81
+		},
+		{
+			"id": "id37",
+			"file": "world/e3487172409117777cfd2ad4956411d8.jpg",
+			"fileid": "e3487172409117777cfd2ad4956411d8",
+			"nodeConfidenceScore": 0.81
+		},
+		{
+			"id": "id38",
+			"file": "world/314720705f96e14625f52c759d8a1e85.jpg",
+			"fileid": "314720705f96e14625f52c759d8a1e85",
+			"nodeConfidenceScore": 0.80
+		},
+		{
+			"id": "id39",
+			"file": "world/11dc00cbe13b2bfcc181fafa8f52f1cb.jpg",
+			"fileid": "11dc00cbe13b2bfcc181fafa8f52f1cb",
+			"nodeConfidenceScore": 0.80
+		},
+		{
+			"id": "id40",
+			"file": "world/925a60117f51198a7d94ee7b5c253acd.png",
+			"fileid": "925a60117f51198a7d94ee7b5c253acd",
+			"nodeConfidenceScore": 0.80
+		},
+		{
+			"id": "id41",
+			"file": "world/faefd4dc3393b3673c42bdf67dfd4706.jpg",
+			"fileid": "faefd4dc3393b3673c42bdf67dfd4706",
+			"nodeConfidenceScore": 0.79
+		},
+		{
+			"id": "id42",
+			"file": "world/6267fff7e1cfdbcd62eadbe8861f5178.png",
+			"fileid": "6267fff7e1cfdbcd62eadbe8861f5178",
+			"nodeConfidenceScore": 0.79
+		},
+		{
+			"id": "id43",
+			"file": "world/5ea2ad31c5770b23d70eeccf146e1ed4.jpg",
+			"fileid": "5ea2ad31c5770b23d70eeccf146e1ed4",
+			"nodeConfidenceScore": 0.78
+		},
+		{
+			"id": "id44",
+			"file": "world/40ed7f454bd4bfd03f1f4aa8467f2bc5.jpg",
+			"fileid": "40ed7f454bd4bfd03f1f4aa8467f2bc5",
+			"nodeConfidenceScore": 0.78
+		},
+		{
+			"id": "id45",
+			"file": "world/4966c9b9512f03723a247d1ed549ae35.JPG",
+			"fileid": "4966c9b9512f03723a247d1ed549ae35",
+			"nodeConfidenceScore": 0.77
+		},
+		{
+			"id": "id46",
+			"file": "world/7a3b94e50e7acda4510ad1785a465a1c.jpg",
+			"fileid": "7a3b94e50e7acda4510ad1785a465a1c",
+			"nodeConfidenceScore": 0.77
+		},
+		{
+			"id": "id47",
+			"file": "world/19a975aa33c6045fa5f161388cf8f482.jpg",
+			"fileid": "19a975aa33c6045fa5f161388cf8f482",
+			"nodeConfidenceScore": 0.76
+		},
+		{
+			"id": "id48",
+			"file": "world/aa5dc9117745ffa48be3aadba8ff8ea7.jpg",
+			"fileid": "aa5dc9117745ffa48be3aadba8ff8ea7",
+			"nodeConfidenceScore": 0.76
+		},
+		{
+			"id": "id49",
+			"file": "world/385de8b0624de38d489b63f75b942a62.JPG",
+			"fileid": "385de8b0624de38d489b63f75b942a62",
+			"nodeConfidenceScore": 0.75
+		},
+		{
+			"id": "id50",
+			"file": "world/3624971b908011628193b0b9cf5c7682.jpg",
+			"fileid": "3624971b908011628193b0b9cf5c7682",
+			"nodeConfidenceScore": 0.74
+		},
+		{
+			"id": "id51",
+			"file": "world/35be367cfc4d08d45e8811c7b53d0a72.jpg",
+			"fileid": "35be367cfc4d08d45e8811c7b53d0a72",
+			"nodeConfidenceScore": 0.74
+		},
+		{
+			"id": "id52",
+			"file": "world/232b63caca2472b43de7446a70974915.jpg",
+			"fileid": "232b63caca2472b43de7446a70974915",
+			"nodeConfidenceScore": 0.73
+		},
+		{
+			"id": "id53",
+			"file": "world/fd86ccbc16131f75795485cb6755836a.jpg",
+			"fileid": "fd86ccbc16131f75795485cb6755836a",
+			"nodeConfidenceScore": 0.73
+		},
+		{
+			"id": "id54",
+			"file": "world/34774f516db00b4decf1fb843870b0fc.png",
+			"fileid": "34774f516db00b4decf1fb843870b0fc",
+			"nodeConfidenceScore": 0.72
+		},
+		{
+			"id": "id55",
+			"file": "world/334994c6b30cd5a71e5d5ec51723a832.jpg",
+			"fileid": "334994c6b30cd5a71e5d5ec51723a832",
+			"nodeConfidenceScore": 0.72
+		},
+		{
+			"id": "id56",
+			"file": "world/36f88d658a954978d8466e47e9a938b4.jpg",
+			"fileid": "36f88d658a954978d8466e47e9a938b4",
+			"nodeConfidenceScore": 0.72
+		},
+		{
+			"id": "id57",
+			"file": "world/797896c47ad43d93266b8b177ac7ba93.jpg",
+			"fileid": "797896c47ad43d93266b8b177ac7ba93",
+			"nodeConfidenceScore": 0.71
+		},
+		{
+			"id": "id58",
+			"file": "world/1792c89e015c72107614accd33105570.jpg",
+			"fileid": "1792c89e015c72107614accd33105570",
+			"nodeConfidenceScore": 0.71
+		},
+		{
+			"id": "id59",
+			"file": "world/8c2ea5873bc6bee92b316be6c6a726d9.jpg",
+			"fileid": "8c2ea5873bc6bee92b316be6c6a726d9",
+			"nodeConfidenceScore": 0.70
+		},
+		{
+			"id": "id60",
+			"file": "world/f8449270d19340e8a87292153ed1c8ee.jpg",
+			"fileid": "f8449270d19340e8a87292153ed1c8ee",
+			"nodeConfidenceScore": 0.70
+		},
+		{
+			"id": "id61",
+			"file": "world/86793adfba02a766bfa9cbcfe2a3bd3b.JPG",
+			"fileid": "86793adfba02a766bfa9cbcfe2a3bd3b",
+			"nodeConfidenceScore": 0.69
+		},
+		{
+			"id": "id62",
+			"file": "world/a54dd9020bf8473e821ea66d023ac841.png",
+			"fileid": "a54dd9020bf8473e821ea66d023ac841",
+			"nodeConfidenceScore": 0.69
+		},
+		{
+			"id": "id63",
+			"file": "world/87c976a51be82344d1d88151c9bc3d2e.jpg",
+			"fileid": "87c976a51be82344d1d88151c9bc3d2e",
+			"nodeConfidenceScore": 0.68
+		},
+		{
+			"id": "id64",
+			"file": "world/fe3549ec073f01a1f1468e414f93231a.JPG",
+			"fileid": "fe3549ec073f01a1f1468e414f93231a",
+			"nodeConfidenceScore": 0.68
+		},
+		{
+			"id": "id65",
+			"file": "world/9a6bd22295b53eff545fed691af46954.JPG",
+			"fileid": "9a6bd22295b53eff545fed691af46954",
+			"nodeConfidenceScore": 0.67
+		},
+		{
+			"id": "id66",
+			"file": "world/80a23b61a9ca47ed08a10fe684858b72.jpg",
+			"fileid": "80a23b61a9ca47ed08a10fe684858b72",
+			"nodeConfidenceScore": 0.67
+		},
+		{
+			"id": "id67",
+			"file": "world/03eeba35b115e818ffc4bbf65f8c808f.png",
+			"fileid": "03eeba35b115e818ffc4bbf65f8c808f",
+			"nodeConfidenceScore": 0.66
+		},
+		{
+			"id": "id68",
+			"file": "world/2ec0c8f0e188dcd01e25449fd109f7f9.JPG",
+			"fileid": "2ec0c8f0e188dcd01e25449fd109f7f9",
+			"nodeConfidenceScore": 0.66
+		},
+		{
+			"id": "id69",
+			"file": "world/1e0a980f04392f34a1c7e4451089570e.jpg",
+			"fileid": "1e0a980f04392f34a1c7e4451089570e",
+			"nodeConfidenceScore": 0.65
+		},
+		{
+			"id": "id70",
+			"file": "world/ff01a4ec840e8e3258916e8f5eb2a17f.jpg",
+			"fileid": "ff01a4ec840e8e3258916e8f5eb2a17f",
+			"nodeConfidenceScore": 0.65
+		},
+		{
+			"id": "id71",
+			"file": "world/0bc5073724e4b2fb9af8c695c7fe901d.JPG",
+			"fileid": "0bc5073724e4b2fb9af8c695c7fe901d",
+			"nodeConfidenceScore": 0.64
+		},
+		{
+			"id": "id72",
+			"file": "world/6cae162679c6b3259b2dbc1437942a12.jpg",
+			"fileid": "6cae162679c6b3259b2dbc1437942a12",
+			"nodeConfidenceScore": 0.64
+		},
+		{
+			"id": "id73",
+			"file": "world/fe97c140e7142911e959ddb04e779e62.JPG",
+			"fileid": "fe97c140e7142911e959ddb04e779e62",
+			"nodeConfidenceScore": 0.63
+		},
+		{
+			"id": "id74",
+			"file": "world/ece9ff36155f58424b61adfbd28b88d1.png",
+			"fileid": "ece9ff36155f58424b61adfbd28b88d1",
+			"nodeConfidenceScore": 0.62
+		},
+		{
+			"id": "id75",
+			"file": "world/1772f60df30e4cd4fdf9171c0201bca0.png",
+			"fileid": "1772f60df30e4cd4fdf9171c0201bca0",
+			"nodeConfidenceScore": 0.62
+		},
+		{
+			"id": "id76",
+			"file": "world/39eb1b84e19702c8cc5262e77e111257.png",
+			"fileid": "39eb1b84e19702c8cc5262e77e111257",
+			"nodeConfidenceScore": 0.61
+		},
+		{
+			"id": "id77",
+			"file": "world/41ed3d5abbe4fa8accf46165cede0ad0.png",
+			"fileid": "41ed3d5abbe4fa8accf46165cede0ad0",
+			"nodeConfidenceScore": 0.61
+		},
+		{
+			"id": "id78",
+			"file": "world/e0bf95702163511509da5bc57988a029.JPG",
+			"fileid": "e0bf95702163511509da5bc57988a029",
+			"nodeConfidenceScore": 0.60
+		},
+		{
+			"id": "id79",
+			"file": "world/6ee322bdc004e70cc2800614d1cad078.png",
+			"fileid": "6ee322bdc004e70cc2800614d1cad078",
+			"nodeConfidenceScore": 0.60
+		},
+		{
+			"id": "id80",
+			"file": "world/131e7023f9eaf3811c5baae04f8abad7.png",
+			"fileid": "131e7023f9eaf3811c5baae04f8abad7",
+			"nodeConfidenceScore": 0.59
+		},
+		{
+			"id": "id81",
+			"file": "world/d5c33374570a89056d15690ebae959bd.png",
+			"fileid": "d5c33374570a89056d15690ebae959bd",
+			"nodeConfidenceScore": 0.59
+		},
+		{
+			"id": "id82",
+			"file": "world/1f45de68c71e27c7f2b950c1953f186d.jpg",
+			"fileid": "1f45de68c71e27c7f2b950c1953f186d",
+			"nodeConfidenceScore": 0.58
+		},
+		{
+			"id": "id83",
+			"file": "world/35af6f6d522902b0f3f353472f5f8e56.png",
+			"fileid": "35af6f6d522902b0f3f353472f5f8e56",
+			"nodeConfidenceScore": 0.58
+		},
+		{
+			"id": "id84",
+			"file": "world/279d79a25e1cb319dfadba82a36ea89f.jpg",
+			"fileid": "279d79a25e1cb319dfadba82a36ea89f",
+			"nodeConfidenceScore": 0.57
+		},
+		{
+			"id": "id85",
+			"file": "world/bb8bff6d5d2ab23aebd23bc8267c9a73.JPG",
+			"fileid": "bb8bff6d5d2ab23aebd23bc8267c9a73",
+			"nodeConfidenceScore": 0.57
+		},
+		{
+			"id": "id86",
+			"file": "world/5c87a8b63db6e84b32e858154bb0dca0.jpg",
+			"fileid": "5c87a8b63db6e84b32e858154bb0dca0",
+			"nodeConfidenceScore": 0.56
+		},
+		{
+			"id": "id87",
+			"file": "world/f5dee8b4ff2f18751e6612fcfbbe7af0.jpg",
+			"fileid": "f5dee8b4ff2f18751e6612fcfbbe7af0",
+			"nodeConfidenceScore": 0.56
+		},
+		{
+			"id": "id88",
+			"file": "world/b4ada34bfd4454dab8fd6e6f4715c94e.JPG",
+			"fileid": "b4ada34bfd4454dab8fd6e6f4715c94e",
+			"nodeConfidenceScore": 0.55
+		},
+		{
+			"id": "id89",
+			"file": "world/4a5ad9597fd4d04310ddbc65bd37d5dc.jpg",
+			"fileid": "4a5ad9597fd4d04310ddbc65bd37d5dc",
+			"nodeConfidenceScore": 0.55
+		},
+		{
+			"id": "id90",
+			"file": "world/cf93873450f36bb25af2328ca4de6dd1.jpg",
+			"fileid": "cf93873450f36bb25af2328ca4de6dd1",
+			"nodeConfidenceScore": 0.54
+		},
+		{
+			"id": "id91",
+			"file": "world/053c2dcaed3a467782befc43da5008f1.jpg",
+			"fileid": "053c2dcaed3a467782befc43da5008f1",
+			"nodeConfidenceScore": 0.54
+		},
+		{
+			"id": "id92",
+			"file": "world/b9e8ac551436d51ceefeb0fd162e1eb1.jpg",
+			"fileid": "b9e8ac551436d51ceefeb0fd162e1eb1",
+			"nodeConfidenceScore": 0.53
+		},
+		{
+			"id": "id93",
+			"file": "world/9ff5ea17f525115580041eac882fefbe.JPG",
+			"fileid": "9ff5ea17f525115580041eac882fefbe",
+			"nodeConfidenceScore": 0.53
+		},
+		{
+			"id": "id94",
+			"file": "world/00cafb7755570264dedfb3c3ad1957e3.jpg",
+			"fileid": "00cafb7755570264dedfb3c3ad1957e3",
+			"nodeConfidenceScore": 0.53
+		},
+		{
+			"id": "id95",
+			"file": "world/b7966723e40fbca7a70e18d3438d7030.JPG",
+			"fileid": "b7966723e40fbca7a70e18d3438d7030",
+			"nodeConfidenceScore": 0.52
+		},
+		{
+			"id": "id96",
+			"file": "world/116a5b9f3e0574c6ef92aae82ce7262c.jpg",
+			"fileid": "116a5b9f3e0574c6ef92aae82ce7262c",
+			"nodeConfidenceScore": 0.52
+		},
+		{
+			"id": "id97",
+			"file": "world/c459b654a90012232331704d28fa0ca0.jpg",
+			"fileid": "c459b654a90012232331704d28fa0ca0",
+			"nodeConfidenceScore": 0.51
+		},
+		{
+			"id": "id98",
+			"file": "world/62850cf070a5fc68036e97ab5468ff23.png",
+			"fileid": "62850cf070a5fc68036e97ab5468ff23",
+			"nodeConfidenceScore": 0.51
+		},
+		{
+			"id": "id99",
+			"file": "world/cd79e1681d4f445cc01f0d4cf4873efe.jpg",
+			"fileid": "cd79e1681d4f445cc01f0d4cf4873efe",
+			"nodeConfidenceScore": 0.50
+		},
+		{
+			"id": "id100",
+			"file": "world/6c099ca468a3787481c1b45842083180.jpg",
+			"fileid": "6c099ca468a3787481c1b45842083180",
+			"nodeConfidenceScore": 0.49
+		},
+		{
+			"id": "id101",
+			"file": "world/bf9b2b75169dcfcb5a685131fd243659.jpg",
+			"fileid": "bf9b2b75169dcfcb5a685131fd243659",
+			"nodeConfidenceScore": 0.49
+		},
+		{
+			"id": "id102",
+			"file": "world/4ec1b0981ff6715944df7d91b379c1cd.JPG",
+			"fileid": "4ec1b0981ff6715944df7d91b379c1cd",
+			"nodeConfidenceScore": 0.48
+		},
+		{
+			"id": "id103",
+			"file": "world/7ad0a061e56351d44fecbfb7cb6526b0.jpg",
+			"fileid": "7ad0a061e56351d44fecbfb7cb6526b0",
+			"nodeConfidenceScore": 0.48
+		},
+		{
+			"id": "id104",
+			"file": "world/1242a46b6630feb081420c047481499b.jpg",
+			"fileid": "1242a46b6630feb081420c047481499b",
+			"nodeConfidenceScore": 0.47
+		},
+		{
+			"id": "id105",
+			"file": "world/f4a6a5fc339ae377ca7013e1fa67992b.jpg",
+			"fileid": "f4a6a5fc339ae377ca7013e1fa67992b",
+			"nodeConfidenceScore": 0.47
+		},
+		{
+			"id": "id106",
+			"file": "world/e0da6b24dab9337adcfb3808ebf6c4f0.jpg",
+			"fileid": "e0da6b24dab9337adcfb3808ebf6c4f0",
+			"nodeConfidenceScore": 0.46
+		},
+		{
+			"id": "id107",
+			"file": "world/dc73b847c06975db07668ea5558d6707.jpg",
+			"fileid": "dc73b847c06975db07668ea5558d6707",
+			"nodeConfidenceScore": 0.46
+		},
+		{
+			"id": "id108",
+			"file": "world/6ac2d70349ec4b0f6ca05392bfb5e70a.jpg",
+			"fileid": "6ac2d70349ec4b0f6ca05392bfb5e70a",
+			"nodeConfidenceScore": 0.45
+		},
+		{
+			"id": "id109",
+			"file": "world/aaa450c0fad685731dbe3190c5aa9613.JPG",
+			"fileid": "aaa450c0fad685731dbe3190c5aa9613",
+			"nodeConfidenceScore": 0.45
+		},
+		{
+			"id": "id110",
+			"file": "world/f2346be53f794b3d15a2593919cd078e.png",
+			"fileid": "f2346be53f794b3d15a2593919cd078e",
+			"nodeConfidenceScore": 0.44
+		},
+		{
+			"id": "id111",
+			"file": "world/9c49b719841ed63a4779ca31bb3b01e1.jpg",
+			"fileid": "9c49b719841ed63a4779ca31bb3b01e1",
+			"nodeConfidenceScore": 0.44
+		},
+		{
+			"id": "id112",
+			"file": "world/f7d134b0f171ee9dd195f9365614b30c.JPG",
+			"fileid": "f7d134b0f171ee9dd195f9365614b30c",
+			"nodeConfidenceScore": 0.44
+		},
+		{
+			"id": "id113",
+			"file": "world/4f5ea2f58f40547db635bc088a4fb921.jpg",
+			"fileid": "4f5ea2f58f40547db635bc088a4fb921",
+			"nodeConfidenceScore": 0.43
+		},
+		{
+			"id": "id114",
+			"file": "world/17377578e6093d677bb544416a3b5f63.JPG",
+			"fileid": "17377578e6093d677bb544416a3b5f63",
+			"nodeConfidenceScore": 0.43
+		},
+		{
+			"id": "id115",
+			"file": "world/9ad8ca6c010e28dcbdeedbe0272a964f.jpg",
+			"fileid": "9ad8ca6c010e28dcbdeedbe0272a964f",
+			"nodeConfidenceScore": 0.42
+		},
+		{
+			"id": "id116",
+			"file": "world/4fba562ac119bd989773a2b6bf2782f3.jpg",
+			"fileid": "4fba562ac119bd989773a2b6bf2782f3",
+			"nodeConfidenceScore": 0.42
+		},
+		{
+			"id": "id117",
+			"file": "world/268ba71396a5f40cbbfddc72fd78b63b.jpg",
+			"fileid": "268ba71396a5f40cbbfddc72fd78b63b",
+			"nodeConfidenceScore": 0.41
+		},
+		{
+			"id": "id118",
+			"file": "world/de57a310f99d106847c6f721207ed530.jpg",
+			"fileid": "de57a310f99d106847c6f721207ed530",
+			"nodeConfidenceScore": 0.41
+		},
+		{
+			"id": "id119",
+			"file": "world/efcd2806882e891b38c8df947aa86f38.jpg",
+			"fileid": "efcd2806882e891b38c8df947aa86f38",
+			"nodeConfidenceScore": 0.40
+		},
+		{
+			"id": "id120",
+			"file": "world/81ff1c4de91bfcd3bb1253534e3244bc.jpg",
+			"fileid": "81ff1c4de91bfcd3bb1253534e3244bc",
+			"nodeConfidenceScore": 0.40
+		},
+		{
+			"id": "id121",
+			"file": "world/67b86c291ac350d5cfe76a8173f1f991.jpg",
+			"fileid": "67b86c291ac350d5cfe76a8173f1f991",
+			"nodeConfidenceScore": 0.39
+		},
+		{
+			"id": "id122",
+			"file": "world/fca30503424b294725917d1ff50c24ed.jpg",
+			"fileid": "fca30503424b294725917d1ff50c24ed",
+			"nodeConfidenceScore": 0.39
+		},
+		{
+			"id": "id123",
+			"file": "world/b097ff82492d7e72eb048d82aa8f90db.jpg",
+			"fileid": "b097ff82492d7e72eb048d82aa8f90db",
+			"nodeConfidenceScore": 0.38
+		},
+		{
+			"id": "id124",
+			"file": "world/c1c61e1d43dfe9411c2c0d60f63dbe24.jpg",
+			"fileid": "c1c61e1d43dfe9411c2c0d60f63dbe24",
+			"nodeConfidenceScore": 0.38
+		},
+		{
+			"id": "id125",
+			"file": "world/b2c0f46604a4a3e2a03d4fd4abcbc0fe.png",
+			"fileid": "b2c0f46604a4a3e2a03d4fd4abcbc0fe",
+			"nodeConfidenceScore": 0.37
+		},
+		{
+			"id": "id126",
+			"file": "world/ec8d1f1e97222bad881b82350e15178b.png",
+			"fileid": "ec8d1f1e97222bad881b82350e15178b",
+			"nodeConfidenceScore": 0.36
+		},
+		{
+			"id": "id127",
+			"file": "world/fcb55332a3e2464754a8679956b5a1fc.JPG",
+			"fileid": "fcb55332a3e2464754a8679956b5a1fc",
+			"nodeConfidenceScore": 0.36
+		},
+		{
+			"id": "id128",
+			"file": "world/c55b2a176dc33588f46aea46afc5dcfd.png",
+			"fileid": "c55b2a176dc33588f46aea46afc5dcfd",
+			"nodeConfidenceScore": 0.35
+		},
+		{
+			"id": "id129",
+			"file": "world/98a100702f87fdddd99c9fcbf419b5dc.jpg",
+			"fileid": "98a100702f87fdddd99c9fcbf419b5dc",
+			"nodeConfidenceScore": 0.35
+		},
+		{
+			"id": "id130",
+			"file": "world/2f7ca508761472c1f75e629f3439311e.jpg",
+			"fileid": "2f7ca508761472c1f75e629f3439311e",
+			"nodeConfidenceScore": 0.34
+		},
+		{
+			"id": "id131",
+			"file": "world/09cbcf813b9d228919b82a5d717ac8b2.jpg",
+			"fileid": "09cbcf813b9d228919b82a5d717ac8b2",
+			"nodeConfidenceScore": 0.34
+		},
+		{
+			"id": "id132",
+			"file": "world/624276a1e020492a7021717faf6f9423.png",
+			"fileid": "624276a1e020492a7021717faf6f9423",
+			"nodeConfidenceScore": 0.33
+		},
+		{
+			"id": "id133",
+			"file": "world/1b2edd5e1eb3e10915ba92d5f9536dd4.jpg",
+			"fileid": "1b2edd5e1eb3e10915ba92d5f9536dd4",
+			"nodeConfidenceScore": 0.33
+		},
+		{
+			"id": "id134",
+			"file": "world/1180917377a170c3d2554e221e541eaa.jpg",
+			"fileid": "1180917377a170c3d2554e221e541eaa",
+			"nodeConfidenceScore": 0.32
+		},
+		{
+			"id": "id135",
+			"file": "world/16f8631afd95940501248d37c904915d.JPG",
+			"fileid": "16f8631afd95940501248d37c904915d",
+			"nodeConfidenceScore": 0.32
+		},
+		{
+			"id": "id136",
+			"file": "world/53302a814d3354efb6aaa65e60c88f29.JPG",
+			"fileid": "53302a814d3354efb6aaa65e60c88f29",
+			"nodeConfidenceScore": 0.31
+		},
+		{
+			"id": "id137",
+			"file": "world/45cd757c771c1a7ea777a5c6549d591c.jpg",
+			"fileid": "45cd757c771c1a7ea777a5c6549d591c",
+			"nodeConfidenceScore": 0.31
+		},
+		{
+			"id": "id138",
+			"file": "world/894780050bc51da7ba1196a9bbe4012c.png",
+			"fileid": "894780050bc51da7ba1196a9bbe4012c",
+			"nodeConfidenceScore": 0.31
+		},
+		{
+			"id": "id139",
+			"file": "world/37976e82df44abaa8aa60399e2fb553c.png",
+			"fileid": "37976e82df44abaa8aa60399e2fb553c",
+			"nodeConfidenceScore": 0.30
+		},
+		{
+			"id": "id140",
+			"file": "world/b60aca72d4452b0bf65b520ac30421ee.png",
+			"fileid": "b60aca72d4452b0bf65b520ac30421ee",
+			"nodeConfidenceScore": 0.30
+		},
+		{
+			"id": "id141",
+			"file": "world/58f0a92e142fc5e867e04ed4682054b5.png",
+			"fileid": "58f0a92e142fc5e867e04ed4682054b5",
+			"nodeConfidenceScore": 0.29
+		},
+		{
+			"id": "id142",
+			"file": "world/1973bad4a56e45ff9e3ce356f4126e73.png",
+			"fileid": "1973bad4a56e45ff9e3ce356f4126e73",
+			"nodeConfidenceScore": 0.29
+		},
+		{
+			"id": "id143",
+			"file": "world/02a789f9e3560845247f8dcf80f99767.jpg",
+			"fileid": "02a789f9e3560845247f8dcf80f99767",
+			"nodeConfidenceScore": 0.28
+		},
+		{
+			"id": "id144",
+			"file": "world/b896cfb5375763c2b3dbb5741f497645.jpg",
+			"fileid": "b896cfb5375763c2b3dbb5741f497645",
+			"nodeConfidenceScore": 0.28
+		},
+		{
+			"id": "id145",
+			"file": "world/acc5a2844318ca9aca6d0502ffdd157b.JPG",
+			"fileid": "acc5a2844318ca9aca6d0502ffdd157b",
+			"nodeConfidenceScore": 0.27
+		},
+		{
+			"id": "id146",
+			"file": "world/4e166d80d64e73a93fa0a58f0e933a26.png",
+			"fileid": "4e166d80d64e73a93fa0a58f0e933a26",
+			"nodeConfidenceScore": 0.27
+		},
+		{
+			"id": "id147",
+			"file": "world/6ea40883f9dd2b340da08518ed80b848.JPG",
+			"fileid": "6ea40883f9dd2b340da08518ed80b848",
+			"nodeConfidenceScore": 0.26
+		},
+		{
+			"id": "id148",
+			"file": "world/6a4e53ef7a482c08e234dcf1bfdc1efa.jpg",
+			"fileid": "6a4e53ef7a482c08e234dcf1bfdc1efa",
+			"nodeConfidenceScore": 0.26
+		},
+		{
+			"id": "id149",
+			"file": "world/1a266fb8c4b2dd2a7b1be3777bb64632.jpg",
+			"fileid": "1a266fb8c4b2dd2a7b1be3777bb64632",
+			"nodeConfidenceScore": 0.25
+		},
+		{
+			"id": "id150",
+			"file": "world/bed510573585f93d473462065d2d439d.jpg",
+			"fileid": "bed510573585f93d473462065d2d439d",
+			"nodeConfidenceScore": 0.24
+		},
+		{
+			"id": "id151",
+			"file": "world/72b017bbc73183c2c10ea6c799b074ef.JPG",
+			"fileid": "72b017bbc73183c2c10ea6c799b074ef",
+			"nodeConfidenceScore": 0.24
+		},
+		{
+			"id": "id152",
+			"file": "world/6ead27cfff0f66955369923b9f8a8c39.jpg",
+			"fileid": "6ead27cfff0f66955369923b9f8a8c39",
+			"nodeConfidenceScore": 0.23
+		},
+		{
+			"id": "id153",
+			"file": "world/05005be1b3d3d4fe9deacf974d5873be.JPG",
+			"fileid": "05005be1b3d3d4fe9deacf974d5873be",
+			"nodeConfidenceScore": 0.23
+		},
+		{
+			"id": "id154",
+			"file": "world/a7e4579a3ce69cf74f03b346d0852911.jpg",
+			"fileid": "a7e4579a3ce69cf74f03b346d0852911",
+			"nodeConfidenceScore": 0.22
+		},
+		{
+			"id": "id155",
+			"file": "world/e4c3262ce9f7ab8ccc1779a2ed8e3478.jpg",
+			"fileid": "e4c3262ce9f7ab8ccc1779a2ed8e3478",
+			"nodeConfidenceScore": 0.22
+		},
+		{
+			"id": "id156",
+			"file": "world/3e35cf7aff88ec8506314b1f92762b11.jpg",
+			"fileid": "3e35cf7aff88ec8506314b1f92762b11",
+			"nodeConfidenceScore": 0.21
+		},
+		{
+			"id": "id157",
+			"file": "world/f6e7f5c72f2e7aacb556cb5fa784dfab.jpg",
+			"fileid": "f6e7f5c72f2e7aacb556cb5fa784dfab",
+			"nodeConfidenceScore": 0.21
+		},
+		{
+			"id": "id158",
+			"file": "world/cbfeedb59720d73f8a98436e80a983ee.jpg",
+			"fileid": "cbfeedb59720d73f8a98436e80a983ee",
+			"nodeConfidenceScore": 0.20
+		},
+		{
+			"id": "id159",
+			"file": "world/0506e1e6251511d7d3846d7f49ebf9bc.jpg",
+			"fileid": "0506e1e6251511d7d3846d7f49ebf9bc",
+			"nodeConfidenceScore": 0.20
+		},
+		{
+			"id": "id160",
+			"file": "world/dc369569e9271dd18e4201e587ad96e1.JPG",
+			"fileid": "dc369569e9271dd18e4201e587ad96e1",
+			"nodeConfidenceScore": 0.19
+		},
+		{
+			"id": "id161",
+			"file": "world/93e852f3114de9a492c894fcb2941eba.png",
+			"fileid": "93e852f3114de9a492c894fcb2941eba",
+			"nodeConfidenceScore": 0.19
+		},
+		{
+			"id": "id162",
+			"file": "world/b2577ee739f0fb49a10654b81d79cdbb.png",
+			"fileid": "b2577ee739f0fb49a10654b81d79cdbb",
+			"nodeConfidenceScore": 0.19
+		},
+		{
+			"id": "id163",
+			"file": "world/78285e9b1b918a035cfd2f38696c40f5.png",
+			"fileid": "78285e9b1b918a035cfd2f38696c40f5",
+			"nodeConfidenceScore": 0.18
+		},
+		{
+			"id": "id164",
+			"file": "world/1657074819a8525b50a1c375716d252f.png",
+			"fileid": "1657074819a8525b50a1c375716d252f",
+			"nodeConfidenceScore": 0.18
+		},
+		{
+			"id": "id165",
+			"file": "world/af0038c59a36b1239c64acc434c22718.jpg",
+			"fileid": "af0038c59a36b1239c64acc434c22718",
+			"nodeConfidenceScore": 0.17
+		},
+		{
+			"id": "id166",
+			"file": "world/6aa9fecbe8ac719a5c558f40ea958ad0.jpg",
+			"fileid": "6aa9fecbe8ac719a5c558f40ea958ad0",
+			"nodeConfidenceScore": 0.17
+		},
+		{
+			"id": "id167",
+			"file": "world/96492c250780ebababfcebc585ef1db6.jpg",
+			"fileid": "96492c250780ebababfcebc585ef1db6",
+			"nodeConfidenceScore": 0.16
+		},
+		{
+			"id": "id168",
+			"file": "world/05f2506ba0045d07e5dc5e955edcf946.jpg",
+			"fileid": "05f2506ba0045d07e5dc5e955edcf946",
+			"nodeConfidenceScore": 0.16
+		},
+		{
+			"id": "id169",
+			"file": "world/70a5521608dcdab54ac5c117ffc0e6cb.PNG",
+			"fileid": "70a5521608dcdab54ac5c117ffc0e6cb",
+			"nodeConfidenceScore": 0.15
+		},
+		{
+			"id": "id170",
+			"file": "world/7d90771f1e3cbca30bf3d669986e4d5c.PNG",
+			"fileid": "7d90771f1e3cbca30bf3d669986e4d5c",
+			"nodeConfidenceScore": 0.15
+		},
+		{
+			"id": "id171",
+			"file": "world/f4ed57d4f10c986a20a45181d16ea8e1.PNG",
+			"fileid": "f4ed57d4f10c986a20a45181d16ea8e1",
+			"nodeConfidenceScore": 0.14
+		},
+		{
+			"id": "id172",
+			"file": "world/6e0d06acaadd5806f930a5733fac883a.PNG",
+			"fileid": "6e0d06acaadd5806f930a5733fac883a",
+			"nodeConfidenceScore": 0.14
+		},
+		{
+			"id": "id173",
+			"file": "world/c7164c1fb6732f57d85a117710d57282.jpg",
+			"fileid": "c7164c1fb6732f57d85a117710d57282",
+			"nodeConfidenceScore": 0.13
+		},
+		{
+			"id": "id174",
+			"file": "world/e651fa477b2e79d9a9a2a31ad6e06e77.JPG",
+			"fileid": "e651fa477b2e79d9a9a2a31ad6e06e77",
+			"nodeConfidenceScore": 0.12
+		},
+		{
+			"id": "id175",
+			"file": "world/f22cfba9569860b806b90d6e933cf724.jpg",
+			"fileid": "f22cfba9569860b806b90d6e933cf724",
+			"nodeConfidenceScore": 0.12
+		},
+		{
+			"id": "id176",
+			"file": "world/7329a78e239869f3cabb42b489794129.JPG",
+			"fileid": "7329a78e239869f3cabb42b489794129",
+			"nodeConfidenceScore": 0.11
+		},
+		{
+			"id": "id177",
+			"file": "world/19e32f2b29a2b345dfd28a8ad857b3fc.jpg",
+			"fileid": "19e32f2b29a2b345dfd28a8ad857b3fc",
+			"nodeConfidenceScore": 0.11
+		},
+		{
+			"id": "id178",
+			"file": "world/03c1bc9f9a36aa335b47492383f9607b.jpg",
+			"fileid": "03c1bc9f9a36aa335b47492383f9607b",
+			"nodeConfidenceScore": 0.10
+		},
+		{
+			"id": "id179",
+			"file": "world/49db5ca7c85b885868f0b8c6b446c9ca.png",
+			"fileid": "49db5ca7c85b885868f0b8c6b446c9ca",
+			"nodeConfidenceScore": 0.10
+		},
+		{
+			"id": "id180",
+			"file": "world/f10585c22e453e4e93cbdad92127b759.jpg",
+			"fileid": "f10585c22e453e4e93cbdad92127b759",
+			"nodeConfidenceScore": 0.09
+		},
+		{
+			"id": "id181",
+			"file": "world/6963722bc8413bbc1443ab4edcae09e3.JPG",
+			"fileid": "6963722bc8413bbc1443ab4edcae09e3",
+			"nodeConfidenceScore": 0.09
+		},
+		{
+			"id": "id182",
+			"file": "world/2f6c568f99bc8ae7b81f1466ff0be758.jpg",
+			"fileid": "2f6c568f99bc8ae7b81f1466ff0be758",
+			"nodeConfidenceScore": 0.08
+		},
+		{
+			"id": "id183",
+			"file": "world/6a041385bd65aa3e55395bb76d70fe2a.jpg",
+			"fileid": "6a041385bd65aa3e55395bb76d70fe2a",
+			"nodeConfidenceScore": 0.08
+		},
+		{
+			"id": "id184",
+			"file": "world/e8d088eda832889e4b2d061e26b92923.jpg",
+			"fileid": "e8d088eda832889e4b2d061e26b92923",
+			"nodeConfidenceScore": 0.07
+		},
+		{
+			"id": "id185",
+			"file": "world/749efca5154c0a27f7be277e99995f1b.jpg",
+			"fileid": "749efca5154c0a27f7be277e99995f1b",
+			"nodeConfidenceScore": 0.07
+		},
+		{
+			"id": "id186",
+			"file": "world/cbcea27a96a9e834401e88bae081c2fb.jpg",
+			"fileid": "cbcea27a96a9e834401e88bae081c2fb",
+			"nodeConfidenceScore": 0.06
+		},
+		{
+			"id": "id187",
+			"file": "world/e6cfe2680c3f0d8d7403316dc05ec607.png",
+			"fileid": "e6cfe2680c3f0d8d7403316dc05ec607",
+			"nodeConfidenceScore": 0.06
+		},
+		{
+			"id": "id188",
+			"file": "world/fbae75e878f75eef951f24f3f4b96ef8.JPG",
+			"fileid": "fbae75e878f75eef951f24f3f4b96ef8",
+			"nodeConfidenceScore": 0.06
+		},
+		{
+			"id": "id189",
+			"file": "world/c9c1ea1416c8c9551bd6b954bde5df97.jpg",
+			"fileid": "c9c1ea1416c8c9551bd6b954bde5df97",
+			"nodeConfidenceScore": 0.05
+		},
+		{
+			"id": "id190",
+			"file": "world/033291b6abae5b3d1632dcba73f34e0b.png",
+			"fileid": "033291b6abae5b3d1632dcba73f34e0b",
+			"nodeConfidenceScore": 0.05
+		},
+		{
+			"id": "id191",
+			"file": "world/b661c0284eabd8931d9a11e2054fc9da.jpg",
+			"fileid": "b661c0284eabd8931d9a11e2054fc9da",
+			"nodeConfidenceScore": 0.04
+		},
+		{
+			"id": "id192",
+			"file": "world/2ee86eb3e40a22f99e8a02deda514b7f.jpg",
+			"fileid": "2ee86eb3e40a22f99e8a02deda514b7f",
+			"nodeConfidenceScore": 0.04
+		},
+		{
+			"id": "id193",
+			"file": "world/c59a64fb6a8f26cdbc15f3408c43ed26.jpg",
+			"fileid": "c59a64fb6a8f26cdbc15f3408c43ed26",
+			"nodeConfidenceScore": 0.03
+		},
+		{
+			"id": "id194",
+			"file": "world/6ab3555a79be4de6992b24a47fbb45b6.JPG",
+			"fileid": "6ab3555a79be4de6992b24a47fbb45b6",
+			"nodeConfidenceScore": 0.03
+		},
+		{
+			"id": "id195",
+			"file": "world/47198162e83d853775fdfb32a81a8339.JPG",
+			"fileid": "47198162e83d853775fdfb32a81a8339",
+			"nodeConfidenceScore": 0.02
+		},
+		{
+			"id": "id196",
+			"file": "world/cb5a618dc63cd00544ce40bca9e515d2.jpg",
+			"fileid": "cb5a618dc63cd00544ce40bca9e515d2",
+			"nodeConfidenceScore": 0.02
+		},
+		{
+			"id": "id197",
+			"file": "world/25d6a26191ecb3ed69ef50db94b58e5f.JPG",
+			"fileid": "25d6a26191ecb3ed69ef50db94b58e5f",
+			"nodeConfidenceScore": 0.01
+		},
+		{
+			"id": "id198",
+			"file": "world/a59dc588a5d85c2b8b727811348a9d10.jpg",
+			"fileid": "a59dc588a5d85c2b8b727811348a9d10",
+			"nodeConfidenceScore": 0.01
+		},
+		{
+			"id": "id199",
+			"file": "world/b6f2d6d139c108c48ff12ab0eb931107.png",
+			"fileid": "b6f2d6d139c108c48ff12ab0eb931107",
+			"nodeConfidenceScore": 0.00
+		}
+	]
+}

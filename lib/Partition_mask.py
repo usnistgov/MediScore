@@ -230,7 +230,7 @@ class Partition:
             data = dict()
             dm = self.part_metric_list[0]
             for m in metrics:
-                data[m] = [dm[m].mean()]
+                data[m] = [dm[m].mean(skipna=True)]
             data['TaskID'] = self.task
             columns = ['TaskID']
             columns.extend(metrics)
@@ -246,7 +246,7 @@ class Partition:
                     continue
                 data = {'Query': query}
                 for m in metrics:
-                    data[m] = dm[m].mean() #average this
+                    data[m] = dm[m].mean(skipna=True) #average this
 
 #                data = {'Query': query,
 #                         'auc': dm.auc,
@@ -288,7 +288,7 @@ class Partition:
 
 #                dm = self.part_dm_list[i]
                 for m in metrics:
-                    data[m] = dm[m].mean() #average this
+                    data[m] = dm[m].mean(skipna=True) #average this
 #                data['auc'].append(dm.auc)
 #                data['fpr_stop'].append(dm.fpr_stop)
 #                data['eer'].append(dm.eer)
