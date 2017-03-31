@@ -45,8 +45,8 @@ filter_tpi="cat comp_maskreport_thres-perimage.txt | grep -v CVS"
 filter_tjr="cat comp_maskreport_thres-journalResults.txt | grep -v CVS"
 
 if ([ ! -f comp_maskreport_splice.txt -o ! -f comp_maskreport_manip.txt -o ! -f comp_maskreport_splice-journalResults.txt \
--o ! -f comp_maskreport_splice-perimage.txt -o ! -f comp_maskreport_manip-perimage.txt -o ! -f comp_maskreport_manip-journalResults.txt \
--o ! -f comp_maskreport_thres.txt -o ! -f comp_maskreport_thres-perimage.txt -o ! -f comp_maskreport_thres-journalResults.txt \
+ -o ! -f comp_maskreport_splice-perimage.txt -o ! -f comp_maskreport_manip-perimage.txt -o ! -f comp_maskreport_manip-journalResults.txt \
+ -o ! -f comp_maskreport_thres.txt -o ! -f comp_maskreport_thres-perimage.txt -o ! -f comp_maskreport_thres-journalResults.txt \
 ]); then
   echo
   echo "    !!!!! MASK SCORER TEST FAILED AT CASE 0 !!!!!    "
@@ -155,8 +155,8 @@ else
 fi
 
 if ([ $flag_s == 0 -a $flag_spi == 0 -a $flag_sjr == 0 \
--a $flag_m == 0 -a $flag_mpi == 0 -a $flag_mjr == 0 \
--a $flag_t == 0 -a $flag_tpi == 0 -a $flag_tjr == 0 \
+ -a $flag_m == 0 -a $flag_mpi == 0 -a $flag_mjr == 0 \
+ -a $flag_t == 0 -a $flag_tpi == 0 -a $flag_tjr == 0 \
 ]); then
   echo
   echo "CASE 0 SUCCESSFULLY PASSED"

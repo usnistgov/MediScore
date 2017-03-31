@@ -464,18 +464,18 @@ else
 fi
 
 if ([ $flag_manipconf_0 == 0 -a $flag_manipconfpi == 0 -a $flag_manipconfjr == 0 \
--a $flag_manipconfmanmade_0 == 0 -a $flag_manipconfmanmade_1 == 0 -a $flag_manipconfmanmadepi == 0 -a $flag_manipconfmanmadejr == 0 \
--a $flag_manipfooconfpi == 0 -a $flag_manipfooconfjr == 0 \
--a $flag_manipconfpart == 0 -a $flag_manipconfpartpi == 0 -a $flag_manipconfpartjr == 0 \
--a $flag_manipconfclonepart == 0 -a $flag_manipconfclonepartpi == 0 -a $flag_manipconfclonepartjr == 0 \
--a $flag_manipfooconfpartpi == 0 -a $flag_manipfooconfpartjr == 0 \
+ -a $flag_manipconfmanmade_0 == 0 -a $flag_manipconfmanmade_1 == 0 -a $flag_manipconfmanmadepi == 0 -a $flag_manipconfmanmadejr == 0 \
+ -a $flag_manipfooconfpi == 0 -a $flag_manipfooconfjr == 0 \
+ -a $flag_manipconfpart == 0 -a $flag_manipconfpartpi == 0 -a $flag_manipconfpartjr == 0 \
+ -a $flag_manipconfclonepart == 0 -a $flag_manipconfclonepartpi == 0 -a $flag_manipconfclonepartjr == 0 \
+ -a $flag_manipfooconfpartpi == 0 -a $flag_manipfooconfpartjr == 0 \
 \
--a $flag_spliceconf_0 == 0 -a $flag_spliceconfpi == 0 \
--a $flag_spliceconfcoll_0 == 0 -a $flag_spliceconfcoll_1 == 0 -a $flag_spliceconfcollpi == 0 \
--a $flag_splicefooconfpi == 0 \
--a $flag_spliceconfpart == 0 -a $flag_spliceconfpartpi == 0 \
--a $flag_spliceconfcollpart == 0 -a $flag_spliceconfcollpartpi == 0 \
--a $flag_splicefooconfpartpi == 0 \
+ -a $flag_spliceconf_0 == 0 -a $flag_spliceconfpi == 0 \
+ -a $flag_spliceconfcoll_0 == 0 -a $flag_spliceconfcoll_1 == 0 -a $flag_spliceconfcollpi == 0 \
+ -a $flag_splicefooconfpi == 0 \
+ -a $flag_spliceconfpart == 0 -a $flag_spliceconfpartpi == 0 \
+ -a $flag_spliceconfcollpart == 0 -a $flag_spliceconfcollpartpi == 0 \
+ -a $flag_splicefooconfpartpi == 0 \
 ]); then
   echo
   echo "CASE 2 SUCCESSFULLY PASSED"

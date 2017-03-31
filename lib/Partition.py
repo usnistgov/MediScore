@@ -197,21 +197,21 @@ class Partition:
             df_list = list()
             for i,query in enumerate(self.part_query_list):
                 dm = self.part_dm_list[i]
-                data = {'Query': query,
-                         'auc': dm.auc,
-                         'fpr_stop' : dm.fpr_stop,
-                         'eer':dm.eer,
-                         'auc_ci_lower':dm.ci_lower,
-                         'auc_ci_upper':dm.ci_upper}
+                data = {'QUERY': query,
+                         'AUC': dm.auc,
+                         'FAR_STOP' : dm.fpr_stop,
+                         'EER':dm.eer,
+                         'AUC_CI_LOWER':dm.ci_lower,
+                         'AUC_CI_UPPER':dm.ci_upper}
                 index = ['P:']
-                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
+                columns = ['QUERY','AUC','FAR_STOP','EER','AUC_CI_LOWER','AUC_CI_UPPER']
                 df_list.append(pd.DataFrame(data,index,columns).round(6))
             return df_list
 
         elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
-            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
+            data = {'AUC': [],'FAR_STOP': [],'EER': [],'AUC_CI_LOWER': [], 'AUC_CI_UPPER': []}
             for i,partition in enumerate(self.part_values_list):
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition,field)]
@@ -225,14 +225,14 @@ class Partition:
                         data[field].append(condition)
 
                 dm = self.part_dm_list[i]
-                data['auc'].append(dm.auc)
-                data['fpr_stop'].append(dm.fpr_stop)
-                data['eer'].append(dm.eer)
-                data['auc_ci_lower'].append(dm.ci_lower)
-                data['auc_ci_upper'].append(dm.ci_upper)
+                data['AUC'].append(dm.auc)
+                data['FAR_STOP'].append(dm.fpr_stop)
+                data['EER'].append(dm.eer)
+                data['AUC_CI_LOWER'].append(dm.ci_lower)
+                data['AUC_CI_UPPER'].append(dm.ci_upper)
 
             columns = list(self.factors_order)
-            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
+            columns.extend(['AUC','FAR_STOP','EER','AUC_CI_LOWER', 'AUC_CI_UPPER'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
             df = pd.DataFrame(data,index,columns).round(6)
             return df

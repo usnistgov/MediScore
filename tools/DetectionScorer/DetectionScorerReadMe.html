@@ -11958,6 +11958,20 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>--dLevel</p>
+<ul>
+<li>Define the lower and upper exclusions (range [0, 0.3]) for d-prime calculation. The default is 0.
+Note that the d-prime specified in the plot is the maximum d-prime.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Output-Options:">Output Options:<a class="anchor-link" href="#Output-Options:">&#182;</a></h3>
 </div>
 </div>
@@ -12102,7 +12116,7 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--optOut</p>
 <ul>
-<li>Evaluate algorithm performance on trials where the IsOptOut value is 'N'.</li>
+<li>Evaluate algorithm performance on trials where IsOptOut values are 'N'.</li>
 </ul>
 
 </div>
@@ -12345,7 +12359,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>OptOut (IsOptOut =='N') scoring
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv --outRoot ./testcases/NC16_101 --optOut --ci --display
+python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv --outRoot ./testcases/NC16_101 --optOut --dLevel 0.1 --ci --display
 </code>
 <img src="./notebookImgs/NC16_101_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
@@ -12374,7 +12388,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_q_query_0_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df2</span>
 </pre></div>
 
@@ -12394,12 +12408,12 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Query</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>QUERY</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
@@ -12444,7 +12458,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_0_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df3</span>
 </pre></div>
 
@@ -12464,12 +12478,12 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Query</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>QUERY</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
@@ -12498,7 +12512,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_f_query_1.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_1_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df4</span>
 </pre></div>
 
@@ -12518,12 +12532,12 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Query</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>QUERY</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
@@ -12568,7 +12582,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_qp_query_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df5</span>
 </pre></div>
 
@@ -12591,11 +12605,11 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
       <th>Unnamed: 0</th>
       <th>Collection</th>
       <th>ProbeWidth</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
@@ -12642,7 +12656,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_fp_query.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_qp_query_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12665,11 +12679,11 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
       <th>Unnamed: 0</th>
       <th>Collection</th>
       <th>ProbeWidth</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
@@ -12727,7 +12741,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_0.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_0_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df10</span>
 </pre></div>
 
@@ -12747,18 +12761,18 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Query</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>QUERY</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>(Collection==['Nimble-SCI'] and IsManipulation...</td>
+      <td>Collection==['Nimble-SCI'] &amp; IsManipulationTyp...</td>
       <td>0.4525</td>
       <td>1</td>
       <td>0.594643</td>
@@ -12781,7 +12795,7 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_tf_query_1.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_1_report.csv&quot;</span><span class="p">)</span>
 <span class="n">df11</span>
 </pre></div>
 
@@ -12801,18 +12815,18 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Query</th>
-      <th>auc</th>
-      <th>fpr_stop</th>
-      <th>eer</th>
-      <th>auc_ci_lower</th>
-      <th>auc_ci_upper</th>
+      <th>QUERY</th>
+      <th>AUC</th>
+      <th>FAR_STOP</th>
+      <th>EER</th>
+      <th>AUC_CI_LOWER</th>
+      <th>AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>(Collection==['Nimble-WEB'] and IsManipulation...</td>
+      <td>Collection==['Nimble-WEB'] &amp; IsManipulationTyp...</td>
       <td>0.590206</td>
       <td>1</td>
       <td>0.436607</td>
