@@ -35,12 +35,14 @@ import cv2
 import pandas as pd
 import argparse
 import numpy as np
-import maskreport as mr
+#import maskreport as mr
+#import pdb #debug purposes
 
 # loading scoring and reporting libraries
 #lib_path = "../../lib"
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
+import maskMetrics as mm
 import Partition_mask as pt
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
@@ -117,15 +119,14 @@ else:
 #wrapper print function when encountering an error. Will also cause script to exit after message is printed.
 
 if verbose==0:
-    printerr = lambda *a:None
+    def printerr(string,exitcode=1):
+        exit(exitcode)
 else:
     def printerr(string,exitcode=1):
         if verbose != 0:
             parser.print_help()
             print(string)
             exit(exitcode)
-
-#TODO: write merge on multi-index for two dataframes
 
 args.task = args.task.lower()
 
@@ -156,8 +157,21 @@ if not os.path.isdir(args.outRoot):
     os.system('mkdir ' + args.outRoot)
 
 #define HTML functions here
-if args.html:
-    if args.task == 'manipulation':
+df2html = lambda *a:None
+if args.task == 'manipulation':
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+        # if the confidence score are 'nan', replace the values with the mininum score
+        #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
+        # convert to the str type to the float type for computations
+        #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    
+        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index)
+        df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,precision=precision)
+    
+        merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
+        return merged_df
+
+    if args.html:
         def df2html(df,average_df,outputRoot,queryManipulation,query):
             html_out = df.copy()
     
@@ -190,7 +204,44 @@ if args.html:
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
             myf.close()
-    elif args.task == 'splice':
+
+elif args.task == 'splice':
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+        #finds rows in index and sys which correspond to target reference
+        #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
+        #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
+    
+        # if the confidence score are 'nan', replace the values with the mininum score
+        #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
+        # convert to the str type to the float type for computations
+        #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
+        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
+    
+        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
+        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
+    
+        probe_df.rename(index=str,columns={"NMM":"pNMM",
+                                           "MCC":"pMCC",
+                                           "BWL1":"pBWL1",
+                                           "GWL1":"pGWL1",
+                                           "ColMaskFileName":"ProbeColMaskFileName",
+                                           "AggMaskFileName":"ProbeAggMaskFileName",
+                                           "Scored":"ProbeScored"},inplace=True)
+    
+        donor_df.rename(index=str,columns={"NMM":"dNMM",
+                                           "MCC":"dMCC",
+                                           "BWL1":"dBWL1",
+                                           "GWL1":"dGWL1",
+                                           "ColMaskFileName":"DonorColMaskFileName",
+                                           "AggMaskFileName":"DonorAggMaskFileName",
+                                           "Scored":"DonorScored"},inplace=True)
+    
+        pd_df = pd.concat([probe_df,donor_df],axis=1)
+        merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID']).drop('Scored',1)
+        return merged_df
+
+    if args.html:
         def df2html(df,average_df,outputRoot,queryManipulation,query):
             html_out = df.copy()
     
@@ -207,9 +258,9 @@ if args.html:
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
             html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
-            html_out.loc[html_out.query("pMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("pMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
             html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
-            html_out.loc[html_out.query("dMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("dMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
@@ -225,10 +276,6 @@ if args.html:
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
             myf.close()
-    else:
-        df2html = lambda *a:None
-else:
-    df2html = lambda *a:None
 
 printq("Beginning the mask scoring report...")
 
@@ -384,7 +431,7 @@ if args.task == 'manipulation':
                 os.system('mkdir ' + outRootQuery)
         m_dfc['Scored'] = ['Y']*len(m_dfc)
     
-        r_df = mr.createReportSSD(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('MCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
         pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
@@ -530,7 +577,7 @@ elif args.task == 'splice':
    
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
-        r_df = mr.createReportDSD(m_dfc,journalData0,probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0,probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
 
         #set where the rows are the same in the join
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
@@ -555,13 +602,14 @@ elif args.task == 'splice':
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
     
-        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
-
+        p_idx = r_df.query('pMCC == -2').index
+        d_idx = r_df.query('dMCC == -2').index
+        r_df.loc[p_idx,'pNMM'] = ''
+        r_df.loc[p_idx,'pBWL1'] = ''
+        r_df.loc[p_idx,'pGWL1'] = ''
+        r_df.loc[d_idx,'dNMM'] = ''
+        r_df.loc[d_idx,'dBWL1'] = ''
+        r_df.loc[d_idx,'dGWL1'] = ''
         #reorder r_df's columns. Names first, then scores, then other metadata
         rcols = r_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
@@ -571,11 +619,21 @@ elif args.task == 'splice':
     
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
         r_dfc = r_df.copy()
-        r_dfc.loc[r_dfc.query('pMCC == -2').index,'pMCC'] = ''
-        r_dfc.loc[r_dfc.query('pMCC == -2').index,'ProbeScored'] = 'N'
-        r_dfc.loc[r_dfc.query('dMCC == -2').index,'dMCC'] = ''
-        r_dfc.loc[r_dfc.query('dMCC == -2').index,'DonorScored'] = 'N'
-        my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries #TODO: move this into the query section a'la manipulation
+        r_dfc.loc[p_idx,'ProbeScored'] = 'N'
+        r_dfc.loc[d_idx,'DonorScored'] = 'N'
+        #p_dummyscores = r_dfc.query("pMCC > -2")[metrics].mean(axis=0)
+        #d_dummyscores = r_dfc.query("dMCC > -2")[metrics].mean(axis=0)
+
+        #substitute for other values that won't get counted in the average
+        r_dfc.loc[p_idx,'pNMM'] = np.nan #p_dummyscores['pNMM']
+        r_dfc.loc[p_idx,'pBWL1'] = np.nan #p_dummyscores['pBWL1']
+        r_dfc.loc[p_idx,'pGWL1'] = np.nan#$p_dummyscores['pGWL1']
+        r_dfc.loc[d_idx,'dNMM'] = np.nan #d_dummyscores['dNMM']
+        r_dfc.loc[d_idx,'dBWL1'] = np.nan #d_dummyscores['dBWL1']
+        r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
+        r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
+        r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
+        my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries.
         df_list = my_partition.render_table(metrics)
     
         if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print

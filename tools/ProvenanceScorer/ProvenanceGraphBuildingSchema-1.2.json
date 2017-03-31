@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "$version": "1.2",
+    "description": "Provenance Graph Building schema",
+    "definitions": {
+        "node": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" }, 
+              "file": { "type": "string" },
+              "fileid": { "type": "string" },
+              "nodeConfidenceScore": { "type": "number" }
+            },
+            "required": [ "id", "file", "nodeConfidenceScore" ]
+        },
+        "link": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "number" },
+              "target": { "type": "number" },
+              "relationshipConfidenceScore": { "type": "number" },
+              "operation": { "type": "string" },
+              "operationArgument": { "type": "string" }
+            },
+            "required": [ "source", "target", "relationshipConfidenceScore" ]
+        },
+        "nodes": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/node" }
+        },
+        "links": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/link" }
+        }
+    },
+    "type": "object",
+    "allOf": [ 
+        { "properties": {
+            "directed": { "type": "boolean" },
+            "nodes": { "$ref": "#/definitions/nodes" },
+            "links": { "$ref": "#/definitions/links" }
+          }
+        }
+    ],
+    "required": ["nodes","links"]
+}

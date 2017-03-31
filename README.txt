@@ -1,5 +1,5 @@
 File: README.txt
-Date: March 17, 2017
+Date: March 30, 2017
 MediScore Version: 1.1.3
 
 This directory contains MediScore, the NIST Medifor scoring and
@@ -39,6 +39,9 @@ INSTALLATION
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
   - unittest
+  ImageMagick is not required, but is highly recommended to accelerate the validator.
+  Download instructions may be found in the following link:
+  http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -158,9 +161,15 @@ HISTORY
       - Validator unit test now toggle-able with identify to hack ImageMagick behavioral discrepancies.
     * MaskScorer:
       - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
-  Mar 17, 2017 - MediScore Version 1.1.3:
+  Mar 31, 2017 - MediScore Version 1.1.3:
+    * Validator:
+      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the validator before it can run over the files.
     * MaskScorer:
       - Absolute paths added. Path dependency for the mask scorer is no longer required.
+      - Bug to averaging procedure for splice portion of the mask scorer is fixed.
+      - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
+    * Provenance:
+      - Provenance validator and formal test cases added. Error messages should be expected in testing.
 
 
 CONTACT
@@ -199,6 +208,7 @@ Andrew Delgado
 Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
+David Joy
 
 
 COPYRIGHT
