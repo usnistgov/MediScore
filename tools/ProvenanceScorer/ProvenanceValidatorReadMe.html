@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>ValidatorReadMe</title>
+<title>ProvenanceValidatorReadMe</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -11751,7 +11751,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Validator">Validator<a class="anchor-link" href="#Validator">&#182;</a></h1>
+<h1 id="Provenance-Validator">Provenance Validator<a class="anchor-link" href="#Provenance-Validator">&#182;</a></h1>
 </div>
 </div>
 </div>
@@ -11769,11 +11769,11 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script validates the content of the index and system output files as specified in the NC2016 Evaluation Plan, as well as the basic format and features of the mask files (i.e. same dimensions as the original image as described in the index file and single-channel grayscale).</p>
-<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it). In this directory should also be a <b>mask</b> directory containing the system output masks.</p>
-<p>All csv files passed to the Validator must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the csv should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this on the csv: foo||bar, although this won't be checked).</p>
-<p>Both the index and system output files must have their columns in the specified order described under Input Options and no other column. The index and system output files must have the same number of rows; further, the system output must not have duplicate rows.</p>
-<p>All masks for the validator will be checked for conformity to the dimensions specified in the index file and for being png's. However, mask fields with blank entries can be skipped over without the validator throwing an error (for the DSD validator, either Probe or Donor mask file name being blank will cause that row to be skipped).</p>
+<p>This script validates the content of provenance system output files relative to the index file as specified in the NC2017 Evaluation Plan, as well as the basic format of the json files. The script works for both the provenance filtering and graph building tasks.</p>
+<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it). In this directory should also be a <b>jsons</b> directory containing the system output masks.</p>
+<p>All csv files passed to the Provenance Validator must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the csv should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this on the csv: foo||bar, although this won't be checked).</p>
+<p>The index and system output files must have the same number of rows; further, the system output must not have duplicate rows.</p>
+<p>All json files for the validator will be checked for conformity to the format specified for provenance filtering and graph building. (Graph building requires an additional "links" entry.) However, json fields with blank entries can be skipped over without the validator throwing an error.</p>
 
 </div>
 </div>
@@ -11794,8 +11794,31 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Example:</p>
 
-<pre><code>python2 validator.py -x ../../data/test_suite/maskScorerTests/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -vt SSD</code></pre>
-<p>Running this code would validate the B_NC2016_Removal_ImgOnly_c-me2_2.csv with additional information provided by the NC2016-removal-index.csv, each under its appropriate directory, through the Single-Source Detection (SSD) validator. The sample inputs shown here should pass the validation.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span>%%bash
+python ProvenanceValidator.py -x <span class="s2">&quot;../../data/test_suite/provenanceValidatorTests/indexes/NC2017_Dev1-provenance-index.csv&quot;</span> <span class="se">\</span>
+                              -s <span class="s2">&quot;../../data/test_suite/provenanceValidatorTests/ValidCheck_NC17_FuncTest_2/ValidCheck_NC17_FuncTest_Provenance_ImgOnly_p-all_1/ValidCheck_NC17_FuncTest_Provenance_ImgOnly_p-all_1.csv&quot;</span> <span class="se">\</span>
+    -nc
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Running this code would validate the ValidCheck_NC17_FuncTest_Provenance_ImgOnly_p-all_1.csv with additional information provided by the NC2017_Dev1-provenance-index.csv, each under its appropriate directory, through the provenance validator. The sample inputs shown here should pass the validation.</p>
 
 </div>
 </div>
@@ -11824,9 +11847,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-vt --valtype</p>
+<p>-nc --nameCheck</p>
 <ul>
-<li>Specify the validation type for the relevant task: Single-Source Detection or Double-Source Detection (i.e. 'SSD' or 'DSD').</li>
+<li>Whether or not to check the naming format of the file according to the ENBF (Extended Backus-Naur Form) <TEAM><em>NC17</em><DATA><em><TASK></em><CONDITION><em><SYS></em><VERSION>. Selecting the option will run the name checker. Further information on the meaning of the ENBF is available in the evaluation plan.</li>
 </ul>
 
 </div>
@@ -11837,9 +11860,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-nc --nameCheck</p>
+<p>-nm --neglectJSON</p>
 <ul>
-<li>Whether or not to check the naming format of the file according to the ENBF (Extended Backus-Naur Form) <TEAM><em>NC17</em><DATA><em><TASK></em><CONDITION><em><SYS></em><VERSION>. Selecting the option will run the name checker. Further information on the meaning of the ENBF is available in the evaluation plan.</li>
+<li>Whether or not to neglect the JSON format checking. Selecting the option will neglect the JSON format checking.</li>
 </ul>
 
 </div>
@@ -11859,9 +11882,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-x --inIndex</p>
+<p>-x --index_file</p>
 <ul>
-<li>Define the index csv file. The index file contains the TaskID, ProbeFileID, ProbeFileName, ProbeWidth, and ProbeHeight fields, and if scoring on the splice task, the DonorFileID, DonorFileName, DonorWidth, and DonorHeight fields as well. No additional fields are permitted for the index file.</li>
+<li>Define the index csv file. The index file contains the TaskID, ProvenanceProbeFileID, ProvenanceProbeFileName, ProvenanceProbeWidth, and ProvenanceProbeHeight fields. No additional fields are permitted for the index file.</li>
 </ul>
 
 </div>
@@ -11872,9 +11895,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-s --inSys</p>
+<p>-s --system_output_file</p>
 <ul>
-<li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and ProbeOutputMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, OutputProbeMaskFileName, and OutputDonorMaskFileName fields, in that order. The OutputProbeMaskFileNames and OutputDonorMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
+<li>Specify the CSV file of the system performance results formatted according to NC2017 specification. The file must contain the ProvenanceProbeFileID and ProvenanceOutputFileName fields. The ProvenanceOutputFileName's should be directory strings relative to the location of the system performance CSV.</li>
 </ul>
 
 </div>

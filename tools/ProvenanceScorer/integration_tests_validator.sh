@@ -7,14 +7,18 @@ check_status() {
     if [ $status -ne 0 ]; then
 	echo "*** FAILED ***"
 	exit $status
+    else
+        echo "*** OK ***"
     fi
 }
 
 check_fail() {
     status=$?
-    if [ $status -ne 1 ]; then
+    if [ $status -eq 0 ]; then
 	echo "*** FAILED ***"
 	exit 1
+    else
+        echo "*** OK ***"
     fi
 }
 
@@ -29,13 +33,11 @@ run_test() {
     else
         check_fail
     fi    
-
-    echo "*** OK ***"
 }
 
 name_test_csv() {
     python ProvenanceValidator.py -x "$testsuite_directory/indexes/NC2017_Dev1-provenance-index.csv" \
-			     	-s "$testsuite_directory/NameCheck_NC17_FuncTest_1/NameCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-valid_1/NameCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-valid_1.csv" \
+			     	-s "$testsuite_directory/NameCheck_NC17_FuncTest_1/NameCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-valid_1/NameCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-valid_1.tsv" \
         			-nc                          
 }
 
@@ -47,7 +49,7 @@ name_test_fileNeqDir() {
 
 name_test_underscores() {
     python ProvenanceValidator.py -x "$testsuite_directory/indexes/NC2017_Dev1-provenance-index.csv" \
-			     	-s "$testsuite_directory/NameCheck_NC17_FuncTest_1/NameCheck_NC17_Functionality_Test_3_ProvenanceFiltering_ImgOnly_p-invalid_1/NameCheck_NC17_Functionality_Test_3_Provenance_ImgOnly_p-invalid_1.csv" \
+			     	-s "$testsuite_directory/NameCheck_NC17_FuncTest_1/NameCheck_NC17_Functionality_Test_3_ProvenanceFiltering_ImgOnly_p-invalid_1/NameCheck_NC17_Functionality_Test_3_ProvenanceFiltering_ImgOnly_p-invalid_1.csv" \
         			-nc                          
 }
 
