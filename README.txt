@@ -170,6 +170,9 @@ HISTORY
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
       - Provenance validator and formal test cases added. Error messages should be expected in testing.
+  Apr 3, 2017
+    * MaskScorer:
+      - Mask scoring sped up. Time taken to run has decreased by approximately 25%.
 
 
 CONTACT
