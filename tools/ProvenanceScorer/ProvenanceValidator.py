@@ -70,7 +70,7 @@ class ProvenanceValidator(validator):
             printq('The name of the file is not valid. Please review the requirements in the eval plan.',True)
             return 1 
         
-    def contentCheck(self,identify=False,neglectMask=False):
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProvenanceProbeFileID':str,

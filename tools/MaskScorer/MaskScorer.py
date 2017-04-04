@@ -277,8 +277,6 @@ elif args.task == 'splice':
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
             myf.close()
 
-printq("Beginning the mask scoring report...")
-
 if args.task == 'manipulation':
     index_dtype = {'TaskID':str,
              'ProbeFileID':str,
@@ -305,6 +303,8 @@ elif args.task == 'splice':
              'OutputProbeMaskFileName':str,
              'OutputDonorMaskFileName':str}
 
+printq("Beginning the mask scoring report...")
+
 mySysDir = os.path.join(args.sysDir,os.path.dirname(args.inSys))
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRefFile = os.path.join(myRefDir,args.inRef)
@@ -314,7 +314,7 @@ if args.optOut:
     if not ('IsOptOut' in list(mySys)):
         print("No IsOptOut column detected. Filtration is meaningless.")
         exit(1)
-    mySys = mySys.query("IsOptOut=='N'")
+    mySys = mySys.query("IsOptOut!='Y'")
     if len(mySys) == 0:
         print("Everything got opted out. Exiting.")
         exit(0)
@@ -513,17 +513,19 @@ if args.task == 'manipulation':
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
-    m_df = pd.merge(sub_ref, mySys, how='left', on=['ProbeFileID','DonorFileID'])
+    param_pfx = ['Probe','Donor']
+    param_ids = [e + 'FileID' for e in param_pfx]
+    m_df = pd.merge(sub_ref, mySys, how='left', on=param_ids)
 
     # get rid of inf values from the merge
-    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName',
-                                                                'DonorMaskFileName'])
+    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[e + 'MaskFileName' for e in param_pfx])
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    journalData0 = pd.merge(probeJournalJoin[['ProbeFileID','DonorFileID','JournalName']].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
+    joinfields = param_ids+['JournalName']
+    journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
     n_journals = len(journalData0)
     journalData0.index = range(n_journals)
 
@@ -534,12 +536,12 @@ elif args.task == 'splice':
 
     for qnum,q in enumerate(queryM):
         m_dfc = m_df.copy()
-        if args.queryManipulation:
-            journalData0['ProbeEvaluated'] = pd.Series(['N']*n_journals)
-            journalData0['DonorEvaluated'] = pd.Series(['N']*n_journals)
-        else:
-            journalData0['ProbeEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
-            journalData0['DonorEvaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
+
+        for param in param_pfx:
+            if args.queryManipulation:
+                journalData0[param+'Evaluated'] = pd.Series(['N']*n_journals)
+            else:
+                journalData0[param+'Evaluated'] = pd.Series(['Y']*n_journals)
 
         #use big_df to filter from the list as a temporary thing
         journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
@@ -548,13 +550,13 @@ elif args.task == 'splice':
         if q is not '':
             #exit if query does not match
             try:
-                big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','DonorFileID']).query(q)
+                big_df = pd.merge(m_df,journalData_df,how='left',on=param_ids).query(q)
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
 
             #do a join with the big dataframe and filter out the stuff that doesn't show up by pairs
-            m_dfc = pd.merge(m_dfc,big_df[['ProbeFileID','DonorFileID']],how='left',on=['ProbeFileID','DonorFileID','JournalName']).dropna().drop('JournalName',1)
+            m_dfc = pd.merge(m_dfc,big_df[param_ids],how='left',on=joinfields).dropna().drop('JournalName',1)
             #journalData = pd.merge(journalData0,big_df[['ProbeFileID','DonorFileID','JournalName']],how='left',on=['ProbeFileID','DonorFileID','JournalName'])
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','ProbeMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'ProbeEvaluated'] = 'Y'
@@ -565,7 +567,7 @@ elif args.task == 'splice':
             #journalData.index = range(0,len(journalData))
 
         #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
-        if len(pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','DonorFileID'])) == 0:
+        if len(pd.merge(m_df,journalData_df,how='left',on=param_ids)) == 0:
             print("The query '{}' yielded no journal data over which computation may take place.".format(q))
             continue
 
@@ -601,7 +603,8 @@ elif args.task == 'splice':
         journalData0 = journalData0[journalcols]
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
         a_df = 0
-    
+
+        #TODO: averaging procedure starts here
         p_idx = r_df.query('pMCC == -2').index
         d_idx = r_df.query('dMCC == -2').index
         r_df.loc[p_idx,'pNMM'] = ''
@@ -650,7 +653,8 @@ elif args.task == 'splice':
                 a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),index=False)
             else:
                 a_df = 0
-    
+        #TODO: averaging procedure ends here
+
         #generate HTML table report
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
@@ -661,31 +665,32 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('dMCC == -2').index,'DonorScored'] = 'N'
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
 
+printq("Ending the mask scoring report.")
 
-if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
-    precision = args.precision
-    if args.task == 'manipulation':
-        myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
-    
-        allmets = "Avg NMM: {}, Avg MCC: {}, Avg BWL1: {}, Avg GWL1: {}".format(round(myavgs[0],precision),
-                                                                 round(myavgs[1],precision),
-                                                                 round(myavgs[2],precision),
-                                                                 round(myavgs[3],precision))
-        printq(allmets)
-    
-    elif args.task == 'splice':
-        pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pBWL1','pGWL1']]
-        davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dBWL1','dGWL1']]
-        pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pBWL1: {}, Avg pGWL1: {}".format(round(pavgs[0],precision),
-                                                                     round(pavgs[1],precision),
-                                                                     round(pavgs[2],precision),
-                                                                     round(pavgs[3],precision))
-        dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dBWL1: {}, Avg dGWL1: {}".format(round(davgs[0],precision),
-                                                                     round(davgs[1],precision),
-                                                                     round(davgs[2],precision),
-                                                                     round(davgs[3],precision))
-        printq(pallmets)
-        printq(dallmets)
-    else:
-        printerr("ERROR: Task not recognized.")
+#if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
+#    precision = args.precision
+#    if args.task == 'manipulation':
+#        myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
+#    
+#        allmets = "Avg NMM: {}, Avg MCC: {}, Avg BWL1: {}, Avg GWL1: {}".format(round(myavgs[0],precision),
+#                                                                 round(myavgs[1],precision),
+#                                                                 round(myavgs[2],precision),
+#                                                                 round(myavgs[3],precision))
+#        printq(allmets)
+#    
+#    elif args.task == 'splice':
+#        pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pBWL1','pGWL1']]
+#        davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dBWL1','dGWL1']]
+#        pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pBWL1: {}, Avg pGWL1: {}".format(round(pavgs[0],precision),
+#                                                                     round(pavgs[1],precision),
+#                                                                     round(pavgs[2],precision),
+#                                                                     round(pavgs[3],precision))
+#        dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dBWL1: {}, Avg dGWL1: {}".format(round(davgs[0],precision),
+#                                                                     round(davgs[1],precision),
+#                                                                     round(davgs[2],precision),
+#                                                                     round(davgs[3],precision))
+#        printq(pallmets)
+#        printq(dallmets)
+#    else:
+#        printerr("ERROR: Task not recognized.")
 

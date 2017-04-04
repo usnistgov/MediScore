@@ -173,6 +173,9 @@ HISTORY
   Apr 3, 2017
     * MaskScorer:
       - Mask scoring sped up. Time taken to run has decreased by approximately 25%.
+      - Other generalizations applied. Initial steps taken towards further modularization of mask scoring code.
+    * Validator
+      - Reference file option included. Scoring for tasks can now be limited to target reference masks for considerable speedup.
 
 
 CONTACT
