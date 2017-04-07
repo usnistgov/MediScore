@@ -654,6 +654,7 @@ class maskMetrics:
     The image parameters necessary to evaluate most of the objects are included
     in the initialization.
     """
+    #TODO: incorporate speedup where we just count the number above or below a threshold.
     def __init__(self,ref,sys,w,systh=-1):
         """
         Constructor
@@ -679,6 +680,7 @@ class maskMetrics:
             if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
                 sys.bwmat = sys.matrix
 
+        #TODO: pass threshold as a parameter here?
         self.conf = self.confusion_measures(ref,sys,w)
 
         #record this dictionary of parameters
