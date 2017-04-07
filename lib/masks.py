@@ -241,6 +241,21 @@ class mask(object):
             self.bwmat = self.intensityBinarize3Channel(threshold,threshold,threshold,0,255)
         return self.bwmat
 
+    def pixelNoScore(self,pixelvalue):
+        """
+        * Description: this function produces a custom no-score region based on the pixel value in the function 
+        * Inputs:
+        *     pixelvalue: pixel value to treat as custom no-score region
+        * Outputs:
+        *     pns: pixel-based no-score region
+        """
+        dims = self.get_dims()
+        pns = np.ones((dims[0],dims[1])).astype(np.uint8)
+        if pixelvalue == -1:
+            return pns
+        pns[self.matrix==pixelvalue] = 0
+        return pns
+
     #save mask to file
     def save(self,fname,compression=0,th=-1):
         """
@@ -392,3 +407,4 @@ class refmask(mask):
         weights=dImg.astype(np.uint8)
 
         return weights
+

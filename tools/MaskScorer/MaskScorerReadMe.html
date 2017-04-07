@@ -11981,6 +11981,14 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <ul>
 <li>Dilation kernel size. (number must be odd; default = 9)</li>
 </ul>
+<p>--ntdks</p>
+<ul>
+<li>Non-target dilation kernel for regions that the user does not want scored. (number must be odd; default = 15)</li>
+</ul>
+<p>--nspx</p>
+<ul>
+<li>Set a pixel value in the system output mask to be a no-score region. The pixel value must be in the interval [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. (default = -1)</li>
+</ul>
 <p>-k kernel</p>
 <ul>
 <li>The shape of the kernel to be used, for both erosion and dilation. Choose from 'box','disc','diamond','gaussian', or 'line'. The default kernel is 'box'.</li>
@@ -12087,7 +12095,7 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
@@ -12098,6 +12106,21 @@ python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTe
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Current query: ConfidenceScore &lt; 0.5
+Current query: ManMade==[&#39;no&#39;]
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -12125,7 +12148,7 @@ python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash

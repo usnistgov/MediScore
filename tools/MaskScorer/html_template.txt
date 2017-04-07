@@ -40,7 +40,7 @@ $jtable
       <td><img src="$sysMask" alt="system output mask" style="width:${width}px;"><br/><b>Original System Output Mask</b></td>
     </tr>
     <tr>
-      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="$binRefMask" alt="binarized reference mask" style="width:${width}px;"><br/><b>Binarized Reference Mask (Black = Manipulated, Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone, Purple = System Opt Out)</b></td>
       <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated, Threshold &lt;= $systh)</b></td>
     </tr>
     <tr>
@@ -130,6 +130,17 @@ $jtable
       </td>
       <td align="left">
       $percsns
+      </td>
+    </tr>
+    <tr>
+      <td>
+<b>System Opt Out (<font style="color:#$pnshex">SNS: $pnscol</font>)</b>:
+      </td>
+      <td align="left">
+      $pns
+      </td>
+      <td align="left">
+      $percpns
       </td>
     </tr>
   </tbody>

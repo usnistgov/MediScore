@@ -215,7 +215,7 @@ class TestValidator(ut.TestCase):
         
         print("BASIC FUNCTIONALITY validation of DSDValidator.py beginning...")
         myval = DSD_Validator(validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
-        self.assertEqual(myval.fullCheck(True,identify,False),0)
+        self.assertEqual(myval.fullCheck(True,identify,False,validatorRoot + 'NC2016_Test0516_dfz/reference/splice/NC2016-splice-ref.csv'),0)
         print("BASIC FUNCTIONALITY validated.")
         
         errmsg = ""
