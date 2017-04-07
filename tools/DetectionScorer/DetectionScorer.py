@@ -119,6 +119,9 @@ if __name__ == '__main__':
         parser.add_argument('--outRoot',default='.',
                             help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
+        parser.add_argument('--outMeta', action='store_true',
+                            help="Save the CSV file with the system scores and metadata")
+
         parser.add_argument('--dump', action='store_true',
                             help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
 
@@ -261,7 +264,7 @@ if __name__ == '__main__':
             os.makedirs(root_path)
 
          # Partition Mode
-        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args.query or args.queryPartition or args.queryManipulation or args.outMeta: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
@@ -283,6 +286,11 @@ if __name__ == '__main__':
             elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
                 pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+
+            if args.outMeta: #save all metadata for analysis purpose
+                pm_df.to_csv(args.outRoot + '_meta.csv', index = False)
+                args.query = [ "TaskID ==['" + args.task.title() + "']" ] #uppercase for the first letter (NC2016)
+                args.query = [ "TaskID ==['" + args.task + "']" ] #NC2017
 
             if args.query:
                 query_mode = 'q'
