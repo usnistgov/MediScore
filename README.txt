@@ -26,7 +26,7 @@ following versions of Ubuntu Linux and OS X.
 INSTALLATION
 ------------
 
-(Lines starting with % are command lines)
+(Lines starting with $ are command lines)
 
 1) Install Python 2.7 (tested in Python == 2.7.12).
 

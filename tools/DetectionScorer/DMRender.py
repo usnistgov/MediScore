@@ -22,7 +22,8 @@ from matplotlib.pyplot import cm
 from collections import OrderedDict
 from itertools import cycle
 
-lib_path = "../../lib"
+#lib_path = "../../lib"
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import Render as p
 import detMetrics as dm
