@@ -66,8 +66,8 @@ class validator:
     @abstractmethod
     def nameCheck(self): pass
     @abstractmethod
-    def contentCheck(self,identify=False,neglectMask=False): pass
-    def fullCheck(self,nc,identify,neglectMask):
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0): pass
+    def fullCheck(self,nc,identify,neglectMask,reffname=0):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -94,7 +94,7 @@ class validator:
 
         printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
 
-        if self.contentCheck(identify,neglectMask) == 1:
+        if self.contentCheck(identify,neglectMask,reffname) == 1:
             return 1
         return 0
 
@@ -152,7 +152,7 @@ class SSD_Validator(validator):
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
-    def contentCheck(self,identify,neglectMask):
+    def contentCheck(self,identify,neglectMask,reffname):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -161,6 +161,13 @@ class SSD_Validator(validator):
                  'ProbeHeight':np.int64}
         idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
+        idxmini = 0
+
+        if reffname is not 0:
+            #filter idxfile based on ProbeFileID's in reffile
+            reffile = pd.read_csv(reffname,sep='|',na_filter=False)
+            gt_ids = reffile.query("IsTarget=='Y'")['ProbeFileID'].tolist()
+            idxmini = idxfile.query("ProbeFileID=={}".format(gt_ids))
     
         dupFlag = 0
         xrowFlag = 0
@@ -225,10 +232,16 @@ class SSD_Validator(validator):
         sysPath = os.path.dirname(self.sysname)
     
         for i in range(0,sysfile.shape[0]):
-            if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
-                printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
+            probeFileID = sysfile['ProbeFileID'][i]
+            if not (probeFileID in idxfile['ProbeFileID'].unique()):
+                printq("ERROR: {} does not exist in the index file.".format(probeFileID),True)
                 matchFlag = 1
                 continue
+            elif reffname is not 0:
+                if not (probeFileID in idxmini['ProbeFileID'].unique()):
+                    printq("{} is not actually manipulated. Neglecting mask validation.".format(probeFileID))
+                    continue
+
 #                printq("The contents of your file are not valid!",True)
 #                return 1
             if not (idxfile['ProbeFileID'][i] in sysfile['ProbeFileID'].unique()):
@@ -242,7 +255,7 @@ class SSD_Validator(validator):
                 if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                     printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                     continue
-                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
+                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,probeOutputMaskFileName),probeFileID,idxfile,identify)
         
         #final validation
         if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
@@ -299,7 +312,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self,identify,neglectMask):
+    def contentCheck(self,identify,neglectMask,reffname):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -325,13 +338,29 @@ class DSD_Validator(validator):
                 printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(s_len,i_len),True)
                 xrowFlag = 1
 
-        with open(self.idxname) as idxfile:
-            for i,l in enumerate(idxfile):
-                if i==0:
-                    i_headnames = l.split('|')
-                    for i,h in enumerate(i_headnames):
-                        i_heads[h.replace('\n','')] = i
-                else: break
+        r_files = {}
+        if reffname is not 0:
+            #TODO: filter idxfile based on ProbeFileID's in reffile
+            with open(reffname) as reffile:
+                r_heads = {}
+                for idx,l in enumerate(reffile):
+                    #print "Process index " + str(idx) + " " + l
+                    if idx == 0:
+                        r_headnames = l.rstrip().split('|')
+                        for i,h in enumerate(r_headnames):
+                            r_heads[h] = i
+                    else:
+                        r_data = l.rstrip().replace("\"","").split('|')
+                        r_files[r_data[r_heads['ProbeFileID']] + ":" + r_data[r_heads['DonorFileID']]] = r_data[r_heads['IsTarget']]
+            
+
+#        with open(self.idxname) as idxfile:
+#            for i,l in enumerate(idxfile):
+#                if i==0:
+#                    i_headnames = l.split('|')
+#                    for i,h in enumerate(i_headnames):
+#                        i_heads[h.replace('\n','')] = i
+#                else: break
 
         idxPath = os.path.dirname(self.idxname)
         ind = {}
@@ -392,6 +421,11 @@ class DSD_Validator(validator):
                         printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
                         keyFlag = 1
                         continue
+
+                    if reffname is not 0:
+                        if r_files[key] == 'N':
+                            printq("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
+                            continue
 
                     if testMask and not neglectMask:
                         probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
@@ -459,7 +493,7 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck_0(self,identify,neglectMask):
+    def contentCheck_0(self,identify,neglectMask,reffname):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -547,13 +581,21 @@ class DSD_Validator(validator):
                 return 1
 
             #check mask validation
+            probeFileID = sysfile['ProbeFileID'][i]
+            donorFileID = sysfile['DonorFileID'][i]
             probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
             donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
+            idxStats = idxfile.query("ProbeFileID=='{}' && DonorFileID=='{}'".format(probeFileID,donorFileID))
+            idxProbeWidth = idxStats['ProbeWidth'][0]
+            idxProbeHeight = idxStats['ProbeHeight'][0]
+            idxDonorWidth = idxStats['DonorWidth'][0]
+            idxDonorHeight = idxStats['DonorHeight'][0]
 
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-                printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping this pair.")
+                printq("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeFileID,donorFileID))
                 continue
-            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
+#            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
+            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,i,identify)
         
         #final validation
         if maskFlag==0:
@@ -752,6 +794,8 @@ if __name__ == '__main__':
     help='required index file',metavar='character')
     parser.add_argument('-s','--inSys',type=str,default=None,\
     help='required system output file',metavar='character')
+    parser.add_argument('-r','--inRef',type=str,default=0,\
+    help='optional reference file for filtration',metavar='character')
     parser.add_argument('-vt','--valtype',type=str,default=None,\
     help='required validator type',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
@@ -786,11 +830,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
+            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask,args.inRef)
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
+            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask,args.inRef)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")

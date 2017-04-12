@@ -1,6 +1,6 @@
 File: README.txt
 Date: March 30, 2017
-MediScore Version: 1.1.3
+MediScore Version: 1.1.4
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -170,9 +170,20 @@ HISTORY
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
       - Provenance validator and formal test cases added. Error messages should be expected in testing.
-  APR 12, 2017 - MediScore Version 1.1.3:
+  Apr 12, 2017 - MediScore Version 1.1.4:
     * DetectionScorer:
       - Absolute paths added. Path dependency for the detection scorer is no longer required.
+    * MaskScorer:
+      - Mask scoring sped up. Time taken to run has decreased by approximately 25%.
+      - Other generalizations applied. Initial steps taken towards further modularization of mask scoring code.
+      - System opt out option introduced. Select pixel values in the mask can be treated as no-score zones.
+      - The threshold metric table for the HTML output is replaced by a plot of the MCC value per binarization threshold. If some issue crops up
+        during the plotting attempt, the threshold metric table will appear instead.
+    * Validator:
+      - Reference file option included. Scoring for tasks can now be limited to target reference masks for considerable speedup.
+    * Provenance:
+      - Provenance validator has added a task option for when checking the EXPID is irrelevant.
+
 
 CONTACT
 -------

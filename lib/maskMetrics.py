@@ -28,8 +28,8 @@ import math
 import copy
 import numpy as np
 import pandas as pd
-#import matplotlib.pyplot as plt
 import os
+import sys
 import random
 import masks
 from decimal import Decimal
@@ -50,7 +50,7 @@ class maskMetricList:
                  joindf,
                  index,
                  mode=0,
-                 colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'white':[255,255,255]}):
+                 colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'purple':[211,0,148],'white':[255,255,255],'gray':[127,127,127]}):
         """
         Constructor
 
@@ -135,6 +135,7 @@ class maskMetricList:
                 #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
                 color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']]
                 colorlist = list(color_purpose['Color'])
+                colorlist = list(filter(lambda a: a != '',colorlist))
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
                 [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
@@ -161,7 +162,7 @@ class maskMetricList:
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
 
-    def getMetricList(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,outputRoot,verbose,html,precision=16):
+    def getMetricList(self,erodeKernSize,dilateKernSize,distractionKernSize,noScorePixel,kern,outputRoot,verbose,html,precision=16):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
@@ -169,6 +170,7 @@ class maskMetricList:
         *     dilateKernSize: length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
                                    0 means nothing will be scored
+        *     noScorePixel: pixel value in the mask to treat as custom no-score region.
         *     kern: kernel shape to be used
         *     outputRoot: the directory for outputs to be written
         *     verbose: permit printout from metrics
@@ -297,6 +299,14 @@ class maskMetricList:
                 rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
                 rImgbin.matrix[bns==0] = self.colordict['yellow']
                 rImgbin.matrix[sns==0] = self.colordict['pink']
+
+                #noScorePixel here
+                pns=0
+                if noScorePixel >= 0:
+                    pns=sImg.pixelNoScore(noScorePixel)
+                    rImgbin.matrix[pns==0] = self.colordict['purple'] #TODO: temporary measure until different color is picked
+                    wts = cv2.bitwise_and(wts,pns)
+
                 rImgbin.save(rbin_name)
 
                 #computes differently depending on choice to binarize system output mask
@@ -332,13 +342,13 @@ class maskMetricList:
  
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
-                    colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,kern,erodeKernSize,maniImgName,subOutRoot)
+                    colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,maniImgName,subOutRoot)
                     colMaskName=colordirs['mask']
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,mets,mymeas,colMaskName,aggImgName,verbose)
+                    self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
         return df.drop(mymode+'MaskFileName',1)
@@ -378,7 +388,7 @@ class maskMetricList:
             hexcolors[c] = self.num2hex(mybgr)
         return hexcolors
     
-    def manipReport(self,task,outputRoot,probeFileID,maniImageFName,baseImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
+    def manipReport(self,task,outputRoot,probeFileID,maniImageFName,baseImageFName,rImg_name,sImg_name,rbin_name,sbin_name,sys_threshold,thresMets,b_weights,s_weights,p_weights,metrics,confmeasures,colMaskName,aggImgName,verbose):
         """
         * Description: this function assembles the HTML report for the manipulated image and is meant to be used solely by getMetricList
         * Inputs:
@@ -395,6 +405,7 @@ class maskMetricList:
         *     thresMets: the table of thresholds for the image and the scores they yielded for that threshold
         *     b_weights: the weighted matrix of the no-score zones of the targeted regions
         *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
+        *     p_weights: the weighted matrix of the no-score zones generated from pixels of a select value in the original mask
         *     metrics: the dictionary of mask scores
         *     confmeasures: truth table measures evaluated between the reference and system output masks
         *     colMaskName: the aggregate mask image of the ground truth, system output, and no-score regions
@@ -405,8 +416,8 @@ class maskMetricList:
         if not os.path.isdir(outputRoot):
             os.system('mkdir ' + outputRoot)
 
-        bwts = np.uint8(255*b_weights)
-        swts = np.uint8(255*s_weights)
+        bwts = np.uint8(b_weights)
+        swts = np.uint8(s_weights)
         sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
@@ -418,6 +429,11 @@ class maskMetricList:
         colwts[bwts==0] = self.colordict['yellow']
         colwts[swts==0] = self.colordict['pink']
 
+        totalpns = 0
+        if p_weights is not 0:
+            colwts[p_weights==0] = self.colordict['purple']
+            totalpns = np.sum(p_weights==0)
+
         cv2.imwrite(weightpath,colwts)
 
         mPath = os.path.join(self.refDir,maniImageFName)
@@ -428,7 +444,7 @@ class maskMetricList:
             htmlstr = Template(f.read())
 
         #dictionary of colors corresponding to confusion measures
-        cols = {'tpcol':'green','fpcol':'red','tncol':'white','fncol':'blue','bnscol':'yellow','snscol':'pink'}
+        cols = {'tpcol':'green','fpcol':'red','tncol':'white','fncol':'blue','bnscol':'yellow','snscol':'pink','pnscol':'purple'}
         hexs = self.nums2hex(cols.values()) #get hex strings from the BGR cols
 
         jtable = ''
@@ -441,7 +457,7 @@ class maskMetricList:
                 evalcol='ProbeEvaluated'
 
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("ProbeFileID=='{}'".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -459,8 +475,20 @@ class maskMetricList:
 
         thresString = ''
         if len(thresMets) > 1:
-            thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3}) #TODO: eventually substitute with a plot from matplotlib based off of thresMets for MCC
-            thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
+            #plot MCC
+            try:
+                import matplotlib.pyplot as plt
+                plt.plot(thresMets['Threshold'],thresMets['MCC'],'bo',thresMets['Threshold'],thresMets['MCC'],'k')
+                plt.xlabel("Binarization threshold value")
+                plt.ylabel("Matthews Correlation Coefficient (MCC)")
+                thresString = os.path.join(outputRoot,'thresMets.png')
+                plt.savefig(thresString,bbox_inches='tight') #save the graph
+                thresString = "<img src=\"{}\" alt=\"thresholds graph\" style=\"width:{}px;\">".format('thresMets.png',allshapes)
+            except:
+                e = sys.exc_info()[0]
+                print("The plotter encountered error {}. Defaulting to table display for the HTML report.".format(e))
+                thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+                thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
         mBase = os.path.basename(mPath)
@@ -533,24 +561,28 @@ class maskMetricList:
                                       'fn' : int(confmeasures['FN']),
                                       'bns' : totalbns,
                                       'sns' : totalsns,
+                                      'pns' : totalpns,
                                       'tpcol':cols['tpcol'],
                                       'fpcol':cols['fpcol'],
                                       'tncol':cols['tncol'],
                                       'fncol':cols['fncol'],
                                       'bnscol':cols['bnscol'],
                                       'snscol':cols['snscol'],
+                                      'pnscol':cols['pnscol'],
                                       'tphex':hexs[cols['tpcol']],
                                       'fphex':hexs[cols['fpcol']],
                                       'tnhex':hexs[cols['tncol']],
                                       'fnhex':hexs[cols['fncol']],
                                       'bnshex':hexs[cols['bnscol']],
                                       'snshex':hexs[cols['snscol']],
+                                      'pnshex':hexs[cols['pnscol']],
                                       'perctp':round(float(confmeasures['TP'])/totalpx,3),
                                       'percfp':round(float(confmeasures['FP'])/totalpx,3),
                                       'perctn':round(float(confmeasures['TN'])/totalpx,3),
                                       'percfn':round(float(confmeasures['FN'])/totalpx,3),
                                       'percbns':round(float(totalbns)/totalpx,3),
                                       'percsns':round(float(totalsns)/totalpx,3),
+                                      'percpns':round(float(totalpns)/totalpx,3),
                                       'jtable':jtable,
                                       'th_table':thresString}) #add journal operations and set bg color to the html
 
@@ -563,7 +595,7 @@ class maskMetricList:
         myhtml.close()
 
     #prints out the aggregate mask, reference and other data
-    def aggregateColorMask(self,ref,sys,bns,sns,kern,erodeKernSize,maniImgName,outputMaskPath):
+    def aggregateColorMask(self,ref,sys,bns,sns,pns,kern,erodeKernSize,maniImgName,outputMaskPath):
         """
         *Description: this function produces the aggregate mask image of the ground truth, system output,
                       and no-score regions for the HTML report, and a composite of the same image superimposed
@@ -595,13 +627,18 @@ class maskMetricList:
         b_eImg = 1-eData/255 #erosion of black/white reference mask
         b_bnsImg = 1-bns
         b_snsImg = 1-sns
+        b_pnsImg = 1-pns
 
         b_sImg[b_sImg != 0] = 1
         b_eImg[b_eImg != 0] = 2
         b_bnsImg[b_bnsImg != 0] = 4
         b_snsImg[b_snsImg != 0] = 8
+        if b_pnsImg is not 1:
+            b_pnsImg[b_pnsImg != 0] = 16
+        else:
+            b_pnsImg = 0
 
-        mImg = b_sImg + b_eImg + b_bnsImg + b_snsImg
+        mImg = b_sImg + b_eImg + b_bnsImg + b_snsImg + b_pnsImg
 
         #set pixels equal to some value:
         #red to false accept and false reject
@@ -615,7 +652,8 @@ class maskMetricList:
         mycolor[mImg==2] = self.colordict['blue'] #only erode image (FN) (the part that is scored)
         mycolor[mImg==3] = self.colordict['green'] #system and erode image coincide (TP)
         mycolor[(mImg>=4) & (mImg <=7)] = self.colordict['yellow'] #boundary no-score zone
-        mycolor[mImg>=8] = self.colordict['pink'] #selection no-score zone
+        mycolor[(mImg>=8) & (mImg <=15)] = self.colordict['pink'] #selection no-score zone
+        mycolor[mImg>=16] = self.colordict['purple'] #system opt out
 
         #return path to mask
         outputMaskName = sys.name.split('/')[-1]
@@ -654,7 +692,6 @@ class maskMetrics:
     The image parameters necessary to evaluate most of the objects are included
     in the initialization.
     """
-    #TODO: incorporate speedup where we just count the number above or below a threshold.
     def __init__(self,ref,sys,w,systh=-1):
         """
         Constructor
@@ -673,20 +710,20 @@ class maskMetrics:
             ref.binarize(254) #get the black/white mask first if not already gotten
 
         self.sys_threshold = systh
-        if systh >= 0:
-            sys.binarize(systh)
-        else:
-            distincts = np.unique(sys.matrix)
-            if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
-                sys.bwmat = sys.matrix
+#        if systh >= 0:
+#            sys.binarize(systh)
+#        else:
+#            distincts = np.unique(sys.matrix)
+#            if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
+#                sys.bwmat = sys.matrix
 
-        #TODO: pass threshold as a parameter here?
-        self.conf = self.confusion_measures(ref,sys,w)
+        #pass threshold as a parameter here
+        self.conf = self.confusion_measures(ref,sys,w,systh)
 
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
         self.mcc = self.matthews(self.conf)
-        self.bwL1 = self.binaryWeightedL1(ref,sys,w)
+        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
 
     def getMetrics(self,popt=0):
         """
@@ -769,7 +806,7 @@ class maskMetrics:
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def confusion_measures(self,ref,sys,w):
+    def confusion_measures(self,ref,sys,w,th):
         """
         * Metric: confusion_measures
         * Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
@@ -779,22 +816,28 @@ class maskMetrics:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
+        *     th: the threshold for binarization
         * Output:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
         r = ref.bwmat.astype(int)
         #TODO: placeholder until something better covers it
-        if sys.bwmat is 0:
-            sys.binarize(254)
+#        if sys.bwmat is 0:
+        if th == -1:
+            th = 254
 
-        s = sys.bwmat.astype(int)
-        x = (r+s)/255.
+#        s = sys.bwmat.astype(int)
+        s = sys.matrix <= th
+#        x = (r+s)/255.
+        mywts = w==1
+        rpos = (r==0) & mywts
+        rneg = (r==255) & mywts
 
-        tp = np.float64(np.sum((x==0.) & (w==1)))
-        fp = np.float64(np.sum((x==1.) & (r==255) & (w==1)))
-        fn = np.float64(np.sum((x==1.) & (w==1)) - fp)
-        tn = np.float64(np.sum((x==2.) & (w==1)))
-        n = np.sum(w==1)
+        tp = np.float64(np.sum(s & rpos))
+        fp = np.float64(np.sum(s & rneg))
+        fn = np.float64(np.sum(rpos) - tp)
+        tn = np.float64(np.sum(rneg) - fp)
+        n = np.sum(mywts)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
@@ -872,7 +915,7 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def binaryWeightedL1(self,ref,sys,w):
+    def binaryWeightedL1(self,ref,sys,w,th):
         """
         * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
@@ -882,14 +925,17 @@ class maskMetrics:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
+        *     th: the threshold for binarization
         * Outputs:
         *     Normalized binary WL1 value
         """
+        if th is -1:
+            th = 254
 
-        rmat = ref.bwmat.astype(int)
-        smat = sys.bwmat.astype(int)
+        rmat = ref.bwmat.astype(int)/255.
+        smat = sys.matrix
 
-        wL1=np.multiply(w,abs(rmat-smat)/255.)
+        wL1=np.multiply(w,abs(rmat-(smat > th)))
         wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
         n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
