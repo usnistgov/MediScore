@@ -13,7 +13,7 @@ example data for the following tools:
                                     (Localization) Scorer
   ProvenanceFilteringScorer       - Scorer for Provenance Filtering
   ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
-		     
+
 
 This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
@@ -170,7 +170,9 @@ HISTORY
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
       - Provenance validator and formal test cases added. Error messages should be expected in testing.
-
+  APR 12, 2017 - MediScore Version 1.1.3:
+    * DetectionScorer:
+      - Absolute paths added. Path dependency for the detection scorer is no longer required.
 
 CONTACT
 -------
