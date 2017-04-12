@@ -133,13 +133,24 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
+    parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
     args = parser.parse_args()
 
+    mkdir_p(args.output_dir)
+    figure_dir = os.path.join(os.path.abspath(args.output_dir), "figures") 
+    # Import GraphVisualizer only if needed as it requires additional
+    # dependencies
+    if args.plot_scored:
+        from GraphVisualizer import *
+        mkdir_p(figure_dir)
+    
     trial_index = load_csv(args.index_file)
     ref_file = load_csv(args.reference_file)
     nodes_file = load_csv(args.node_file)
     world_index = load_csv(args.world_file)
 
+    abs_reference_dir = os.path.abspath(args.reference_dir)
+    
     system_output_index = load_csv(args.system_output_file)
 
     def check_for_trial_disparity():
@@ -179,7 +190,7 @@ if __name__ == '__main__':
         world_node_lookup[world_node.JournalNodeID] = world_node.WorldFileName_x
     
     for journal_fn, trial_index_ref_sysout_items in trial_index_ref_sysout.groupby("JournalFileName"):
-        journal_path = os.path.join(args.reference_dir, journal_fn)
+        journal_path = os.path.join(abs_reference_dir, journal_fn)
         journal = load_json(journal_path)        
         
         node_lookup = {}
@@ -227,6 +238,14 @@ if __name__ == '__main__':
 
             sys_nodes, sys_edges = system_out_to_scorable(system_out)
 
+            # Could maybe put this in a "mapping" function
+            correct_nodes = sys_nodes & ref_nodes
+            fa_nodes = sys_nodes - ref_nodes
+            missing_nodes = ref_nodes - sys_nodes
+            correct_edges = sys_edges & ref_edges
+            fa_edges = sys_edges - ref_edges
+            missing_edges = ref_edges - sys_edges
+                        
             out_rec = { "JournalName": trial.JournalName,
                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                         "Direct": args.direct,
@@ -235,18 +254,30 @@ if __name__ == '__main__':
                         "NumSysLinks": len(sys_edges),
                         "NumRefNodes": len(ref_nodes),
                         "NumRefLinks": len(ref_edges),
-                        "NumCorrectNodes": len(sys_nodes & ref_nodes),
-                        "NumMissingNodes": len(ref_nodes - sys_nodes),
-                        "NumFalseAlarmNodes": len(sys_nodes - ref_nodes),
-                        "NumCorrectLinks": len(sys_edges & ref_edges),
-                        "NumMissingLinks": len(ref_edges - sys_edges),
-                        "NumFalseAlarmLinks": len(sys_edges - ref_edges),
+                        "NumCorrectNodes": len(correct_nodes),
+                        "NumMissingNodes": len(missing_nodes),
+                        "NumFalseAlarmNodes": len(fa_nodes),
+                        "NumCorrectLinks": len(correct_edges),
+                        "NumMissingLinks": len(missing_edges),
+                        "NumFalseAlarmLinks": len(fa_edges),
                         "SimNLO": SimNLO(ref_nodes, ref_edges, sys_nodes, sys_edges),
                         "SimNO": SimNO(ref_nodes, sys_nodes),
                         "SimLO": SimLO(ref_edges, sys_edges),
                         "NodeRecall": node_recall(ref_nodes, sys_nodes) }
             
             output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
+
+            # Plot our scored graph if requested
+            if args.plot_scored:
+                out_fn = os.path.join(figure_dir, "{}.png".format(trial.ProvenanceProbeFileID))
+                render_provenance_graph_from_mapping(correct_nodes,
+                                                     fa_nodes,
+                                                     missing_nodes,
+                                                     correct_edges,
+                                                     fa_edges,
+                                                     missing_edges,
+                                                     out_fn,
+                                                     abs_reference_dir)
 
     output_agg_records = build_provenancegraphbuilding_agg_output_df()
     aggregated = { "Direct": args.direct,
@@ -256,7 +287,6 @@ if __name__ == '__main__':
                    "MeanNodeRecall": output_records["NodeRecall"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
     
-    mkdir_p(args.output_dir)
     try:
         with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
             output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
