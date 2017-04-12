@@ -196,6 +196,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
     parser.add_argument("-x", "--index_file", help="Task Index file", type=str, required=True)
     parser.add_argument("-s", "--system_output_file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
+    parser.add_argument("-t", "--task", help="Evaluation task. Required only if name checking is not done.", type=str)
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-nm','--neglectJSON',action="store_true",\
@@ -216,4 +217,6 @@ if __name__ == '__main__':
                 print(mystring)
 
     validation = ProvenanceValidator(args.system_output_file,args.index_file)
+    if args.task:
+        validation.task = args.task
     validation.fullCheck(args.nameCheck,False,args.neglectJSON)

@@ -135,6 +135,7 @@ class maskMetricList:
                 #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
                 color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,myProbeID,evalcol))[['Color','Purpose']]
                 colorlist = list(color_purpose['Color'])
+                colorlist = list(filter(lambda a: a != '',colorlist))
                 purposes = list(color_purpose['Purpose'])
                 purposes_unique = []
                 [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
@@ -456,7 +457,7 @@ class maskMetricList:
                 evalcol='ProbeEvaluated'
 
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("ProbeFileID=='{}'".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
+            jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration

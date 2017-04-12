@@ -121,15 +121,15 @@ else:
 
 #wrapper print function when encountering an error. Will also cause script to exit after message is printed.
 
-if verbose==0:
-    def printerr(string,exitcode=1):
-        exit(exitcode)
-else:
-    def printerr(string,exitcode=1):
-        if verbose != 0:
-            parser.print_help()
-            print(string)
-            exit(exitcode)
+#if verbose==0:
+#    def printerr(string,exitcode=1):
+#        exit(exitcode)
+#else:
+def printerr(string,exitcode=1):
+    if verbose != 0:
+        parser.print_help()
+        print(string)
+    exit(exitcode)
 
 args.task = args.task.lower()
 
