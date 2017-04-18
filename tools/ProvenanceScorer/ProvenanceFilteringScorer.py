@@ -46,63 +46,61 @@ def system_out_to_ordered_nodes(system_out):
     node_set_w_confidence.sort(reverse=True)
     return node_set_w_confidence
 
-def build_provenancefiltering_agg_output_df():
-    df = pd.DataFrame(columns=["MeanNodeRecall@50",
-                               "MeanNodeRecall@100",
-                               "MeanNodeRecall@200"])
-    dtypes = { "MeanNodeRecall@50": float,
-               "MeanNodeRecall@100": float,
-               "MeanNodeRecall@200": float }
+# Can't use just a hash here, as we need to enforce column order
+def build_dataframe(columns, fields):
+    df = pd.DataFrame(columns=columns)
 
+    
     # Setting column data type one by one as pandas doesn't offer a
     # convenient way to do this
-    for col, t in dtypes.items():
+    for col, t in fields.items():
         df[col] = df[col].astype(t)
 
     return df
+
+def build_provenancefiltering_agg_output_df():
+    return build_dataframe(["MeanNodeRecall@50",
+                            "MeanNodeRecall@100",
+                            "MeanNodeRecall@200"],
+                           { "MeanNodeRecall@50": float,
+                             "MeanNodeRecall@100": float,
+                             "MeanNodeRecall@200": float })
 
 def build_provenancefiltering_output_df():
-    df = pd.DataFrame(columns=["JournalName",
-                               "ProvenanceProbeFileID",
-                               "ProvenanceOutputFileName",
-                               "NumSysNodes",
-                               "NumRefNodes",
-                               "NumCorrectNodes@50",
-                               "NumMissingNodes@50",
-                               "NumFalseAlarmNodes@50",
-                               "NumCorrectNodes@100",
-                               "NumMissingNodes@100",
-                               "NumFalseAlarmNodes@100",
-                               "NumCorrectNodes@200",
-                               "NumMissingNodes@200",
-                               "NumFalseAlarmNodes@200",
-                               "NodeRecall@50",
-                               "NodeRecall@100",
-                               "NodeRecall@200"])
-    dtypes = { "JournalName": str,
-               "ProvenanceProbeFileID": str,
-               "ProvenanceOutputFileName": str,
-               "NumSysNodes": int,
-               "NumRefNodes": int,
-               "NumCorrectNodes@50": int,
-               "NumMissingNodes@50": int,
-               "NumFalseAlarmNodes@50": int,
-               "NumCorrectNodes@100": int,
-               "NumMissingNodes@100": int,
-               "NumFalseAlarmNodes@100": int,
-               "NumCorrectNodes@200": int,
-               "NumMissingNodes@200": int,
-               "NumFalseAlarmNodes@200": int,
-               "NodeRecall@50": float,
-               "NodeRecall@100": float,
-               "NodeRecall@200": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "ProvenanceOutputFileName",
+                            "NumSysNodes",
+                            "NumRefNodes",
+                            "NumCorrectNodes@50",
+                            "NumMissingNodes@50",
+                            "NumFalseAlarmNodes@50",
+                            "NumCorrectNodes@100",
+                            "NumMissingNodes@100",
+                            "NumFalseAlarmNodes@100",
+                            "NumCorrectNodes@200",
+                            "NumMissingNodes@200",
+                            "NumFalseAlarmNodes@200",
+                            "NodeRecall@50",
+                            "NodeRecall@100",
+                            "NodeRecall@200"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "ProvenanceOutputFileName": str,
+                             "NumSysNodes": int,
+                             "NumRefNodes": int,
+                             "NumCorrectNodes@50": int,
+                             "NumMissingNodes@50": int,
+                             "NumFalseAlarmNodes@50": int,
+                             "NumCorrectNodes@100": int,
+                             "NumMissingNodes@100": int,
+                             "NumFalseAlarmNodes@100": int,
+                             "NumCorrectNodes@200": int,
+                             "NumMissingNodes@200": int,
+                             "NumFalseAlarmNodes@200": int,
+                             "NodeRecall@50": float,
+                             "NodeRecall@100": float,
+                             "NodeRecall@200": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")

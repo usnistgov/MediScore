@@ -56,70 +56,67 @@ def system_out_to_scorable(system_out):
     edge_set = { (node_lookup[edge["source"]]["file"], node_lookup[edge["target"]]["file"]) for edge in system_out["links"] }
     return (node_set, edge_set)
 
-def build_provenancegraphbuilding_agg_output_df():
-    df = pd.DataFrame(columns=["Direct",
-                               "MeanSimNLO",
-                               "MeanSimNO",
-                               "MeanSimLO",
-                               "MeanNodeRecall"])
+# Can't use just a hash here, as we need to enforce column order
+def build_dataframe(columns, fields):
+    df = pd.DataFrame(columns=columns)
 
-    dtypes = { "Direct": bool,
-               "MeanSimNLO": float,
-               "MeanSimNO": float,
-               "MeanSimLO": float,
-               "MeanNodeRecall": float }
-
+    
     # Setting column data type one by one as pandas doesn't offer a
     # convenient way to do this
-    for col, t in dtypes.items():
+    for col, t in fields.items():
         df[col] = df[col].astype(t)
 
     return df
+
+def build_provenancegraphbuilding_agg_output_df():
+    return build_dataframe(["Direct",
+                            "MeanSimNLO",
+                            "MeanSimNO",
+                            "MeanSimLO",
+                            "MeanNodeRecall"],
+                           { "Direct": bool,
+                             "MeanSimNLO": float,
+                             "MeanSimNO": float,
+                             "MeanSimLO": float,
+                             "MeanNodeRecall": float })
 
 def build_provenancegraphbuilding_output_df():
-    df = pd.DataFrame(columns=["JournalName",
-                               "ProvenanceProbeFileID",
-                               "Direct",
-                               "ProvenanceOutputFileName",
-                               "NumSysNodes",
-                               "NumSysLinks",
-                               "NumRefNodes",
-                               "NumRefLinks",
-                               "NumCorrectNodes",
-                               "NumMissingNodes",
-                               "NumFalseAlarmNodes",
-                               "NumCorrectLinks",
-                               "NumMissingLinks",
-                               "NumFalseAlarmLinks",
-                               "SimNLO",
-                               "SimNO",
-                               "SimLO",
-                               "NodeRecall"])
-    dtypes = { "JournalName": str,
-               "ProvenanceProbeFileID": str,
-               "Direct": bool,
-               "ProvenanceOutputFileName": str,
-               "NumSysNodes": int,
-               "NumSysLinks": int,
-               "NumRefNodes": int,
-               "NumRefLinks": int,
-               "NumCorrectNodes": int,
-               "NumMissingNodes": int,
-               "NumFalseAlarmNodes": int,
-               "NumCorrectLinks": int,
-               "NumMissingLinks": int,
-               "NumFalseAlarmLinks": int,
-               "SimNLO": float,
-               "SimNO": float,
-               "SimLO": float,
-               "NodeRecall": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "NumSysNodes",
+                            "NumSysLinks",
+                            "NumRefNodes",
+                            "NumRefLinks",
+                            "NumCorrectNodes",
+                            "NumMissingNodes",
+                            "NumFalseAlarmNodes",
+                            "NumCorrectLinks",
+                            "NumMissingLinks",
+                            "NumFalseAlarmLinks",
+                            "SimNLO",
+                            "SimNO",
+                            "SimLO",
+                            "NodeRecall"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "NumSysNodes": int,
+                             "NumSysLinks": int,
+                             "NumRefNodes": int,
+                             "NumRefLinks": int,
+                             "NumCorrectNodes": int,
+                             "NumMissingNodes": int,
+                             "NumFalseAlarmNodes": int,
+                             "NumCorrectLinks": int,
+                             "NumMissingLinks": int,
+                             "NumFalseAlarmLinks": int,
+                             "SimNLO": float,
+                             "SimNO": float,
+                             "SimLO": float,
+                             "NodeRecall": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceGraphBuilding task output")
@@ -280,6 +277,7 @@ if __name__ == '__main__':
                                                      abs_reference_dir)
 
     output_agg_records = build_provenancegraphbuilding_agg_output_df()
+
     aggregated = { "Direct": args.direct,
                    "MeanSimNLO": output_records["SimNLO"].mean(),
                    "MeanSimNO": output_records["SimNO"].mean(),
