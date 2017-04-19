@@ -267,7 +267,8 @@ if __name__ == '__main__':
             # Plot our scored graph if requested
             if args.plot_scored:
                 out_fn = os.path.join(figure_dir, "{}.png".format(trial.ProvenanceProbeFileID))
-                render_provenance_graph_from_mapping(correct_nodes,
+                render_provenance_graph_from_mapping(trial.ProvenanceProbeFileID,
+                                                     correct_nodes,
                                                      fa_nodes,
                                                      missing_nodes,
                                                      correct_edges,
