@@ -80,6 +80,36 @@ def build_provenancegraphbuilding_agg_output_df():
                              "MeanSimLO": float,
                              "MeanNodeRecall": float })
 
+def build_provenancegraphbuilding_nodemapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "WorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "WorldFileID": str,
+                             "Mapping": str })
+
+def build_provenancegraphbuilding_linkmapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "SourceWorldFileID",
+                            "TargetWorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "SourceWorldFileID": str,
+                             "TargetWorldFileID": str,
+                             "Mapping": str })
+
 def build_provenancegraphbuilding_output_df():
     return build_dataframe(["JournalName",
                             "ProvenanceProbeFileID",
@@ -181,6 +211,8 @@ if __name__ == '__main__':
     world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
 
     output_records = build_provenancegraphbuilding_output_df()
+    output_node_mapping_records = build_provenancegraphbuilding_nodemapping_df()
+    output_link_mapping_records = build_provenancegraphbuilding_linkmapping_df()
     
     world_node_lookup = {}
     for world_node in world_nodes.itertuples():
@@ -242,7 +274,39 @@ if __name__ == '__main__':
             correct_edges = sys_edges & ref_edges
             fa_edges = sys_edges - ref_edges
             missing_edges = ref_edges - sys_edges
-                        
+
+            def _worldfile_path_to_id(path):
+                base, ext = os.path.splitext(os.path.basename(path))
+                return base
+
+            def _build_node_map_record(node, mapping):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "WorldFileID": _worldfile_path_to_id(node),
+                         "Mapping": mapping }
+
+            def _build_link_map_record(link, mapping):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "SourceWorldFileID": _worldfile_path_to_id(link[0]),
+                         "TargetWorldFileID": _worldfile_path_to_id(link[1]),
+                         "Mapping": mapping }
+
+            for map_record in ([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                               [ _build_node_map_record(node, "FalseAlarm") for node in fa_nodes ] +
+                               [ _build_node_map_record(node, "Missing") for node in missing_nodes ]):
+                output_node_mapping_records = output_node_mapping_records.append(pd.Series(map_record), ignore_index=True)
+
+            for map_record in ([ _build_link_map_record(link, "Correct") for link in correct_edges ] +
+                               [ _build_link_map_record(link, "FalseAlarm") for link in fa_edges ] +
+                               [ _build_link_map_record(link, "Missing") for link in missing_edges ]):
+                output_link_mapping_records = output_link_mapping_records.append(pd.Series(map_record), ignore_index=True)
+
+            
             out_rec = { "JournalName": trial.JournalName,
                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                         "Direct": args.direct,
@@ -285,14 +349,15 @@ if __name__ == '__main__':
                    "MeanSimLO": output_records["SimLO"].mean(),
                    "MeanNodeRecall": output_records["NodeRecall"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
-    
-    try:
-        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
-            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
-    try:
-        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
-            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+
+    def _write_df_to_csv(df, out_fn):
+        try:
+            with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
+                df.to_csv(path_or_buf=out_f, sep="|", index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
+
+    _write_df_to_csv(output_records, "trial_scores.csv")
+    _write_df_to_csv(output_agg_records, "scores.csv")
+    _write_df_to_csv(output_node_mapping_records, "node_mapping.csv")
+    _write_df_to_csv(output_link_mapping_records, "link_mapping.csv")
