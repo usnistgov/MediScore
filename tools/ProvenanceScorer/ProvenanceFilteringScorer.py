@@ -66,6 +66,20 @@ def build_provenancefiltering_agg_output_df():
                              "MeanNodeRecall@100": float,
                              "MeanNodeRecall@200": float })
 
+def build_provenancefiltering_nodemapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "ProvenanceOutputFileName",
+                            "Measure",
+                            "WorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "ProvenanceOutputFileName": str,
+                             "Measure": str,
+                             "WorldFileID": str,
+                             "Mapping": str })
+
 def build_provenancefiltering_output_df():
     return build_dataframe(["JournalName",
                             "ProvenanceProbeFileID",
@@ -153,6 +167,7 @@ if __name__ == '__main__':
     world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
 
     output_records = build_provenancefiltering_output_df()
+    output_mapping_records = build_provenancefiltering_nodemapping_df()
         
     for trial in trial_index_ref_sysout.itertuples():
         system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
@@ -162,19 +177,41 @@ if __name__ == '__main__':
         world_set_nodes.add(probe_node_wfn)
 
         ordered_sys_nodes = system_out_to_ordered_nodes(system_out)
-
+            
         out_rec = { "JournalName": trial.JournalName,
                     "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                     "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
                     "NumSysNodes": len(ordered_sys_nodes),
                     "NumRefNodes": len(world_set_nodes) }
 
+        def _worldfile_path_to_id(path):
+            base, ext = os.path.splitext(os.path.basename(path))
+            return base
+        
+        def _build_node_map_record(node, mapping):
+            return { "JournalName": trial.JournalName,
+                     "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                     "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                     "Measure": "NodeRecall@{}".format(n),
+                     "WorldFileID": _worldfile_path_to_id(node),
+                     "Mapping": mapping }
+
         for n in [ 50, 100, 200 ]:
             sys_nodes_at_n = { node.file for node in ordered_sys_nodes[0:n] }
-            out_rec.update({ "NumCorrectNodes@{}".format(n): len(sys_nodes_at_n & world_set_nodes),
-                             "NumMissingNodes@{}".format(n): len(world_set_nodes - sys_nodes_at_n),
-                             "NumFalseAlarmNodes@{}".format(n): len(sys_nodes_at_n - world_set_nodes),
+
+            correct_nodes = sys_nodes_at_n & world_set_nodes
+            missing_nodes = world_set_nodes - sys_nodes_at_n
+            false_alarm_nodes = sys_nodes_at_n - world_set_nodes
+            
+            out_rec.update({ "NumCorrectNodes@{}".format(n): len(correct_nodes),
+                             "NumMissingNodes@{}".format(n): len(missing_nodes),
+                             "NumFalseAlarmNodes@{}".format(n): len(false_alarm_nodes),
                              "NodeRecall@{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
+
+            for map_record in ([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                               [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
+                               [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
+                output_mapping_records = output_mapping_records.append(pd.Series(map_record), ignore_index=True)
             
         output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
@@ -185,13 +222,14 @@ if __name__ == '__main__':
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
 
     mkdir_p(args.output_dir)
-    try:
-        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
-            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
-    try:
-        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
-            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+
+    def _write_df_to_csv(df, out_fn):
+        try:
+            with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
+                df.to_csv(path_or_buf=out_f, sep="|", index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
+                
+    _write_df_to_csv(output_records, "trial_scores.csv")
+    _write_df_to_csv(output_agg_records, "scores.csv")
+    _write_df_to_csv(output_mapping_records, "node_mapping.csv")
