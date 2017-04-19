@@ -349,7 +349,7 @@ if __name__ == '__main__':
                    "MeanSimLO": output_records["SimLO"].mean(),
                    "MeanNodeRecall": output_records["NodeRecall"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
-
+    
     def _write_df_to_csv(df, out_fn):
         try:
             with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
@@ -361,3 +361,15 @@ if __name__ == '__main__':
     _write_df_to_csv(output_agg_records, "scores.csv")
     _write_df_to_csv(output_node_mapping_records, "node_mapping.csv")
     _write_df_to_csv(output_link_mapping_records, "link_mapping.csv")
+
+    try:
+        pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+        with open(os.path.join(args.output_dir, "scores.html"), 'w') as out_f:
+            out_f.write("<h2>Aggregated Scores:</h2>")
+            output_agg_records.to_html(buf=out_f, index=False)
+            out_f.write("<br/><br/>")
+            out_f.write("<h2>Trial Scores:</h2>")
+            output_records["Figure"] = output_records["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
+            output_records.to_html(buf=out_f, index=False, escape=False)
+    except IOError as ioerr:
+        err_quit("{}. Aborting!".format(ioerr))
