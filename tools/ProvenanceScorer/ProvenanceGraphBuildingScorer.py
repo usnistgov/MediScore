@@ -161,10 +161,13 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
     parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
+    parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
     args = parser.parse_args()
 
     mkdir_p(args.output_dir)
-    figure_dir = os.path.join(os.path.abspath(args.output_dir), "figures") 
+    figure_dir = os.path.join(os.path.abspath(args.output_dir), "figures")
+    if args.html_report == True:
+        args.plot_scored = True        
     # Import GraphVisualizer only if needed as it requires additional
     # dependencies
     if args.plot_scored:
@@ -362,14 +365,15 @@ if __name__ == '__main__':
     _write_df_to_csv(output_node_mapping_records, "node_mapping.csv")
     _write_df_to_csv(output_link_mapping_records, "link_mapping.csv")
 
-    try:
-        pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
-        with open(os.path.join(args.output_dir, "scores.html"), 'w') as out_f:
-            out_f.write("<h2>Aggregated Scores:</h2>")
-            output_agg_records.to_html(buf=out_f, index=False)
-            out_f.write("<br/><br/>")
-            out_f.write("<h2>Trial Scores:</h2>")
-            output_records["Figure"] = output_records["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
-            output_records.to_html(buf=out_f, index=False, escape=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+    if args.html_report == True:
+        try:
+            pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            with open(os.path.join(args.output_dir, "report.html"), 'w') as out_f:
+                out_f.write("<h2>Aggregated Scores:</h2>")
+                output_agg_records.to_html(buf=out_f, index=False)
+                out_f.write("<br/><br/>")
+                out_f.write("<h2>Trial Scores:</h2>")
+                output_records["Figure"] = output_records["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
+                output_records.to_html(buf=out_f, index=False, escape=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))

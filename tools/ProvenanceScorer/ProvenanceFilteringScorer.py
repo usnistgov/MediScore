@@ -127,6 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
+    parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores", action="store_true")
     args = parser.parse_args()
 
     trial_index = load_csv(args.index_file)
@@ -233,3 +234,15 @@ if __name__ == '__main__':
     _write_df_to_csv(output_records, "trial_scores.csv")
     _write_df_to_csv(output_agg_records, "scores.csv")
     _write_df_to_csv(output_mapping_records, "node_mapping.csv")
+
+    if args.html_report == True:
+        try:
+            pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            with open(os.path.join(args.output_dir, "report.html"), 'w') as out_f:
+                out_f.write("<h2>Aggregated Scores:</h2>")
+                output_agg_records.to_html(buf=out_f, index=False)
+                out_f.write("<br/><br/>")
+                out_f.write("<h2>Trial Scores:</h2>")
+                output_records.to_html(buf=out_f, index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
