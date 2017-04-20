@@ -209,9 +209,9 @@ if __name__ == '__main__':
                              "NumFalseAlarmNodes@{}".format(n): len(false_alarm_nodes),
                              "NodeRecall@{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
 
-            for map_record in ([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
-                               [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
-                               [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
+            for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                                     [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
+                                     [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
                 output_mapping_records = output_mapping_records.append(pd.Series(map_record), ignore_index=True)
             
         output_records = output_records.append(pd.Series(out_rec), ignore_index=True)

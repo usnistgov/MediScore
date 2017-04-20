@@ -299,14 +299,14 @@ if __name__ == '__main__':
                          "TargetWorldFileID": _worldfile_path_to_id(link[1]),
                          "Mapping": mapping }
 
-            for map_record in ([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
-                               [ _build_node_map_record(node, "FalseAlarm") for node in fa_nodes ] +
-                               [ _build_node_map_record(node, "Missing") for node in missing_nodes ]):
+            for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                                     [ _build_node_map_record(node, "FalseAlarm") for node in fa_nodes ] +
+                                     [ _build_node_map_record(node, "Missing") for node in missing_nodes ]):
                 output_node_mapping_records = output_node_mapping_records.append(pd.Series(map_record), ignore_index=True)
 
-            for map_record in ([ _build_link_map_record(link, "Correct") for link in correct_edges ] +
-                               [ _build_link_map_record(link, "FalseAlarm") for link in fa_edges ] +
-                               [ _build_link_map_record(link, "Missing") for link in missing_edges ]):
+            for map_record in sorted([ _build_link_map_record(link, "Correct") for link in correct_edges ] +
+                                     [ _build_link_map_record(link, "FalseAlarm") for link in fa_edges ] +
+                                     [ _build_link_map_record(link, "Missing") for link in missing_edges ]):
                 output_link_mapping_records = output_link_mapping_records.append(pd.Series(map_record), ignore_index=True)
 
             
