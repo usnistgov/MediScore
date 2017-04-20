@@ -39,9 +39,13 @@ INSTALLATION
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
   - unittest
-  ImageMagick is not required, but is highly recommended to accelerate the validator.
-  Download instructions may be found in the following link:
-  http://imagemagick.org/script/download.php
+  Optional :
+  - pydot (tested in version 1.2.3) -- For graphical output from
+    ProvenanceGraphBuildingScorer.py
+
+  ImageMagick is not required, but is highly recommended to accelerate
+  the validator.  Download instructions may be found in the following
+  link: http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -188,6 +192,8 @@ HISTORY
       - Option to use faster mask scorer for code stability.
     * Validator:
       - Included validation of Nimble Challenge ID.
+    * Provenance:
+      - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
 
 CONTACT
 -------
