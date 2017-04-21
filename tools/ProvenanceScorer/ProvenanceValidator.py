@@ -18,7 +18,7 @@ class ProvenanceValidator(validator):
         self.sysname=sysfname
         self.idxname=idxfname
 
-    def nameCheck(self):
+    def nameCheck(self,NCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
@@ -58,6 +58,9 @@ class ProvenanceValidator(validator):
         if team == '':
             printq("ERROR: The team name must not include underscores '_'.",True)
             teamFlag = 1
+        if ncid != NCID:
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
+            ncidFlag = 1
         task = task.lower()
         self.task = task
         if (task != 'provenance') and (task != 'provenancefiltering'):
@@ -201,6 +204,8 @@ if __name__ == '__main__':
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-nm','--neglectJSON',action="store_true",\
     help="Neglect JSON validation.")
+    parser.add_argument('--ncid',type=str,default="NC17",\
+    help="the NCID to validate against.")
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     args = parser.parse_args()
@@ -219,4 +224,4 @@ if __name__ == '__main__':
     validation = ProvenanceValidator(args.system_output_file,args.index_file)
     if args.task:
         validation.task = args.task
-    validation.fullCheck(args.nameCheck,False,args.neglectJSON)
+    validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON)

@@ -139,7 +139,7 @@ class SSD_Validator(validator):
         version = arrSplit[6]
 
         if ncid != NCID:
-            printq("ERROR: The NCID must be NC17.",True)
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
             ncidFlag = 1
         if team == '':
             printq("ERROR: The team name must not include underscores.",True)
@@ -311,8 +311,8 @@ class DSD_Validator(validator):
             printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
     
-        if (ncid != NCID): #TODO: replace with an option later
-            printq("ERROR: The NCID must be NC17.",True)
+        if ncid != NCID:
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
             ncidFlag = 1
 
         task = task.lower()

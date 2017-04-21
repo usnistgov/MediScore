@@ -188,6 +188,8 @@ HISTORY
       - Option to use faster mask scorer for code stability.
     * Validator:
       - Included validation of Nimble Challenge ID.
+    * ProvenanceValidator:
+      - Included validation of Nimble Challenge ID.
 
 CONTACT
 -------
