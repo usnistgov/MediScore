@@ -64,10 +64,10 @@ class validator:
         self.sysname=sysfname
         self.idxname=idxfname
     @abstractmethod
-    def nameCheck(self): pass
+    def nameCheck(self,neglectNCID=False): pass
     @abstractmethod
     def contentCheck(self,identify=False,neglectMask=False,reffname=0): pass
-    def fullCheck(self,nc,identify,neglectMask,reffname=0):
+    def fullCheck(self,nc,identify,neglectNCID,neglectMask,reffname=0):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -81,7 +81,7 @@ class validator:
 
         #option to do a namecheck
         if nc:
-            if self.nameCheck() == 1:
+            if self.nameCheck(neglectNCID) == 1:
                 return 1
 
         printq("Checking if index file is a pipe-separated csv...")
@@ -100,7 +100,7 @@ class validator:
 
 
 class SSD_Validator(validator):
-    def nameCheck(self):
+    def nameCheck(self,neglectNCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
@@ -138,7 +138,7 @@ class SSD_Validator(validator):
         sys = arrSplit[5]
         version = arrSplit[6]
 
-        if ncid != 'NC17': #TODO: replace with an option later
+        if (ncid != 'NC17') and not neglectNCID: #TODO: replace with an option later
             printq("ERROR: The NCID must be NC17.",True)
             ncidFlag = 1
         if team == '':
@@ -269,7 +269,7 @@ class SSD_Validator(validator):
             return 1
 
 class DSD_Validator(validator):
-    def nameCheck(self):
+    def nameCheck(self,neglectNCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
@@ -311,7 +311,7 @@ class DSD_Validator(validator):
             printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
     
-        if ncid != 'NC17': #TODO: replace with an option later
+        if (ncid != 'NC17') and not neglectNCID: #TODO: replace with an option later
             printq("ERROR: The NCID must be NC17.",True)
             ncidFlag = 1
 
@@ -822,6 +822,8 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nm','--neglectMask',action="store_true",\
     help="neglect mask dimensionality validation.")
+    parser.add_argument('-nid','--neglectNCID',action="store_true",\
+    help="neglect NCID validation.")
 
     if len(sys.argv) > 1:
 
@@ -846,11 +848,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask,args.inRef)
+            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectNCID,args.neglectMask,args.inRef)
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask,args.inRef)
+            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectNCID,args.neglectMask,args.inRef)
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
