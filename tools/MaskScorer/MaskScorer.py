@@ -42,7 +42,6 @@ import numpy as np
 #lib_path = "../../lib"
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
-import maskMetrics as mm
 import Partition_mask as pt
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
@@ -108,9 +107,15 @@ parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
 
 args = parser.parse_args()
 verbose=args.verbose
+
+if args.speedup:
+    import maskMetrics as mm
+else:
+    import maskMetrics_old as mm
 
 #wrapper print function for print message suppression
 if verbose:

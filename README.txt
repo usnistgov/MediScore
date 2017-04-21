@@ -1,6 +1,6 @@
 File: README.txt
-Date: March 30, 2017
-MediScore Version: 1.1.4
+Date: April 21, 2017
+MediScore Version: 1.1.5
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -183,7 +183,11 @@ HISTORY
       - Reference file option included. Scoring for tasks can now be limited to target reference masks for considerable speedup.
     * Provenance:
       - Provenance validator has added a task option for when checking the EXPID is irrelevant.
-
+  Apr 21, 2017 - MediScore Version 1.1.5
+    * MaskScorer:
+      - Option to use faster mask scorer for code stability.
+    * Validator:
+      - Included validation of Nimble Challenge ID.
 
 CONTACT
 -------

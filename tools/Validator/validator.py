@@ -117,6 +117,7 @@ class SSD_Validator(validator):
             return 1
     
         taskFlag = 0
+        ncidFlag = 0
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
@@ -126,7 +127,7 @@ class SSD_Validator(validator):
             printq("ERROR: There are not enough arguments to verify in the name.")
             return 1
         elif len(arrSplit) > 7:
-            printq("ERROR: The team name must not include characters + or _",True)
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
 
         team = arrSplit[0]
@@ -136,16 +137,19 @@ class SSD_Validator(validator):
         self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
-    
-        if ('+' in team) or (team == ''):
-            printq("ERROR: The team name must not include characters + or _",True)
+
+        if ncid != 'NC17': #TODO: replace with an option later
+            printq("ERROR: The NCID must be NC17.",True)
+            ncidFlag = 1
+        if team == '':
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
         task = task.lower()
         if (task != 'manipulation'): # and (task != 'provenance') and (task != 'provenancefiltering'):
             printq('ERROR: What kind of task is ' + task + '? It should be manipulation!',True) #, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
-        if (taskFlag == 0) and (teamFlag == 0):
+        if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
             return 0
         else:
@@ -282,11 +286,19 @@ class DSD_Validator(validator):
             return 1
     
         taskFlag = 0
+        ncidFlag = 0
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
 
         arrSplit = sysfName.split('_')
+        if len(arrSplit) < 7:
+            printq("ERROR: There are not enough arguments to verify in the name.")
+            return 1
+        elif len(arrSplit) > 7:
+            printq("ERROR: The team name must not include underscores.",True)
+            teamFlag = 1
+
         team = arrSplit[0]
         ncid = arrSplit[1]
         data = arrSplit[2]
@@ -295,16 +307,20 @@ class DSD_Validator(validator):
         sys = arrSplit[5]
         version = arrSplit[6]
     
-        if '+' in team or team == '':
-            printq("ERROR: The team name must not include characters + or _",True)
+        if team == '':
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
     
+        if ncid != 'NC17': #TODO: replace with an option later
+            printq("ERROR: The NCID must be NC17.",True)
+            ncidFlag = 1
+
         task = task.lower()
         if task != 'splice':
             printq('ERROR: What kind of task is ' + task + '? It should be splice!',True)
             taskFlag = 1
     
-        if (taskFlag == 0) and (teamFlag == 0):
+        if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
             return 0
         else:
