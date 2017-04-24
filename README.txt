@@ -40,9 +40,13 @@ INSTALLATION
   - scikit-learn (tested in version 0.17.1)
   - rawpy (tested in version 0.9.0)
   - unittest
-  ImageMagick is not required, but is highly recommended to accelerate the validator.
-  Download instructions may be found in the following link:
-  http://imagemagick.org/script/download.php
+  Optional :
+  - pydot (tested in version 1.2.3) -- For graphical output from
+    ProvenanceGraphBuildingScorer.py
+
+  ImageMagick is not required, but is highly recommended to accelerate
+  the validator.  Download instructions may be found in the following
+  link: http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -199,6 +203,8 @@ HISTORY
       - Set default NCID to "NC17Eval"
     * Validator:
       - Set default NCID to "NC17Eval"
+    * Provenance:
+      - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
 
 CONTACT
 -------
