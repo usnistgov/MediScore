@@ -200,9 +200,9 @@ HISTORY
       - Added capability to read raw image files
     * ProvenanceValidator:
       - Fixed a minor typo in the error message output
-      - Set default NCID to "NC17Eval"
+      - Set default NCID to "NC17"
     * Validator:
-      - Set default NCID to "NC17Eval"
+      - Set default NCID to "NC17"
       - Added option to skip IsOptOut=='Y' rows
     * Provenance:
       - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
