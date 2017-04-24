@@ -46,63 +46,75 @@ def system_out_to_ordered_nodes(system_out):
     node_set_w_confidence.sort(reverse=True)
     return node_set_w_confidence
 
-def build_provenancefiltering_agg_output_df():
-    df = pd.DataFrame(columns=["MeanNodeRecall@50",
-                               "MeanNodeRecall@100",
-                               "MeanNodeRecall@200"])
-    dtypes = { "MeanNodeRecall@50": float,
-               "MeanNodeRecall@100": float,
-               "MeanNodeRecall@200": float }
+# Can't use just a hash here, as we need to enforce column order
+def build_dataframe(columns, fields):
+    df = pd.DataFrame(columns=columns)
 
+    
     # Setting column data type one by one as pandas doesn't offer a
     # convenient way to do this
-    for col, t in dtypes.items():
+    for col, t in fields.items():
         df[col] = df[col].astype(t)
 
     return df
+
+def build_provenancefiltering_agg_output_df():
+    return build_dataframe(["MeanNodeRecall@50",
+                            "MeanNodeRecall@100",
+                            "MeanNodeRecall@200"],
+                           { "MeanNodeRecall@50": float,
+                             "MeanNodeRecall@100": float,
+                             "MeanNodeRecall@200": float })
+
+def build_provenancefiltering_nodemapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "ProvenanceOutputFileName",
+                            "Measure",
+                            "WorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "ProvenanceOutputFileName": str,
+                             "Measure": str,
+                             "WorldFileID": str,
+                             "Mapping": str })
 
 def build_provenancefiltering_output_df():
-    df = pd.DataFrame(columns=["JournalName",
-                               "ProvenanceProbeFileID",
-                               "ProvenanceOutputFileName",
-                               "NumSysNodes",
-                               "NumRefNodes",
-                               "NumCorrectNodes@50",
-                               "NumMissingNodes@50",
-                               "NumFalseAlarmNodes@50",
-                               "NumCorrectNodes@100",
-                               "NumMissingNodes@100",
-                               "NumFalseAlarmNodes@100",
-                               "NumCorrectNodes@200",
-                               "NumMissingNodes@200",
-                               "NumFalseAlarmNodes@200",
-                               "NodeRecall@50",
-                               "NodeRecall@100",
-                               "NodeRecall@200"])
-    dtypes = { "JournalName": str,
-               "ProvenanceProbeFileID": str,
-               "ProvenanceOutputFileName": str,
-               "NumSysNodes": int,
-               "NumRefNodes": int,
-               "NumCorrectNodes@50": int,
-               "NumMissingNodes@50": int,
-               "NumFalseAlarmNodes@50": int,
-               "NumCorrectNodes@100": int,
-               "NumMissingNodes@100": int,
-               "NumFalseAlarmNodes@100": int,
-               "NumCorrectNodes@200": int,
-               "NumMissingNodes@200": int,
-               "NumFalseAlarmNodes@200": int,
-               "NodeRecall@50": float,
-               "NodeRecall@100": float,
-               "NodeRecall@200": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "ProvenanceOutputFileName",
+                            "NumSysNodes",
+                            "NumRefNodes",
+                            "NumCorrectNodes@50",
+                            "NumMissingNodes@50",
+                            "NumFalseAlarmNodes@50",
+                            "NumCorrectNodes@100",
+                            "NumMissingNodes@100",
+                            "NumFalseAlarmNodes@100",
+                            "NumCorrectNodes@200",
+                            "NumMissingNodes@200",
+                            "NumFalseAlarmNodes@200",
+                            "NodeRecall@50",
+                            "NodeRecall@100",
+                            "NodeRecall@200"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "ProvenanceOutputFileName": str,
+                             "NumSysNodes": int,
+                             "NumRefNodes": int,
+                             "NumCorrectNodes@50": int,
+                             "NumMissingNodes@50": int,
+                             "NumFalseAlarmNodes@50": int,
+                             "NumCorrectNodes@100": int,
+                             "NumMissingNodes@100": int,
+                             "NumFalseAlarmNodes@100": int,
+                             "NumCorrectNodes@200": int,
+                             "NumMissingNodes@200": int,
+                             "NumFalseAlarmNodes@200": int,
+                             "NodeRecall@50": float,
+                             "NodeRecall@100": float,
+                             "NodeRecall@200": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
@@ -115,6 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
+    parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores", action="store_true")
     args = parser.parse_args()
 
     trial_index = load_csv(args.index_file)
@@ -155,6 +168,7 @@ if __name__ == '__main__':
     world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
 
     output_records = build_provenancefiltering_output_df()
+    output_mapping_records = build_provenancefiltering_nodemapping_df()
         
     for trial in trial_index_ref_sysout.itertuples():
         system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
@@ -164,19 +178,41 @@ if __name__ == '__main__':
         world_set_nodes.add(probe_node_wfn)
 
         ordered_sys_nodes = system_out_to_ordered_nodes(system_out)
-
+            
         out_rec = { "JournalName": trial.JournalName,
                     "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                     "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
                     "NumSysNodes": len(ordered_sys_nodes),
                     "NumRefNodes": len(world_set_nodes) }
 
+        def _worldfile_path_to_id(path):
+            base, ext = os.path.splitext(os.path.basename(path))
+            return base
+        
+        def _build_node_map_record(node, mapping):
+            return { "JournalName": trial.JournalName,
+                     "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                     "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                     "Measure": "NodeRecall@{}".format(n),
+                     "WorldFileID": _worldfile_path_to_id(node),
+                     "Mapping": mapping }
+
         for n in [ 50, 100, 200 ]:
             sys_nodes_at_n = { node.file for node in ordered_sys_nodes[0:n] }
-            out_rec.update({ "NumCorrectNodes@{}".format(n): len(sys_nodes_at_n & world_set_nodes),
-                             "NumMissingNodes@{}".format(n): len(world_set_nodes - sys_nodes_at_n),
-                             "NumFalseAlarmNodes@{}".format(n): len(sys_nodes_at_n - world_set_nodes),
+
+            correct_nodes = sys_nodes_at_n & world_set_nodes
+            missing_nodes = world_set_nodes - sys_nodes_at_n
+            false_alarm_nodes = sys_nodes_at_n - world_set_nodes
+            
+            out_rec.update({ "NumCorrectNodes@{}".format(n): len(correct_nodes),
+                             "NumMissingNodes@{}".format(n): len(missing_nodes),
+                             "NumFalseAlarmNodes@{}".format(n): len(false_alarm_nodes),
                              "NodeRecall@{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
+
+            for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                                     [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
+                                     [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
+                output_mapping_records = output_mapping_records.append(pd.Series(map_record), ignore_index=True)
             
         output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
@@ -187,13 +223,26 @@ if __name__ == '__main__':
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
 
     mkdir_p(args.output_dir)
-    try:
-        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
-            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
-    try:
-        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
-            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+
+    def _write_df_to_csv(df, out_fn):
+        try:
+            with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
+                df.to_csv(path_or_buf=out_f, sep="|", index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
+                
+    _write_df_to_csv(output_records, "trial_scores.csv")
+    _write_df_to_csv(output_agg_records, "scores.csv")
+    _write_df_to_csv(output_mapping_records, "node_mapping.csv")
+
+    if args.html_report == True:
+        try:
+            pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            with open(os.path.join(args.output_dir, "report.html"), 'w') as out_f:
+                out_f.write("<h2>Aggregated Scores:</h2>")
+                output_agg_records.to_html(buf=out_f, index=False)
+                out_f.write("<br/><br/>")
+                out_f.write("<h2>Trial Scores:</h2>")
+                output_records.to_html(buf=out_f, index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
