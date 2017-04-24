@@ -185,7 +185,7 @@ class SSD_Validator(validator):
 
         sysHeads = list(sysfile.columns)
         allClear = True
-#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
+#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
         truelist = ["ProbeFileID","ConfidenceScore"]
 
         for i in range(0,len(truelist)):
@@ -202,6 +202,10 @@ class SSD_Validator(validator):
 
         if not allClear:
             return 1
+
+        optOut=False
+        if "IsOptOut" in sysHeads:
+            optOut=True
 
         testMask = False
         if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
@@ -260,6 +264,11 @@ class SSD_Validator(validator):
                 if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                     printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                     continue
+                #if IsOptOut is present
+                if optOut:
+                    if sysfile['IsOptOut'][i] == 'Y':
+                        continue
+
                 maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,probeOutputMaskFileName),probeFileID,idxfile,identify)
         
         #final validation
@@ -397,6 +406,7 @@ class DSD_Validator(validator):
 
         sysPath = os.path.dirname(self.sysname)
         testMask = False
+        optOut = False
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 printq("Process {} ".format(idx) + l)
@@ -420,6 +430,8 @@ class DSD_Validator(validator):
             
                     if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
                         testMask = True
+                    if "IsOptOut" in s_headnames:
+                        optOut = True
 
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
@@ -451,6 +463,10 @@ class DSD_Validator(validator):
                         if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
                             printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
                             continue
+
+                        if optOut:
+                            if l_content[s_heads['IsOptOut']] == 'Y':
+                                continue
      
                         probeWidth = int(indRec[i_heads['ProbeWidth']])
                         probeHeight = int(indRec[i_heads['ProbeHeight']])

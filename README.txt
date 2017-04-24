@@ -199,6 +199,7 @@ HISTORY
       - Set default NCID to "NC17Eval"
     * Validator:
       - Set default NCID to "NC17Eval"
+      - Added option to skip IsOptOut=='Y' rows
 
 CONTACT
 -------
