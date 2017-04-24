@@ -1,6 +1,6 @@
 File: README.txt
-Date: April 21, 2017
-MediScore Version: 1.1.5
+Date: April 24, 2017
+MediScore Version: 1.1.6
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -38,6 +38,7 @@ INSTALLATION
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
+  - rawpy (tested in version 0.9.0)
   - unittest
   ImageMagick is not required, but is highly recommended to accelerate the validator.
   Download instructions may be found in the following link:
@@ -190,6 +191,14 @@ HISTORY
       - Included validation of Nimble Challenge ID.
     * ProvenanceValidator:
       - Included validation of Nimble Challenge ID.
+  Apr 24, 2017 - MediScore Version 1.1.6
+    * MaskScorer:
+      - Added capability to read raw image files
+    * ProvenanceValidator:
+      - Fixed a minor typo in the error message output
+      - Set default NCID to "NC17Eval"
+    * Validator:
+      - Set default NCID to "NC17Eval"
 
 CONTACT
 -------

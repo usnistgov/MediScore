@@ -24,6 +24,7 @@
 """
 import cv
 import cv2
+import rawpy
 import math
 import copy
 import numpy as np
@@ -90,7 +91,10 @@ class mask(object):
                    single-channel grayscale
         """
         self.name=n
-        self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
+        if self.name[-4:] == '.awr':
+            self.matrix=rawpy.imread(n).postprocess()
+        else:
+            self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
         if self.matrix is None:
             masktype = 'System'
             if isinstance(self,refmask):
