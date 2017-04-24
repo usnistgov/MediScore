@@ -224,4 +224,4 @@ if __name__ == '__main__':
     validation = ProvenanceValidator(args.system_output_file,args.index_file)
     if args.task:
         validation.task = args.task
-    validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON)
+    exit(validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON))

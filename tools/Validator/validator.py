@@ -848,11 +848,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef)
+            exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef))
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef)
+            exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef))
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
