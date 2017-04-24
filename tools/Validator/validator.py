@@ -823,7 +823,7 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nm','--neglectMask',action="store_true",\
     help="neglect mask dimensionality validation.")
-    parser.add_argument('--ncid',type=str,default="NC17Eval",\
+    parser.add_argument('--ncid',type=str,default="NC17",\
     help="the NCID to validate against.")
 
     if len(sys.argv) > 1:

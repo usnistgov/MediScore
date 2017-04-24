@@ -204,7 +204,7 @@ if __name__ == '__main__':
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-nm','--neglectJSON',action="store_true",\
     help="Neglect JSON validation.")
-    parser.add_argument('--ncid',type=str,default="NC17Eval",\
+    parser.add_argument('--ncid',type=str,default="NC17",\
     help="the NCID to validate against.")
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
