@@ -43,12 +43,15 @@ def render_provenance_graph(nodes, edges, output_fn):
 
     graph.write_png(output_fn)
 
-def render_provenance_graph_from_mapping(probe_node, correct_nodes, fa_nodes, missing_nodes, correct_edges, fa_edges, missing_edges, output_fn, ref_dir = None):
+def render_provenance_graph_from_mapping(probe_node, correct_nodes, fa_nodes, missing_nodes, correct_edges, fa_edges, missing_edges, output_fn, ref_dir = None, thumb_cache_dir = None):
     correct_color = "green"
     fa_color = "red"
     missing_color = "dimgray"
 
     thumb_dir = os.path.join(os.path.dirname(output_fn), "thumbs")
+    if thumb_cache_dir is not None:
+        thumb_dir = thumb_cache_dir
+        
     if not os.path.isdir(thumb_dir):
         os.makedirs(thumb_dir)
     

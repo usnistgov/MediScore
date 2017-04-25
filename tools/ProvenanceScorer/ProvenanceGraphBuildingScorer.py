@@ -162,6 +162,7 @@ if __name__ == '__main__':
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
     parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
     parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
+    parser.add_argument("-T", "--thumbnail-cache-dir", help="Directory to use as thumbnail cache", type=str)
     args = parser.parse_args()
 
     mkdir_p(args.output_dir)
@@ -180,6 +181,10 @@ if __name__ == '__main__':
     world_index = load_csv(args.world_file)
 
     abs_reference_dir = os.path.abspath(args.reference_dir)
+    
+    abs_thumb_cache_dir = None
+    if args.thumbnail_cache_dir is not None:
+        abs_thumb_cache_dir = os.path.abspath(args.thumbnail_cache_dir)
     
     system_output_index = load_csv(args.system_output_file)
 
@@ -342,7 +347,8 @@ if __name__ == '__main__':
                                                      fa_edges,
                                                      missing_edges,
                                                      out_fn,
-                                                     abs_reference_dir)
+                                                     abs_reference_dir,
+                                                     abs_thumb_cache_dir)
 
     output_agg_records = build_provenancegraphbuilding_agg_output_df()
 
