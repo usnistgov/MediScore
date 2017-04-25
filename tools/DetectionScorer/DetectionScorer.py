@@ -129,6 +129,9 @@ if __name__ == '__main__':
                             help="Print output with procedure messages on the command-line if this option is specified.")
 
         # Plot Options
+        parser.add_argument('--plotTitle',default='Performance',
+                            help="Define the plot title (default: %(default)s)", metavar='character')
+
         parser.add_argument('--plotType',default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
 
@@ -370,7 +373,7 @@ if __name__ == '__main__':
         else:
             if args.plotType =='':
                 args.plotType = 'roc'
-            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_type = args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
 
 
@@ -473,6 +476,7 @@ if __name__ == '__main__':
         args_queryManipulation = None
         args_query = None
         args_queryPartition = None
+        plotTitle = "Test"
         #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
@@ -690,7 +694,7 @@ if __name__ == '__main__':
         else:
             if plotType =='':
                 plotType = 'roc'
-            p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = plotTitle, plot_type=plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
 
 
