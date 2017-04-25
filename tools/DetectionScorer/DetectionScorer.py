@@ -281,21 +281,21 @@ if __name__ == '__main__':
             if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
                  # merge the reference and index csv only
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
 
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the reference and index csv
-                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                    df_1 = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+                    pm_df = pd.merge(df_1, df_2, how='inner', on= 'ProbeFileID')
             #DSD
             elif args.task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
 
             if args.outMeta: #save all metadata for analysis purpose
                 pm_df.to_csv(args.outRoot + '_meta.csv', index = False)
@@ -605,17 +605,17 @@ if __name__ == '__main__':
             if task in ['manipulation', 'provenancefiltering', 'provenance']:
                 # merge the reference and index csv only
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
 
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the reference and index csv
-                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                    df_1 = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName')
                     # merge the dataframes above
-                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+                    pm_df = pd.merge(df_1, df_2, how='inner', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
 ##    #                # for queryManipulation, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
 #                    if args.queryManipulation:
@@ -626,7 +626,7 @@ if __name__ == '__main__':
 
             elif task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
 
             if args_query:
                 query_mode = 'q'
