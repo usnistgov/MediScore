@@ -163,6 +163,10 @@ if __name__ == '__main__':
         parser.add_argument('--optOut', action='store_true',
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
+        #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
+#        parser.add_argument('-qn', '--queryNonManipulation',
+#        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
+
 
         args = parser.parse_args()
         #print("Namespace :\n{}\n".format(args))
@@ -196,10 +200,9 @@ if __name__ == '__main__':
         # Loading the JTjoin and JTmask file
         myJTJoinFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv')
         myJTMaskFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv')
-
 #        print("myRefFname {}".format(myRefFname))
 #        print("JTJoinFname {}".format(myJTJoinFname))
- #       print("JTMaskFname {}".format(myJTMaskFname))
+#        print("JTMaskFname {}".format(myJTMaskFname))
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
@@ -210,11 +213,10 @@ if __name__ == '__main__':
 
         # Loading the index file
         try:
-
-            #myIndexFname = args.refDir + "/" + args.inIndex
             myIndexFname = os.path.join(args.refDir, args.inIndex)
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
             myIndex = pd.read_csv(myIndexFname, sep='|', low_memory=False)
+
         except IOError:
             print("ERROR: There was an error opening the index csv file")
             exit(1)
@@ -232,7 +234,7 @@ if __name__ == '__main__':
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str,
                          'DonorOutputMaskFileName':str}
-            #mySysFname = args.sysDir + "/" + args.inSys
+
             mySysFname = os.path.join(args.sysDir, args.inSys)
             v_print("Sys File Name {}".format(mySysFname))
             mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype, low_memory=False)
@@ -252,8 +254,6 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-
-        #TODO: Error for partitions
         # to calculate TRR
         total_num = m_df.shape[0]
         v_print("Original total data number: {}".format(total_num))
@@ -269,7 +269,9 @@ if __name__ == '__main__':
 
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
+
         # merge the reference and index csv only
+        #SSD
         if args.task in ['manipulation']:
              # merge the reference and index csv only
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
@@ -282,7 +284,7 @@ if __name__ == '__main__':
                 sub_pm_df = pm_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
         #DSD
-        elif args.task in ['splice']: #don't need JTJoin and JTMask
+        elif args.task in ['splice']:
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
             pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
             #print(list(pm_df))
@@ -299,14 +301,15 @@ if __name__ == '__main__':
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
-            if args.task in ['manipulation']: #do not merge for splice
+            if args.task in ['manipulation']:
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
-                    # merge the JournalJoinTable and the JournalMaskTable
-                    jt_meta = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
+                    # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(pm_df, jt_meta, how='inner', on= 'ProbeFileID')
+                    pm_df = pd.merge(pm_df, jt_meta, how='left', on= 'ProbeFileID')
+            #don't need JTJoin and JTMask for splice?
 
             if args.query:
                 query_mode = 'q'
@@ -462,7 +465,7 @@ if __name__ == '__main__':
 
     # Debugging mode
     else:
-
+        #This section need to be reimplement later
         print('Starting debug mode ...\n')
 
         refDir = '/Users/yunglee/YYL/MEDIFOR/data'
