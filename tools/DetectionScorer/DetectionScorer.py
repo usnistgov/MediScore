@@ -267,7 +267,7 @@ if __name__ == '__main__':
         total_num = m_df.shape[0]
         v_print("Original total data number: {}".format(total_num))
         ## if OptOut has chosen, all of queries should be applied
-
+        #print(list(myIndex))
 
         # the performers' result directory
         if '/' not in args.outRoot:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
         elif args.task in ['splice']: #don't need JTJoin and JTMask
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
             pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
-            print(list(pm_df))
+            #print(list(pm_df))
             
             if args.outAllmeta: #save all metadata for analysis purpose
                 pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep=',')
