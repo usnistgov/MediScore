@@ -1,4 +1,4 @@
-"ProbeFileID"|"ConfidenceScore"|"ProbeOutputMaskFileName"|"IsOptOut"
+"ProbeFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"IsOptOut"
 "NC2016_0098"|0.5|"mask/NC2016_0098.png"|"N"
 "NC2016_0136"|0.548893|"mask/NC2016_0136.png"|"N"
 "NC2016_0324"|0.520598|"mask/NC2016_0324.png"|"N"

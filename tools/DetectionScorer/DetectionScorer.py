@@ -120,7 +120,10 @@ if __name__ == '__main__':
                             help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
         parser.add_argument('--outMeta', action='store_true',
-                            help="Save the CSV file with the system scores and metadata")
+                            help="Save the CSV file with the system scores with minimal metadata")
+        
+        parser.add_argument('--outAllmeta', action='store_true',
+                            help="Save the CSV file with the system scores with all metadata")
 
         parser.add_argument('--dump', action='store_true',
                             help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
@@ -228,7 +231,7 @@ if __name__ == '__main__':
         # Loading system output for SSD and DSD due to different columns between SSD and DSD
         try:
 
-            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if args.task in ['manipulation']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
@@ -248,7 +251,7 @@ if __name__ == '__main__':
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
-        if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
+        if args.task in ['manipulation']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
         elif args.task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
@@ -275,35 +278,44 @@ if __name__ == '__main__':
 
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
+        # merge the reference and index csv only
+        if args.task in ['manipulation']:
+             # merge the reference and index csv only
+            subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
+            pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
+            
+            if args.outAllmeta: #save all metadata for analysis purpose
+                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep=',')
+            
+            if args.outMeta: #save all metadata for analysis purpose
+                sub_pm_df = pm_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
+                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+        #DSD
+        elif args.task in ['splice']: #don't need JTJoin and JTMask
+            subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
+            pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
+            print(list(pm_df))
+            
+            if args.outAllmeta: #save all metadata for analysis purpose
+                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep=',')
+            
+            if args.outMeta: #save all metadata for analysis purpose
+                sub_pm_df = pm_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
+                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
 
          # Partition Mode
-        if args.query or args.queryPartition or args.queryManipulation or args.outMeta: # add or targetManiTypeSet or nontargetManiTypeSet
+        if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
-            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
-                 # merge the reference and index csv only
-                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-                pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
-
+            if args.task in ['manipulation']: #do not merge for splice
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
-                    # merge the reference and index csv
-                    df_1 = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(df_1, df_2, how='inner', on= 'ProbeFileID')
-            #DSD
-            elif args.task in ['splice']: #TBD
-                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
-
-            if args.outMeta: #save all metadata for analysis purpose
-                pm_df.to_csv(args.outRoot + '_meta.csv', index = False)
-                args.query = [ "TaskID ==['" + args.task.title() + "']" ] #uppercase for the first letter (NC2016)
-                args.query = [ "TaskID ==['" + args.task + "']" ] #NC2017
+                    pm_df = pd.merge(pm_df, jt_meta, how='inner', on= 'ProbeFileID')                    
 
             if args.query:
                 query_mode = 'q'
@@ -370,11 +382,14 @@ if __name__ == '__main__':
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
             args.plotType = plot_opts['plot_type']
+            plot_opts['title'] = args.plotTitle
+            #print("test plot title1 {}".format(plot_opts['title']))
         else:
             if args.plotType =='':
                 args.plotType = 'roc'
             p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_type = args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            #print("test plot title2 {}".format(plot_opts['title']))
 
 
         # opening of the plot_options json config file from command-line
@@ -414,9 +429,9 @@ if __name__ == '__main__':
 
         if args.optOut:
             if plot_opts['plot_type'] == 'ROC':
-                plot_opts['title'] = "trROC"
+                plot_opts['title'] = "tr" + args.plotTitle
             elif plot_opts['plot_type'] == 'DET':
-                plot_opts['title'] = "trDET"
+                plot_opts['title'] = "tr" + args.plotTitle
 
 
         # Renaming the curves for the legend
@@ -556,7 +571,7 @@ if __name__ == '__main__':
 
         try:
             # Loading system output for SSD and DSD due to different columns between SSD and DSD
-            if task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if task in ['manipulation']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
@@ -575,7 +590,7 @@ if __name__ == '__main__':
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
-        if task in ['manipulation', 'provenancefiltering', 'provenance']:
+        if task in ['manipulation']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
         elif task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
@@ -606,7 +621,7 @@ if __name__ == '__main__':
             print("Partition Mode \n")
             partition_mode = True
 
-            if task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if task in ['manipulation']:
                 # merge the reference and index csv only
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
                 pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
