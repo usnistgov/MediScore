@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
         parser.add_argument('--outMeta', action='store_true',
                             help="Save the CSV file with the system scores with minimal metadata")
-        
+
         parser.add_argument('--outAllmeta', action='store_true',
                             help="Save the CSV file with the system scores with all metadata")
 
@@ -274,10 +274,10 @@ if __name__ == '__main__':
              # merge the reference and index csv only
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
             pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
-            
+
             if args.outAllmeta: #save all metadata for analysis purpose
-                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep=',')
-            
+                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+
             if args.outMeta: #save all metadata for analysis purpose
                 sub_pm_df = pm_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
@@ -286,10 +286,10 @@ if __name__ == '__main__':
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
             pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
             #print(list(pm_df))
-            
+
             if args.outAllmeta: #save all metadata for analysis purpose
-                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep=',')
-            
+                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+
             if args.outMeta: #save all metadata for analysis purpose
                 sub_pm_df = pm_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
@@ -306,7 +306,7 @@ if __name__ == '__main__':
                     # merge the JournalJoinTable and the JournalMaskTable
                     jt_meta = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(pm_df, jt_meta, how='inner', on= 'ProbeFileID')                    
+                    pm_df = pd.merge(pm_df, jt_meta, how='inner', on= 'ProbeFileID')
 
             if args.query:
                 query_mode = 'q'
@@ -332,12 +332,12 @@ if __name__ == '__main__':
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False, sep='|')
             elif args.queryPartition:
-                table_df.to_csv(args.outRoot + '_qp_query_report.csv')
+                table_df.to_csv(args.outRoot + '_qp_query_report.csv', sep='|')
             elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False, sep='|')
 
 
         # No partitions
@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(args.outRoot + '_all_report.csv', index = False)
+            table_df.to_csv(args.outRoot + '_all_report.csv', index = False, sep='|')
 
         if isinstance(table_df,list):
             print("\nReport tables:\n")
