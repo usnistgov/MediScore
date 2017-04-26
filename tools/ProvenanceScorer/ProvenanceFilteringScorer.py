@@ -59,12 +59,12 @@ def build_dataframe(columns, fields):
     return df
 
 def build_provenancefiltering_agg_output_df():
-    return build_dataframe(["MeanNodeRecall@50",
-                            "MeanNodeRecall@100",
-                            "MeanNodeRecall@200"],
-                           { "MeanNodeRecall@50": float,
-                             "MeanNodeRecall@100": float,
-                             "MeanNodeRecall@200": float })
+    return build_dataframe(["MeanNodeRecallAt50",
+                            "MeanNodeRecallAt100",
+                            "MeanNodeRecallAt200"],
+                           { "MeanNodeRecallAt50": float,
+                             "MeanNodeRecallAt100": float,
+                             "MeanNodeRecallAt200": float })
 
 def build_provenancefiltering_nodemapping_df():
     return build_dataframe(["JournalName",
@@ -86,35 +86,35 @@ def build_provenancefiltering_output_df():
                             "ProvenanceOutputFileName",
                             "NumSysNodes",
                             "NumRefNodes",
-                            "NumCorrectNodes@50",
-                            "NumMissingNodes@50",
-                            "NumFalseAlarmNodes@50",
-                            "NumCorrectNodes@100",
-                            "NumMissingNodes@100",
-                            "NumFalseAlarmNodes@100",
-                            "NumCorrectNodes@200",
-                            "NumMissingNodes@200",
-                            "NumFalseAlarmNodes@200",
-                            "NodeRecall@50",
-                            "NodeRecall@100",
-                            "NodeRecall@200"],
+                            "NumCorrectNodesAt50",
+                            "NumMissingNodesAt50",
+                            "NumFalseAlarmNodesAt50",
+                            "NumCorrectNodesAt100",
+                            "NumMissingNodesAt100",
+                            "NumFalseAlarmNodesAt100",
+                            "NumCorrectNodesAt200",
+                            "NumMissingNodesAt200",
+                            "NumFalseAlarmNodesAt200",
+                            "NodeRecallAt50",
+                            "NodeRecallAt100",
+                            "NodeRecallAt200"],
                            { "JournalName": str,
                              "ProvenanceProbeFileID": str,
                              "ProvenanceOutputFileName": str,
                              "NumSysNodes": int,
                              "NumRefNodes": int,
-                             "NumCorrectNodes@50": int,
-                             "NumMissingNodes@50": int,
-                             "NumFalseAlarmNodes@50": int,
-                             "NumCorrectNodes@100": int,
-                             "NumMissingNodes@100": int,
-                             "NumFalseAlarmNodes@100": int,
-                             "NumCorrectNodes@200": int,
-                             "NumMissingNodes@200": int,
-                             "NumFalseAlarmNodes@200": int,
-                             "NodeRecall@50": float,
-                             "NodeRecall@100": float,
-                             "NodeRecall@200": float })
+                             "NumCorrectNodesAt50": int,
+                             "NumMissingNodesAt50": int,
+                             "NumFalseAlarmNodesAt50": int,
+                             "NumCorrectNodesAt100": int,
+                             "NumMissingNodesAt100": int,
+                             "NumFalseAlarmNodesAt100": int,
+                             "NumCorrectNodesAt200": int,
+                             "NumMissingNodesAt200": int,
+                             "NumFalseAlarmNodesAt200": int,
+                             "NodeRecallAt50": float,
+                             "NodeRecallAt100": float,
+                             "NodeRecallAt200": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
@@ -193,7 +193,7 @@ if __name__ == '__main__':
             return { "JournalName": trial.JournalName,
                      "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                      "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
-                     "Measure": "NodeRecall@{}".format(n),
+                     "Measure": "NodeRecallAt{}".format(n),
                      "WorldFileID": _worldfile_path_to_id(node),
                      "Mapping": mapping }
 
@@ -204,10 +204,10 @@ if __name__ == '__main__':
             missing_nodes = world_set_nodes - sys_nodes_at_n
             false_alarm_nodes = sys_nodes_at_n - world_set_nodes
             
-            out_rec.update({ "NumCorrectNodes@{}".format(n): len(correct_nodes),
-                             "NumMissingNodes@{}".format(n): len(missing_nodes),
-                             "NumFalseAlarmNodes@{}".format(n): len(false_alarm_nodes),
-                             "NodeRecall@{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
+            out_rec.update({ "NumCorrectNodesAt{}".format(n): len(correct_nodes),
+                             "NumMissingNodesAt{}".format(n): len(missing_nodes),
+                             "NumFalseAlarmNodesAt{}".format(n): len(false_alarm_nodes),
+                             "NodeRecallAt{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
 
             for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
                                      [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
@@ -217,9 +217,9 @@ if __name__ == '__main__':
         output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
     output_agg_records = build_provenancefiltering_agg_output_df()
-    aggregated = { "MeanNodeRecall@50": output_records["NodeRecall@50"].mean(),
-                   "MeanNodeRecall@100": output_records["NodeRecall@100"].mean(),
-                   "MeanNodeRecall@200": output_records["NodeRecall@200"].mean() }
+    aggregated = { "MeanNodeRecallAt50": output_records["NodeRecallAt50"].mean(),
+                   "MeanNodeRecallAt100": output_records["NodeRecallAt100"].mean(),
+                   "MeanNodeRecallAt200": output_records["NodeRecallAt200"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
 
     mkdir_p(args.output_dir)
