@@ -210,7 +210,7 @@ HISTORY
     * DetectionScorer:
       - Changed the join method (left to inner) for merging the reference and index cvs file.
       - Added the plotTitle option.
-      - Added outMeta and outAllmeta for producing the meta information along with system output.
+      - Added the outMeta and outAllmeta options for producing the meta information along with system output.
       - Updated the column names in the test cases.
       - Fixed a bug on detcompcheckfile.sh
       - Changed the csv separation ',' to '|' for all report csv files.
