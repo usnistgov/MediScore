@@ -18,13 +18,13 @@ class ProvenanceValidator(validator):
         self.sysname=sysfname
         self.idxname=idxfname
 
-    def nameCheck(self):
+    def nameCheck(self,NCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
         sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
-            printq('ERROR: Your system output deos not appear to be a csv.',True)
+            printq('ERROR: Your system output does not appear to be a csv.',True)
             return 1
     
         fileExpid = sys_pieces[0].split('/')
@@ -58,6 +58,9 @@ class ProvenanceValidator(validator):
         if team == '':
             printq("ERROR: The team name must not include underscores '_'.",True)
             teamFlag = 1
+        if ncid != NCID:
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
+            ncidFlag = 1
         task = task.lower()
         self.task = task
         if (task != 'provenance') and (task != 'provenancefiltering'):
@@ -70,7 +73,7 @@ class ProvenanceValidator(validator):
             printq('The name of the file is not valid. Please review the requirements in the eval plan.',True)
             return 1 
         
-    def contentCheck(self,identify=False,neglectMask=False):
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProvenanceProbeFileID':str,
@@ -196,10 +199,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
     parser.add_argument("-x", "--index_file", help="Task Index file", type=str, required=True)
     parser.add_argument("-s", "--system_output_file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
+    parser.add_argument("-t", "--task", help="Evaluation task. Required only if name checking is not done.", type=str)
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-nm','--neglectJSON',action="store_true",\
     help="Neglect JSON validation.")
+    parser.add_argument('--ncid',type=str,default="NC17",\
+    help="the NCID to validate against.")
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     args = parser.parse_args()
@@ -216,4 +222,6 @@ if __name__ == '__main__':
                 print(mystring)
 
     validation = ProvenanceValidator(args.system_output_file,args.index_file)
-    validation.fullCheck(args.nameCheck,False,args.neglectJSON)
+    if args.task:
+        validation.task = args.task
+    exit(validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON))

@@ -710,20 +710,19 @@ class maskMetrics:
             ref.binarize(254) #get the black/white mask first if not already gotten
 
         self.sys_threshold = systh
-#        if systh >= 0:
-#            sys.binarize(systh)
-#        else:
-#            distincts = np.unique(sys.matrix)
-#            if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
-#                sys.bwmat = sys.matrix
+        if systh >= 0:
+            sys.binarize(systh)
+        else:
+            distincts = np.unique(sys.matrix)
+            if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
+                sys.bwmat = sys.matrix
 
-        #pass threshold as a parameter here
-        self.conf = self.confusion_measures(ref,sys,w,systh)
+        self.conf = self.confusion_measures(ref,sys,w)
 
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
         self.mcc = self.matthews(self.conf)
-        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
+        self.bwL1 = self.binaryWeightedL1(ref,sys,w)
 
     def getMetrics(self,popt=0):
         """
@@ -806,7 +805,7 @@ class maskMetrics:
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def confusion_measures(self,ref,sys,w,th):
+    def confusion_measures(self,ref,sys,w):
         """
         * Metric: confusion_measures
         * Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
@@ -816,28 +815,22 @@ class maskMetrics:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
-        *     th: the threshold for binarization
         * Output:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
         r = ref.bwmat.astype(int)
         #TODO: placeholder until something better covers it
-#        if sys.bwmat is 0:
-        if th == -1:
-            th = 254
+        if sys.bwmat is 0:
+            sys.binarize(254)
 
-#        s = sys.bwmat.astype(int)
-        s = sys.matrix <= th
-#        x = (r+s)/255.
-        mywts = w==1
-        rpos = (r==0) & mywts
-        rneg = (r==255) & mywts
+        s = sys.bwmat.astype(int)
+        x = (r+s)/255.
 
-        tp = np.float64(np.sum(s & rpos))
-        fp = np.float64(np.sum(s & rneg))
-        fn = np.float64(np.sum(rpos) - tp)
-        tn = np.float64(np.sum(rneg) - fp)
-        n = np.sum(mywts)
+        tp = np.float64(np.sum((x==0.) & (w==1)))
+        fp = np.float64(np.sum((x==1.) & (r==255) & (w==1)))
+        fn = np.float64(np.sum((x==1.) & (w==1)) - fp)
+        tn = np.float64(np.sum((x==2.) & (w==1)))
+        n = np.sum(w==1)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
@@ -915,7 +908,7 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def binaryWeightedL1(self,ref,sys,w,th):
+    def binaryWeightedL1(self,ref,sys,w):
         """
         * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
@@ -925,17 +918,14 @@ class maskMetrics:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
-        *     th: the threshold for binarization
         * Outputs:
         *     Normalized binary WL1 value
         """
-        if th is -1:
-            th = 254
 
-        rmat = ref.bwmat.astype(int)/255.
-        smat = sys.matrix
+        rmat = ref.bwmat.astype(int)
+        smat = sys.bwmat.astype(int)
 
-        wL1=np.multiply(w,abs(rmat-(smat > th)))
+        wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
         n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
@@ -1137,7 +1127,6 @@ class maskMetrics:
                 print("Binary Weighted L1: %0.3f" % maxBWL1)
 
         return thresMets,tmax
-
 
 #    def getPlot(self,thresMets,metric='all',display=True,multi_fig=False):
 #        """

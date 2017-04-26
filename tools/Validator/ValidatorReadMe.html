@@ -11850,6 +11850,19 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>-nm --neglectMask</p>
+<ul>
+<li>Whether or not to neglect the mask dimension validation.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Input-Options">Input Options<a class="anchor-link" href="#Input-Options">&#182;</a></h3>
 </div>
 </div>
@@ -11875,6 +11888,32 @@ div#notebook {
 <p>-s --inSys</p>
 <ul>
 <li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and ProbeOutputMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, OutputProbeMaskFileName, and OutputDonorMaskFileName fields, in that order. The OutputProbeMaskFileNames and OutputDonorMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-r --inRef</p>
+<ul>
+<li>Define the reference csv file to filter mask dimensionality validation to only the target masks (i.e. IsTarget == 'Y'). This is especially useful when trying to validate the splice output.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--ncid</p>
+<ul>
+<li>Specify the NCID for the evaluation. This should be the NCID specified in the evaluation plan. Default: 'NC17'</li>
 </ul>
 
 </div>

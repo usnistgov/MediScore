@@ -1,6 +1,6 @@
 File: README.txt
-Date: March 30, 2017
-MediScore Version: 1.1.3
+Date: April 24, 2017
+MediScore Version: 1.1.6
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -13,7 +13,7 @@ example data for the following tools:
                                     (Localization) Scorer
   ProvenanceFilteringScorer       - Scorer for Provenance Filtering
   ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
-		     
+
 
 This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
@@ -26,7 +26,7 @@ following versions of Ubuntu Linux and OS X.
 INSTALLATION
 ------------
 
-(Lines starting with % are command lines)
+(Lines starting with $ are command lines)
 
 1) Install Python 2.7 (tested in Python == 2.7.12).
 
@@ -38,10 +38,15 @@ INSTALLATION
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
+  - rawpy (tested in version 0.9.0)
   - unittest
-  ImageMagick is not required, but is highly recommended to accelerate the validator.
-  Download instructions may be found in the following link:
-  http://imagemagick.org/script/download.php
+  Optional :
+  - pydot (tested in version 1.2.3) -- For graphical output from
+    ProvenanceGraphBuildingScorer.py
+
+  ImageMagick is not required, but is highly recommended to accelerate
+  the validator.  Download instructions may be found in the following
+  link: http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -170,7 +175,37 @@ HISTORY
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
       - Provenance validator and formal test cases added. Error messages should be expected in testing.
-
+  Apr 12, 2017 - MediScore Version 1.1.4:
+    * DetectionScorer:
+      - Absolute paths added. Path dependency for the detection scorer is no longer required.
+    * MaskScorer:
+      - Mask scoring sped up. Time taken to run has decreased by approximately 25%.
+      - Other generalizations applied. Initial steps taken towards further modularization of mask scoring code.
+      - System opt out option introduced. Select pixel values in the mask can be treated as no-score zones.
+      - The threshold metric table for the HTML output is replaced by a plot of the MCC value per binarization threshold. If some issue crops up
+        during the plotting attempt, the threshold metric table will appear instead.
+    * Validator:
+      - Reference file option included. Scoring for tasks can now be limited to target reference masks for considerable speedup.
+    * Provenance:
+      - Provenance validator has added a task option for when checking the EXPID is irrelevant.
+  Apr 21, 2017 - MediScore Version 1.1.5
+    * MaskScorer:
+      - Option to use faster mask scorer for code stability.
+    * Validator:
+      - Included validation of Nimble Challenge ID.
+    * ProvenanceValidator:
+      - Included validation of Nimble Challenge ID.
+  Apr 24, 2017 - MediScore Version 1.1.6
+    * MaskScorer:
+      - Added capability to read raw image files
+    * ProvenanceValidator:
+      - Fixed a minor typo in the error message output
+      - Set default NCID to "NC17"
+    * Validator:
+      - Set default NCID to "NC17"
+      - Added option to skip IsOptOut=='Y' rows
+    * Provenance:
+      - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
 
 CONTACT
 -------

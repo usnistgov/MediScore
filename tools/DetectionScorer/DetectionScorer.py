@@ -27,7 +27,8 @@ import sys
 from collections import OrderedDict
 from itertools import cycle
 
-lib_path = "../../lib"
+#lib_path = "../../lib"
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import Render as p
 import detMetrics as dm
@@ -190,8 +191,7 @@ if __name__ == '__main__':
         # Loading the reference file
         try:
             myRefFname = os.path.join(args.refDir, args.inRef)
-
-            myRef = pd.read_csv(myRefFname, sep='|')
+            myRef = pd.read_csv(myRefFname, sep='|', low_memory=False)
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
             print("ERROR: There was an error opening the reference csv file '" + myRefFname + "'")
@@ -206,15 +206,17 @@ if __name__ == '__main__':
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
-            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
-            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+            myJTJoin = pd.read_csv(myJTJoinFname, sep='|', low_memory=False)
+            myJTMask = pd.read_csv(myJTMaskFname, sep='|', low_memory=False)
         else:
             v_print("Either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
 
         # Loading the index file
         try:
             myIndexFname = os.path.join(args.refDir, args.inIndex)
-            myIndex = pd.read_csv(myIndexFname, sep='|')
+           # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
+            myIndex = pd.read_csv(myIndexFname, sep='|', low_memory=False)
+
         except IOError:
             print("ERROR: There was an error opening the index csv file")
             exit(1)
@@ -235,7 +237,7 @@ if __name__ == '__main__':
 
             mySysFname = os.path.join(args.sysDir, args.inSys)
             v_print("Sys File Name {}".format(mySysFname))
-            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
+            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype, low_memory=False)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
         except IOError:
             print("ERROR: There was an error opening the system output csv file")
