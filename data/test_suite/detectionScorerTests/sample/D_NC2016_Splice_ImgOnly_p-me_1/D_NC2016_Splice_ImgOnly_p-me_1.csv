@@ -1,4 +1,4 @@
-"ProbeFileID"|"DonorFileID"|"ConfidenceScore"|"ProbeOutputMaskFName"|"DonorDoutputMaskFName"|"IsOptOut"
+"ProbeFileID"|"DonorFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"OutputDonorMaskFileName"|"IsOptOut"
 "F18"|"F166"|0.034|"mask/F18-mask.png"|"mask/F166-mask.png"|"Y"
 "F166"|"F165"|0.021|"mask/F166-mask.png"|"mask/F165-mask.png"|"Y"
 "F165"|"F86"|0.021|"mask/F165-mask.png"|"mask/F86-mask.png"|"Y"

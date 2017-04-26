@@ -175,13 +175,13 @@ class Render:
         return fig
 
 
-def gen_default_plot_options(path="./plotJsonFiles/plot_options.json",plot_type='DET'):
+def gen_default_plot_options(path="./plotJsonFiles/plot_options.json", plot_title = "Performance", plot_type='DET'):
     """ This function generates JSON file to customize the plot.
         path: JSON file name along with the path
         plot_type: either DET or ROC"""
     from collections import OrderedDict
     mon_dict = OrderedDict([
-        ('title', plot_type),
+        ('title', plot_title),
         ('plot_type', plot_type),
         ('title_fontsize', 15),
         ('xticks_size', 'medium'),
