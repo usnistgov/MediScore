@@ -305,10 +305,10 @@ if __name__ == '__main__':
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
-                    # merge the JournalJoinTable and the JournalMaskTable
-                    jt_meta = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName') #JournalName instead of JournalID
+                    # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(pm_df, jt_meta, how='inner', on= 'ProbeFileID')
+                    pm_df = pd.merge(pm_df, jt_meta, how='left', on= 'ProbeFileID')
             #don't need JTJoin and JTMask for splice?
 
             if args.query:
