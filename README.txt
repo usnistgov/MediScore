@@ -206,6 +206,7 @@ HISTORY
       - Added option to skip IsOptOut=='Y' rows
     * Provenance:
       - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
+  Apr 26, 2017 - MediScore Version 1.1.7
     * DetectionScorer:
       - Changed the join method (left to inner) for merging the reference and index cvs file.
       - Added the plotTitle option.
