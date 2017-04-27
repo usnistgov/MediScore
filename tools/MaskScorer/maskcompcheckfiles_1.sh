@@ -285,13 +285,13 @@ else
 	cat comp_maskreport_remove-journalResults.txt
 fi
 
-if ([ $flag_all == 0 -a $flag_allpi == 0 -a $flag_alljr == 0 \
- -a $flag_clone == 0 -a $flag_clonepi == 0 -a $flag_clonejr == 0 \
- -a $flag_add == 0 -a $flag_addpi == 0 -a $flag_addjr == 0 \
- -a $flag_clone_add == 0 -a $flag_clone_addpi == 0 -a $flag_clone_addjr == 0 \
- -a $flag_healpi == 0 -a $flag_healjr == 0 \
- -a $flag_remove == 0 -a $flag_removepi == 0 -a $flag_removejr == 0 \
-]); then
+flag_total=$(($flag_all + $flag_allpi + $flag_alljr\
+ + $flag_clone + $flag_clonepi + $flag_clonejr\
+ + $flag_add + $flag_addpi + $flag_addjr\
+ + $flag_clone_add + $flag_clone_addpi + $flag_clone_addjr\
+ + $flag_healpi + $flag_healjr\
+ + $flag_remove + $flag_removepi + $flag_removejr))
+if ([ $flag_total == 0 ]); then
   echo
   echo "CASE 1 SUCCESSFULLY PASSED"
   echo

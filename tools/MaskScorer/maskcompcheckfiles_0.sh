@@ -154,10 +154,9 @@ else
 	cat comp_maskreport_thres-journalResults.txt
 fi
 
-if ([ $flag_s == 0 -a $flag_spi == 0 -a $flag_sjr == 0 \
- -a $flag_m == 0 -a $flag_mpi == 0 -a $flag_mjr == 0 \
- -a $flag_t == 0 -a $flag_tpi == 0 -a $flag_tjr == 0 \
-]); then
+flag_total=$(($flag_s + $flag_spi + $flag_sjr + $flag_m + $flag_mpi + $flag_mjr + $flag_t + $flag_tpi + $flag_tjr))
+
+if ([ $flag_total -eq 0 ]); then
   echo
   echo "CASE 0 SUCCESSFULLY PASSED"
   echo
