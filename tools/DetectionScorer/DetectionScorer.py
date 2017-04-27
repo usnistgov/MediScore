@@ -301,7 +301,7 @@ if __name__ == '__main__':
         if(myIndex.shape[0] != index_m_df.shape[0]):
             print("Index row num: {}".format(myIndex.shape[0]))
             print("Merged data row num: {}".format(index_m_df.shape[0]))
-            print ("Error: the row number of the index file and the number of the merged data file do not match")
+            print ("Warning: the row number of the index file and the number of the merged data file do not match.")
 
 
          # Partition Mode
