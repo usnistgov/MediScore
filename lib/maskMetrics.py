@@ -86,18 +86,9 @@ class maskMetrics:
 
         if popt==1:
             #for nicer printout
-            if (self.nmm==1) or (self.nmm==-1):
-                print("NMM: %d" % self.nmm)
-            else:
-                print("NMM: %0.3f" % self.nmm)
-            if (self.mcc==1) or (self.mcc==-1):
-                print("MCC: %d" % self.mcc)
-            else:
-                print("MCC (Matthews correlation coeff.): %0.3f" % self.mcc)
-            if (self.bwL1==1) or (self.bwL1==0):
-                print("BWL1: %d" % self.bwL1)
-            else:
-                print("Binary Weighted L1: %0.3f" % self.bwL1)
+            print("NMM: {}".format(self.nmm))
+            print("MCC (Matthews correlation coeff.): {}".format(self.mcc))
+            print("Binary Weighted L1: {}".format(self.bwL1))
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
