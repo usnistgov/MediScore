@@ -1,6 +1,6 @@
 File: README.txt
-Date: April 24, 2017
-MediScore Version: 1.1.6
+Date: April 26, 2017
+MediScore Version: 1.1.7
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -200,6 +200,15 @@ HISTORY
     * Validator:
       - Set default NCID to "NC17"
       - Added option to skip IsOptOut=='Y' rows
+  Apr 26, 2017 - MediScore Version 1.1.7
+    * MaskScorer:
+      - Fixed plotting issue with HTML reports.
+      - Added white mask scoring
+      - Accounts for case in which the no-score zone covers the entire image
+      - CSV outputs are now pipe-separated
+      - NaN output for columns that are not scores are substituted with empty string ''
+      - Re-distributed code in maskMetrics.py and maskMetrics_old.py to separate the metrics class (maskMetrics.py and maskMetrics_old.py)
+        and the metric runner (metricRunner.py)
 
 CONTACT
 -------

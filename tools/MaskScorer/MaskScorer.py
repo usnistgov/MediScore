@@ -42,6 +42,7 @@ import numpy as np
 #lib_path = "../../lib"
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
+from metricRunner import maskMetricRunner
 import Partition_mask as pt
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
@@ -112,11 +113,6 @@ parser.add_argument('--speedup',action='store_true',help="Run mask evaluation wi
 args = parser.parse_args()
 verbose=args.verbose
 
-if args.speedup:
-    import maskMetrics as mm
-else:
-    import maskMetrics_old as mm
-
 #wrapper print function for print message suppression
 if verbose:
     def printq(string):
@@ -174,8 +170,8 @@ if args.task == 'manipulation':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     
-        maskMetricRunner = mm.maskMetricList(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index)
-        df = maskMetricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=0,speedup=args.speedup)
+        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
     
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
         return merged_df
@@ -191,7 +187,9 @@ if args.task == 'manipulation':
             #set links around the system output data frame files for images that are not NaN
             #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
             pd.set_option('display.max_colwidth',-1)
-            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+#            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out.loc[html_out['Scored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileID'] + '/' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+
             html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
 
             #final filtering
@@ -225,14 +223,14 @@ elif args.task == 'splice':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        maskMetricRunner = mm.maskMetricList(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=1)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=1,speedup=args.speedup)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        probe_df = maskMetricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
+        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
-        maskMetricRunner = mm.maskMetricList(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        donor_df = maskMetricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
+        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
     
         probe_df.rename(index=str,columns={"NMM":"pNMM",
                                            "MCC":"pMCC",
@@ -266,8 +264,12 @@ elif args.task == 'splice':
             #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
             #html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
             pd.set_option('display.max_colwidth',-1)
-            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/probe/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
-            html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/donor/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
+#            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/probe/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+#            html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/donor/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
+
+            html_out.loc[html_out['ProbeScored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['ProbeScored'] == 'Y','DonorFileID'] + '/probe/' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+            html_out.loc[html_out['DonorScored'] == 'Y','DonorFileName'] = '<a href="' + html_out.ix[html_out['DonorScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileID'] + '/donor/' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1) + '</a>'
+
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
             html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
@@ -321,13 +323,13 @@ printq("Beginning the mask scoring report...")
 mySysFile = os.path.join(args.sysDir,args.inSys)
 myRefFile = os.path.join(myRefDir,args.inRef)
 
-mySys = pd.read_csv(mySysFile,sep='|',header=0,dtype=sys_dtype,na_filter=False)
+mySys = pd.read_csv(mySysFile,sep="|",header=0,dtype=sys_dtype,na_filter=False)
 if args.optOut:
     if not ('IsOptOut' in list(mySys)):
         print("No IsOptOut column detected. Filtration is meaningless.")
         exit(1)
-    mySys = mySys.query("IsOptOut!='Y'")
-    if len(mySys) == 0:
+    mySysTest = mySys.query("IsOptOut!='Y'")
+    if len(mySysTest) == 0:
         print("Everything got opted out. Exiting.")
         exit(0)
     
@@ -336,8 +338,8 @@ ref_dtype = {}
 with open(myRefFile,'r') as ref:
     ref_dtype = {h:str for h in ref.readline().rstrip().split('|')} #treat it as string
 
-myRef = pd.read_csv(myRefFile,sep='|',header=0,dtype=ref_dtype,na_filter=False)
-myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep='|',header=0,dtype=index_dtype,na_filter=False)
+myRef = pd.read_csv(myRefFile,sep="|",header=0,dtype=ref_dtype,na_filter=False)
+myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep="|",header=0,dtype=index_dtype,na_filter=False)
 
 factor_mode = ''
 query = ['']
@@ -372,13 +374,13 @@ sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
 refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
 #try/catch this
 try:
-    probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep='|',header=0,na_filter=False)
+    probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep="|",header=0,na_filter=False)
 except IOError:
     print("No probeJournalJoin file is present. This run will terminate.")
     exit(1)
 
 try:
-    journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep='|',header=0,na_filter=False)
+    journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep="|",header=0,na_filter=False)
 except IOError:
     print("No journalMask file is present. This run will terminate.")
     exit(1)
@@ -388,6 +390,13 @@ if args.task == 'manipulation':
     m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
     # get rid of inf values from the merge and entries for which there is nothing to work with.
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['OutputProbeMaskFileName'])
+    #for all columns unique to mySys except ConfidenceScore, replace np.nan with empty string
+    sysCols = list(mySys)
+    refCols = list(sub_ref)
+    sysCols = [c for c in sysCols if c not in refCols]
+    sysCols.remove('ConfidenceScore')
+    for c in sysCols:
+        m_df.loc[pd.isnull(m_df[c]),c] = ''
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
@@ -460,7 +469,7 @@ if args.task == 'manipulation':
         journalcols = ['ProbeFileID']
         journalcols.extend(journalcols_else)
         journalData0 = journalData0[journalcols]
-        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
+        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
     
 #        r_df['Scored'] = pd.Series(['Y']*len(r_df))
 #        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
@@ -493,13 +502,25 @@ if args.task == 'manipulation':
                 #a_df get the headers of temp_df and tack entries on one after the other
                 a_df = pd.DataFrame(columns=df_list[0].columns) 
                 for i,temp_df in enumerate(df_list):
-                    temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),index=False)
+                    temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
                     a_df = a_df.append(temp_df,ignore_index=True)
-                    
+                #at the same time do an optOut filter where relevant and save that
+                if args.optOut:
+                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                    df_list_o = my_partition_o.render_table(metrics)
+                    if len(df_list_o) > 0:
+                        for i,temp_df_o in enumerate(df_list_o):
+                            temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
+                            a_df = a_df.append(temp_df_o,ignore_index=True)
             elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
                 a_df = df_list[0]
-                if len(a_df) > 0:
-                    a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),index=False)
+                if len(a_df) > 0: 
+                    #add optOut scoring in addition to (not replacing) the averaging procedure
+                    if args.optOut:
+                        my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                        df_list_o = my_partition_o.render_table(metrics)
+                        a_df = a_df.append(df_list_o[0],ignore_index=True)
+                    a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
                 else:
                     a_df = 0
     
@@ -509,7 +530,7 @@ if args.task == 'manipulation':
         prefix = os.path.basename(args.inSys).split('.')[0]
         r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
         r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
     
 #commenting out for the time being
 #elif args.task in ['removal','clone']:
@@ -531,6 +552,13 @@ elif args.task == 'splice':
 
     # get rid of inf values from the merge
     m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[e + 'MaskFileName' for e in param_pfx])
+    #for all columns unique to mySys except ConfidenceScore, replace np.nan with empty string
+    sysCols = list(mySys)
+    refCols = list(sub_ref)
+    sysCols = [c for c in sysCols if c not in refCols]
+    sysCols.remove('ConfidenceScore')
+    for c in sysCols:
+        m_df.loc[pd.isnull(m_df[c]),c] = ''
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
@@ -575,7 +603,7 @@ elif args.task == 'splice':
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','DonorMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
 
-        m_dfc.index = range(0,len(m_dfc))
+        m_dfc.index = range(len(m_dfc))
             #journalData.index = range(0,len(journalData))
 
         #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
@@ -591,7 +619,7 @@ elif args.task == 'splice':
    
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
-        r_df = createReport(m_dfc,journalData0,probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
 
         #set where the rows are the same in the join
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
@@ -613,7 +641,7 @@ elif args.task == 'splice':
 
 #        journalData0 = pd.merge(journalData0,probeJournalJoin[['ProbeFileID','DonorFileID','JournalName','StartNodeID','EndNodeID']],how='right',on=['JournalName','StartNodeID','EndNodeID'])
         journalData0 = journalData0[journalcols]
-        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),index=False)
+        journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
         a_df = 0
 
         #TODO: averaging procedure starts here
@@ -656,13 +684,26 @@ elif args.task == 'splice':
             #a_df get the headers of temp_df and tack entries on one after the other
             a_df = pd.DataFrame(columns=df_list[0].columns) 
             for i,temp_df in enumerate(df_list):
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),index=False)
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
+            #at the same time do an optOut filter where relevant and save that
+            if args.optOut:
+                my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                df_list_o = my_partition_o.render_table(metrics)
+                if len(df_list_o) > 0:
+                    for i,temp_df_o in enumerate(df_list_o):
+                        temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
+                        a_df = a_df.append(temp_df_o,ignore_index=True)
                 
         elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
             a_df = df_list[0]
             if len(a_df) > 0:
-                a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),index=False)
+                #add optOut scoring in addition to (not replacing) the averaging procedure
+                if args.optOut:
+                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                    df_list_o = my_partition_o.render_table(metrics)
+                    a_df = a_df.append(df_list_o[0],ignore_index=True)
+                a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
             else:
                 a_df = 0
         #TODO: averaging procedure ends here
@@ -675,7 +716,7 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('pMCC == -2').index,'ProbeScored'] = 'N'
         r_df.loc[r_df.query('dMCC == -2').index,'dMCC'] = ''
         r_df.loc[r_df.query('dMCC == -2').index,'DonorScored'] = 'N'
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
 
 printq("Ending the mask scoring report.")
 

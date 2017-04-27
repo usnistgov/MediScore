@@ -5,3 +5,4 @@ JournalName|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument
 414c1f66804a0f8de50142b6665d9d14|414c1f66804a0f8de50142b6665d9d14-TGT-03-BRIGHT|414c1f66804a0f8de50142b6665d9d14-TGT-04-MBLUR|FilterBlurMotion|255 12 0||
 414c1f66804a0f8de50142b6665d9d14|414c1f66804a0f8de50142b6665d9d14-TGT-01|414c1f66804a0f8de50142b6665d9d14-TGT-02-PASTERC|PasteSplice|255 0 240|add|large man-made object
 8daee7c562ec7a7e80d73ec6c1dfb9ee|b38a81a6aaa6ce91567afd8a914c7bf1-01|b38a81a6aaa6ce91567afd8a914c7bf1-size03|PasteSplice|247 250 0|add|natural object
+less_smallmanip|less_smallmanip-1|less_smallmanip-2|PasteSplice|0 0 0|add|all black
