@@ -360,7 +360,6 @@ class maskMetricRunner:
             threshold = 0
             metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
             #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
-            gwL1 = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
             if self.sbin >= 0:
                 #just get scores in one run if threshold is chosen
                 mets = metricRunner.getMetrics(popt=verbose)
@@ -381,7 +380,7 @@ class maskMetricRunner:
                 sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                 sImg.save(sbin_name,th=threshold)
  
-            mets['GWL1'] = gwL1
+            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
             for met in ['NMM','MCC','BWL1','GWL1']:
                 df.set_value(i,met,round(mets[met],precision))
  
@@ -393,7 +392,7 @@ class maskMetricRunner:
                 df.set_value(i,'ColMaskFileName',colMaskName)
                 df.set_value(i,'AggMaskFileName',aggImgName)
                 #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                self.manipReport(task,subOutRoot,df[mymode+'FileID'].loc[i],maniImageFName[i],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
+                self.manipReport(task,subOutRoot,row[mymode+'FileID'],row[mymode+'FileName'],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
 
         ilog.close()
         return df.drop(mymode+'MaskFileName',1)

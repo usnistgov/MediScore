@@ -222,6 +222,9 @@ HISTORY
         and the metric runner (metricRunner.py)
     * Provenance:
       - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
+  MediScore Version 1.1.8
+    * MaskScorer:
+      - Added option to score on a smaller index file for testing purposes.
 
 CONTACT
 -------

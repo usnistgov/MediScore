@@ -11993,6 +11993,14 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <ul>
 <li>The shape of the kernel to be used, for both erosion and dilation. Choose from 'box','disc','diamond','gaussian', or 'line'. The default kernel is 'box'.</li>
 </ul>
+<p>-xF indexFilter</p>
+<ul>
+<li>Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.</li>
+</ul>
+<p>--speedup</p>
+<ul>
+<li>Run mask evaluation with a sped-up evaluator.</li>
+</ul>
 
 </div>
 </div>
@@ -12079,6 +12087,10 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <p>-html</p>
 <ul>
 <li>Output the report to HTML files. Set the flag to choose this option.</li>
+</ul>
+<p>--optOut</p>
+<ul>
+<li>Evaluate algorithm performance on trials where the IsOptOut value is not 'Y'. In addition to the averaging report(s) based on query or otherwise, one or more additional reports will be generated for masks that were not opted out.</li>
 </ul>
 
 </div>
