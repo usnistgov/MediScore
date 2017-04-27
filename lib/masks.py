@@ -91,7 +91,7 @@ class mask(object):
                    single-channel grayscale
         """
         self.name=n
-        if self.name[-4:] == '.awr':
+        if self.name[-4:] == '.arw':
             self.matrix=rawpy.imread(n).postprocess()
         else:
             self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
