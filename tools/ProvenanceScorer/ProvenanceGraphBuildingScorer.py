@@ -56,70 +56,97 @@ def system_out_to_scorable(system_out):
     edge_set = { (node_lookup[edge["source"]]["file"], node_lookup[edge["target"]]["file"]) for edge in system_out["links"] }
     return (node_set, edge_set)
 
-def build_provenancegraphbuilding_agg_output_df():
-    df = pd.DataFrame(columns=["Direct",
-                               "MeanSimNLO",
-                               "MeanSimNO",
-                               "MeanSimLO",
-                               "MeanNodeRecall"])
+# Can't use just a hash here, as we need to enforce column order
+def build_dataframe(columns, fields):
+    df = pd.DataFrame(columns=columns)
 
-    dtypes = { "Direct": bool,
-               "MeanSimNLO": float,
-               "MeanSimNO": float,
-               "MeanSimLO": float,
-               "MeanNodeRecall": float }
-
+    
     # Setting column data type one by one as pandas doesn't offer a
     # convenient way to do this
-    for col, t in dtypes.items():
+    for col, t in fields.items():
         df[col] = df[col].astype(t)
 
     return df
+
+def build_provenancegraphbuilding_agg_output_df():
+    return build_dataframe(["Direct",
+                            "MeanSimNLO",
+                            "MeanSimNO",
+                            "MeanSimLO",
+                            "MeanNodeRecall"],
+                           { "Direct": bool,
+                             "MeanSimNLO": float,
+                             "MeanSimNO": float,
+                             "MeanSimLO": float,
+                             "MeanNodeRecall": float })
+
+def build_provenancegraphbuilding_nodemapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "WorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "WorldFileID": str,
+                             "Mapping": str })
+
+def build_provenancegraphbuilding_linkmapping_df():
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "SourceWorldFileID",
+                            "TargetWorldFileID",
+                            "Mapping"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "SourceWorldFileID": str,
+                             "TargetWorldFileID": str,
+                             "Mapping": str })
 
 def build_provenancegraphbuilding_output_df():
-    df = pd.DataFrame(columns=["JournalName",
-                               "ProvenanceProbeFileID",
-                               "Direct",
-                               "ProvenanceOutputFileName",
-                               "NumSysNodes",
-                               "NumSysLinks",
-                               "NumRefNodes",
-                               "NumRefLinks",
-                               "NumCorrectNodes",
-                               "NumMissingNodes",
-                               "NumFalseAlarmNodes",
-                               "NumCorrectLinks",
-                               "NumMissingLinks",
-                               "NumFalseAlarmLinks",
-                               "SimNLO",
-                               "SimNO",
-                               "SimLO",
-                               "NodeRecall"])
-    dtypes = { "JournalName": str,
-               "ProvenanceProbeFileID": str,
-               "Direct": bool,
-               "ProvenanceOutputFileName": str,
-               "NumSysNodes": int,
-               "NumSysLinks": int,
-               "NumRefNodes": int,
-               "NumRefLinks": int,
-               "NumCorrectNodes": int,
-               "NumMissingNodes": int,
-               "NumFalseAlarmNodes": int,
-               "NumCorrectLinks": int,
-               "NumMissingLinks": int,
-               "NumFalseAlarmLinks": int,
-               "SimNLO": float,
-               "SimNO": float,
-               "SimLO": float,
-               "NodeRecall": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
+    return build_dataframe(["JournalName",
+                            "ProvenanceProbeFileID",
+                            "Direct",
+                            "ProvenanceOutputFileName",
+                            "NumSysNodes",
+                            "NumSysLinks",
+                            "NumRefNodes",
+                            "NumRefLinks",
+                            "NumCorrectNodes",
+                            "NumMissingNodes",
+                            "NumFalseAlarmNodes",
+                            "NumCorrectLinks",
+                            "NumMissingLinks",
+                            "NumFalseAlarmLinks",
+                            "SimNLO",
+                            "SimNO",
+                            "SimLO",
+                            "NodeRecall"],
+                           { "JournalName": str,
+                             "ProvenanceProbeFileID": str,
+                             "Direct": bool,
+                             "ProvenanceOutputFileName": str,
+                             "NumSysNodes": int,
+                             "NumSysLinks": int,
+                             "NumRefNodes": int,
+                             "NumRefLinks": int,
+                             "NumCorrectNodes": int,
+                             "NumMissingNodes": int,
+                             "NumFalseAlarmNodes": int,
+                             "NumCorrectLinks": int,
+                             "NumMissingLinks": int,
+                             "NumFalseAlarmLinks": int,
+                             "SimNLO": float,
+                             "SimNO": float,
+                             "SimLO": float,
+                             "NodeRecall": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceGraphBuilding task output")
@@ -133,13 +160,27 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
+    parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
+    parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
     args = parser.parse_args()
 
+    mkdir_p(args.output_dir)
+    figure_dir = os.path.join(os.path.abspath(args.output_dir), "figures")
+    if args.html_report == True:
+        args.plot_scored = True        
+    # Import GraphVisualizer only if needed as it requires additional
+    # dependencies
+    if args.plot_scored:
+        from GraphVisualizer import *
+        mkdir_p(figure_dir)
+    
     trial_index = load_csv(args.index_file)
     ref_file = load_csv(args.reference_file)
     nodes_file = load_csv(args.node_file)
     world_index = load_csv(args.world_file)
 
+    abs_reference_dir = os.path.abspath(args.reference_dir)
+    
     system_output_index = load_csv(args.system_output_file)
 
     def check_for_trial_disparity():
@@ -173,13 +214,15 @@ if __name__ == '__main__':
     world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
 
     output_records = build_provenancegraphbuilding_output_df()
+    output_node_mapping_records = build_provenancegraphbuilding_nodemapping_df()
+    output_link_mapping_records = build_provenancegraphbuilding_linkmapping_df()
     
     world_node_lookup = {}
     for world_node in world_nodes.itertuples():
         world_node_lookup[world_node.JournalNodeID] = world_node.WorldFileName_x
     
     for journal_fn, trial_index_ref_sysout_items in trial_index_ref_sysout.groupby("JournalFileName"):
-        journal_path = os.path.join(args.reference_dir, journal_fn)
+        journal_path = os.path.join(abs_reference_dir, journal_fn)
         journal = load_json(journal_path)        
         
         node_lookup = {}
@@ -227,6 +270,46 @@ if __name__ == '__main__':
 
             sys_nodes, sys_edges = system_out_to_scorable(system_out)
 
+            # Could maybe put this in a "mapping" function
+            correct_nodes = sys_nodes & ref_nodes
+            fa_nodes = sys_nodes - ref_nodes
+            missing_nodes = ref_nodes - sys_nodes
+            correct_edges = sys_edges & ref_edges
+            fa_edges = sys_edges - ref_edges
+            missing_edges = ref_edges - sys_edges
+
+            def _worldfile_path_to_id(path):
+                base, ext = os.path.splitext(os.path.basename(path))
+                return base
+
+            def _build_node_map_record(node, mapping):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "WorldFileID": _worldfile_path_to_id(node),
+                         "Mapping": mapping }
+
+            def _build_link_map_record(link, mapping):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "SourceWorldFileID": _worldfile_path_to_id(link[0]),
+                         "TargetWorldFileID": _worldfile_path_to_id(link[1]),
+                         "Mapping": mapping }
+
+            for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
+                                     [ _build_node_map_record(node, "FalseAlarm") for node in fa_nodes ] +
+                                     [ _build_node_map_record(node, "Missing") for node in missing_nodes ]):
+                output_node_mapping_records = output_node_mapping_records.append(pd.Series(map_record), ignore_index=True)
+
+            for map_record in sorted([ _build_link_map_record(link, "Correct") for link in correct_edges ] +
+                                     [ _build_link_map_record(link, "FalseAlarm") for link in fa_edges ] +
+                                     [ _build_link_map_record(link, "Missing") for link in missing_edges ]):
+                output_link_mapping_records = output_link_mapping_records.append(pd.Series(map_record), ignore_index=True)
+
+            
             out_rec = { "JournalName": trial.JournalName,
                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                         "Direct": args.direct,
@@ -235,12 +318,12 @@ if __name__ == '__main__':
                         "NumSysLinks": len(sys_edges),
                         "NumRefNodes": len(ref_nodes),
                         "NumRefLinks": len(ref_edges),
-                        "NumCorrectNodes": len(sys_nodes & ref_nodes),
-                        "NumMissingNodes": len(ref_nodes - sys_nodes),
-                        "NumFalseAlarmNodes": len(sys_nodes - ref_nodes),
-                        "NumCorrectLinks": len(sys_edges & ref_edges),
-                        "NumMissingLinks": len(ref_edges - sys_edges),
-                        "NumFalseAlarmLinks": len(sys_edges - ref_edges),
+                        "NumCorrectNodes": len(correct_nodes),
+                        "NumMissingNodes": len(missing_nodes),
+                        "NumFalseAlarmNodes": len(fa_nodes),
+                        "NumCorrectLinks": len(correct_edges),
+                        "NumMissingLinks": len(missing_edges),
+                        "NumFalseAlarmLinks": len(fa_edges),
                         "SimNLO": SimNLO(ref_nodes, ref_edges, sys_nodes, sys_edges),
                         "SimNO": SimNO(ref_nodes, sys_nodes),
                         "SimLO": SimLO(ref_edges, sys_edges),
@@ -248,7 +331,21 @@ if __name__ == '__main__':
             
             output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
+            # Plot our scored graph if requested
+            if args.plot_scored:
+                out_fn = os.path.join(figure_dir, "{}.png".format(trial.ProvenanceProbeFileID))
+                render_provenance_graph_from_mapping(trial.ProvenanceProbeFileID,
+                                                     correct_nodes,
+                                                     fa_nodes,
+                                                     missing_nodes,
+                                                     correct_edges,
+                                                     fa_edges,
+                                                     missing_edges,
+                                                     out_fn,
+                                                     abs_reference_dir)
+
     output_agg_records = build_provenancegraphbuilding_agg_output_df()
+
     aggregated = { "Direct": args.direct,
                    "MeanSimNLO": output_records["SimNLO"].mean(),
                    "MeanSimNO": output_records["SimNO"].mean(),
@@ -256,14 +353,27 @@ if __name__ == '__main__':
                    "MeanNodeRecall": output_records["NodeRecall"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
     
-    mkdir_p(args.output_dir)
-    try:
-        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
-            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
-    try:
-        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
-            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+    def _write_df_to_csv(df, out_fn):
+        try:
+            with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
+                df.to_csv(path_or_buf=out_f, sep="|", index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
+
+    _write_df_to_csv(output_records, "trial_scores.csv")
+    _write_df_to_csv(output_agg_records, "scores.csv")
+    _write_df_to_csv(output_node_mapping_records, "node_mapping.csv")
+    _write_df_to_csv(output_link_mapping_records, "link_mapping.csv")
+
+    if args.html_report == True:
+        try:
+            pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            with open(os.path.join(args.output_dir, "report.html"), 'w') as out_f:
+                out_f.write("<h2>Aggregated Scores:</h2>")
+                output_agg_records.to_html(buf=out_f, index=False)
+                out_f.write("<br/><br/>")
+                out_f.write("<h2>Trial Scores:</h2>")
+                output_records["Figure"] = output_records["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
+                output_records.to_html(buf=out_f, index=False, escape=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))

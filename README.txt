@@ -40,9 +40,13 @@ INSTALLATION
   - scikit-learn (tested in version 0.17.1)
   - rawpy (tested in version 0.9.0)
   - unittest
-  ImageMagick is not required, but is highly recommended to accelerate the validator.
-  Download instructions may be found in the following link:
-  http://imagemagick.org/script/download.php
+  Optional :
+  - pydot (tested in version 1.2.3) -- For graphical output from
+    ProvenanceGraphBuildingScorer.py
+
+  ImageMagick is not required, but is highly recommended to accelerate
+  the validator.  Download instructions may be found in the following
+  link: http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -201,6 +205,13 @@ HISTORY
       - Set default NCID to "NC17"
       - Added option to skip IsOptOut=='Y' rows
   Apr 26, 2017 - MediScore Version 1.1.7
+    * DetectionScorer:
+      - Changed the join method (left to inner) for merging the reference and index cvs file.
+      - Added the plotTitle option.
+      - Added the outMeta and outAllmeta options for producing the meta information along with system output.
+      - Updated the column names in the test cases.
+      - Fixed a bug on detcompcheckfile.sh
+      - Changed the csv separation ',' to '|' for all report csv files.
     * MaskScorer:
       - Fixed plotting issue with HTML reports.
       - Added white mask scoring
@@ -209,6 +220,8 @@ HISTORY
       - NaN output for columns that are not scores are substituted with empty string ''
       - Re-distributed code in maskMetrics.py and maskMetrics_old.py to separate the metrics class (maskMetrics.py and maskMetrics_old.py)
         and the metric runner (metricRunner.py)
+    * Provenance:
+      - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
 
 CONTACT
 -------

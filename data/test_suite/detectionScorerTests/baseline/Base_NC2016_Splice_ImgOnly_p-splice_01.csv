@@ -1,4 +1,4 @@
-"ProbeFileID"|"DonorFileID"|"ConfidenceScore"|"ProbeOutputMaskFileName"|"DonorOutputMaskFileName"|"IsOptOut"
+"ProbeFileID"|"DonorFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"OutputDonorMaskFileName"|"IsOptOut"
 "NC2016_0017"|"NC2016_9482"|0.0046|""|""|"N"
 "NC2016_0048"|"NC2016_2245"|39|"mask/NC2016_0048_768_1.png"|"mask/NC2016_0048_768_2.png"|"N"
 "NC2016_0048"|"NC2016_3072"|42|"mask/NC2016_0048_804_1.png"|"mask/NC2016_0048_804_2.png"|"N"
