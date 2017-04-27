@@ -225,6 +225,11 @@ HISTORY
   MediScore Version 1.1.8
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
+      - Added increased capability to read images of different formats, including raw and bmp images.
+    * Validator:
+      - IsOptOut column is mandated
+    * ProvenanceValidator:
+      - ConfidenceScore and IsOptOut columns are mandated
 
 CONTACT
 -------
