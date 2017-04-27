@@ -275,25 +275,28 @@ if __name__ == '__main__':
         if args.task in ['manipulation']:
              # merge the reference and index csv only
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-            pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
+            index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
+            print("sys data size {}".format(mySys.shape))
+            print("m data size {}".format(index_m_df.shape))
+
 
             if args.outAllmeta: #save all metadata for analysis purpose
-                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
 
             if args.outMeta: #save all metadata for analysis purpose
-                sub_pm_df = pm_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
         #DSD
         elif args.task in ['splice']:
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-            pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
+            index_m_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
             #print(list(pm_df))
 
             if args.outAllmeta: #save all metadata for analysis purpose
-                pm_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
 
             if args.outMeta: #save all metadata for analysis purpose
-                sub_pm_df = pm_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
 
          # Partition Mode
@@ -308,7 +311,7 @@ if __name__ == '__main__':
                     # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
                     jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(pm_df, jt_meta, how='left', on= 'ProbeFileID')
+                    pm_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
             #don't need JTJoin and JTMask for splice?
 
             if args.query:
@@ -347,9 +350,9 @@ if __name__ == '__main__':
         else:
 
             if args.optOut:
-                m_df = m_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut=='N' ")
 
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
+            DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
 
             DM_List = [DM]
             table_df = DM.render_table()

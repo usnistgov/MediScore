@@ -23,6 +23,7 @@ class detMetrics:
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
         self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = self.compute_points_sk(score, gt)
+        #print("count {}".format(score.shape))
         self.trr = round(float((self.t_num + self.nt_num))/total_num, 2)
         #print("T# {}, NT# {}, TRR: {}".format(self.t_num, self.nt_num, self.trr))
 #        print("({0:.1f}s)".format(time.time() - s))
