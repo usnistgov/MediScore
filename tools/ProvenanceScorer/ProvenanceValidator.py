@@ -88,14 +88,13 @@ class ProvenanceValidator(validator):
         jsonFlag = 0
         matchFlag = 0
         
-        if sysfile.shape[1] < 2:
-            printq("ERROR: The number of columns of the system output file must be at least 2. Make sure you are using '|' to separate your columns.",True)
+        if sysfile.shape[1] < 4:
+            printq("ERROR: The number of columns of the system output file must be at least 4. Make sure you are using '|' to separate your columns.",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
-        truelist = ["ProvenanceProbeFileID","ProvenanceOutputFileName"]
+        truelist = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName","IsOptOut"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
