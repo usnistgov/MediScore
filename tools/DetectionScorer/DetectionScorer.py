@@ -276,9 +276,8 @@ if __name__ == '__main__':
              # merge the reference and index csv only
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
             index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
-            print("sys data size {}".format(mySys.shape))
-            print("m data size {}".format(index_m_df.shape))
-
+#            print("sys data size {}".format(mySys.shape))
+#            print("m data size {}".format(index_m_df.shape))
 
             if args.outAllmeta: #save all metadata for analysis purpose
                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
@@ -298,6 +297,12 @@ if __name__ == '__main__':
             if args.outMeta: #save all metadata for analysis purpose
                 sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+
+        if(myIndex.shape[0] != index_m_df.shape[0]):
+            print("Index row num: {}".format(myIndex.shape[0]))
+            print("Merged data row num: {}".format(index_m_df.shape[0]))
+            print ("Error: the row number of the index file and the number of the merged data file do not match")
+
 
          # Partition Mode
         if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
