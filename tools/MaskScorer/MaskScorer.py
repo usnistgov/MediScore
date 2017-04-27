@@ -108,6 +108,7 @@ parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
 
 args = parser.parse_args()
@@ -397,6 +398,8 @@ if args.task == 'manipulation':
     sysCols.remove('ConfidenceScore')
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
+    if args.indexFilter:
+        m_df = pd.merge(myIndex['ProbeFileID','ProbeWidth'],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
@@ -486,7 +489,8 @@ if args.task == 'manipulation':
         r_df = r_df[firstcols]
     
         a_df = 0
-        if len(r_df.query("Scored=='Y'")) == 0:
+        #filter nan out of the below
+        if len(r_df.query("Scored=='Y'").dropna()) == 0:
             #if nothing was scored, print a message and return
             print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
         else:
@@ -559,6 +563,9 @@ elif args.task == 'splice':
     sysCols.remove('ConfidenceScore')
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
+    if args.indexFilter:
+        m_df = pd.merge(myIndex[['ProbeFileID','DonorFileID']],m_df,how='left',on=['ProbeFileID','DonorFileID'])
+
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
@@ -659,54 +666,61 @@ elif args.task == 'splice':
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         r_df = r_df[firstcols]
+   
+        #filter here
+        a_df = 0
+        #filter nan out of the below
+        if len(r_df.query("(ProbeScored == 'Y') | (DonorScored == 'Y')").dropna()) == 0:
+            #if nothing was scored, print a message and return
+            print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
+        else:
+            metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+            r_dfc = r_df.copy()
+            r_dfc.loc[p_idx,'ProbeScored'] = 'N'
+            r_dfc.loc[d_idx,'DonorScored'] = 'N'
+            #p_dummyscores = r_dfc.query("pMCC > -2")[metrics].mean(axis=0)
+            #d_dummyscores = r_dfc.query("dMCC > -2")[metrics].mean(axis=0)
     
-        metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-        r_dfc = r_df.copy()
-        r_dfc.loc[p_idx,'ProbeScored'] = 'N'
-        r_dfc.loc[d_idx,'DonorScored'] = 'N'
-        #p_dummyscores = r_dfc.query("pMCC > -2")[metrics].mean(axis=0)
-        #d_dummyscores = r_dfc.query("dMCC > -2")[metrics].mean(axis=0)
-
-        #substitute for other values that won't get counted in the average
-        r_dfc.loc[p_idx,'pNMM'] = np.nan #p_dummyscores['pNMM']
-        r_dfc.loc[p_idx,'pBWL1'] = np.nan #p_dummyscores['pBWL1']
-        r_dfc.loc[p_idx,'pGWL1'] = np.nan#$p_dummyscores['pGWL1']
-        r_dfc.loc[d_idx,'dNMM'] = np.nan #d_dummyscores['dNMM']
-        r_dfc.loc[d_idx,'dBWL1'] = np.nan #d_dummyscores['dBWL1']
-        r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
-        r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
-        r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
-        my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries.
-        df_list = my_partition.render_table(metrics)
-    
-        if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
-            #use Partition for OOP niceness and to identify file to be written. 
-            #a_df get the headers of temp_df and tack entries on one after the other
-            a_df = pd.DataFrame(columns=df_list[0].columns) 
-            for i,temp_df in enumerate(df_list):
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
-                a_df = a_df.append(temp_df,ignore_index=True)
-            #at the same time do an optOut filter where relevant and save that
-            if args.optOut:
-                my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
-                df_list_o = my_partition_o.render_table(metrics)
-                if len(df_list_o) > 0:
-                    for i,temp_df_o in enumerate(df_list_o):
-                        temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
-                        a_df = a_df.append(temp_df_o,ignore_index=True)
-                
-        elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
-            a_df = df_list[0]
-            if len(a_df) > 0:
-                #add optOut scoring in addition to (not replacing) the averaging procedure
+            #substitute for other values that won't get counted in the average
+            r_dfc.loc[p_idx,'pNMM'] = np.nan #p_dummyscores['pNMM']
+            r_dfc.loc[p_idx,'pBWL1'] = np.nan #p_dummyscores['pBWL1']
+            r_dfc.loc[p_idx,'pGWL1'] = np.nan#$p_dummyscores['pGWL1']
+            r_dfc.loc[d_idx,'dNMM'] = np.nan #d_dummyscores['dNMM']
+            r_dfc.loc[d_idx,'dBWL1'] = np.nan #d_dummyscores['dBWL1']
+            r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
+            r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
+            r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
+            my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries.
+            df_list = my_partition.render_table(metrics)
+        
+            if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
+                #use Partition for OOP niceness and to identify file to be written. 
+                #a_df get the headers of temp_df and tack entries on one after the other
+                a_df = pd.DataFrame(columns=df_list[0].columns) 
+                for i,temp_df in enumerate(df_list):
+                    temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
+                    a_df = a_df.append(temp_df,ignore_index=True)
+                #at the same time do an optOut filter where relevant and save that
                 if args.optOut:
                     my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
                     df_list_o = my_partition_o.render_table(metrics)
-                    a_df = a_df.append(df_list_o[0],ignore_index=True)
-                a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
-            else:
-                a_df = 0
-        #TODO: averaging procedure ends here
+                    if len(df_list_o) > 0:
+                        for i,temp_df_o in enumerate(df_list_o):
+                            temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
+                            a_df = a_df.append(temp_df_o,ignore_index=True)
+                    
+            elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
+                a_df = df_list[0]
+                if len(a_df) > 0:
+                    #add optOut scoring in addition to (not replacing) the averaging procedure
+                    if args.optOut:
+                        my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                        df_list_o = my_partition_o.render_table(metrics)
+                        a_df = a_df.append(df_list_o[0],ignore_index=True)
+                    a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
+                else:
+                    a_df = 0
+            #TODO: averaging procedure ends here
 
         #generate HTML table report
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
