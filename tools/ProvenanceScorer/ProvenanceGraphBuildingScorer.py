@@ -17,6 +17,13 @@ def err_quit(msg, exit_status=1):
     print(msg)
     exit(exit_status)
 
+def build_logger(verbosity_threshold=0):
+    def _log(depth, msg):
+        if depth <= verbosity_threshold:
+            print(msg)
+
+    return _log
+
 def load_json(json_fn):
     try:
         with open(json_fn, 'r') as json_f:
@@ -163,6 +170,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
     parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
     parser.add_argument("-T", "--thumbnail-cache-dir", help="Directory to use as thumbnail cache", type=str)
+    parser.add_argument("-v", "--verbose", help="Toggle verbose log output", action="store_true")
     args = parser.parse_args()
 
     mkdir_p(args.output_dir)
@@ -174,7 +182,12 @@ if __name__ == '__main__':
     if args.plot_scored:
         from GraphVisualizer import *
         mkdir_p(figure_dir)
-    
+
+    # Logger setup, could eventually support different levels of
+    # verbosity
+    verbosity_threshold = 1 if args.verbose else 0
+    log = build_logger(verbosity_threshold)
+        
     trial_index = load_csv(args.index_file)
     ref_file = load_csv(args.reference_file)
     nodes_file = load_csv(args.node_file)
@@ -188,7 +201,7 @@ if __name__ == '__main__':
     
     system_output_index = load_csv(args.system_output_file)
 
-    def check_for_trial_disparity():
+    def check_for_trial_disparity(only_warn_on_extraneous = False):
         # detect missing trials
         ref_probes = [ t.ProvenanceProbeFileID for t in trial_index.itertuples() ]
         remaining_sys_probes = [ t.ProvenanceProbeFileID for t in system_output_index.itertuples() ]
@@ -204,14 +217,17 @@ if __name__ == '__main__':
         if len(missing_probes) > 0:
             errs.append("Error, missing the following ProvenanceProbeFileIDs from the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, missing_probes))))
         if len(remaining_sys_probes) > 0:
-            errs.append("Error, extraneous ProvenanceProbeFileIDs in the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, remaining_sys_probes))))
+            if only_warn_on_extraneous:
+                log(1, "Warning, found {} extraneous ProvenanceProbeFileIDs in the system output.".format(len(remaining_sys_probes)))
+            else:
+                errs.append("Error, extraneous ProvenanceProbeFileIDs in the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, remaining_sys_probes))))
 
         if len(errs) > 0:
             errs.append("Aborting!")
             err_quit("\n".join(errs))
 
-    if not args.skip_trial_disparity_check:
-        check_for_trial_disparity()
+    check_for_trial_disparity(args.skip_trial_disparity_check)
+    log(1, "Scoring {} trials ..".format(len(trial_index)))
             
     trial_index_ref = pd.merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
     trial_index_ref_sysout = pd.merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
@@ -252,6 +268,7 @@ if __name__ == '__main__':
             err_quit("Detected a cycle in journal file.  Aborting!")
 
         for trial in trial_index_ref_sysout_items.itertuples():
+            log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
             system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
             
             probe_node_id = nodes_file[nodes_file.WorldFileID == trial.ProvenanceProbeFileID].iloc[0]["JournalNodeID"]
@@ -359,22 +376,26 @@ if __name__ == '__main__':
                    "MeanNodeRecall": output_records["NodeRecall"].mean() }
     output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
     
-    def _write_df_to_csv(df, out_fn):
+    def _write_df_to_csv(name, df, out_fn):
         try:
-            with open(os.path.join(args.output_dir, out_fn), 'w') as out_f:
+            out_path = os.path.join(args.output_dir, out_fn) 
+            with open(out_path, 'w') as out_f:
+                log(1, "Writing {} to '{}'".format(name, out_path))
                 df.to_csv(path_or_buf=out_f, sep="|", index=False)
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))
 
-    _write_df_to_csv(output_records, "trial_scores.csv")
-    _write_df_to_csv(output_agg_records, "scores.csv")
-    _write_df_to_csv(output_node_mapping_records, "node_mapping.csv")
-    _write_df_to_csv(output_link_mapping_records, "link_mapping.csv")
+    _write_df_to_csv("Trial Scores", output_records, "trial_scores.csv")
+    _write_df_to_csv("Aggregate Scores", output_agg_records, "scores.csv")
+    _write_df_to_csv("Node Mapping", output_node_mapping_records, "node_mapping.csv")
+    _write_df_to_csv("Link Mapping", output_link_mapping_records, "link_mapping.csv")
 
     if args.html_report == True:
         try:
             pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
-            with open(os.path.join(args.output_dir, "report.html"), 'w') as out_f:
+            report_out_path = os.path.join(args.output_dir, "report.html")
+            log(1, "Writing HTML Report to '{}'".format(report_out_path))
+            with open(report_out_path, 'w') as out_f:
                 out_f.write("<h2>Aggregated Scores:</h2>")
                 output_agg_records.to_html(buf=out_f, index=False)
                 out_f.write("<br/><br/>")
