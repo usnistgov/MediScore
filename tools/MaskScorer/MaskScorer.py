@@ -399,7 +399,7 @@ if args.task == 'manipulation':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex['ProbeFileID','ProbeWidth'],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
+        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
