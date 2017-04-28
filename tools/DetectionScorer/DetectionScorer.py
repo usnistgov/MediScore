@@ -286,8 +286,8 @@ if __name__ == '__main__':
             if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
                 sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
-            else:
-                print("Error: the required columns are not exist.")
+            elif args.outMeta and not set(mani_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
         #DSD
         elif args.task in ['splice']:
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
@@ -301,8 +301,8 @@ if __name__ == '__main__':
             if args.outMeta and set(splice_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
                 sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
-            else:
-                print("Error: the required columns are not exist.")
+            elif args.outMeta and not set(splice_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
 
 #        if(myIndex.shape[0] != index_m_df.shape[0]):
 #            print("Index row num: {}".format(myIndex.shape[0]))
