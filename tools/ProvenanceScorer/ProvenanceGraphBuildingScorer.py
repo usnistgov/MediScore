@@ -159,6 +159,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceGraphBuilding task output")
     parser.add_argument("-d", "--direct", help="toggle direct path scoring", action="store_true")
     parser.add_argument("-t", "--skip-trial-disparity-check", help="Skip check for trial disparity between INDEX_FILE and SYSTEM_OUTPUT_FILE", action="store_true")
+    parser.add_argument("-c", "--warn-on-system-cycle", help="Produces warnings if cycles detected in system output, rather than aborting", action="store_true")
     parser.add_argument("-o", "--output-dir", help="Output directory for scores", type=str, required=True)
     parser.add_argument("-x", "--index-file", help="Task Index file", type=str, required=True)
     parser.add_argument("-r", "--reference-file", help="Reference file", type=str, required=True)
@@ -269,7 +270,8 @@ if __name__ == '__main__':
 
         for trial in trial_index_ref_sysout_items.itertuples():
             log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
-            system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
+            system_out_path = os.path.join(args.system_dir, trial.ProvenanceOutputFileName)
+            system_out = load_json(system_out_path)
             
             probe_node_id = nodes_file[nodes_file.WorldFileID == trial.ProvenanceProbeFileID].iloc[0]["JournalNodeID"]
             probe_node_wfn = trial.ProvenanceProbeFileName_x
@@ -291,6 +293,12 @@ if __name__ == '__main__':
             ref_edges = { (lookup_wfn(node_lookup[s]["id"]), lookup_wfn(node_lookup[t]["id"])) for s, t, p in ref_graph }
 
             sys_nodes, sys_edges = system_out_to_scorable(system_out)
+            sys_edge_records = [ EdgeRecord(e[0], e[1], Path(e, None)) for e in sys_edges]
+            if detect_cycle(sys_edge_records):
+                if args.warn_on_system_cycle:
+                    log(1, "Warning, detected cycle(s) for system output file '{}'".format(system_out_path))
+                else:
+                    err_quit("Detected cycle(s) for system output file '{}', Aborting!".format(system_out_path))
 
             # Could maybe put this in a "mapping" function
             correct_nodes = sys_nodes & ref_nodes
