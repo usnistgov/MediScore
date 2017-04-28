@@ -92,7 +92,7 @@ class mask(object):
                    single-channel grayscale
         """
         self.name=n
-        ext = self.name[-4:].lower()
+        ext = self.name.split('.')[-1].lower()
         if (ext == '.arw') or (ext == '.nef'):
             self.matrix=rawpy.imread(n).postprocess()
             #rgb2gray this if readopt==0
