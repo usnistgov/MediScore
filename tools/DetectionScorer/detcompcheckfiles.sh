@@ -243,9 +243,7 @@ if ([ $c1_flag7 == 0 -a $c1_flag8 == 0 ]) ; then
 	echo
 	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 2."
 	echo
-    echo
-	echo "All DETECTION SCORER TESTS SUCCESSFULLY PASSED!!!"
-	echo
+
   if [ $clean = "TRUE" ] ; then
     rm -rf testcases
 		rm -rf plotJsonFiles
