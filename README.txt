@@ -226,6 +226,7 @@ HISTORY
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
       - Added increased capability to read images of different formats, including raw and bmp images.
+      - Fixed bug related to parsing the extension of the images.
     * Validator:
       - IsOptOut column is mandated
     * ProvenanceValidator:
