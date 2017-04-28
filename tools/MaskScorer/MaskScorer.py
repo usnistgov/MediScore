@@ -369,7 +369,8 @@ if args.precision < 1:
     printq("Precision should not be less than 1 for scores to be meaningful. Defaulting to 16 digits.")
     args.precision=16
 
-sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
+#sub_ref = myRef[myRef['IsTarget']=="Y"].copy()
+sub_ref = myRef.copy()
 
 #update accordingly along with ProbeJournalJoin and JournalMask csv's in refDir
 refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
@@ -399,7 +400,8 @@ if args.task == 'manipulation':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
+        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').dropna().drop('ProbeWidth',1)
+    m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
@@ -564,7 +566,8 @@ elif args.task == 'splice':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[['ProbeFileID','DonorFileID']],m_df,how='left',on=['ProbeFileID','DonorFileID'])
+        m_df = pd.merge(myIndex[['ProbeFileID','DonorFileID']],m_df,how='left',on=['ProbeFileID','DonorFileID']).dropna()
+    m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
