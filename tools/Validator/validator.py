@@ -179,14 +179,14 @@ class SSD_Validator(validator):
         maskFlag = 0
         matchFlag = 0
         
-        if sysfile.shape[1] < 2:
-            printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 3:
+            printq("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore"]
+        truelist = ["ProbeFileID","ConfidenceScore","IsOptOut"]
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -417,10 +417,10 @@ class DSD_Validator(validator):
                     #header checking
                     if len(s_headnames) < 5:
                         #check number of headers
-                        printq("ERROR: The number of columns of the system output file must be at least 5. Are you using '|' to separate your columns?",True)
+                        printq("ERROR: The number of columns of the system output file must be at least 6. Are you using '|' to separate your columns?",True)
                         return 1
                     allClear = True
-                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
+                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","IsOptOut"]
                     for th in truelist:
                         allClear = allClear and (th in s_headnames)
                         if not (th in s_headnames):
