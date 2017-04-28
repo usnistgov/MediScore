@@ -7,7 +7,7 @@ sys.path.append(lib_path)
 
 import json
 import argparse
-import pandas as pd
+from pandas import DataFrame, read_csv, merge, set_option
 import errno
 import collections
 
@@ -33,7 +33,7 @@ def load_json(json_fn):
 
 def load_csv(csv_fn, sep="|"):
     try:
-        return pd.read_csv(csv_fn, sep)
+        return read_csv(csv_fn, sep)
     except IOError as ioerr:
         err_quit("{}. Aborting!".format(ioerr))
 
@@ -52,76 +52,6 @@ def system_out_to_ordered_nodes(system_out):
     node_set_w_confidence = [ node_w_confidence(n["nodeConfidenceScore"], n["file"]) for n in system_out["nodes"] ]
     node_set_w_confidence.sort(reverse=True)
     return node_set_w_confidence
-
-# Can't use just a hash here, as we need to enforce column order
-def build_dataframe(columns, fields):
-    df = pd.DataFrame(columns=columns)
-
-    
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in fields.items():
-        df[col] = df[col].astype(t)
-
-    return df
-
-def build_provenancefiltering_agg_output_df():
-    return build_dataframe(["MeanNodeRecallAt50",
-                            "MeanNodeRecallAt100",
-                            "MeanNodeRecallAt200"],
-                           { "MeanNodeRecallAt50": float,
-                             "MeanNodeRecallAt100": float,
-                             "MeanNodeRecallAt200": float })
-
-def build_provenancefiltering_nodemapping_df():
-    return build_dataframe(["JournalName",
-                            "ProvenanceProbeFileID",
-                            "ProvenanceOutputFileName",
-                            "Measure",
-                            "WorldFileID",
-                            "Mapping"],
-                           { "JournalName": str,
-                             "ProvenanceProbeFileID": str,
-                             "ProvenanceOutputFileName": str,
-                             "Measure": str,
-                             "WorldFileID": str,
-                             "Mapping": str })
-
-def build_provenancefiltering_output_df():
-    return build_dataframe(["JournalName",
-                            "ProvenanceProbeFileID",
-                            "ProvenanceOutputFileName",
-                            "NumSysNodes",
-                            "NumRefNodes",
-                            "NumCorrectNodesAt50",
-                            "NumMissingNodesAt50",
-                            "NumFalseAlarmNodesAt50",
-                            "NumCorrectNodesAt100",
-                            "NumMissingNodesAt100",
-                            "NumFalseAlarmNodesAt100",
-                            "NumCorrectNodesAt200",
-                            "NumMissingNodesAt200",
-                            "NumFalseAlarmNodesAt200",
-                            "NodeRecallAt50",
-                            "NodeRecallAt100",
-                            "NodeRecallAt200"],
-                           { "JournalName": str,
-                             "ProvenanceProbeFileID": str,
-                             "ProvenanceOutputFileName": str,
-                             "NumSysNodes": int,
-                             "NumRefNodes": int,
-                             "NumCorrectNodesAt50": int,
-                             "NumMissingNodesAt50": int,
-                             "NumFalseAlarmNodesAt50": int,
-                             "NumCorrectNodesAt100": int,
-                             "NumMissingNodesAt100": int,
-                             "NumFalseAlarmNodesAt100": int,
-                             "NumCorrectNodesAt200": int,
-                             "NumMissingNodesAt200": int,
-                             "NumFalseAlarmNodesAt200": int,
-                             "NodeRecallAt50": float,
-                             "NodeRecallAt100": float,
-                             "NodeRecallAt200": float })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
@@ -178,13 +108,13 @@ if __name__ == '__main__':
     check_for_trial_disparity(args.skip_trial_disparity_check)
     log(1, "Scoring {} trials ..".format(len(trial_index)))
             
-    trial_index_ref = pd.merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
-    trial_index_ref_sysout = pd.merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
+    trial_index_ref = merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
+    trial_index_ref_sysout = merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
 
-    world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
+    world_nodes = merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
 
-    output_records = build_provenancefiltering_output_df()
-    output_mapping_records = build_provenancefiltering_nodemapping_df()
+    output_records = []
+    output_mapping_records = []
         
     for trial in trial_index_ref_sysout.itertuples():
         log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
@@ -229,15 +159,40 @@ if __name__ == '__main__':
             for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
                                      [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
                                      [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
-                output_mapping_records = output_mapping_records.append(pd.Series(map_record), ignore_index=True)
+                output_mapping_records.append(map_record)
             
-        output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
+        output_records.append(out_rec)
 
-    output_agg_records = build_provenancefiltering_agg_output_df()
-    aggregated = { "MeanNodeRecallAt50": output_records["NodeRecallAt50"].mean(),
-                   "MeanNodeRecallAt100": output_records["NodeRecallAt100"].mean(),
-                   "MeanNodeRecallAt200": output_records["NodeRecallAt200"].mean() }
-    output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
+
+    output_mapping_records_df = DataFrame(output_mapping_records, columns = ["JournalName",
+                                                                             "ProvenanceProbeFileID",
+                                                                             "ProvenanceOutputFileName",
+                                                                             "Measure",
+                                                                             "WorldFileID",
+                                                                             "Mapping"])
+    output_records_df = DataFrame(output_records, columns = ["JournalName",
+                                                             "ProvenanceProbeFileID",
+                                                             "ProvenanceOutputFileName",
+                                                             "NumSysNodes",
+                                                             "NumRefNodes",
+                                                             "NumCorrectNodesAt50",
+                                                             "NumMissingNodesAt50",
+                                                             "NumFalseAlarmNodesAt50",
+                                                             "NumCorrectNodesAt100",
+                                                             "NumMissingNodesAt100",
+                                                             "NumFalseAlarmNodesAt100",
+                                                             "NumCorrectNodesAt200",
+                                                             "NumMissingNodesAt200",
+                                                             "NumFalseAlarmNodesAt200",
+                                                             "NodeRecallAt50",
+                                                             "NodeRecallAt100",
+                                                             "NodeRecallAt200"])
+    aggregated = [{ "MeanNodeRecallAt50": output_records_df["NodeRecallAt50"].mean(),
+                    "MeanNodeRecallAt100": output_records_df["NodeRecallAt100"].mean(),
+                    "MeanNodeRecallAt200": output_records_df["NodeRecallAt200"].mean() }]
+    output_agg_records_df = DataFrame(aggregated, columns = ["MeanNodeRecallAt50",
+                                                             "MeanNodeRecallAt100",
+                                                             "MeanNodeRecallAt200"])
 
     mkdir_p(args.output_dir)
 
@@ -250,20 +205,20 @@ if __name__ == '__main__':
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))
 
-    _write_df_to_csv("Trial Scores", output_records, "trial_scores.csv")
-    _write_df_to_csv("Aggregate Scores", output_agg_records, "scores.csv")
-    _write_df_to_csv("Node Mapping", output_mapping_records, "node_mapping.csv")
+    _write_df_to_csv("Trial Scores", output_records_df, "trial_scores.csv")
+    _write_df_to_csv("Aggregate Scores", output_agg_records_df, "scores.csv")
+    _write_df_to_csv("Node Mapping", output_mapping_records_df, "node_mapping.csv")
 
     if args.html_report == True:
         try:
-            pd.set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
             report_out_path = os.path.join(args.output_dir, "report.html")
             log(1, "Writing HTML Report to '{}'".format(report_out_path))
             with open(report_out_path, 'w') as out_f:
                 out_f.write("<h2>Aggregated Scores:</h2>")
-                output_agg_records.to_html(buf=out_f, index=False)
+                output_agg_records_df.to_html(buf=out_f, index=False)
                 out_f.write("<br/><br/>")
                 out_f.write("<h2>Trial Scores:</h2>")
-                output_records.to_html(buf=out_f, index=False)
+                output_records_df.to_html(buf=out_f, index=False)
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))
