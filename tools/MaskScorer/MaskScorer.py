@@ -395,7 +395,8 @@ if args.task == 'manipulation':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').dropna().drop('ProbeWidth',1)
+        printq("Filtering the reference and system output by index file...")
+        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
     m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score
@@ -570,7 +571,8 @@ elif args.task == 'splice':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[param_ids],m_df,how='left',on=param_ids).dropna()
+        printq("Filtering the reference and system output by index file...")
+        m_df = pd.merge(myIndex[param_ids],m_df,how='left',on=param_ids)
     m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score

@@ -225,6 +225,7 @@ HISTORY
   MediScore Version 1.1.8
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
+      - Fixed index parsing bug.
       - Added increased capability to read images of different formats, including raw and bmp images.
       - Fixed bug related to parsing the extension of the images.
       - Added verbosity and optout querying for mask score partitioner.
