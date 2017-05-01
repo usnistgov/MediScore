@@ -227,8 +227,10 @@ HISTORY
       - Added option to score on a smaller index file for testing purposes.
       - Added increased capability to read images of different formats, including raw and bmp images.
       - Fixed bug related to parsing the extension of the images.
+      - Added verbosity and optout querying for mask score partitioner.
     * Validator:
       - IsOptOut column is mandated
+      - Substituted range for xrange for speedup
     * ProvenanceValidator:
       - ConfidenceScore and IsOptOut columns are mandated
 
