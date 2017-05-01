@@ -121,10 +121,10 @@ class Render:
 
                 if isNoNumber:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f at FAR=%.2f\n" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
                 else:
