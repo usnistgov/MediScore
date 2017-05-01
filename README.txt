@@ -234,6 +234,11 @@ HISTORY
       - IsOptOut column is mandated
     * ProvenanceValidator:
       - ConfidenceScore and IsOptOut columns are mandated
+  May 1, 2017 - MediScore Version 1.1.9
+    * DetectionScorer:
+      - Added subtitle on the plot
+      - Added the noNum option to not print the number of trials on the plot legend.
+      - Changed the aspect of plot ratio 
 
 CONTACT
 -------
