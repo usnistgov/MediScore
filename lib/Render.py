@@ -16,7 +16,7 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self, display=False, multi_fig=False, isOptOut=False):
+    def plot_curve(self, display=False, multi_fig=False, isOptOut=False, isNoNumber=False):
         """ Return single figure or a list of figures depending on the multi_fig option
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
@@ -25,15 +25,15 @@ class Render:
         if multi_fig is True:
             fig_list = list()
             for i,dm in enumerate(self.DM_list):
-                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut)
+                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut, isNoNumber)
                 fig_list.append(fig)
             return fig_list
         else:
-            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut)
+            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut, isNoNumber)
             return fig
 
     #TODO: add auc values to each legend
-    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False):
+    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False, isNoNumber = False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
         fig_number: a number of plot figures
@@ -47,7 +47,7 @@ class Render:
         import matplotlib.pyplot as plt
 
 
-        fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
+        fig = plt.figure(num=fig_number, figsize=(7,6.5), dpi=120, facecolor='w', edgecolor='k')
         nb_dm_objects = len(dm_list)
         # DET curve settings
         if self.plot_opts['plot_type'] == 'DET':
@@ -118,13 +118,24 @@ class Render:
                 DM = dm_list[0]
                 plt.plot(DM.fpr, DM.tpr+DM.ci_tpr, 'k--')
                 plt.plot(DM.fpr, DM.tpr-DM.ci_tpr, 'k--')
-                #TODO: add number of data
-                if isOptOut:
-                    plt.annotate("trAUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
-                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
+                if isNoNumber:
+                    if isOptOut:
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                    else:
+                        plt.annotate("AUC=%.2f at FAR=%.2f\n" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
                 else:
-                    plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
-                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                    if isOptOut:
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                    else:
+                        plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
+
 
 
 
@@ -155,6 +166,7 @@ class Render:
         plt.xticks(xytick, x_tick_labels, size=self.plot_opts['xticks_size'])
         plt.yticks(xytick, y_tick_labels, size=self.plot_opts['yticks_size'])
         plt.suptitle(self.plot_opts['title'], fontsize=self.plot_opts['title_fontsize'])
+        plt.title(self.plot_opts['subtitle'], fontsize=self.plot_opts['subtitle_fontsize'])
         plt.xlabel(self.plot_opts['xlabel'], fontsize=self.plot_opts['xlabel_fontsize'])
         if self.plot_opts['plot_type'] == 'ROC':
             plt.ylabel("Correct Detection Rate [%]", fontsize=self.plot_opts['ylabel_fontsize'])
@@ -175,21 +187,23 @@ class Render:
         return fig
 
 
-def gen_default_plot_options(path="./plotJsonFiles/plot_options.json", plot_title = "Performance", plot_type='DET'):
+def gen_default_plot_options(path='./plotJsonFiles/plot_options.json', plot_title = 'Performance', plot_subtitle = '', plot_type='DET'):
     """ This function generates JSON file to customize the plot.
         path: JSON file name along with the path
         plot_type: either DET or ROC"""
     from collections import OrderedDict
     mon_dict = OrderedDict([
         ('title', plot_title),
+        ('subtitle', plot_subtitle),
         ('plot_type', plot_type),
-        ('title_fontsize', 15),
+        ('title_fontsize', 13),#15
+        ('subtitle_fontsize', 11),#15
         ('xticks_size', 'medium'),
         ('yticks_size', 'medium'),
         ('xlabel', "False Alarm Rate [%]"),
-        ('xlabel_fontsize', 12),
+        ('xlabel_fontsize', 11),
         ('ylabel', "Miss Detection Rate [%]"),
-        ('ylabel_fontsize', 12)])
+        ('ylabel_fontsize', 11)])
     with open(path, 'w') as f:
         f.write(json.dumps(mon_dict).replace(',', ',\n'))
 
