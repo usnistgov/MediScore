@@ -716,7 +716,7 @@ elif args.task == 'splice':
                     a_df = a_df.append(temp_df,ignore_index=True)
                 #at the same time do an optOut filter where relevant and save that
                 if args.optOut:
-                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics,verbose) #average over queries
+                    my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics,verbose) #average over queries
                     df_list_o = my_partition_o.render_table(metrics)
                     if len(df_list_o) > 0:
                         for i,temp_df_o in enumerate(df_list_o):
@@ -729,9 +729,9 @@ elif args.task == 'splice':
                     #add optOut scoring in addition to (not replacing) the averaging procedure
                     if args.optOut:
                         if q == '':
-                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
+                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
                         else:
-                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
+                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
                         df_list_o = my_partition_o.render_table(metrics)
                         if len(df_list_o) > 0:
                             a_df = a_df.append(df_list_o[0],ignore_index=True)
