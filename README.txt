@@ -222,7 +222,10 @@ HISTORY
         and the metric runner (metricRunner.py)
     * Provenance:
       - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
-  MediScore Version 1.1.8
+  Apr 28, 2017 - MediScore Version 1.1.8
+    * DetectionScorer:
+      - Added test cases for merging behavior between index and reference.
+      - Took out OutputProbeMaskFileName and OutputDonorMaskFileName while saving the meta csv file.
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
       - Fixed index parsing bug.
@@ -234,6 +237,11 @@ HISTORY
       - Substituted range for xrange for speedup
     * ProvenanceValidator:
       - ConfidenceScore and IsOptOut columns are mandated
+  May 1, 2017 - MediScore Version 1.1.9
+    * DetectionScorer:
+      - Added subtitle on the plot
+      - Added the noNum option to not print the number of trials on the plot legend.
+      - Changed the aspect of plot ratio 
 
 CONTACT
 -------

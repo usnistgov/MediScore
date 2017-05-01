@@ -136,6 +136,9 @@ if __name__ == '__main__':
         parser.add_argument('--plotTitle',default='Performance',
                             help="Define the plot title (default: %(default)s)", metavar='character')
 
+        parser.add_argument('--plotSubtitle',default='',
+                            help="Define the plot subtitle (default: %(default)s)", metavar='character')
+
         parser.add_argument('--plotType',default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
 
@@ -162,6 +165,9 @@ if __name__ == '__main__':
 
         parser.add_argument('--optOut', action='store_true',
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+
+        parser.add_argument('--noNum', action='store_true',
+                            help="Do not print the number of trials and non-trials on the legend of the plot")
 
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
@@ -276,16 +282,18 @@ if __name__ == '__main__':
              # merge the reference and index csv only
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
             index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
-            print("sys data size {}".format(mySys.shape))
-            print("m data size {}".format(index_m_df.shape))
-
+#            print("sys data size {}".format(mySys.shape))
+#            print("m data size {}".format(index_m_df.shape))
 
             if args.outAllmeta: #save all metadata for analysis purpose
                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
 
-            if args.outMeta: #save all metadata for analysis purpose
-                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "IsOptOut"]]
+            mani_meta_list = ["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]
+            if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+            elif args.outMeta and not set(mani_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
         #DSD
         elif args.task in ['splice']:
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
@@ -295,9 +303,18 @@ if __name__ == '__main__':
             if args.outAllmeta: #save all metadata for analysis purpose
                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
 
-            if args.outMeta: #save all metadata for analysis purpose
-                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "OutputProbeMaskFileName", "OutputDonorMaskFileName", "IsOptOut"]]
+            splice_meta_list = ["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]
+            if args.outMeta and set(splice_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]]
                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+            elif args.outMeta and not set(splice_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
+
+#        if(myIndex.shape[0] != index_m_df.shape[0]):
+#            print("Index row num: {}".format(myIndex.shape[0]))
+#            print("Merged data row num: {}".format(index_m_df.shape[0]))
+#            print ("Warning: the row number of the index file and the number of the merged data file do not match.")
+
 
          # Partition Mode
         if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
@@ -311,7 +328,7 @@ if __name__ == '__main__':
                     # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
                     jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
+                    index_m_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
             #don't need JTJoin and JTMask for splice?
 
             if args.query:
@@ -325,11 +342,11 @@ if __name__ == '__main__':
                 query = args.queryManipulation
 
             if args.optOut:
-                pm_df = pm_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut=='N' ")
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
+            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -380,11 +397,12 @@ if __name__ == '__main__':
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
             args.plotType = plot_opts['plot_type']
             plot_opts['title'] = args.plotTitle
+            plot_opts['subtitle'] = args.plotSubtitle
             #print("test plot title1 {}".format(plot_opts['title']))
         else:
             if args.plotType =='':
                 args.plotType = 'roc'
-            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_type = args.plotType.upper())
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
             #print("test plot title2 {}".format(plot_opts['title']))
 
@@ -457,7 +475,7 @@ if __name__ == '__main__':
         # Creation of the Renderer
         myRender = p.Render(configRender)
         # Plotting
-        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut)
+        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut, isNoNumber = args.noNum)
 
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):
