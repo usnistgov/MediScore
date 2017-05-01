@@ -92,13 +92,13 @@ class mask(object):
                    single-channel grayscale
         """
         self.name=n
-        ext = self.name[-4:].lower()
-        if (ext == '.arw') or (ext == '.nef'):
+        ext = self.name.split('.')[-1].lower()
+        if (ext == 'arw') or (ext == 'nef'):
             self.matrix=rawpy.imread(n).postprocess()
             #rgb2gray this if readopt==0
             if readopt == 0:
                 self.matrix=cv2.cvtColor(self.matrix,cv2.COLOR_BGR2GRAY)
-        elif ext == '.bmp':
+        elif ext == 'bmp':
             bmpmode='L'
             if readopt==1:
                 bmpmode='RGB'
