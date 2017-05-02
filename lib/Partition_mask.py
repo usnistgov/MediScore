@@ -242,7 +242,7 @@ class Partition:
             dm = self.part_metric_list[0]
             for m in metrics:
                 #set all '' to np.nan
-                dm.loc[dm[m]=='',]=np.nan
+                dm.loc[dm[m]=='',m]=np.nan
                 data[m] = [dm[m].mean(skipna=True)]
             data['TaskID'] = [self.task]
             data['Query'] = self.part_query_list
