@@ -1,2 +1,2 @@
-ProbeFileID|ConfidenceScore|OutputProbeMaskFileName
-morelight|1|mask/sys-light.png
+ProbeFileID|ConfidenceScore|OutputProbeMaskFileName|IsOptOut
+morelight|1|mask/sys-light.png|N

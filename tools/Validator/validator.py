@@ -187,8 +187,12 @@ class SSD_Validator(validator):
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
         truelist = ["ProbeFileID","ConfidenceScore","IsOptOut"]
+        testMask = False
+        if self.condition in ["ImgOnly","ImgMeta"]:
+            truelist.append("OutputProbeMaskFileName")
+            testMask = True 
 
-        for i in range(0,len(truelist)):
+        for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
             if not (truelist[i] in sysHeads):
 #                headlist = []
@@ -207,15 +211,11 @@ class SSD_Validator(validator):
         if "IsOptOut" in sysHeads:
             optOut=True
 
-        testMask = False
-        if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
-            testMask = True
-        
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
-            rowlist = range(0,sysfile.shape[0])
+            rowlist = xrange(sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: "
                     + ' ,'.join(list(map(str,sysfile['ProbeFileID'][sysfile.duplicated()])))    + " at row(s): "
                     + ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).",True)
@@ -240,7 +240,7 @@ class SSD_Validator(validator):
 
         sysPath = os.path.dirname(self.sysname)
     
-        for i in range(0,sysfile.shape[0]):
+        for i in xrange(sysfile.shape[0]):
             probeFileID = sysfile['ProbeFileID'][i]
             if not (probeFileID in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: {} does not exist in the index file.".format(probeFileID),True)
@@ -436,44 +436,45 @@ class DSD_Validator(validator):
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
                         s_heads[h] = i
-                else:
-                    #for non-headers
-                    l_content = l.rstrip().replace("\"","").split('|')
-                    probeID = l_content[s_heads['ProbeFileID']]
-                    donorID = l_content[s_heads['DonorFileID']]
-                    key = probeID + ":" + donorID
+                    continue
 
-                    #try catch the key lookup
-                    try:
-                        indRec = ind[key]
-                    except KeyError:
-                        printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
-                        keyFlag = 1
+                #for non-headers
+                l_content = l.rstrip().replace("\"","").split('|')
+                probeID = l_content[s_heads['ProbeFileID']]
+                donorID = l_content[s_heads['DonorFileID']]
+                key = probeID + ":" + donorID
+
+                #try catch the key lookup
+                try:
+                    indRec = ind[key]
+                except KeyError:
+                    printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
+                    keyFlag = 1
+                    continue
+
+                if reffname is not 0:
+                    if r_files[key] == 'N':
+                        printq("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
                         continue
 
-                    if reffname is not 0:
-                        if r_files[key] == 'N':
-                            printq("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
-                            continue
+                if testMask and not neglectMask:
+                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
+                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
 
-                    if testMask and not neglectMask:
-                        probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
-                        donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
-    
-                        if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
-                            printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
-                            continue
+                    if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
+                        printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                        continue
 
-                        if optOut:
-                            if l_content[s_heads['IsOptOut']] == 'Y':
-                                continue
-     
-                        probeWidth = int(indRec[i_heads['ProbeWidth']])
-                        probeHeight = int(indRec[i_heads['ProbeHeight']])
-                        donorWidth = int(indRec[i_heads['DonorWidth']])
-                        donorHeight = int(indRec[i_heads['DonorHeight']])
-    
-                        maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
+                    if optOut:
+                        if l_content[s_heads['IsOptOut']] == 'Y':
+                            continue
+ 
+                    probeWidth = int(indRec[i_heads['ProbeWidth']])
+                    probeHeight = int(indRec[i_heads['ProbeHeight']])
+                    donorWidth = int(indRec[i_heads['DonorWidth']])
+                    donorHeight = int(indRec[i_heads['DonorHeight']])
+
+                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -484,11 +485,11 @@ class DSD_Validator(validator):
 
 #                     if dupFlag == 0:
 #                         #only point in checking masks is if index file doesn't have duplicates in the first place
-    
+
 #                         os.system("grep -i {} {} > tmp.txt".format(probeID,self.idxname)) #grep to temporary file
 #                         os.system("grep -i {} tmp.txt > row.txt".format(donorID))
 #                         qlen = 0
-    
+
 #                         with open("row.txt") as row:
 #                             qlen = sum(1 for m in row)
 #                         if qlen > 0:
@@ -552,7 +553,7 @@ class DSD_Validator(validator):
         #truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","OptOut"]
         truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
 
-        for i in range(0,len(truelist)):
+        for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
             if not (truelist[i] in sysHeads):
     #            headlist = []
@@ -568,7 +569,7 @@ class DSD_Validator(validator):
             return 1
         
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
-            rowlist = range(0,sysfile.shape[0])
+            rowlist = xrange(sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: " + ' ,'.join(list(sysfile['ProbeFileID'][sysfile.duplicated()])) + " at row(s): " +\
                                      ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).",True)
             dupFlag = 1
@@ -599,7 +600,7 @@ class DSD_Validator(validator):
         
         sysPath = os.path.dirname(self.sysname)
     
-        for i in range(0,sysfile.shape[0]):
+        for i in xrange(sysfile.shape[0]):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
                 printq("The contents of your file are not valid!",True)

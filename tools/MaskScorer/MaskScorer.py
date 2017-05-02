@@ -194,6 +194,9 @@ if args.task == 'manipulation':
             html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
 
             #final filtering
+            html_out.loc[html_out.query("MCC == -2").index,'NMM'] = ''
+            html_out.loc[html_out.query("MCC == -2").index,'BWL1'] = ''
+            html_out.loc[html_out.query("MCC == -2").index,'GWL1'] = ''
             html_out.loc[html_out.query("MCC == -2").index,'MCC'] = ''
             html_out.loc[html_out.query("MCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
 
@@ -273,8 +276,14 @@ elif args.task == 'splice':
 
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
+            html_out.loc[html_out.query("pMCC == -2").index,'pNMM'] = ''
+            html_out.loc[html_out.query("pMCC == -2").index,'pBWL1'] = ''
+            html_out.loc[html_out.query("pMCC == -2").index,'pGWL1'] = ''
             html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
             html_out.loc[html_out.query("pMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
+            html_out.loc[html_out.query("dMCC == -2").index,'dNMM'] = ''
+            html_out.loc[html_out.query("dMCC == -2").index,'dBWL1'] = ''
+            html_out.loc[html_out.query("dMCC == -2").index,'dGWL1'] = ''
             html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
             html_out.loc[html_out.query("dMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
             #write to index.html
@@ -325,16 +334,10 @@ mySysFile = os.path.join(args.sysDir,args.inSys)
 myRefFile = os.path.join(myRefDir,args.inRef)
 
 mySys = pd.read_csv(mySysFile,sep="|",header=0,dtype=sys_dtype,na_filter=False)
-if args.optOut:
-    if not ('IsOptOut' in list(mySys)):
-        print("No IsOptOut column detected. Filtration is meaningless.")
-        exit(1)
-    mySysTest = mySys.query("IsOptOut!='Y'")
-    if len(mySysTest) == 0:
-        print("Everything got opted out. Exiting.")
-        exit(0)
-    
-    
+if args.optOut and not ('IsOptOut' in list(mySys)):
+    print("ERROR: No IsOptOut column detected. Filtration is meaningless.")
+    exit(1)
+
 ref_dtype = {}
 with open(myRefFile,'r') as ref:
     ref_dtype = {h:str for h in ref.readline().rstrip().split('|')} #treat it as string
@@ -351,6 +354,7 @@ elif args.queryPartition:
     factor_mode = 'qp'
     query = [args.queryPartition]
 elif args.queryManipulation:
+    factor_mode = 'qm'
     query = args.queryManipulation
 
 ## if the confidence score are 'nan', replace the values with the mininum score
@@ -400,7 +404,8 @@ if args.task == 'manipulation':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').dropna().drop('ProbeWidth',1)
+        printq("Filtering the reference and system output by index file...")
+        m_df = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],m_df,how='left',on='ProbeFileID').drop('ProbeWidth',1)
     m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score
@@ -431,6 +436,7 @@ if args.task == 'manipulation':
         #use big_df to filter from the list as a temporary thing
         if q is not '':
             #exit if query does not match
+            printq("Merging main data and journal data and querying the result...")
             try:
                 big_df = pd.merge(m_df,journalData_df,how='left',on=['ProbeFileID','JournalName']).query(q) #TODO: test on sample with a print?
             except pd.computation.ops.UndefinedVariableError:
@@ -456,7 +462,7 @@ if args.task == 'manipulation':
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
         m_dfc['Scored'] = ['Y']*len(m_dfc)
-    
+        printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('MCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
@@ -478,9 +484,9 @@ if args.task == 'manipulation':
     
 #        r_df['Scored'] = pd.Series(['Y']*len(r_df))
 #        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = np.nan
+        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = np.nan
+        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = np.nan
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata
@@ -498,11 +504,15 @@ if args.task == 'manipulation':
         else:
             metrics = ['NMM','MCC','BWL1','GWL1']
             r_dfc = r_df.copy()
-            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = ''
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = np.nan
             r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
-            my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
+#            if args.queryManipulation:
+#                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),q,factor_mode,metrics) #average over queries
+#            else:
+#                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
+            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
             df_list = my_partition.render_table(metrics)
-         
+            
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
                 #use Partition for OOP niceness and to identify file to be written.
                 #a_df get the headers of temp_df and tack entries on one after the other
@@ -512,20 +522,24 @@ if args.task == 'manipulation':
                     a_df = a_df.append(temp_df,ignore_index=True)
                 #at the same time do an optOut filter where relevant and save that
                 if args.optOut:
-                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics,verbose) #average over queries
                     df_list_o = my_partition_o.render_table(metrics)
                     if len(df_list_o) > 0:
                         for i,temp_df_o in enumerate(df_list_o):
                             temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
                             a_df = a_df.append(temp_df_o,ignore_index=True)
-            elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
+            elif (args.queryPartition or (factor_mode == '') or (factor_mode == 'qm')) and (len(df_list) > 0):
                 a_df = df_list[0]
                 if len(a_df) > 0: 
                     #add optOut scoring in addition to (not replacing) the averaging procedure
                     if args.optOut:
-                        my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                        if q == '':
+                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
+                        else:
+                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
                         df_list_o = my_partition_o.render_table(metrics)
-                        a_df = a_df.append(df_list_o[0],ignore_index=True)
+                        if len(df_list_o) > 0:
+                            a_df = a_df.append(df_list_o[0],ignore_index=True)
                     a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
                 else:
                     a_df = 0
@@ -566,7 +580,8 @@ elif args.task == 'splice':
     for c in sysCols:
         m_df.loc[pd.isnull(m_df[c]),c] = ''
     if args.indexFilter:
-        m_df = pd.merge(myIndex[['ProbeFileID','DonorFileID']],m_df,how='left',on=['ProbeFileID','DonorFileID']).dropna()
+        printq("Filtering the reference and system output by index file...")
+        m_df = pd.merge(myIndex[param_ids],m_df,how='left',on=param_ids)
     m_df = m_df.query("IsTarget=='Y'")
 
     # if the confidence score are 'nan', replace the values with the mininum score
@@ -599,6 +614,7 @@ elif args.task == 'splice':
 
         if q is not '':
             #exit if query does not match
+            printq("Merging main data and journal data and querying the result...")
             try:
                 big_df = pd.merge(m_df,journalData_df,how='left',on=param_ids).query(q)
             except pd.computation.ops.UndefinedVariableError:
@@ -628,7 +644,7 @@ elif args.task == 'splice':
                 os.system('mkdir ' + outRootQuery)
    
         m_dfc['Scored'] = ['Y']*len(m_dfc)
-
+        printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
 
         #set where the rows are the same in the join
@@ -657,12 +673,12 @@ elif args.task == 'splice':
         #TODO: averaging procedure starts here
         p_idx = r_df.query('pMCC == -2').index
         d_idx = r_df.query('dMCC == -2').index
-        r_df.loc[p_idx,'pNMM'] = ''
-        r_df.loc[p_idx,'pBWL1'] = ''
-        r_df.loc[p_idx,'pGWL1'] = ''
-        r_df.loc[d_idx,'dNMM'] = ''
-        r_df.loc[d_idx,'dBWL1'] = ''
-        r_df.loc[d_idx,'dGWL1'] = ''
+#        r_df.loc[p_idx,'pNMM'] = ''
+#        r_df.loc[p_idx,'pBWL1'] = ''
+#        r_df.loc[p_idx,'pGWL1'] = ''
+#        r_df.loc[d_idx,'dNMM'] = ''
+#        r_df.loc[d_idx,'dBWL1'] = ''
+#        r_df.loc[d_idx,'dGWL1'] = ''
         #reorder r_df's columns. Names first, then scores, then other metadata
         rcols = r_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
@@ -693,7 +709,11 @@ elif args.task == 'splice':
             r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
             r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
             r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
-            my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries.
+#            if args.queryManipulation:
+#                my_partition = pt.Partition(r_dfc,q,factor_mode,metrics) #average over queries
+#            else:
+#                my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries
+            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
             df_list = my_partition.render_table(metrics)
         
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -705,21 +725,25 @@ elif args.task == 'splice':
                     a_df = a_df.append(temp_df,ignore_index=True)
                 #at the same time do an optOut filter where relevant and save that
                 if args.optOut:
-                    my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                    my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics,verbose) #average over queries
                     df_list_o = my_partition_o.render_table(metrics)
                     if len(df_list_o) > 0:
                         for i,temp_df_o in enumerate(df_list_o):
                             temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
                             a_df = a_df.append(temp_df_o,ignore_index=True)
                     
-            elif (args.queryPartition or (factor_mode == '')) and (len(df_list) > 0):
+            elif (args.queryPartition or (factor_mode == '') or (factor_mode == 'qm')) and (len(df_list) > 0):
                 a_df = df_list[0]
                 if len(a_df) > 0:
                     #add optOut scoring in addition to (not replacing) the averaging procedure
                     if args.optOut:
-                        my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics) #average over queries
+                        if q == '':
+                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
+                        else:
+                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
                         df_list_o = my_partition_o.render_table(metrics)
-                        a_df = a_df.append(df_list_o[0],ignore_index=True)
+                        if len(df_list_o) > 0:
+                            a_df = a_df.append(df_list_o[0],ignore_index=True)
                     a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
                 else:
                     a_df = 0

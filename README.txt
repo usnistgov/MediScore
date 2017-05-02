@@ -228,20 +228,33 @@ HISTORY
       - Took out OutputProbeMaskFileName and OutputDonorMaskFileName while saving the meta csv file.
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
+      - Fixed index parsing bug.
       - Added increased capability to read images of different formats, including raw and bmp images.
       - Fixed bug related to parsing the extension of the images.
     * Validator:
       - IsOptOut column is mandated
+      - Substituted range for xrange for speedup
     * ProvenanceValidator:
       - ConfidenceScore and IsOptOut columns are mandated
   May 1, 2017 - MediScore Version 1.1.9
     * DetectionScorer:
       - Added subtitle on the plot
       - Added the noNum option to not print the number of trials on the plot legend.
-      - Changed the aspect of plot ratio 
+      - Changed the aspect of plot ratio
+    * MaskScorer:
+      - Added optout querying and some verbose printout for mask score partitioner.
+  May 2, 2017 - MediScore Version 1.1.10
+    * Validator:
+      - Revised video header checking.
+    * Mask Scorer:
+      - Added verbose output for image dimension checking, just in case.
+      - Added catcher for each iteration of mask scoring loop for runtime stability.
+      - Further stabilized mask partitioner.
+    * DetectionScorer:
       - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
       - Added the columns “TRR” and “SYS_RESPONSE” to the report table
       - Changed the number of total data to the number of the merged data for TRR’s denominator
+
 
 CONTACT
 -------
