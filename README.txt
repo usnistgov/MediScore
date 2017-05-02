@@ -239,6 +239,9 @@ HISTORY
       - Added subtitle on the plot
       - Added the noNum option to not print the number of trials on the plot legend.
       - Changed the aspect of plot ratio 
+      - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
+      - Added the columns “TRR” and “SYS_RESPONSE” to the report table
+      - Changed the number of total data to the number of the merged data for TRR’s denominator
 
 CONTACT
 -------
