@@ -11,7 +11,7 @@ class Partition:
        It generates and stores each dataframe and their corresponding
        DetMetric objects.
     """
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1, sys_res = 'all'):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -49,7 +49,7 @@ class Partition:
             self.n_partitions = len(self.part_values_list)
 
         self.part_df_list = self.gen_part_df_list(dataframe)
-        self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel, dLevel, total_num)
+        self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res)
 
 
     def gen_index_factor(self,list_factors):
@@ -156,7 +156,7 @@ class Partition:
 
         return df_list
 
-    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel, dLevel, total_num):
+    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -167,7 +167,7 @@ class Partition:
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
                 print("Current query: {}".format(query))
-                dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI, ciLevel, dLevel, total_num))
+                dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res))
             else:
                 print('#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
         return dm_list
@@ -202,16 +202,18 @@ class Partition:
                          'FAR_STOP' : dm.fpr_stop,
                          'EER':dm.eer,
                          'AUC_CI_LOWER':dm.ci_lower,
-                         'AUC_CI_UPPER':dm.ci_upper}
+                         'AUC_CI_UPPER':dm.ci_upper,
+                         'TRR':dm.trr,
+                         'SYS_RESPONSE':dm.sys_res}
                 index = ['P:']
-                columns = ['QUERY','AUC','FAR_STOP','EER','AUC_CI_LOWER','AUC_CI_UPPER']
+                columns = ['QUERY','AUC','FAR_STOP','EER','AUC_CI_LOWER','AUC_CI_UPPER', 'TRR', 'SYS_RESPONSE']
                 df_list.append(pd.DataFrame(data,index,columns).round(6))
             return df_list
 
         elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
-            data = {'AUC': [],'FAR_STOP': [],'EER': [],'AUC_CI_LOWER': [], 'AUC_CI_UPPER': []}
+            data = {'AUC': [],'FAR_STOP': [],'EER': [],'AUC_CI_LOWER': [], 'AUC_CI_UPPER': [], 'TRR': [], 'SYS_RESPONSE': []}
             for i,partition in enumerate(self.part_values_list):
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition,field)]
@@ -230,9 +232,11 @@ class Partition:
                 data['EER'].append(dm.eer)
                 data['AUC_CI_LOWER'].append(dm.ci_lower)
                 data['AUC_CI_UPPER'].append(dm.ci_upper)
+                data['TRR'].append(dm.trr)
+                data['SYS_RESPONSE'].append(dm.sys_res)
 
             columns = list(self.factors_order)
-            columns.extend(['AUC','FAR_STOP','EER','AUC_CI_LOWER', 'AUC_CI_UPPER'])
+            columns.extend(['AUC','FAR_STOP','EER','AUC_CI_LOWER', 'AUC_CI_UPPER', 'TRR', 'SYS_RESPONSE'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions)]
             df = pd.DataFrame(data,index,columns).round(6)
             return df
