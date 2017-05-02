@@ -4,6 +4,7 @@ import re
 from itertools import product
 from collections import OrderedDict
 import pandas as pd
+import numpy as np
 
 class Partition:
     """This class represents a set of partitions for a single panda's dataframe,
@@ -207,6 +208,7 @@ class Partition:
                 #dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI))
             else:
                 print('#### Warning: Empty DataFrame for query "{}"\n#### Please verify factors conditions.'.format(query))
+            if self.verbose: print("Metrics: {}".format(df[metrics]))
             dm_list.append(df[metrics])
         return dm_list
 
@@ -239,6 +241,8 @@ class Partition:
             data = dict()
             dm = self.part_metric_list[0]
             for m in metrics:
+                #set all '' to np.nan
+                dm.loc[dm[m]=='',]=np.nan
                 data[m] = [dm[m].mean(skipna=True)]
             data['TaskID'] = [self.task]
             data['Query'] = self.part_query_list

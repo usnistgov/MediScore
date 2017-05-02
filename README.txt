@@ -248,6 +248,8 @@ HISTORY
       - Revised video header checking.
     * Mask Scorer:
       - Added verbose output for image dimension checking, just in case.
+      - Added catcher for each iteration of mask scoring loop for runtime stability.
+      - Further stabilized mask partitioner.
 
 CONTACT
 -------
