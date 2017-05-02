@@ -194,6 +194,9 @@ if args.task == 'manipulation':
             html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
 
             #final filtering
+            html_out.loc[html_out.query("MCC == -2").index,'NMM'] = ''
+            html_out.loc[html_out.query("MCC == -2").index,'BWL1'] = ''
+            html_out.loc[html_out.query("MCC == -2").index,'GWL1'] = ''
             html_out.loc[html_out.query("MCC == -2").index,'MCC'] = ''
             html_out.loc[html_out.query("MCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
 
@@ -273,8 +276,14 @@ elif args.task == 'splice':
 
             html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
 
+            html_out.loc[html_out.query("pMCC == -2").index,'pNMM'] = ''
+            html_out.loc[html_out.query("pMCC == -2").index,'pBWL1'] = ''
+            html_out.loc[html_out.query("pMCC == -2").index,'pGWL1'] = ''
             html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
             html_out.loc[html_out.query("pMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
+            html_out.loc[html_out.query("dMCC == -2").index,'dNMM'] = ''
+            html_out.loc[html_out.query("dMCC == -2").index,'dBWL1'] = ''
+            html_out.loc[html_out.query("dMCC == -2").index,'dGWL1'] = ''
             html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
             html_out.loc[html_out.query("dMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
             #write to index.html
@@ -475,9 +484,9 @@ if args.task == 'manipulation':
     
 #        r_df['Scored'] = pd.Series(['Y']*len(r_df))
 #        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = ''
-        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = ''
+        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = np.nan
+        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = np.nan
+        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = np.nan
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
     
         #reorder r_df's columns. Names first, then scores, then other metadata
@@ -495,7 +504,7 @@ if args.task == 'manipulation':
         else:
             metrics = ['NMM','MCC','BWL1','GWL1']
             r_dfc = r_df.copy()
-            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = ''
+            r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = np.nan
             r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
 #            if args.queryManipulation:
 #                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),q,factor_mode,metrics) #average over queries
@@ -664,12 +673,12 @@ elif args.task == 'splice':
         #TODO: averaging procedure starts here
         p_idx = r_df.query('pMCC == -2').index
         d_idx = r_df.query('dMCC == -2').index
-        r_df.loc[p_idx,'pNMM'] = ''
-        r_df.loc[p_idx,'pBWL1'] = ''
-        r_df.loc[p_idx,'pGWL1'] = ''
-        r_df.loc[d_idx,'dNMM'] = ''
-        r_df.loc[d_idx,'dBWL1'] = ''
-        r_df.loc[d_idx,'dGWL1'] = ''
+#        r_df.loc[p_idx,'pNMM'] = ''
+#        r_df.loc[p_idx,'pBWL1'] = ''
+#        r_df.loc[p_idx,'pGWL1'] = ''
+#        r_df.loc[d_idx,'dNMM'] = ''
+#        r_df.loc[d_idx,'dBWL1'] = ''
+#        r_df.loc[d_idx,'dGWL1'] = ''
         #reorder r_df's columns. Names first, then scores, then other metadata
         rcols = r_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
