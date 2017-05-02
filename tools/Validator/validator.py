@@ -187,6 +187,10 @@ class SSD_Validator(validator):
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
         truelist = ["ProbeFileID","ConfidenceScore","IsOptOut"]
+        testMask = False
+        if self.condition in ["ImgOnly","ImgMeta"]:
+            truelist.append("OutputProbeMaskFileName")
+            testMask = True 
 
         for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -207,10 +211,6 @@ class SSD_Validator(validator):
         if "IsOptOut" in sysHeads:
             optOut=True
 
-        testMask = False
-        if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
-            testMask = True
-        
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
 

@@ -243,6 +243,13 @@ HISTORY
       - Changed the aspect of plot ratio 
     * MaskScorer:
       - Added optout querying and some verbose printout for mask score partitioner.
+  MediScore Version 1.1.10
+    * Validator:
+      - Revised video header checking.
+    * Mask Scorer:
+      - Added verbose output for image dimension checking, just in case.
+      - Added catcher for each iteration of mask scoring loop for runtime stability.
+      - Further stabilized mask partitioner.
 
 CONTACT
 -------
