@@ -10,7 +10,8 @@ class Partition:
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
-    def __init__(self,dataframe,query,factor_mode,metrics): #,fpr_stop=1, isCI=False):
+    #TODO: add verbose option
+    def __init__(self,dataframe,query,factor_mode,metrics,verbose=False): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -38,14 +39,16 @@ class Partition:
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
         self.task = dataframe['TaskID'].iloc[0]
+        self.verbose = verbose
 
+        if verbose: print("Beginning partition. Factor mode {} for query {}".format (factor_mode,query))
         # If we have a list of queries
         if (self.factor_mode == 'q'):
             #self.query = None
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
         elif self.factor_mode == 'qp':
-            self.query = query[0].replace(' ','')
+            self.query = query.replace(' ','')
             #TODO: Simplify the factors dictionary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
             self.part_values_list = self.gen_part_values_list()
@@ -53,7 +56,11 @@ class Partition:
             self.n_partitions = len(self.part_values_list)
         elif (self.factor_mode == 'qm') or (self.factor_mode == ''):
             #self.query = None
-            self.part_query_list = ['']
+            self.part_query_list = [query]
+#            if self.factor_mode == 'qm':
+#                self.part_query_list = [query]
+#            else:
+#                self.part_query_list = ['']
             self.n_partitions = len(self.part_query_list)
 
         self.part_df_list = self.gen_part_df_list(dataframe)
@@ -155,7 +162,8 @@ class Partition:
             generated according to its query in part_query_list.
         """
         df_list = list()
-        if self.part_query_list == ['']:
+        if self.verbose: print("Generating dataframe for query(s) {}.".format(self.part_query_list))
+        if (self.part_query_list == ['']) or (self.factor_mode == 'qm'):
             #base case
             return [df]
 
@@ -171,7 +179,7 @@ class Partition:
             try:
                 sub_df = df.query(query)
             except pd.computation.ops.UndefinedVariableError:
-                print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(query))
+                print("The query '{}' doesn't seem to refer to a valid key. Partitioning has failed. Please correct the query and try again.".format(query))
                 exit(1)
             #print("Removing duplicates ...\n")
             new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
@@ -194,7 +202,7 @@ class Partition:
 
         for df, query in zip(self.part_df_list,self.part_query_list):
             if not df.empty:
-                print("Current query: {}".format(query))
+                if self.verbose: print("Current query: {}".format(query))
                 #dm_list.append(df[metrics])
                 #dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'],fpr_stop, isCI))
             else:
@@ -220,6 +228,7 @@ class Partition:
             one dataframe listing all the partitions in 'fp' mode
         """
 
+        if self.verbose: print("Rendering table for metrics {}...".format(metrics))
         def find_factor_list_pos(List, factor):
             i = 0
             while factor not in List[i]: i += 1
@@ -231,8 +240,11 @@ class Partition:
             dm = self.part_metric_list[0]
             for m in metrics:
                 data[m] = [dm[m].mean(skipna=True)]
-            data['TaskID'] = self.task
-            columns = ['TaskID']
+            data['TaskID'] = [self.task]
+            data['Query'] = self.part_query_list
+            if data['Query'] == ['']:
+                data['Query'] = ['Full']
+            columns = ['TaskID','Query']
             columns.extend(metrics)
             return [pd.DataFrame(data=data,columns=columns)]
 

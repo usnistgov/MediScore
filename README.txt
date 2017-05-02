@@ -228,10 +228,12 @@ HISTORY
       - Took out OutputProbeMaskFileName and OutputDonorMaskFileName while saving the meta csv file.
     * MaskScorer:
       - Added option to score on a smaller index file for testing purposes.
+      - Fixed index parsing bug.
       - Added increased capability to read images of different formats, including raw and bmp images.
       - Fixed bug related to parsing the extension of the images.
     * Validator:
       - IsOptOut column is mandated
+      - Substituted range for xrange for speedup
     * ProvenanceValidator:
       - ConfidenceScore and IsOptOut columns are mandated
   May 1, 2017 - MediScore Version 1.1.9
@@ -239,6 +241,8 @@ HISTORY
       - Added subtitle on the plot
       - Added the noNum option to not print the number of trials on the plot legend.
       - Changed the aspect of plot ratio 
+    * MaskScorer:
+      - Added optout querying and some verbose printout for mask score partitioner.
 
 CONTACT
 -------
