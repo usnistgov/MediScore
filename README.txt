@@ -250,6 +250,11 @@ HISTORY
       - Added verbose output for image dimension checking, just in case.
       - Added catcher for each iteration of mask scoring loop for runtime stability.
       - Further stabilized mask partitioner.
+    * Provenance:
+      - Changed column names is ProvenanceFilteringScorer to use 'At' instead of '@'
+      - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
+      - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
+      - Misc. optimizations
 
 CONTACT
 -------

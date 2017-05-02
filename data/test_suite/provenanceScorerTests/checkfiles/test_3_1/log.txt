@@ -1,0 +1,7 @@
+Scoring 1 trials ..
+Working on ProvenanceProbeFileID: '9f796693249720d9d4eb8f1c3347c300' in JournalName: 'c257f3e674aaa597784ae6f5a402c748'
+Warning, detected cycle(s) for system output file '../../data/test_suite/provenanceScorerTests/jsons/test_case_3-system_output_1.json'
+Writing Trial Scores to '../../data/test_suite/provenanceScorerTests/checkfiles/test_3_1/trial_scores.csv'
+Writing Aggregate Scores to '../../data/test_suite/provenanceScorerTests/checkfiles/test_3_1/scores.csv'
+Writing Node Mapping to '../../data/test_suite/provenanceScorerTests/checkfiles/test_3_1/node_mapping.csv'
+Writing Link Mapping to '../../data/test_suite/provenanceScorerTests/checkfiles/test_3_1/link_mapping.csv'

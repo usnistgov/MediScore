@@ -20,7 +20,11 @@ run_test() {
     echo "** Running integration test '$test' **"
     $test "$compcheckfile_outdir"
     check_status
-    
+
+    # Replace paths in logfile
+    if [ -f "${compcheckfile_outdir}/log.txt" ]; then
+	sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
+    fi
     diff -r "$checkfile_outdir" "$compcheckfile_outdir"
     check_status
     
@@ -97,6 +101,21 @@ test_2_1() {
 				       -R "$testsuite_directory/" \
 				       -s "$testsuite_directory/test_case_2-system_output_1_index.csv" \
 				       -S "$testsuite_directory/"
+}
+
+# Graph Building test 3_1
+test_3_1() {
+    mkdir -p "$1"
+    ./ProvenanceGraphBuildingScorer.py -o "$1" \
+				       -c \
+				       -v \
+				       -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
+				       -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
+				       -n "$testsuite_directory/test_case_2-provenance-node.csv" \
+				       -w "$testsuite_directory/test_case_2-provenancegraphbuilding-world.csv" \
+				       -R "$testsuite_directory/" \
+				       -s "$testsuite_directory/test_case_3-system_output_1_index.csv" \
+				       -S "$testsuite_directory/" >&"$1/log.txt"
 }
 
 # Filtering test 0 (2_0)
