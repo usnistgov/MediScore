@@ -240,10 +240,10 @@ HISTORY
     * DetectionScorer:
       - Added subtitle on the plot
       - Added the noNum option to not print the number of trials on the plot legend.
-      - Changed the aspect of plot ratio 
+      - Changed the aspect of plot ratio
     * MaskScorer:
       - Added optout querying and some verbose printout for mask score partitioner.
-  MediScore Version 1.1.10
+  May 2, 2017 - MediScore Version 1.1.10
     * Validator:
       - Revised video header checking.
     * Mask Scorer:
@@ -255,6 +255,11 @@ HISTORY
       - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
       - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
       - Misc. optimizations
+    * DetectionScorer:
+      - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
+      - Added the columns “TRR” and “SYS_RESPONSE” to the report table
+      - Changed the number of total data to the number of the merged data for TRR’s denominator
+
 
 CONTACT
 -------
