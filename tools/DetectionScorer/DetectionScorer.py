@@ -398,6 +398,7 @@ if __name__ == '__main__':
             args.plotType = plot_opts['plot_type']
             plot_opts['title'] = args.plotTitle
             plot_opts['subtitle'] = args.plotSubtitle
+            plot_opts['subtitle_fontsize'] = 11
             #print("test plot title1 {}".format(plot_opts['title']))
         else:
             if args.plotType =='':
