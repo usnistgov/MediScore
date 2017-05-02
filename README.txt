@@ -231,7 +231,6 @@ HISTORY
       - Fixed index parsing bug.
       - Added increased capability to read images of different formats, including raw and bmp images.
       - Fixed bug related to parsing the extension of the images.
-      - Added verbosity and optout querying for mask score partitioner.
     * Validator:
       - IsOptOut column is mandated
       - Substituted range for xrange for speedup
@@ -242,6 +241,8 @@ HISTORY
       - Added subtitle on the plot
       - Added the noNum option to not print the number of trials on the plot legend.
       - Changed the aspect of plot ratio 
+    * MaskScorer:
+      - Added optout querying and some verbose printout for mask score partitioner.
 
 CONTACT
 -------
