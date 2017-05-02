@@ -11776,15 +11776,15 @@ div#notebook {
 <p>This script performs scoring for the Medifor Provenance Filtering task.  The script produces output files in the form of a pipe-separated csv files, and returns an exit status of 0 if scoring was successful.  If the script aborts due to an error, the error will be written to standard out, and the script will exit with a status of 1.  The script produces two output files, 'trial_scores.csv', which reports scores at the trial (probe) level, and 'scores.csv', which aggregates metrics over trials.  The script also generates a 'node_mapping.csv' file which lists each individual node for each trial and measure and it's designation as either "Correct", "FalseAlarm", or "Missing".</p>
 <p>The script reports the following metrics:</p>
 <ul>
-<li>Node recall @ 50 - Recall for the top 50 nodes (by confidence score) reported by the system</li>
-<li>Node recall @ 100 - Recall for the top 100 nodes (by confidence score) reported by the system</li>
-<li>Node recall @ 200 - Recall for the top 200 nodes (by confidence score) reported by the system</li>
+<li>Node recall at 50 - Recall for the top 50 nodes (by confidence score) reported by the system</li>
+<li>Node recall at 100 - Recall for the top 100 nodes (by confidence score) reported by the system</li>
+<li>Node recall at 200 - Recall for the top 200 nodes (by confidence score) reported by the system</li>
 </ul>
 <p>Where:
 $$\begin{equation*}
 recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 \end{equation*}$$</p>
-<p>The script also reports various counts, such as the number of correct nodes @ 50.  See the examples section for sample output.</p>
+<p>The script also reports various counts, such as the number of correct nodes at 50.  See the examples section for sample output.</p>
 <h2 id="Command-line-interface">Command-line interface<a class="anchor-link" href="#Command-line-interface">&#182;</a></h2><h3 id="Required-Arguments">Required Arguments<a class="anchor-link" href="#Required-Arguments">&#182;</a></h3><p>-o, --output-dir OUTPUT_DIR</p>
 <ul>
 <li>Output directory, where you want the script to write results</li>
@@ -11817,9 +11817,13 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 <ul>
 <li>System output directory where system output json files can be found.  Paths to system output json files in the SYSTEM_OUTPUT_FILE should be relative to this directory</li>
 </ul>
-<h3 id="Optional-Arguments">Optional Arguments<a class="anchor-link" href="#Optional-Arguments">&#182;</a></h3><p>-t, --skip-trial-disparity-check</p>
+<h3 id="Optional-Arguments">Optional Arguments<a class="anchor-link" href="#Optional-Arguments">&#182;</a></h3><p>-v, --verbose</p>
 <ul>
-<li>By default the script will check that the trials in INDEX_FILE correspond one-to-one to the trials in the SYSTEM_OUTPUT_FILE.  If this option is set, no such check is performed</li>
+<li>If set, scoring progress messages and warnings are logged to standard output</li>
+</ul>
+<p>-t, --skip-trial-disparity-check</p>
+<ul>
+<li>By default the script will check that the trials in INDEX_FILE correspond one-to-one to the trials in the SYSTEM_OUTPUT_FILE.  If this option is set, extraneous trials in the SYSTEM_OUTPUT_FILE are reported as warnings instead of errors.  Note that warnings are suppressed unless the -v option is set</li>
 </ul>
 <p>-H, --html-report</p>
 <ul>

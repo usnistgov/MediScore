@@ -194,6 +194,12 @@ HISTORY
       - Included validation of Nimble Challenge ID.
     * Provenance:
       - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
+  May 2, 2017 - Mediscore Version ?.?.?
+    * Provenance:
+      - Changed column names is ProvenanceFilteringScorer to use 'At' instead of '@'
+      - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
+      - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
+      - Misc. optimizations
 
 CONTACT
 -------
