@@ -305,7 +305,9 @@ class maskMetricRunner:
                 df.set_value(i,'MCC',-2) #for reference to filter later
                 continue
 
+
             rdims = rImg.get_dims()
+            if verbose: print("Beginning scoring for reference image {} with dims {} and systen image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
             idxdims = self.index.query("{}FileID=='{}'".format(mymode,manip_ids[i])).iloc[0]
             idxW = idxdims[mymode+'Width']
             idxH = idxdims[mymode+'Height']
