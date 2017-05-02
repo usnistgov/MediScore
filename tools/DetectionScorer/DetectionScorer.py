@@ -261,8 +261,8 @@ if __name__ == '__main__':
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
         # to calculate TRR
-        total_num = m_df.shape[0]
-        v_print("Original total data number: {}".format(total_num))
+        #total_num = m_df.shape[0]
+
         ## if OptOut has chosen, all of queries should be applied
         #print(list(myIndex))
 
@@ -315,6 +315,8 @@ if __name__ == '__main__':
 #            print("Merged data row num: {}".format(index_m_df.shape[0]))
 #            print ("Warning: the row number of the index file and the number of the merged data file do not match.")
 
+        total_num = index_m_df.shape[0]
+        v_print("Total data number: {}".format(total_num))
 
         sys_response = 'all' # to distinguish use of the optout
          # Partition Mode
