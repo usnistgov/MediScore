@@ -260,6 +260,10 @@ HISTORY
       - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
       - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
       - Misc. optimizations
+  MediScore Version 1.1.11
+    * Mask Scorer:
+      - Revised test cases for queryPartition and queryPartition functionality.
+      - Added more verbose messages to metric runner for easier error tracking.
 
 
 CONTACT

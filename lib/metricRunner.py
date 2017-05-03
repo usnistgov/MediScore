@@ -336,12 +336,14 @@ class maskMetricRunner:
                     sImg.save(sbin_name,th=self.sbin)
     
                 #save the image separately for html and further review. Use that in the html report
+                if verbose: print("Generating no-score zones...")
                 wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
     
                 #do a 3-channel combine with bns and sns for their colors before saving
                 rImgbin = rImg.get_copy()
                 rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
                 rbinmat = np.copy(rImgbin.bwmat)
+                if verbose: print("Generating reference mask with no-score zones...")
                 rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
                 rImgbin.matrix[bns==0] = self.colordict['yellow']
                 rImgbin.matrix[sns==0] = self.colordict['pink']
@@ -349,10 +351,12 @@ class maskMetricRunner:
                 #noScorePixel here
                 pns=0
                 if noScorePixel >= 0:
+                    if verbose: print("Setting system optOut no-score zone...")
                     pns=sImg.pixelNoScore(noScorePixel)
                     rImgbin.matrix[pns==0] = self.colordict['purple'] #TODO: temporary measure until different color is picked
                     wts = cv2.bitwise_and(wts,pns)
     
+                if verbose: print("Saving binarized reference mask...")
                 rImgbin.save(rbin_name)
                 #if wts allows for nothing to be scored, (i.e. no GT pos), print error message and record all scores as np.nan 
                 if np.sum(cv2.bitwise_and(wts,rImgbin.bwmat)) == 0:
@@ -362,8 +366,10 @@ class maskMetricRunner:
                 mets = 0
                 mymeas = 0
                 threshold = 0
+                if verbose: print("Generating metrics...")
                 metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
                 #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
+                if verbose: print("Metrics generated. Getting metrics...")
                 if self.sbin >= 0:
                     #just get scores in one run if threshold is chosen
                     mets = metricRunner.getMetrics(popt=verbose)
@@ -381,26 +387,32 @@ class maskMetricRunner:
                         thresMets='' #to minimize redundancy
     
                 if self.sbin == -1:
+                    if verbose: print("Saving binarized system mask...")
                     sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                     sImg.save(sbin_name,th=threshold)
      
                 mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
                 for met in ['NMM','MCC','BWL1','GWL1']:
+                    if verbose: print("Setting value for {}...".format(met))
                     df.set_value(i,met,round(mets[met],precision))
+
+                if verbose: print("Metrics computed.")
      
                 if html:
                     maniImgName = os.path.join(self.refDir,maniImageFName[i])
+                    if verbose: print("Generating aggregate color mask for HTML report...")
                     colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,maniImgName,subOutRoot,self.colordict)
                     colMaskName=colordirs['mask']
                     aggImgName=colordirs['agg']
                     df.set_value(i,'ColMaskFileName',colMaskName)
                     df.set_value(i,'AggMaskFileName',aggImgName)
                     #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
+                    if verbose: print("Generating HTML report...")
                     self.manipReport(task,subOutRoot,row[mymode+'FileID'],row[mymode+'FileName'],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
             except:
-                e = sys.exc_info()[0]
-                print("{}FileName {} for {}FileID {} encountered exception {}.".format(mymode,row[mymode+'FileName'],mymode,row[mymode+'FileID'],e))
-                errlist.append(e)
+                exc_type,exc_obj,exc_tb = sys.exc_info()
+                print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,row[mymode+'FileName'],mymode,row[mymode+'FileID'],exc_type,exc_tb.tb_lineno))
+                errlist.append(exc_type)
 
         #print all error output at very end and exit (1) if failed at any iteration of loop
         if len(errlist) > 1:
@@ -476,6 +488,8 @@ class maskMetricRunner:
         sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
+
+        if verbose: print("Generating weights image...")
         mywts = cv2.bitwise_and(b_weights,s_weights)
 
         dims = bwts.shape
@@ -489,12 +503,14 @@ class maskMetricRunner:
             colwts[p_weights==0] = self.colordict['purple']
             totalpns = np.sum(p_weights==0)
 
+        if verbose: print("Saving weights image...")
         cv2.imwrite(weightpath,colwts)
 
         mPath = os.path.join(self.refDir,maniImageFName)
         allshapes=min(dims[1],640) #limit on width for readability of the report
 
         # generate HTML files
+        if verbose: print("Reading HTML template...")
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/html_template.txt"), 'r') as f:
             htmlstr = Template(f.read())
 
@@ -511,6 +527,7 @@ class maskMetricRunner:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
+            if verbose: print("Composing journal table...")
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
             jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
@@ -523,7 +540,8 @@ class maskMetricRunner:
             jdata['Color'] = 'td bgcolor="#' + jDataHex + '"btd'
             jtable = jdata.to_html(index=False)
             jtable = jtable.replace('<td>td','<td').replace('btd','>')
-        
+       
+        if verbose: print("Computing pixel count...") 
         totalpx = np.sum(mywts==1)
         totalbns = np.sum(bwts==0)
         totalsns = np.sum(swts==0)
@@ -546,6 +564,7 @@ class maskMetricRunner:
 
         thresString = ''
         if len(thresMets) > 1:
+            if verbose: print("Generating MCC per threshold graph...")
             #plot MCC
             try:
                 import matplotlib
@@ -582,7 +601,7 @@ class maskMetricRunner:
                 os.remove(bPathNew)
             except OSError:
                 None
-            if verbose: print "Creating link for base image " + baseImageFName
+            if verbose: print("Creating link for base image " + baseImageFName)
             os.symlink(os.path.abspath(bPath),bPathNew)
             basehtml="<img src={} alt='base image' style='width:{}px;'>".format('baseFile' + baseImageFName[-4:],allshapes)
 
@@ -666,6 +685,7 @@ class maskMetricRunner:
         fname=os.path.join(outputRoot,fprefix + '.html')
         myhtml=open(fname,'w')
         myhtml.write(htmlstr)
+        if verbose: print("HTML page written.")
         myhtml.close()
 
     #prints out the aggregate mask, reference and other data
