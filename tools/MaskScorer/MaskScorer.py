@@ -50,6 +50,7 @@ import Partition_mask as pt
 
 
 ########### Command line interface ########################################################
+#TODO: drop into main() when MaskScorer.py has been OOP'ed
 
 #data_path = "../../data"
 refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
@@ -178,6 +179,20 @@ if args.task == 'manipulation':
         df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
     
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
+#        merged_df['Scored'] = pd.Series(['Y']*len(merged_df))
+#        merged_df.loc[merged_df.query('MCC == -2').index,'Scored'] = 'N'
+        merged_df.loc[merged_df.query('MCC == -2').index,'NMM'] = np.nan
+        merged_df.loc[merged_df.query('MCC == -2').index,'BWL1'] = np.nan
+        merged_df.loc[merged_df.query('MCC == -2').index,'GWL1'] = np.nan
+        #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+    
+        #reorder merged_df's columns. Names first, then scores, then other metadata
+        rcols = merged_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        merged_df = merged_df[firstcols]
+    
         return merged_df
 
     if args.html:
@@ -257,6 +272,22 @@ elif args.task == 'splice':
     
         pd_df = pd.concat([probe_df,donor_df],axis=1)
         merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID']).drop('Scored',1)
+
+        #reorder merged_df's columns. Names first, then scores, then other metadata
+        p_idx = merged_df.query('pMCC == -2').index
+        d_idx = merged_df.query('dMCC == -2').index
+        rcols = merged_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        merged_df = merged_df[firstcols]
+   
+        merged_df.loc[p_idx,'pNMM'] = np.nan
+        merged_df.loc[p_idx,'pBWL1'] = np.nan
+        merged_df.loc[p_idx,'pGWL1'] = np.nan
+        merged_df.loc[d_idx,'dNMM'] = np.nan
+        merged_df.loc[d_idx,'dBWL1'] = np.nan
+        merged_df.loc[d_idx,'dGWL1'] = np.nan
         return merged_df
 
     if args.html:
@@ -467,8 +498,9 @@ if args.task == 'manipulation':
         m_dfc['Scored'] = ['Y']*len(m_dfc)
         printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
-        #TODO: incorporate into createReport, since organizing it
+        #TODO: new function: journalUpdate. Reorganizes journal
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('MCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
         pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
 #        p_idx = pjoins.reset_index().merge(journalData0,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
@@ -486,26 +518,12 @@ if args.task == 'manipulation':
         journalData0 = journalData0[journalcols]
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
     
-#        r_df['Scored'] = pd.Series(['Y']*len(r_df))
-#        r_df.loc[r_df.query('MCC == -2').index,'Scored'] = 'N'
-        r_df.loc[r_df.query('MCC == -2').index,'NMM'] = np.nan
-        r_df.loc[r_df.query('MCC == -2').index,'BWL1'] = np.nan
-        r_df.loc[r_df.query('MCC == -2').index,'GWL1'] = np.nan
-        #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
-    
-        #reorder r_df's columns. Names first, then scores, then other metadata
-        rcols = r_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored']
-        metadata = [t for t in rcols if t not in firstcols]
-        firstcols.extend(metadata)
-        r_df = r_df[firstcols]
-    
         a_df = 0
         #filter nan out of the below
         #TODO: averaging procedure starts here. Requires r_df, metrics (check if MCC is in metrics, if not, return no average), and query, return a_df
         if len(r_df.query("Scored=='Y'").dropna()) == 0:
             #if nothing was scored, print a message and return
-            print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
+            print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile. This is not an error.".format(q))
         else:
             metrics = ['NMM','MCC','BWL1','GWL1']
             r_dfc = r_df.copy()
@@ -656,7 +674,7 @@ elif args.task == 'splice':
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
 
         #set where the rows are the same in the join
-        #TODO: incorporate into createReport, since organizing it
+        #TODO: new function: journalUpdate. Reorganizes journal
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
         pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
         p_idx = journalData0.reset_index().merge(pjoins,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
@@ -677,37 +695,14 @@ elif args.task == 'splice':
 #        journalData0 = pd.merge(journalData0,probeJournalJoin[['ProbeFileID','DonorFileID','JournalName','StartNodeID','EndNodeID']],how='right',on=['JournalName','StartNodeID','EndNodeID'])
         journalData0 = journalData0[journalcols]
         journalData0.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
-        a_df = 0
 
-        #TODO: averaging procedure starts here, requires r_df and metrics, and query
-        p_idx = r_df.query('pMCC == -2').index
-        d_idx = r_df.query('dMCC == -2').index
-#        r_df.loc[p_idx,'pNMM'] = ''
-#        r_df.loc[p_idx,'pBWL1'] = ''
-#        r_df.loc[p_idx,'pGWL1'] = ''
-#        r_df.loc[d_idx,'dNMM'] = ''
-#        r_df.loc[d_idx,'dBWL1'] = ''
-#        r_df.loc[d_idx,'dGWL1'] = ''
-        #reorder r_df's columns. Names first, then scores, then other metadata
-        rcols = r_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-        metadata = [t for t in rcols if t not in firstcols]
-        firstcols.extend(metadata)
-        r_df = r_df[firstcols]
-   
-        r_df.loc[p_idx,'pNMM'] = np.nan
-        r_df.loc[p_idx,'pBWL1'] = np.nan
-        r_df.loc[p_idx,'pGWL1'] = np.nan
-        r_df.loc[d_idx,'dNMM'] = np.nan
-        r_df.loc[d_idx,'dBWL1'] = np.nan
-        r_df.loc[d_idx,'dGWL1'] = np.nan
         #filter here
-        #TODO: averaging procedure starts here instead? requires r_df,metrics, and query
+        #TODO: averaging procedure starts here instead? requires r_df,metrics, and query, returns a_df
         a_df = 0
         #filter nan out of the below
         if len(r_df.query("(ProbeScored == 'Y') | (DonorScored == 'Y')").dropna()) == 0:
             #if nothing was scored, print a message and return
-            print("None of the masks that we attempted to score for this run had regions to be scored. Further factor analysis is futile. This is not an error.")
+            print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile. This is not an error.".format(q))
         else:
             metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
             r_dfc = r_df.copy()

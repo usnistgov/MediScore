@@ -261,8 +261,8 @@ if __name__ == '__main__':
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
         # to calculate TRR
-        total_num = m_df.shape[0]
-        v_print("Original total data number: {}".format(total_num))
+        #total_num = m_df.shape[0]
+
         ## if OptOut has chosen, all of queries should be applied
         #print(list(myIndex))
 
@@ -315,7 +315,10 @@ if __name__ == '__main__':
 #            print("Merged data row num: {}".format(index_m_df.shape[0]))
 #            print ("Warning: the row number of the index file and the number of the merged data file do not match.")
 
+        total_num = index_m_df.shape[0]
+        v_print("Total data number: {}".format(total_num))
 
+        sys_response = 'all' # to distinguish use of the optout
          # Partition Mode
         if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
@@ -343,10 +346,11 @@ if __name__ == '__main__':
 
             if args.optOut:
                 index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                sys_response = 'tr'
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
+            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num, sys_res = sys_response)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -368,8 +372,9 @@ if __name__ == '__main__':
 
             if args.optOut:
                 index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                sys_response = 'tr'
 
-            DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
+            DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num, sys_res = sys_response)
 
             DM_List = [DM]
             table_df = DM.render_table()
@@ -398,6 +403,7 @@ if __name__ == '__main__':
             args.plotType = plot_opts['plot_type']
             plot_opts['title'] = args.plotTitle
             plot_opts['subtitle'] = args.plotSubtitle
+            plot_opts['subtitle_fontsize'] = 11
             #print("test plot title1 {}".format(plot_opts['title']))
         else:
             if args.plotType =='':
