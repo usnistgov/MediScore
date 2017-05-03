@@ -47,7 +47,7 @@ class Partition:
             self.part_query_list = query
             self.n_partitions = len(self.part_query_list)
         elif self.factor_mode == 'qp':
-            self.query = query.replace(' ','')
+            self.query = query[0].replace(' ','')
             #TODO: Simplify the factors dictionary after the removing of the text render table
             self.factors_dict,self.factors_order = self.gen_factors_dict()
             self.part_values_list = self.gen_part_values_list()
