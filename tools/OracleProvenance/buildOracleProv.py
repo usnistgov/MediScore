@@ -114,7 +114,8 @@ for i,row in GTProbes.iterrows():
             team = d.split('_')[0]
             sysjs = mySys.query("ProvenanceProbeFileID==['{}']".format(row['ProvenanceProbeFileID']))["{}ProvenanceOutputFileName".format(team)]
             if len(sysjs) == 0:
-                print("ProvenanceProbeFileID {} not found in sysjs. Continuing...".format(row['ProvenanceProbeFileID'])) 
+                print("ProvenanceProbeFileID {} not found in sysjs. Continuing...".format(row['ProvenanceProbeFileID']))
+                continue
             sysjs = sysjs.iloc[0]
             with open(os.path.join(dirlist[d],sysjs)) as jsonfile:
                 js = json.load(jsonfile)
