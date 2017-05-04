@@ -67,7 +67,7 @@ if not os.path.isdir(args.outRoot):
     os.system('mkdir ' + os.path.join(args.outRoot,'jsons'))
 
 #GTProbes = myRef.query("IsTarget=='Y'")
-GTProbes = myRef #NOTE: in case of further need to filter
+GTProbes = myRef.copy() #NOTE: in case of further need to filter
 
 #construct outer-joined system output by ProvenanceProbeFileID
 
@@ -112,7 +112,10 @@ for i,row in GTProbes.iterrows():
         tempSys = 0
         for d in dirlist.keys():
             team = d.split('_')[0]
-            sysjs = mySys.query("ProvenanceProbeFileID==['{}']".format(row['ProvenanceProbeFileID']))["{}ProvenanceOutputFileName".format(team)].iloc[0]
+            sysjs = mySys.query("ProvenanceProbeFileID==['{}']".format(row['ProvenanceProbeFileID']))["{}ProvenanceOutputFileName".format(team)]
+            if len(sysjs) == 0:
+                print("ProvenanceProbeFileID {} not found in sysjs. Continuing...".format(row['ProvenanceProbeFileID'])) 
+            sysjs = sysjs.iloc[0]
             with open(os.path.join(dirlist[d],sysjs)) as jsonfile:
                 js = json.load(jsonfile)
                 jsdfs = [pd.DataFrame(e,index=[idx]) for idx,e in enumerate(js['nodes'])]
