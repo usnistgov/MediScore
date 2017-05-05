@@ -58,7 +58,7 @@ def system_out_to_scorable(system_out):
     nl = { i: node for i, node in enumerate(system_out["nodes"]) }
 
     sys_node_dict = { n["file"]: n for n in system_out["nodes"] }
-    sys_edge_dict = { (nl[e["source"]]["file"], nl[e["target"]]["file"]): (nl[e["source"]], nl[e["target"]]) for e in system_out["links"] }
+    sys_edge_dict = { (nl[e["source"]]["file"], nl[e["target"]]["file"]): (nl[e["source"]], nl[e["target"]], e) for e in system_out["links"] }
 
     return (sys_node_dict, sys_edge_dict)
 
@@ -248,16 +248,20 @@ if __name__ == '__main__':
                          "Direct": args.direct,
                          "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
                          "WorldFileID": _worldfile_path_to_id(node_key),
+                         "NodeConfidence": sys_node["nodeConfidenceScore"] if sys_node != None else None,
                          "Mapping": _get_mapping(ref_node, sys_node) }
 
             def _build_link_map_record(link_key, ref_link, sys_link):
                 link_key_s, link_key_t = link_key
+                if sys_link != None:
+                    sys_s_node, sys_t_node, sys_link_record = sys_link
                 return { "JournalName": trial.JournalName,
                          "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                          "Direct": args.direct,
                          "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
                          "SourceWorldFileID": _worldfile_path_to_id(link_key_s),
                          "TargetWorldFileID": _worldfile_path_to_id(link_key_t),
+                         "LinkConfidence": sys_link_record["relationshipConfidenceScore"] if sys_link != None else None,
                          "Mapping": _get_mapping(ref_link, sys_link) }
 
             output_node_mapping_records += sorted([ _build_node_map_record(*node_map) for node_map in node_mapping ])
@@ -330,6 +334,7 @@ if __name__ == '__main__':
                                                                                        "Direct",
                                                                                        "ProvenanceOutputFileName",
                                                                                        "WorldFileID",
+                                                                                       "NodeConfidence",
                                                                                        "Mapping"])
     output_link_mapping_records_df = DataFrame(output_link_mapping_records, columns = ["JournalName",
                                                                                        "ProvenanceProbeFileID",
@@ -337,6 +342,7 @@ if __name__ == '__main__':
                                                                                        "ProvenanceOutputFileName",
                                                                                        "SourceWorldFileID",
                                                                                        "TargetWorldFileID",
+                                                                                       "LinkConfidence",
                                                                                        "Mapping"])
     output_records_df = DataFrame(output_records, columns = ["JournalName",
                                                              "ProvenanceProbeFileID",

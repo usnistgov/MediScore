@@ -182,6 +182,7 @@ if __name__ == '__main__':
                          "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
                          "Measure": "NodeRecallAt{}".format(n),
                          "WorldFileID": _worldfile_path_to_id(node_key),
+                         "NodeConfidence": sys_node["nodeConfidenceScore"] if sys_node != None else None,
                          "Mapping": _get_mapping(ref_node, sys_node) }
 
             def _corr_selector(t):
@@ -226,6 +227,7 @@ if __name__ == '__main__':
                                                                              "ProvenanceOutputFileName",
                                                                              "Measure",
                                                                              "WorldFileID",
+                                                                             "NodeConfidence",
                                                                              "Mapping"])
     output_records_df = DataFrame(output_records, columns = ["JournalName",
                                                              "ProvenanceProbeFileID",
