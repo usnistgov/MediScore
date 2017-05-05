@@ -183,6 +183,9 @@ for i,row in GTProbes.iterrows():
     for idx,n in enumerate(nodes):
         n['id'] = 'id{}'.format(idx)
 
+    if len(nodes) > N:
+        nodes = nodes[:N]
+
     jsonout = {'directed':True,'nodes':nodes}
     with open(os.path.join(args.outRoot,"jsons/{}.json".format(row['ProvenanceProbeFileID'])),'w') as outfile:
         json.dump(jsonout,outfile,indent = 4)
