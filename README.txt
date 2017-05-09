@@ -266,6 +266,7 @@ HISTORY
       - Added more verbose messages to metric runner for easier error tracking.
     * Provenance:
       - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
+      - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
 
 
 CONTACT

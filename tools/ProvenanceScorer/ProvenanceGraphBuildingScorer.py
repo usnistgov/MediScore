@@ -399,6 +399,24 @@ if __name__ == '__main__':
                 out_f.write("<br/><br/>")
                 out_f.write("<h2>Trial Scores:</h2>")
                 output_records_df["Figure"] = output_records_df["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
-                output_records_df.to_html(buf=out_f, index=False, escape=False)
+                output_records_df.to_html(buf=out_f, index=False, escape=False, columns=["JournalName",
+                                                                                         "ProvenanceProbeFileID",
+                                                                                         "Direct",
+                                                                                         "ProvenanceOutputFileName",
+                                                                                         "Figure",
+                                                                                         "SimNLO",
+                                                                                         "SimNO",
+                                                                                         "SimLO",
+                                                                                         "NodeRecall",
+                                                                                         "NumSysNodes",
+                                                                                         "NumSysLinks",
+                                                                                         "NumRefNodes",
+                                                                                         "NumRefLinks",
+                                                                                         "NumCorrectNodes",
+                                                                                         "NumMissingNodes",
+                                                                                         "NumFalseAlarmNodes",
+                                                                                         "NumCorrectLinks",
+                                                                                         "NumMissingLinks",
+                                                                                         "NumFalseAlarmLinks"])
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))

@@ -278,6 +278,22 @@ if __name__ == '__main__':
                 output_agg_records_df.to_html(buf=out_f, index=False)
                 out_f.write("<br/><br/>")
                 out_f.write("<h2>Trial Scores:</h2>")
-                output_records_df.to_html(buf=out_f, index=False)
+                output_records_df.to_html(buf=out_f, index=False, columns=["JournalName",
+                                                                           "ProvenanceProbeFileID",
+                                                                           "ProvenanceOutputFileName",
+                                                                           "NodeRecallAt50",
+                                                                           "NodeRecallAt100",
+                                                                           "NodeRecallAt200",
+                                                                           "NumSysNodes",
+                                                                           "NumRefNodes",
+                                                                           "NumCorrectNodesAt50",
+                                                                           "NumMissingNodesAt50",
+                                                                           "NumFalseAlarmNodesAt50",
+                                                                           "NumCorrectNodesAt100",
+                                                                           "NumMissingNodesAt100",
+                                                                           "NumFalseAlarmNodesAt100",
+                                                                           "NumCorrectNodesAt200",
+                                                                           "NumMissingNodesAt200",
+                                                                           "NumFalseAlarmNodesAt200"])
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))
