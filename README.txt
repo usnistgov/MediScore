@@ -266,6 +266,7 @@ HISTORY
       - Added more verbose messages to metric runner for easier error tracking.
       - Further compartmentalized reporting features into separate functions for the purpose of increased modulation. Preparing to turn
         mask scorer into an object.
+      - Introduced speedup to mask color filtering.
 
 
 CONTACT
