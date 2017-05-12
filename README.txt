@@ -244,19 +244,36 @@ HISTORY
     * MaskScorer:
       - Added optout querying and some verbose printout for mask score partitioner.
   May 2, 2017 - MediScore Version 1.1.10
-    * Validator:
-      - Revised video header checking.
-    * Mask Scorer:
-      - Added verbose output for image dimension checking, just in case.
-      - Added catcher for each iteration of mask scoring loop for runtime stability.
-      - Further stabilized mask partitioner.
     * DetectionScorer:
       - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
       - Added the columns “TRR” and “SYS_RESPONSE” to the report table
       - Changed the number of total data to the number of the merged data for TRR’s denominator
+<<<<<<< HEAD
 May 12, 2017 - MediScore Version 1.1.11
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
+=======
+    * Mask Scorer:
+      - Added verbose output for image dimension checking, just in case.
+      - Added catcher for each iteration of mask scoring loop for runtime stability.
+      - Further stabilized mask partitioner.
+      - Revised partitioner querying based on query mode.
+    * Validator:
+      - Revised video header checking.
+    * Provenance:
+      - Changed column names is ProvenanceFilteringScorer to use 'At' instead of '@'
+      - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
+      - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
+      - Misc. optimizations
+  MediScore Version 1.1.11
+    * Mask Scorer:
+      - Revised test cases for queryPartition and queryPartition functionality.
+      - Added more verbose messages to metric runner for easier error tracking.
+    * Provenance:
+      - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
+      - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
+
+>>>>>>> f4abce4e5cc0b10dd24d9852840b690b96de5e3c
 
 CONTACT
 -------
