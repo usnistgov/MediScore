@@ -254,7 +254,9 @@ HISTORY
       - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
       - Added the columns “TRR” and “SYS_RESPONSE” to the report table
       - Changed the number of total data to the number of the merged data for TRR’s denominator
-
+May 12, 2017 - MediScore Version 1.1.11
+    * DetectionScorer:
+      - Applied the "noNum" option for both partition and EER
 
 CONTACT
 -------
