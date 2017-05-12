@@ -264,9 +264,9 @@ HISTORY
     * Mask Scorer:
       - Revised test cases for queryPartition and queryPartition functionality.
       - Added more verbose messages to metric runner for easier error tracking.
-      - Further compartmentalized reporting features into separate functions for the purpose of increased modulation. Preparing to turn
-        mask scorer into an object.
+      - Restructured code to be more modular.
       - Introduced speedup to mask color filtering.
+      - Fixed pixel-based no-score region for grayscale mask case.
 
 
 CONTACT

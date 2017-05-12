@@ -161,8 +161,6 @@ class maskMetrics:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
         r = ref.bwmat.astype(int)
-        #TODO: placeholder until something better covers it
-#        if sys.bwmat is 0:
         if th == -1:
             th = 254
 
@@ -170,6 +168,8 @@ class maskMetrics:
         s = sys.matrix <= th
 #        x = (r+s)/255.
         mywts = w==1
+#        rpos = cv2.bitwise_and(r==0,mywts)
+#        rneg = cv2.bitwise_and(r==255,mywts)
         rpos = (r==0) & mywts
         rneg = (r==255) & mywts
 
@@ -195,13 +195,13 @@ class maskMetrics:
         * Output:
         *     NMM score in range [c, 1]
         """
-        tp = conf['TP']
-        fp = conf['FP']
-        fn = conf['FN']
         Rgt=np.sum((ref.bwmat==0) & (w==1))
         if Rgt == 0:
             print("Mask {} has no region to score for the NMM.".format(ref.name))
             return np.nan
+        tp = conf['TP']
+        fp = conf['FP']
+        fn = conf['FN']
         return max(c,(tp-fn-fp)/Rgt)
 
     def matthews(self,conf):
@@ -274,15 +274,15 @@ class maskMetrics:
         if th is -1:
             th = 254
 
-        rmat = ref.bwmat.astype(int)/255.
-        smat = sys.matrix
-
-        wL1=np.multiply(w,abs(rmat-(smat > th)))
-        wL1=np.sum(wL1)
-        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
         n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         if n == 0:
             return np.nan
+
+        rmat = ref.bwmat.astype(int)/255.
+        smat = sys.matrix
+        wL1=np.multiply(w,abs(rmat-(smat > th)))
+        wL1=np.sum(wL1)
+        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
         norm_wL1=wL1/n
         return norm_wL1
 
@@ -303,6 +303,9 @@ class maskMetrics:
         * Outputs:
         *     Normalized grayscale WL1 value
         """
+        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        if n == 0:
+            return np.nan
 
         rmat = ref.bwmat.astype(int)
         smat = sys.matrix.astype(int)
@@ -310,9 +313,6 @@ class maskMetrics:
         wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
-        if n == 0:
-            return np.nan
         norm_wL1=wL1/n
         return norm_wL1
 
@@ -345,7 +345,7 @@ class maskMetrics:
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
@@ -354,6 +354,7 @@ class maskMetrics:
         *     sys: the system output mask object
         *     bns: the boundary no-score weighted matrix
         *     sns: the selected no-score weighted matrix
+        *     pns: the pixel no-score weighted matrix
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
@@ -372,6 +373,8 @@ class maskMetrics:
         btotal = np.sum(bns)
         stotal = np.sum(sns)
         w = cv2.bitwise_and(bns,sns)
+        if pns is not 0:
+            w = cv2.bitwise_and(w,pns)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
