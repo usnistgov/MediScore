@@ -51,6 +51,7 @@ import Partition_mask as pt
 
 
 ########### Command line interface ########################################################
+#TODO: drop into main() when MaskScorer.py has been OOP'ed
 
 #data_path = "../../data"
 refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
@@ -165,6 +166,7 @@ if not os.path.isdir(args.outRoot):
 
 #TODO: turn this into a class after scores come in, a'la validator
 #methods: __init__, createReport, journalUpdate, averageByFactors, and df2html
+
 #define HTML functions here
 df2html = lambda *a:None
 if args.task == 'manipulation':
@@ -178,6 +180,20 @@ if args.task == 'manipulation':
         df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision)
     
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
+#        merged_df['Scored'] = pd.Series(['Y']*len(merged_df))
+#        merged_df.loc[merged_df.query('MCC == -2').index,'Scored'] = 'N'
+        merged_df.loc[merged_df.query('MCC == -2').index,'NMM'] = np.nan
+        merged_df.loc[merged_df.query('MCC == -2').index,'BWL1'] = np.nan
+        merged_df.loc[merged_df.query('MCC == -2').index,'GWL1'] = np.nan
+        #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
+    
+        #reorder merged_df's columns. Names first, then scores, then other metadata
+        rcols = merged_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        merged_df = merged_df[firstcols]
+    
         return merged_df
 
     def journalUpdate(probeJournalJoin,journalData,r_df):
@@ -325,6 +341,22 @@ elif args.task == 'splice':
     
         pd_df = pd.concat([probe_df,donor_df],axis=1)
         merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID']).drop('Scored',1)
+
+        #reorder merged_df's columns. Names first, then scores, then other metadata
+        p_idx = merged_df.query('pMCC == -2').index
+        d_idx = merged_df.query('dMCC == -2').index
+        rcols = merged_df.columns.tolist()
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        merged_df = merged_df[firstcols]
+   
+        merged_df.loc[p_idx,'pNMM'] = np.nan
+        merged_df.loc[p_idx,'pBWL1'] = np.nan
+        merged_df.loc[p_idx,'pGWL1'] = np.nan
+        merged_df.loc[d_idx,'dNMM'] = np.nan
+        merged_df.loc[d_idx,'dBWL1'] = np.nan
+        merged_df.loc[d_idx,'dGWL1'] = np.nan
         return merged_df
 
     def journalUpdate(probeJournalJoin,journalData,r_df):
@@ -493,7 +525,7 @@ myRef = pd.read_csv(myRefFile,sep="|",header=0,dtype=ref_dtype,na_filter=False)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep="|",header=0,dtype=index_dtype,na_filter=False)
 
 factor_mode = ''
-query = ['']
+query = '' #in a similar format to queryManipulation elements, since partition treats them similarly
 if args.query:
     factor_mode = 'q'
     query = args.query #is a list of items
@@ -616,6 +648,7 @@ if args.task == 'manipulation':
 
         printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
@@ -739,22 +772,6 @@ elif args.task == 'splice':
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
-        #TODO: averaging procedure starts here
-        p_idx = r_df.query('pMCC == -2').index
-        d_idx = r_df.query('dMCC == -2').index
-#        r_df.loc[p_idx,'pNMM'] = ''
-#        r_df.loc[p_idx,'pBWL1'] = ''
-#        r_df.loc[p_idx,'pGWL1'] = ''
-#        r_df.loc[d_idx,'dNMM'] = ''
-#        r_df.loc[d_idx,'dBWL1'] = ''
-#        r_df.loc[d_idx,'dGWL1'] = ''
-        #reorder r_df's columns. Names first, then scores, then other metadata
-        rcols = r_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-        metadata = [t for t in rcols if t not in firstcols]
-        firstcols.extend(metadata)
-        r_df = r_df[firstcols]
-   
         #filter here
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
         a_df = 0
