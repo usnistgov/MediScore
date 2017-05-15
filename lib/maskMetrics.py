@@ -197,9 +197,9 @@ class maskMetrics:
         * Output:
         *     NMM score in range [c, 1]
         """
-#        Rgt=np.sum((ref.bwmat==0) & (w==1))
         tp = conf['TP']
         fn = conf['FN']
+#        Rgt=np.sum((ref.bwmat==0) & (w==1))
         Rgt = tp + fn
         if Rgt == 0:
             print("Mask {} has no region to score for the NMM.".format(ref.name))
