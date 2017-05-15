@@ -248,6 +248,7 @@ HISTORY
       - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
       - Added the columns “TRR” and “SYS_RESPONSE” to the report table
       - Changed the number of total data to the number of the merged data for TRR’s denominator
+
     * Mask Scorer:
       - Added verbose output for image dimension checking, just in case.
       - Added catcher for each iteration of mask scoring loop for runtime stability.
@@ -260,13 +261,19 @@ HISTORY
       - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
       - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
       - Misc. optimizations
-  MediScore Version 1.1.11
+  May 12, 2017 - MediScore Version 1.1.11
     * Mask Scorer:
       - Revised test cases for queryPartition and queryPartition functionality.
       - Added more verbose messages to metric runner for easier error tracking.
       - Restructured code to be more modular.
       - Introduced speedup to mask color filtering and NMM and BWL1 metrics.
       - Fixed pixel-based no-score region for grayscale mask case.
+    * Provenance:
+      - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
+      - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
+  May 12, 2017 - MediScore Version 1.1.12
+    * DetectionScorer:
+      - Applied the "noNum" option for both partition and EER
 
 
 CONTACT

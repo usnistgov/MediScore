@@ -4,12 +4,14 @@ import re
 from itertools import product
 from collections import OrderedDict
 import pandas as pd
+import numpy as np
 
 class Partition:
     """This class represents a set of partitions for a single panda's dataframe,
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
+    #TODO: add verbose option
     def __init__(self,dataframe,query,factor_mode,metrics,verbose=False): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
@@ -160,13 +162,12 @@ class Partition:
             This function computes and store each partition's dataframe
             generated according to its query in part_query_list.
         """
+        df_list = list()
         if self.verbose: print("Generating dataframe for query(s) {}.".format(self.part_query_list))
         if (self.part_query_list == ['']) or (self.factor_mode == 'qm'):
-            if self.verbose: print("Dataframe already generated. Proceeding...")
             #base case
             return [df]
 
-        df_list = list()
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
 
@@ -175,7 +176,7 @@ class Partition:
 #                if any(i in query for i in operators):
 #                    chosenField = [x.strip() for x in query.replace('!=', '==').split('==')]
 #                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
-            if self.verbose: print("Filtering for query {}...".format(query))
+
             try:
                 sub_df = df.query(query)
             except pd.computation.ops.UndefinedVariableError:

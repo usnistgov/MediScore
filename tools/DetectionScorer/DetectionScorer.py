@@ -473,8 +473,10 @@ if __name__ == '__main__':
                     elif plot_opts['plot_type'] == 'DET':
                         #plot_opts['title'] = "trDET"
                         met_str = " (trEER: " + str(round(dm_list.eer,2))
-
-                curve_opts["label"] = query + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + trr_str + ")"
+                if args.noNum:
+                    curve_opts["label"] = query + met_str + trr_str + ")"
+                else:
+                    curve_opts["label"] = query + met_str + trr_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) +")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)

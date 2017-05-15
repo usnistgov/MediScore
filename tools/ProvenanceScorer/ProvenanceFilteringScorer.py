@@ -45,13 +45,18 @@ def mkdir_p(path):
             pass
         else:
             err_quit("{}. Aborting!".format(exc))
-        
+
 # Returns ordered array of named tuples representing nodes
 def system_out_to_ordered_nodes(system_out):
     node_w_confidence = collections.namedtuple('node_w_confidence', [ 'confidence', 'file' ])
-    node_set_w_confidence = [ node_w_confidence(n["nodeConfidenceScore"], n["file"]) for n in system_out["nodes"] ]
+    node_set_w_confidence = []
+    sys_nodes_dict = {}
+    for n in system_out["nodes"]:
+        node_set_w_confidence.append(node_w_confidence(n["nodeConfidenceScore"], n["file"]))
+        sys_nodes_dict[n["file"]] = n
+
     node_set_w_confidence.sort(reverse=True)
-    return node_set_w_confidence
+    return node_set_w_confidence, sys_nodes_dict
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
@@ -77,6 +82,8 @@ if __name__ == '__main__':
     ref_file = load_csv(args.reference_file)
     nodes_file = load_csv(args.node_file)
     world_index = load_csv(args.world_file)
+
+    abs_reference_dir = os.path.abspath(args.reference_dir)
 
     system_output_index = load_csv(args.system_output_file)
 
@@ -107,61 +114,112 @@ if __name__ == '__main__':
 
     check_for_trial_disparity(args.skip_trial_disparity_check)
     log(1, "Scoring {} trials ..".format(len(trial_index)))
-            
+
     trial_index_ref = merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
     trial_index_ref_sysout = merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
 
-    world_nodes = merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
+    world_nodes = merge(nodes_file, world_index, on = ["WorldFileID", "WorldFileName"], how = "inner")
 
     output_records = []
     output_mapping_records = []
-        
-    for trial in trial_index_ref_sysout.itertuples():
-        log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
-        system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
-        
-        probe_node_wfn = trial.ProvenanceProbeFileName_x
-        world_set_nodes = { node.WorldFileName_x for node in world_nodes[world_nodes.ProvenanceProbeFileID == trial.ProvenanceProbeFileID].itertuples() }
-        world_set_nodes.add(probe_node_wfn)
 
-        ordered_sys_nodes = system_out_to_ordered_nodes(system_out)
-            
-        out_rec = { "JournalName": trial.JournalName,
-                    "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
-                    "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
-                    "NumSysNodes": len(ordered_sys_nodes),
-                    "NumRefNodes": len(world_set_nodes) }
+    for journal_fn, trial_index_ref_sysout_items in trial_index_ref_sysout.groupby("JournalFileName"):
+        journal_path = os.path.join(abs_reference_dir, journal_fn)
+        journal = load_json(journal_path)
 
-        def _worldfile_path_to_id(path):
-            base, ext = os.path.splitext(os.path.basename(path))
-            return base
-        
-        def _build_node_map_record(node, mapping):
-            return { "JournalName": trial.JournalName,
-                     "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
-                     "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
-                     "Measure": "NodeRecallAt{}".format(n),
-                     "WorldFileID": _worldfile_path_to_id(node),
-                     "Mapping": mapping }
+        journal_node_lookup = {}
+        for n in journal["nodes"]:
+            journal_node_lookup[n["id"]] = n
 
-        for n in [ 50, 100, 200 ]:
-            sys_nodes_at_n = { node.file for node in ordered_sys_nodes[0:n] }
+        for trial in trial_index_ref_sysout_items.itertuples():
+            log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
+            system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
 
-            correct_nodes = sys_nodes_at_n & world_set_nodes
-            missing_nodes = world_set_nodes - sys_nodes_at_n
-            false_alarm_nodes = sys_nodes_at_n - world_set_nodes
-            
-            out_rec.update({ "NumCorrectNodesAt{}".format(n): len(correct_nodes),
-                             "NumMissingNodesAt{}".format(n): len(missing_nodes),
-                             "NumFalseAlarmNodesAt{}".format(n): len(false_alarm_nodes),
-                             "NodeRecallAt{}".format(n): node_recall(world_set_nodes, sys_nodes_at_n) })
+            ref_nodes_dict = {}
+            for n in world_nodes[world_nodes.ProvenanceProbeFileID == trial.ProvenanceProbeFileID].itertuples():
+                ref_nodes_dict[n.WorldFileName] = journal_node_lookup[n.JournalNodeID]
 
-            for map_record in sorted([ _build_node_map_record(node, "Correct") for node in correct_nodes ] +
-                                     [ _build_node_map_record(node, "Missing") for node in missing_nodes ] +
-                                     [ _build_node_map_record(node, "FalseAlarm") for node in false_alarm_nodes ]):
-                output_mapping_records.append(map_record)
-            
-        output_records.append(out_rec)
+            # This should only add a single node, the probe node,
+            # doing this in a loop because Pandas
+            for n in nodes_file[(nodes_file.ProvenanceProbeFileID == trial.ProvenanceProbeFileID) & (nodes_file.WorldFileName == trial.ProvenanceProbeFileName_x)].itertuples():
+                ref_nodes_dict[n.WorldFileName] = journal_node_lookup[n.JournalNodeID]
+
+            ordered_sys_nodes, full_sys_nodes_dict = system_out_to_ordered_nodes(system_out)
+
+            out_rec = { "JournalName": trial.JournalName,
+                        "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                        "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                        "NumSysNodes": len(ordered_sys_nodes),
+                        "NumRefNodes": len(ref_nodes_dict.keys()) }
+
+            def _worldfile_path_to_id(path):
+                base, ext = os.path.splitext(os.path.basename(path))
+                return base
+
+            def _build_mapping(ref_nodes, sys_nodes):
+                node_mapping = [ (nk, ref_nodes.get(nk, None), sys_nodes.get(nk, None)) for nk in set(ref_nodes.keys()) | set(sys_nodes.keys()) ]
+
+                # a *_mapping file is a collection of (ref_*, sys_*)
+                # tuples, where ref_* is None in the case of a FA and
+                # sys_* is None in the case of a miss
+                return node_mapping
+
+            def _get_mapping(r, s):
+                mapping = "Correct"
+                if r == None:
+                    mapping = "FalseAlarm"
+                    if s == None:
+                        # Should never have a case where both ref and
+                        # sys are None, but let's check to be sure
+                        raise ValueError("Shouldn't have None for both ref and sys")
+                elif s == None:
+                    mapping = "Missing"
+                return mapping
+
+            def _build_node_map_record(n, node_key, ref_node, sys_node):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "Measure": "NodeRecallAt{}".format(n),
+                         "WorldFileID": _worldfile_path_to_id(node_key),
+                         "NodeConfidence": sys_node["nodeConfidenceScore"] if sys_node != None else None,
+                         "Mapping": _get_mapping(ref_node, sys_node) }
+
+            def _corr_selector(t):
+                k, r, s = t
+                return (r != None and s != None)
+
+            def _fa_selector(t):
+                k, r, s = t
+                return (r == None and s != None)
+
+            def _miss_selector(t):
+                k, r, s = t
+                return (r != None and s == None)
+
+            def _mapping_breakdown(node_mapping):
+                return ({ k for k, r, s in filter(_corr_selector, node_mapping) },
+                        { k for k, r, s in filter(_miss_selector, node_mapping) },
+                        { k for k, r, s in filter(_fa_selector, node_mapping) })
+
+            for n in [ 50, 100, 200 ]:
+                sys_nodes_at_n = { node.file for node in ordered_sys_nodes[0:n] }
+
+                sys_nodes_dict = { n: full_sys_nodes_dict[n] for n in sys_nodes_at_n }
+
+                node_mapping = _build_mapping(ref_nodes_dict, sys_nodes_dict)
+                output_mapping_records += sorted([ _build_node_map_record(n, *node_map) for node_map in node_mapping ])
+
+                sys_nodes = set(sys_nodes_dict.keys())
+                ref_nodes = set(ref_nodes_dict.keys())
+                correct_nodes, missing_nodes, false_alarm_nodes = _mapping_breakdown(node_mapping)
+
+                out_rec.update({ "NumCorrectNodesAt{}".format(n): len(correct_nodes),
+                                 "NumMissingNodesAt{}".format(n): len(missing_nodes),
+                                 "NumFalseAlarmNodesAt{}".format(n): len(false_alarm_nodes),
+                                 "NodeRecallAt{}".format(n): node_recall(ref_nodes, sys_nodes) })
+
+            output_records.append(out_rec)
 
 
     output_mapping_records_df = DataFrame(output_mapping_records, columns = ["JournalName",
@@ -169,6 +227,7 @@ if __name__ == '__main__':
                                                                              "ProvenanceOutputFileName",
                                                                              "Measure",
                                                                              "WorldFileID",
+                                                                             "NodeConfidence",
                                                                              "Mapping"])
     output_records_df = DataFrame(output_records, columns = ["JournalName",
                                                              "ProvenanceProbeFileID",
@@ -198,7 +257,7 @@ if __name__ == '__main__':
 
     def _write_df_to_csv(name, df, out_fn):
         try:
-            out_path = os.path.join(args.output_dir, out_fn) 
+            out_path = os.path.join(args.output_dir, out_fn)
             with open(out_path, 'w') as out_f:
                 log(1, "Writing {} to '{}'".format(name, out_path))
                 df.to_csv(path_or_buf=out_f, sep="|", index=False)
@@ -219,6 +278,22 @@ if __name__ == '__main__':
                 output_agg_records_df.to_html(buf=out_f, index=False)
                 out_f.write("<br/><br/>")
                 out_f.write("<h2>Trial Scores:</h2>")
-                output_records_df.to_html(buf=out_f, index=False)
+                output_records_df.to_html(buf=out_f, index=False, columns=["JournalName",
+                                                                           "ProvenanceProbeFileID",
+                                                                           "ProvenanceOutputFileName",
+                                                                           "NodeRecallAt50",
+                                                                           "NodeRecallAt100",
+                                                                           "NodeRecallAt200",
+                                                                           "NumSysNodes",
+                                                                           "NumRefNodes",
+                                                                           "NumCorrectNodesAt50",
+                                                                           "NumMissingNodesAt50",
+                                                                           "NumFalseAlarmNodesAt50",
+                                                                           "NumCorrectNodesAt100",
+                                                                           "NumMissingNodesAt100",
+                                                                           "NumFalseAlarmNodesAt100",
+                                                                           "NumCorrectNodesAt200",
+                                                                           "NumMissingNodesAt200",
+                                                                           "NumFalseAlarmNodesAt200"])
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))

@@ -81,16 +81,29 @@ class Render:
                 norm_fpr = list(map(norm.ppf, DM.fpr))
                 plt.plot(norm_fpr, norm_fnrs_pos_ci, 'k--')
                 plt.plot(norm_fpr, norm_fnrs_neg_ci, 'k--')
-                if isOptOut:
-                    plt.annotate("trEER = %.2f (TRR: %.2f)" %(DM.eer*100, DM.trr), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
-                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
-                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
-                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+
+                if isNoNumber:
+                    if isOptOut:
+                        plt.annotate("trEER = %.2f (TRR: %.2f)" %(DM.eer*100, DM.trr), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                     xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                     arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                    else:
+                        plt.annotate("EER = %.2f%%" %(DM.eer*100), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                     xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                     arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
                 else:
-                    plt.annotate("EER = %.2f%%" %(DM.eer*100), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
-                                 xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
-                                 arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
-                                 size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                    if isOptOut:
+                        plt.annotate("trEER = %.2f \n(TRR: %.2f, T#: %d, NT#: %d)" %(DM.eer*100, DM.trr, DM.t_num, DM.nt_num), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                     xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                     arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                     size=9, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
+                    else:
+                        plt.annotate("EER = %.2f \n(T#: %d, NT#: %d)" %(DM.eer*100, DM.t_num, DM.nt_num), xy=(norm.ppf(DM.eer), norm.ppf(DM.eer)), xycoords='data',
+                                     xytext=(norm.ppf(DM.eer+0.05)+0.5, norm.ppf(DM.eer+0.05)+0.5), textcoords='data',
+                                     arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.2", fc="w"),
+                                     size=9, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"),)
 
 
         # ROC curve settings
@@ -121,7 +134,7 @@ class Render:
 
                 if isNoNumber:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f)" %(DM.auc,DM.fpr_stop, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
                         plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
@@ -129,7 +142,7 @@ class Render:
 
                 else:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d, TRR: %.2f) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " %(DM.trr, DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
                         plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
@@ -168,6 +181,7 @@ class Render:
         plt.suptitle(self.plot_opts['title'], fontsize=self.plot_opts['title_fontsize'])
         plt.title(self.plot_opts['subtitle'], fontsize=self.plot_opts['subtitle_fontsize'])
         plt.xlabel(self.plot_opts['xlabel'], fontsize=self.plot_opts['xlabel_fontsize'])
+
         if self.plot_opts['plot_type'] == 'ROC':
             plt.ylabel("Correct Detection Rate [%]", fontsize=self.plot_opts['ylabel_fontsize'])
         else:
