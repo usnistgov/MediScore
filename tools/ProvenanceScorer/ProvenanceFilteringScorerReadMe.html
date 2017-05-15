@@ -11751,22 +11751,10 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Provenance-Filtering-Scorer">Provenance Filtering Scorer<a class="anchor-link" href="#Provenance-Filtering-Scorer">&#182;</a></h1><h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
+<h1 id="Provenance-Filtering-Scorer">Provenance Filtering Scorer<a class="anchor-link" href="#Provenance-Filtering-Scorer">&#182;</a></h1><p>ProvenanceFilteringScorer.py</p>
+<h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ProvenanceFilteringScorer</span><span class="o">.</span><span class="n">py</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="prompt input_prompt">
@@ -11873,16 +11861,16 @@ JournalName|ProvenanceProbeFileID|ProvenanceOutputFileName|NumSysNodes|NumRefNod
 c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|18|6|12|44|12|6|88|18|0|182|0.333333333333|0.666666666667|1.0
 
 ==&gt; compcheckfiles/filtering_example/node_mapping.csv &lt;==
-JournalName|ProvenanceProbeFileID|ProvenanceOutputFileName|Measure|WorldFileID|Mapping
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|05091cd3d392e1296004ea4f6487cfe5|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|05576908c045ce6a2f217ad4c4c952ab|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|26ed524291d79ad35696bbe856ba7e38|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|3c109a9289f94a895a26a58b782ad994|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|5169deb7c208794ddeb8ce6b51965da4|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|6dd715c810f9e473429f47dd1e2d2cfa|Correct
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|1|FalseAlarm
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|10|FalseAlarm
-c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|11|FalseAlarm
+JournalName|ProvenanceProbeFileID|ProvenanceOutputFileName|Measure|WorldFileID|NodeConfidence|Mapping
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|05091cd3d392e1296004ea4f6487cfe5|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|05576908c045ce6a2f217ad4c4c952ab|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|26ed524291d79ad35696bbe856ba7e38|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|3c109a9289f94a895a26a58b782ad994|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|5169deb7c208794ddeb8ce6b51965da4|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|6dd715c810f9e473429f47dd1e2d2cfa|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|1|0.9|FalseAlarm
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|10|0.9|FalseAlarm
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|NodeRecallAt50|11|0.9|FalseAlarm
 </pre>
 </div>
 </div>
