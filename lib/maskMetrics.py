@@ -72,7 +72,8 @@ class maskMetrics:
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
         self.mcc = self.matthews(self.conf)
-        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
+        self.bwL1 = self.binaryWeightedL1(self.conf)
+#        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
 
     def getMetrics(self,popt=0):
         """
@@ -170,14 +171,15 @@ class maskMetrics:
         mywts = w==1
 #        rpos = cv2.bitwise_and(r==0,mywts)
 #        rneg = cv2.bitwise_and(r==255,mywts)
+        n = np.sum(mywts)
         rpos = (r==0) & mywts
+        nrpos = np.sum(rpos)
         rneg = (r==255) & mywts
 
         tp = np.float64(np.sum(s & rpos))
         fp = np.float64(np.sum(s & rneg))
-        fn = np.float64(np.sum(rpos) - tp)
-        tn = np.float64(np.sum(rneg) - fp)
-        n = np.sum(mywts)
+        fn = np.float64(nrpos - tp)
+        tn = np.float64(n - nrpos - fp)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
@@ -195,13 +197,14 @@ class maskMetrics:
         * Output:
         *     NMM score in range [c, 1]
         """
-        Rgt=np.sum((ref.bwmat==0) & (w==1))
+#        Rgt=np.sum((ref.bwmat==0) & (w==1))
+        tp = conf['TP']
+        fn = conf['FN']
+        Rgt = tp + fn
         if Rgt == 0:
             print("Mask {} has no region to score for the NMM.".format(ref.name))
             return np.nan
-        tp = conf['TP']
         fp = conf['FP']
-        fn = conf['FN']
         return max(c,(tp-fn-fp)/Rgt)
 
     def matthews(self,conf):
@@ -257,34 +260,54 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def binaryWeightedL1(self,ref,sys,w,th):
+    def binaryWeightedL1(self,conf):
         """
         * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
                        for the binarized mask and normalizes the value
                        with the no score zone
         * Inputs:
-        *     ref: the reference mask object
-        *     sys: the system output mask object
-        *     w: the weight matrix
-        *     th: the threshold for binarization
+        *     conf: the confusion measures. Made explicit here to demonstrate the metric's
+                    dependency on the confusion measures
         * Outputs:
         *     Normalized binary WL1 value
         """
-        if th is -1:
-            th = 254
-
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        n=conf['N'] #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         if n == 0:
             return np.nan
 
-        rmat = ref.bwmat.astype(int)/255.
-        smat = sys.matrix
-        wL1=np.multiply(w,abs(rmat-(smat > th)))
-        wL1=np.sum(wL1)
-        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        norm_wL1=wL1/n
+        norm_wL1=(conf['FP'] + conf['FN'])/n
         return norm_wL1
+
+#    def binaryWeightedL1(self,ref,sys,w,th):
+#        """
+#        * Metric: binary Weighted L1
+#        * Description: this function calculates the weighted L1 loss
+#                       for the binarized mask and normalizes the value
+#                       with the no score zone
+#        * Inputs:
+#        *     ref: the reference mask object
+#        *     sys: the system output mask object
+#        *     w: the weight matrix
+#        *     th: the threshold for binarization
+#        * Outputs:
+#        *     Normalized binary WL1 value
+#        """
+#        if th is -1:
+#            th = 254
+#
+#        #TODO: take stuff from conf too?
+#        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+#        if n == 0:
+#            return np.nan
+#
+#        rmat = ref.bwmat.astype(int)/255.
+#        smat = sys.matrix
+#        wL1=np.multiply(w,abs(rmat-(smat > th)))
+#        wL1=np.sum(wL1)
+#        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
+#        norm_wL1=wL1/n
+#        return norm_wL1
 
     @staticmethod
     def grayscaleWeightedL1(ref,sys,w):

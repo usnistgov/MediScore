@@ -265,7 +265,7 @@ HISTORY
       - Revised test cases for queryPartition and queryPartition functionality.
       - Added more verbose messages to metric runner for easier error tracking.
       - Restructured code to be more modular.
-      - Introduced speedup to mask color filtering.
+      - Introduced speedup to mask color filtering and NMM and BWL1 metrics.
       - Fixed pixel-based no-score region for grayscale mask case.
 
 
