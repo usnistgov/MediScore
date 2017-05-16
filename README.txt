@@ -274,6 +274,8 @@ HISTORY
   May 12, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
+    * Mask Scorer:
+      - Introduced minor speedup for confusion measures.
 
 
 CONTACT

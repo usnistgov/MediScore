@@ -55,7 +55,7 @@ class maskMetrics:
                  corresponding to the highest MCC chosen
         """
         #get masks for ref and sys
-        if np.array_equal(ref.bwmat,0):
+        if ref.bwmat is 0:
             ref.binarize(254) #get the black/white mask first if not already gotten
 
         self.sys_threshold = systh
@@ -161,7 +161,8 @@ class maskMetrics:
         * Output:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
-        r = ref.bwmat.astype(int)
+        r = ref.bwmat
+#.astype(int)
         if th == -1:
             th = 254
 
