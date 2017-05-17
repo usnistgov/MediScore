@@ -18,7 +18,7 @@ import os # os.system("pause") for windows command line
 import sys
 import json
 
-from matplotlib.pyplot import cm
+#from matplotlib.pyplot import cm
 from collections import OrderedDict
 from itertools import cycle
 
@@ -63,6 +63,11 @@ if __name__ == '__main__':
         help="Increase output verbosity")
 
         args = parser.parse_args()
+
+        if not args.display:
+            import matplotlib
+            matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
 
         # Verbosity option
         if args.verbose:
