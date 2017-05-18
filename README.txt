@@ -276,6 +276,7 @@ HISTORY
       - Applied the "noNum" option for both partition and EER
     * Mask Scorer:
       - Introduced minor speedup for confusion measures.
+      - Shrunk test cases to facilitate more frequent testing.
 
 
 CONTACT
