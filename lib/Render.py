@@ -134,18 +134,18 @@ class Render:
 
                 if isNoNumber:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f)" %(DM.auc,DM.fpr_stop, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f)" %(DM.auc, DM.fpr_stop, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc, DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
                 else:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " %(DM.trr, DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " %(DM.auc, DM.fpr_stop, DM.trr, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc, DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 

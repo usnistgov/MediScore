@@ -74,6 +74,9 @@ if __name__ == '__main__':
         parser.add_argument('--noNum', action='store_true',
                             help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
+        parser.add_argument('--optOut', action='store_true',
+                            help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Increase output verbosity")
 
@@ -208,26 +211,37 @@ if __name__ == '__main__':
             exit(1)
         else:
             for curve_opts, fname, dm_list in zip(opts_list, f_list, DM_List):
-                if plot_opts['plot_type'] == 'ROC':
-                    met_str = " (AUC: " + str(round(dm_list.auc,2))
-                elif plot_opts['plot_type'] == 'DET':
-                    met_str = " (EER: " + str(round(dm_list.eer,2))
                 #fname = os.path.basename(fname)
                 if ':' in fname:
                     first_fname, second_fname = fname.rsplit(':', 1)
                     fname = second_fname
 
+                if plot_opts['plot_type'] == 'ROC':
+                    met_str = " (AUC: " + str(round(dm_list.auc,2))
+                elif plot_opts['plot_type'] == 'DET':
+                    met_str = " (EER: " + str(round(dm_list.eer,2))
+
+                trr_str = ""
+                if args.optOut:
+                    trr_str = ", TRR: " + str(dm_list.trr)
+                    if plot_opts['plot_type'] == 'ROC':
+                        #plot_opts['title'] = "trROC"
+                        met_str = " (trAUC: " + str(round(dm_list.auc,2))
+                    elif plot_opts['plot_type'] == 'DET':
+                        #plot_opts['title'] = "trDET"
+                        met_str = " (trEER: " + str(round(dm_list.eer,2))
+
                 if args.noNum:
-                    curve_opts["label"] = fname + met_str + ")"
+                    curve_opts["label"] = fname + met_str + trr_str + ")"
                 else:
-                    curve_opts["label"] = fname + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) +")"
+                    curve_opts["label"] = fname + met_str + trr_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) +")"
             #curve_opts["label"] = fname + " (AUC: " + str(round(d.auc,2)) + ", T#: "+ str(d.t_num) + ", NT#: "+ str(d.nt_num) + ")"
             # Creation of the object setRender (~DetMetricSet)
             configRender = p.setRender(DM_List, opts_list, plot_opts)
             # Creation of the Renderer
             myRender = p.Render(configRender)
             # Plotting
-            myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isNoNumber = args.noNum)
+            myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut = args.optOut, isNoNumber = args.noNum)
 
             # save multiple figures if multi_fig == True
             if isinstance(myfigure,list):
