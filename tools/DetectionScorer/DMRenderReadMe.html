@@ -11976,28 +11976,6 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="OptOut-Options:">OptOut Options:<a class="anchor-link" href="#OptOut-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--optOut</p>
-<ul>
-<li>Evaluate algorithm performance on trials where IsOptOut values are 'N'.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Command-line-Usage">Command-line Usage<a class="anchor-link" href="#Command-line-Usage">&#182;</a></h2>
 </div>
 </div>
@@ -12056,9 +12034,9 @@ python DMRender.py -i ../../data/test_suite/dmRenderTests/dm_list_without_colon.
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>OptOut case
+<li>OptOut case dm file
 <code>
-python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --outRoot ./testcases/dump_test4 --plotTitle "DMRender Optout Test" --display --optOut
+python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_101_query_0.dm --outRoot ./testcases/dump_test4 --plotTitle "DMRender Optout Test" --display
 </code>
 <img src="./notebookImgs/dump_test4_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
@@ -12074,7 +12052,7 @@ python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --
 <ul>
 <li>Displaying the legend without trial numbers
 <code>
-python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --outRoot ./testcases/dump_test5 --plotTitle "DMRender No Trial Number Test" --display --optOut --noNum
+python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --outRoot ./testcases/dump_test5 --plotTitle "DMRender No Trial Number Test" --display --noNum
 </code>
 <img src="./notebookImgs/dump_test5_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>

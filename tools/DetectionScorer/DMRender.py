@@ -74,9 +74,6 @@ if __name__ == '__main__':
         parser.add_argument('--noNum', action='store_true',
                             help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
-        parser.add_argument('--optOut', action='store_true',
-                            help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
-
         parser.add_argument('-v', '--verbose', action='store_true',
                             help="Increase output verbosity")
 
@@ -222,7 +219,9 @@ if __name__ == '__main__':
                     met_str = " (EER: " + str(round(dm_list.eer,2))
 
                 trr_str = ""
-                if args.optOut:
+                optout = False
+                if dm_list.sys_res == 'tr':
+                    optout = True
                     trr_str = ", TRR: " + str(dm_list.trr)
                     if plot_opts['plot_type'] == 'ROC':
                         #plot_opts['title'] = "trROC"
@@ -241,7 +240,7 @@ if __name__ == '__main__':
             # Creation of the Renderer
             myRender = p.Render(configRender)
             # Plotting
-            myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut = args.optOut, isNoNumber = args.noNum)
+            myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut = optout, isNoNumber = args.noNum)
 
             # save multiple figures if multi_fig == True
             if isinstance(myfigure,list):
