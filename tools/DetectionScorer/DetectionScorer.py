@@ -167,7 +167,7 @@ if __name__ == '__main__':
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
         parser.add_argument('--noNum', action='store_true',
-                            help="Do not print the number of trials and non-trials on the legend of the plot")
+                            help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
