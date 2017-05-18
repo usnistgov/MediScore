@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Date: 11/07/2016
+Date: 03/07/2017
 Authors: Yooyoung Lee and Timothee Kheyrkhah
 
 Description: this code loads DM files and renders plots.
@@ -43,7 +43,7 @@ if __name__ == '__main__':
             if x == '':
                 raise argparse.ArgumentTypeError("{0} not provided".format(x))
             return x
-        
+
         parser = argparse.ArgumentParser(description='NIST detection scorer.')
 
         parser.add_argument('-i','--input', type=is_file_specified,
@@ -53,14 +53,14 @@ if __name__ == '__main__':
                             help='Report output file (plot and table) path along with the file suffix: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
         # Plot Options
+        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
+                            help="Plot option:[roc] and [det] (default: %(default)s)", metavar='character')
+
         parser.add_argument('--plotTitle',default='Performance',
                             help="Define the plot title (default: %(default)s)", metavar='character')
 
         parser.add_argument('--plotSubtitle',default='',
                             help="Define the plot subtitle (default: %(default)s)", metavar='character')
-        
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
-                            help="Plot option:[roc] and [det] (default: %(default)s)", metavar='character')
 
         parser.add_argument('--display', action='store_true',
                             help="display plots")
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
         parser.add_argument('-c','--curveOption', action='store_true',
                             help="Generate a JSON file for defalut curve options ")
-        
+
         parser.add_argument('--noNum', action='store_true',
                             help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
@@ -110,13 +110,13 @@ if __name__ == '__main__':
 
                 with open(fname) as f:
                     f_list = f.read().splitlines()
-                    
+
                 DM_List = list()
                 for filename in f_list:
                     if ':' in filename:
                         first_fname, second_fname = filename.rsplit(':', 1)
                         filename = first_fname
-                        
+
                     if not os.path.isfile(filename):
                         print("Filename: {} does not exist".format(filename))
                     else:
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         # then generates the new JSON curve option file
         if not os.path.isfile(dict_curve_options_path_name) or args.curveOption: #or args.default
             v_print("Generating the default curve options ..")
-                
+
             # Creation of defaults plot curve options dictionnary (line style opts)
             Curve_opt = OrderedDict([('color', 'red'),
                                      ('linestyle', 'solid'),
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                                      ('markerfacecolor', 'red'),
                                      ('label',None),
                                      ('antialiased', 'False')])
-    
+
             # Creating the list of curves options dictionnaries (will be automatic)
             opts_list = list()
             colors = ['red','blue','green','cyan','magenta','yellow','black']
@@ -213,11 +213,10 @@ if __name__ == '__main__':
                 elif plot_opts['plot_type'] == 'DET':
                     met_str = " (EER: " + str(round(dm_list.eer,2))
                 #fname = os.path.basename(fname)
-                fname = fname
                 if ':' in fname:
                     first_fname, second_fname = fname.rsplit(':', 1)
                     fname = second_fname
-               
+
                 if args.noNum:
                     curve_opts["label"] = fname + met_str + ")"
                 else:
