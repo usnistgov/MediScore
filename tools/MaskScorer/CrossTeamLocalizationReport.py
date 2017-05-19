@@ -8,6 +8,7 @@
 	- Sort probes based on max MCC per probe
 	- Sort teams based on average MCC per team
 	- Option to specify table name
+	- preQuery option added
 * Status: Development
 	- NA
 * Status: Future
@@ -74,6 +75,9 @@ def main():
 	parser.add_argument('--tableName', '-tn', type=str, default='CombinedCSVData',
 		help='Name of table to be created and/or queried: [e.g. MaskScoresPerImage]. Defaults to CombinedCSVData')
 
+	parser.add_argument('--preQuery', '-pq', type=str, default='None',
+		help="For Jon")
+
 	parser.add_argument('--queryProbe', '-qp', type=str, default='all', nargs='+',
 		help='ProbeIDs to be displayed in HTML file: [e.g. 003eaa9f0f222263550b95e0ab994f33]. If not used, defaults to creating a report with all probes.')
 
@@ -124,13 +128,35 @@ def main():
 			addFromDir(args.addDir, args.dbName, tableName, args.delimiter, args.fixFilePath, args.verbose)
 
 	if not args.addOnly:
+		
+		if args.preQuery != 'None':
+			print(createTable(args.dbName, args.preQuery))
+
 		generalInfo, perExpInfo = queryDB(args.dbName, tableName, args.queryProbe, args.queryExp, args.queryMCC, args.verbose)
+		
 		
 		# Output overallResults to an HTML file
 		if args.verbose:
 			print(htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams))
 		else:
 			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams)
+
+
+
+def createTable(db, query):
+	# Creates a table to in the database that will be used for HTML output
+
+	conn = sqlite3.connect(db)
+	c = conn.cursor()
+
+	sqlText = query
+	c.execute(sqlText)
+
+	conn.commit()
+	conn.close()
+
+	return 'Table created using %s' % query
+
 
 def addFromDir(scoresDir,  dbName, tableName, delimiter, fixFilePath, verbose):
 	# Adds all CSV files matching *Manipulation*perimage.csv or specified pattern in a given directory into specified database
@@ -317,8 +343,9 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 
 			# Exits program if no data is found for a given probe and/or experiment name	
 			if results == None and isScored == None:
-				print("Check input. Data for probe %s or experiment %s not found." % (probe, exp))
-				sys.exit()
+				print("Check input. Data for probe %s and experiment %s not found." % (probe, exp))
+				# sys.exit()
+				results = (exp, None, 'Not in Table', None)
 
 			# Need to construct output if none exists for HTML ouput
 			if results == None and isScored[0] == 'Y':
@@ -418,7 +445,10 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 					headers.append(experiment[0])
 				
 				# If Scored is 'N' is an empty string, exp was not score for this particular probe
-				if experiment[2] == 'N':
+				if experiment[2] == 'Not in Table':
+					experimentResults = '<td>Experiment/Probe not in table</td>'
+
+				elif experiment[2] == 'N':
 					experimentResults = '<td>Experiment was not evaluated for this probe</td>'
  
 				elif experiment[2] == 'Y' and experiment[1] == 'NA':
@@ -435,17 +465,21 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 			# This code takes the filepath of another file in the same directory
 			# And converts <ProbeMaskFileName>.ccm.png to <ProbeMaskFileName>.ccm-bin.png
 			# Then, puts it together to get the correct directory and filename of the binarized reference mask
-			binRefMaskFilePathList = probeInfo[0][1].split('/')[:-1]
-			correctBinRefMaskFileName = probeInfo[0][2].split('/')[-1].split('.')[0] + '.ccm-bin.png'
-			binRefMaskFilePathList.append(correctBinRefMaskFileName)
+			for result in probeInfo:
+				if result != None:
 
-			# Creates each row for the HTML file from 'inner' template
-			result = innerS.substitute(probeID = probeInfo[0][0], 
-			 					compMask = probeInfo[0][1], 
-			 					binRefMask = '/'.join(binRefMaskFilePathList),
-			 					expsResults = expsJoined)
+					binRefMaskFilePathList = result[1].split('/')[:-1]
+					correctBinRefMaskFileName = result[2].split('/')[-1].split('.')[0] + '.ccm-bin.png'
+					binRefMaskFilePathList.append(correctBinRefMaskFileName)
 
-			resultsList.append(result)
+					# Creates each row for the HTML file from 'inner' template
+					result = innerS.substitute(probeID = result[0], 
+					 					compMask = result[1], 
+					 					binRefMask = '/'.join(binRefMaskFilePathList),
+					 					expsResults = expsJoined)
+
+					resultsList.append(result)
+					break
 
 		# Puts the pieces of HTML together and formats HTML based on 'outer' template
 		headersJoined = '<th>' + '</th>\n\t\t<th>'.join(headers) + '</th>'
