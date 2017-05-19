@@ -1,12 +1,13 @@
 """
 * File: CrossTeamLocalizationReport.py
 * Date Started: 4/26/2017
-* Date Updated: 5/16/2017
+* Date Updated: 5/19/2017
 * Status: Complete
 	- Fix filepath for images before inserting into database
 	- Add from specified directory
 	- Sort probes based on max MCC per probe
 	- Sort teams based on average MCC per team
+	- Option to specify table name
 * Status: Development
 	- NA
 * Status: Future
@@ -70,6 +71,9 @@ def main():
 	parser.add_argument('--dbName', '-db', type=str, default='ScoresPerImage.db',
 		help='Name of database to be created and/or queried: [e.g. DryRunScores.db]. Defaults to ScoresPerImage.db')
 
+	parser.add_argument('--tableName', '-tn', type=str, default='CombinedCSVData',
+		help='Name of table to be created and/or queried: [e.g. MaskScoresPerImage]. Defaults to CombinedCSVData')
+
 	parser.add_argument('--queryProbe', '-qp', type=str, default='all', nargs='+',
 		help='ProbeIDs to be displayed in HTML file: [e.g. 003eaa9f0f222263550b95e0ab994f33]. If not used, defaults to creating a report with all probes.')
 
@@ -102,7 +106,7 @@ def main():
 	if args.sortTeams not in ['None', 'asc', 'desc']:
 		parser.error('--sortTeams argument must be asc or desc')
 
-	tableName = 'CombinedDataTable'
+	tableName = args.tableName
 
 	# Inserts data from each CSV file and associates it with respective experiment name
 	if (args.scoreFilePath > 0 and args.scoreFilePath != 'None'):
@@ -174,7 +178,7 @@ def addToDB(CSVFilePath, db, tableName, expName, delimiter, fixFilePath):
 					c.execute(sqlText)			
 
 					# Check to see if EXPID already exists in table before adding additional rows in table
-					sqlText = "SELECT DISTINCT ExpName from CombinedDataTable"
+					sqlText = "SELECT DISTINCT ExpName from %s" % tableName
 					c.execute(sqlText)
 					results = c.fetchall()
 					for element in results:
