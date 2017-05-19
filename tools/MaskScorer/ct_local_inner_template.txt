@@ -1,0 +1,5 @@
+<tr>	
+ 		<td>$probeID<br><a href="$compMask" target="_blank"><img src="$compMask" alt="Compositie Mask with Color" style="width:304px;height:228px;"></td>
+ 		<td><br><a href="$binRefMask" target="_blank"><img src="$binRefMask" alt="Binarized Reference Mask" style="width:304px;height:228px;"></td>
+ 		$expsResults
+	</tr>
