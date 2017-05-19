@@ -272,6 +272,8 @@ HISTORY
   May 12, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
+    * Provenance:
+      - Updated integration test runner for OS compatability
 
 
 CONTACT

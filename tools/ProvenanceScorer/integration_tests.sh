@@ -22,8 +22,10 @@ run_test() {
     check_status
 
     # Replace paths in logfile
-    if [ -f "${compcheckfile_outdir}/log.txt" ]; then
-	sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
+    log_fn="${compcheckfile_outdir}/log.txt"
+    if [ -f "$log_fn" ]; then
+	sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" "$log_fn" >"${log_fn}.new"
+	mv "${log_fn}.new" "$log_fn"
     fi
     diff -r "$checkfile_outdir" "$compcheckfile_outdir"
     check_status
