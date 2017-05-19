@@ -488,9 +488,9 @@ if __name__ == '__main__':
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):
             for i,fig in enumerate(myfigure):
-                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf')
+                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
         else:
-            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf')
+            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
 
     # Debugging mode
     else:
