@@ -189,11 +189,13 @@ class Render:
         plt.grid()
 
         if self.opts_list[0]['label'] != None:
-            plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
+#            lgd = plt.legend(loc='lower right', prop={'size':8}, shadow=True, fontsize='medium', bbox_to_anchor=(0., -0.35, 1., .102))
             # Put a nicer background color on the legend.
             #legend.get_frame().set_facecolor('#00FFCC')
             #plt.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
-            fig.tight_layout(pad=7)
+            fig.tight_layout(pad=2.5)
+
+            plt.legend(loc='upper left', bbox_to_anchor=(0.6, 0.5), borderaxespad=0, prop={'size':8}, shadow=True, fontsize='small')
 
         if display is True:
             plt.show()
