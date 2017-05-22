@@ -12,6 +12,7 @@
 * Status: Development
 	- NA
 * Status: Future
+	- Mouse-over image pop-up
 	- Possibly autogenerate thumbnails to improve web page loading time
 		* PHP + Javascript?
 
@@ -343,7 +344,7 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 
 			# Exits program if no data is found for a given probe and/or experiment name	
 			if results == None and isScored == None:
-				print("Check input. Data for probe %s and experiment %s not found." % (probe, exp))
+				# print("Check input. Data for probe %s and experiment %s not found." % (probe, exp))
 				# sys.exit()
 				results = (exp, None, 'Not in Table', None)
 
@@ -372,13 +373,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 	
 	headers = ['Composite', 'Binarized']
 
-	# HTML templates used to populate output HTML file
-	outerTemplateFile = 'ct_local_outer_template.txt'
-	innerTemplateFile = 'ct_local_inner_template.txt'
-
-	with open(outerTemplateFile, "rb") as outerFile, open(innerTemplateFile, "rb") as innerFile, open (outputFile, 'w') as output:
-		outerS = Template(outerFile.read())
-		innerS = Template(innerFile.read())
+	with open (outputFile, 'w') as output:
 
 		#### Might be better to get maxMCC and avgMCC while querying the database instead of calculating here ####
 
@@ -472,11 +467,12 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 					correctBinRefMaskFileName = result[2].split('/')[-1].split('.')[0] + '.ccm-bin.png'
 					binRefMaskFilePathList.append(correctBinRefMaskFileName)
 
-					# Creates each row for the HTML file from 'inner' template
-					result = innerS.substitute(probeID = result[0], 
-					 					compMask = result[1], 
-					 					binRefMask = '/'.join(binRefMaskFilePathList),
-					 					expsResults = expsJoined)
+					# Testing with templates within this script:
+					result = """<tr>
+						<td>%s<br><a href="%s" target="_blank"><img src="%s" alt="Compositie Mask with Color" style="width:304px;height:228px;"></td>
+ 						<td><br><a href="%s" target="_blank"><img src="%s" alt="Binarized Reference Mask" style="width:304px;height:228px;"></td>
+ 						%s
+					</tr>""" % (result[0], result[1], result[1], '/'.join(binRefMaskFilePathList), '/'.join(binRefMaskFilePathList), expsJoined)
 
 					resultsList.append(result)
 					break
@@ -484,10 +480,32 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 		# Puts the pieces of HTML together and formats HTML based on 'outer' template
 		headersJoined = '<th>' + '</th>\n\t\t<th>'.join(headers) + '</th>'
 		rowsJoined = ''.join(resultsList)
-		result = outerS.substitute(headers = headersJoined, rows = rowsJoined)
+
+		htmlOut = """<!DOCTYPE html>
+			<html>
+			<head>
+			<style>
+			table, th, td {
+				border: 1px solid black;
+				min-width: 304px;
+				}
+			</style>
+			</head>
+			<body>
+
+			<table>
+				<tr>
+				%s
+				</tr>	
+			%s
+			
+			</table>
+			</body>
+			</html>
+			""" % (headersJoined, rowsJoined)
 		
 		# Writes to output HTML file
-		output.write(result)
+		output.write(htmlOut)
 
 	return "%s has been generated" % outputFile 
 
