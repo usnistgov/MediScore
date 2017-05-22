@@ -1,7 +1,7 @@
 """
 * File: CrossTeamLocalizationReport.py
 * Date Started: 4/26/2017
-* Date Updated: 5/19/2017
+* Date Updated: 5/22/2017
 * Status: Complete
 	- Fix filepath for images before inserting into database
 	- Add from specified directory
@@ -9,6 +9,7 @@
 	- Sort teams based on average MCC per team
 	- Option to specify table name
 	- preQuery option added
+	- Removed dependency on template text files
 * Status: Development
 	- NA
 * Status: Future
@@ -43,7 +44,6 @@ import sqlite3
 import re
 import os
 import fnmatch
-from string import Template
 
 
 def main():
@@ -51,71 +51,67 @@ def main():
 	##### Command line arguments #####
 	parser = argparse.ArgumentParser(description="Creates a cross-team localization report.")
 
-	# If scoreFilePath given, must associate expName with it
-	parser.add_argument('--scoreFilePath', type=str, default='None', nargs='+',
-		help='Filepath to CSV containing score results: [e.g. /Users/alp3/DryRunScores/HW_NC17_DRYRUN17_Manipulation_ImgOnly_p-baseline_1-mask_scores_perimage.csv]. If none given, will query already existing data in the database.')
+	addDataGroup = parser.add_argument_group('Add Data', 'Options to create and add data to a database')
+	queryDBGroup = parser.add_argument_group('Query DB', 'Options for querying an already existing database and outputting to HTML')
 
-	parser.add_argument('--expName', type=str, default='None', nargs='+',
-		help='Experiment Name associated with respective scoreFilePath: [e.g. HW_p-baseline_1]')
-
-	parser.add_argument('--delimiter', '-d', type=str, default='|',
+	#### Options for adding data from CSV to database ####
+	addDataGroup.add_argument('--addOnly', '-a', action='store_true',
+		help='Use this option to add CSV files to database without producing an HTML file')
+	addDataGroup.add_argument('--csvFilePath', type=str, default='None', nargs='+',
+		help='Filepath to CSV containing score results: [e.g. ~/DryRunScores/HW_NC17_DRYRUN17_Manipulation_ImgOnly_p-baseline_1-mask_scores_perimage.csv]. If none given, will query already existing data in the database.')
+	addDataGroup.add_argument('--expName', type=str, default='None', nargs='+',
+		help='Experiment Name associated with respective csvFilePath: [e.g. HW_p-baseline_1]')
+	addDataGroup.add_argument('--addDir', type=str, default=['None', 'Manipulation*perimage.csv'], nargs=2,
+		help='Use this to add all CSVs in a specified directory with glob pattern [e.g. ~/DryRunScores/ *Manipulation*perimage.csv]. This will automatically generate experiment names in the form of <TEAM>_<SYS>_<VERSION> (e.g. HW_p-baseline_1')
+	addDataGroup.add_argument('--fixFilePath', '-fp', type=str, default=['None','None'], nargs=2,
+		help='Use this option to correct filepaths of images in CSV file before data is inserted into database [e.g. /oldDirectory/ /newDirectory/]')
+	addDataGroup.add_argument('--delimiter', '-d', type=str, default='|',
 		help='Use to specify if your data files are not delimited by | (pipes). [e.g. ,]')
 
-	parser.add_argument('--addOnly', '-a', action='store_true',
-		help='Use this option to add CSV files to database without producing an HTML file')
-
-	parser.add_argument('--addDir', type=str, default=['None', 'Manipulation*perimage.csv'], nargs=2,
-		help='Use this to add all CSVs in a specified directory with glob pattern [e.g. /Users/alp3/DryRunScores/ *Manipulation*perimage.csv]. This will automatically generate experiment names in the form of <TEAM>_<SYS>_<VERSION> (e.g. HW_p-baseline_1')
-
-	parser.add_argument('--fixFilePath', '-fp', type=str, default=['None','None'], nargs=2,
-		help='Use this option to correct filepaths of images in CSV file before data is inserted into database [e.g. /oldDirectory/ /newDirectory/]')
-
-	parser.add_argument('--dbName', '-db', type=str, default='ScoresPerImage.db',
-		help='Name of database to be created and/or queried: [e.g. DryRunScores.db]. Defaults to ScoresPerImage.db')
-
-	parser.add_argument('--tableName', '-tn', type=str, default='CombinedCSVData',
-		help='Name of table to be created and/or queried: [e.g. MaskScoresPerImage]. Defaults to CombinedCSVData')
-
-	parser.add_argument('--preQuery', '-pq', type=str, default='None',
-		help="For Jon")
-
-	parser.add_argument('--queryProbe', '-qp', type=str, default='all', nargs='+',
+	#### Options for querying database and display of HTML page ####
+	queryDBGroup.add_argument('--queryProbe', '-qp', type=str, default='all', nargs='+',
 		help='ProbeIDs to be displayed in HTML file: [e.g. 003eaa9f0f222263550b95e0ab994f33]. If not used, defaults to creating a report with all probes.')
-
-	parser.add_argument('--queryExp', '-qe', type=str, default='all', nargs='+',
-		help='Experiments to be displayed in HTML file: [e.g. HW_p-baseline_1]. Default is for all experiments. Experiment names must exist in database already and name must match exactly, or be added with --scoreFilePath and --expName.')
-
-	parser.add_argument('--queryMCC', '-qm', type=str, default='all', nargs='+',
+	queryDBGroup.add_argument('--queryExp', '-qe', type=str, default='all', nargs='+',
+		help='Experiments to be displayed in HTML file: [e.g. HW_p-baseline_1]. Default is for all experiments. Experiment names must exist in database already and name must match exactly, or be added with --csvFilePath and --expName.')
+	queryDBGroup.add_argument('--queryMCC', '-qm', type=str, default='all', nargs='+',
 		help='Use to query MCC, numbers must be between. [-1, 1]: [e.g. "> 0.5"]. Multiple arguments will be ANDed together. [e.g. "> 0" "< 0.5" is equivalent to MCC > 0 AND MCC < 0.5] Default will query all MCCs of all values.')
-
-	parser.add_argument('--sortProbes', '-sp', type=str, default='None',
+	queryDBGroup.add_argument('--sortProbes', '-sp', type=str, default='None',
 		help='Use to sort output results by probes based on descending (desc) or ascending (asc) order of max MCC for each probe [e.g. desc]. Default is none.')
-
-	parser.add_argument('--sortTeams', '-st', type=str, default='None',
+	queryDBGroup.add_argument('--sortTeams', '-st', type=str, default='None',
 		help='Use to sort output results by on descending (desc) or ascending (asc) order average MCC scores of each time [e.g desc]. Default is none.')
-
-	parser.add_argument('--outputFileName', '-out', type=str, default='output.html',
+	queryDBGroup.add_argument('--outputFileName', '-out', type=str, default='output.html',
 		help='Name of output file: [e.g. AllDryRunResults.html]. Defaults to output.html')
 
+	#### Options for both adding to database and querying database ####
+	parser.add_argument('--dbName', '-db', type=str, default='ScoresPerImage.db',
+		help='Name of database to be created and/or queried: [e.g. DryRunScores.db]. Defaults to ScoresPerImage.db')
+	parser.add_argument('--tableName', '-tn', type=str, default='CombinedCSVData',
+		help='Name of table to be created and/or queried: [e.g. MaskScoresPerImage]. Defaults to CombinedCSVData')
 	parser.add_argument('--verbose', '-v', action='store_true',
 		help='Control print output.')
 
+	#### Option for Jon ####
+	parser.add_argument('--preQuery', '-pq', type=str, default='None',
+		help="For Jon")
+
 	args = parser.parse_args()
 
-	if (len(args.scoreFilePath) != len(args.expName)):
-		parser.error('--scoreFilePath requires an argument with the --expName option for each argument provided in --scoreFilePath.')
-
+	#### Error handling on incorrect input ####
+	if (len(args.csvFilePath) != len(args.expName)):
+		parser.error('--csvFilePath requires an argument with the --expName option for each argument provided in --csvFilePath.')
 	if args.sortProbes not in ['None', 'asc', 'desc']:
 		parser.error('--sortProbes argument must be asc or desc')
-
 	if args.sortTeams not in ['None', 'asc', 'desc']:
 		parser.error('--sortTeams argument must be asc or desc')
+	if args.addOnly:
+		if (args.csvFilePath == 'None' and args.addDir[0] == 'None'):
+			parser.error('If using --addOnly, must provide a csv filepath (--csvFilePath ~/DryRunScores/HW_NC17_DRYRUN17_Manipulation_ImgOnly_p-baseline_1-mask_scores_perimage.csv) and associated experiment name (--expName HW_p-baseline_1) or a directory with a matching pattern (--addDir ~/DryRunScores/ *Mani*perimage.csv)')
 
 	tableName = args.tableName
 
 	# Inserts data from each CSV file and associates it with respective experiment name
-	if (args.scoreFilePath > 0 and args.scoreFilePath != 'None'):
-		for dataFilePath, expName in zip(args.scoreFilePath, args.expName):
+	if (args.csvFilePath > 0 and args.csvFilePath != 'None'):
+		for dataFilePath, expName in zip(args.csvFilePath, args.expName):
 			if args.verbose:
 				print(addToDB(dataFilePath, args.dbName, tableName, expName, args.delimiter, args.fixFilePath))
 			else:
@@ -129,12 +125,13 @@ def main():
 			addFromDir(args.addDir, args.dbName, tableName, args.delimiter, args.fixFilePath, args.verbose)
 
 	if not args.addOnly:
-		
 		if args.preQuery != 'None':
-			print(createTable(args.dbName, args.preQuery))
+			if args.verbose:
+				print(createTable(args.dbName, args.preQuery))
+			else:
+				createTable(args.dbName, args.preQuery)
 
 		generalInfo, perExpInfo = queryDB(args.dbName, tableName, args.queryProbe, args.queryExp, args.queryMCC, args.verbose)
-		
 		
 		# Output overallResults to an HTML file
 		if args.verbose:
@@ -142,10 +139,11 @@ def main():
 		else:
 			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams)
 
+	sys.exit(0)
 
 
 def createTable(db, query):
-	# Creates a table to in the database that will be used for HTML output
+	# Should be used to create a table in the database that will be used for HTML output
 
 	conn = sqlite3.connect(db)
 	c = conn.cursor()
@@ -189,45 +187,51 @@ def addToDB(CSVFilePath, db, tableName, expName, delimiter, fixFilePath):
 	conn.text_factory = str
 	c = conn.cursor()
 
-	with open(CSVFilePath, "rb") as f:
-		reader = csv.reader(f, delimiter=delimiter)
+	try:
+		with open(CSVFilePath, "rb") as f:
+			reader = csv.reader(f, delimiter=delimiter)
 
-		header = True
-		
-		try:
-			for row in reader:
+			header = True
 			
-				# Need to get column names from first row of csv
-				if header:
-					header = False	
+			try:
+				for row in reader:
+				
+					# Need to get column names from first row of csv
+					if header:
+						header = False	
 
-					sqlText = "CREATE TABLE IF NOT EXISTS %s(%s)" % (tableName, ', '.join(['ExpName TEXT', ', '.join(['%s TEXT' % column for column in row])]))
-					c.execute(sqlText)			
+						sqlText = "CREATE TABLE IF NOT EXISTS %s(%s)" % (tableName, ', '.join(['ExpName TEXT', ', '.join(['%s TEXT' % column for column in row])]))
+						c.execute(sqlText)			
 
-					# Check to see if EXPID already exists in table before adding additional rows in table
-					sqlText = "SELECT DISTINCT ExpName from %s" % tableName
-					c.execute(sqlText)
-					results = c.fetchall()
-					for element in results:
-						if element[0] == expName:
-							return 'Experiment matching Experiment Name %s already in database.' % expName
+						# Check to see if EXPID already exists in table before adding additional rows in table
+						sqlText = "SELECT DISTINCT ExpName from %s" % tableName
+						c.execute(sqlText)
+						results = c.fetchall()
+						for element in results:
+							if element[0] == expName:
+								return 'Experiment matching Experiment Name %s already in database.' % expName
 
 
-					sqlText = "INSERT INTO %s VALUES(%s)" % (tableName, ', '.join(['?', ', '.join(['?' for column in row])]))
-					
-				else:
-					row.insert(0, expName)
-					insertRow = row[:]
+						sqlText = "INSERT INTO %s VALUES(%s)" % (tableName, ', '.join(['?', ', '.join(['?' for column in row])]))
+						
+					else:
+						row.insert(0, expName)
+						insertRow = row[:]
 
-					# Updates filepath of images before inserting data into database
-					if oldDir != 'None':
-					 	insertRow = []
-					 	for column in row:
-					 		insertRow.append(re.sub(oldDir, newDir, column))
-					c.execute(sqlText, insertRow)
-		
-		except csv.Error, e:
-			return 'File %s was unable to be loaded into the DB' % CSVFilePath
+						# Updates filepath of images before inserting data into database
+						if oldDir != 'None':
+						 	insertRow = []
+						 	for column in row:
+						 		insertRow.append(re.sub(oldDir, newDir, column))
+						try:
+							c.execute(sqlText, insertRow)
+						except sqlite3.OperationalError:
+							return 'Check delimiters in CSV file, %s. If not |, use --delimiter <delimiter type> (e.g. --delimiter ,).' % CSVFilePath
+			
+			except csv.Error, e:
+				return 'File %s was unable to be loaded into the DB' % CSVFilePath
+	except IOError:
+		return 'File %s was unable to open. Check name and/or filepath.' % CSVFilePath
 
 	conn.commit()
 	conn.close()
@@ -239,7 +243,7 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	# Query database based on user input: 
 	#	If no input, queries all probes
 	#	If only probes specified, queries all experiments for specified probes
-	#	If only experiements specified, queries all probes for specified experiments
+	#	If only experiments specified, queries all probes for specified experiments
 	#	If probes and experiments specified, queries specified probes for specified experiments
 	#   If probes, experiments, and MCC specified, queries based on those parameters
 	
@@ -247,12 +251,10 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	c = conn.cursor()
 
 	# List of elements that I want to query that are the same among all experiements
-	# Can change this later to get these from command line?
 	queryElements = ['ProbeFileID', 'AggMaskFileName', 'ProbeMaskFileName']
 
 	# List of elements that are unique to each experiment
 	# Using cast(MCC as real) instead of just MCC to handle the case where MCC gets stored in scientific notation (e-05)
-	# Can change this later to get these from command line?
 	perExpElements = ['ExpName', 'cast(MCC as real)', 'Scored', 'ColMaskFileName']
 
 	queryResults =[]
@@ -310,7 +312,7 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	count = 0
 	total = len(probesList)
 
-
+	#### Note to self:
 	#### Maybe use the following: WHERE ProbeFileID IN ('probe1', 'probe2', ...)
 	#### Then, can avoid looping through probes and exps individually
 
@@ -322,10 +324,6 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 			percentage = float(count) / total * 100
 			msgText = "Querying is %.2f%% complete" % percentage
 			print msgText, "               \r",
-
-		# sqlText1 = "SELECT DISTINCT %s FROM %s WHERE ProbeFileID = '%s'" % (', '.join(queryElements), tableName, probe)
-		# c.execute(sqlText1)
-		# queryResults.append(c.fetchall())
 
 		expsPerProbeList = []
 		genPerProbeList = []
