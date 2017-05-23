@@ -427,23 +427,26 @@ if __name__ == '__main__':
         Curve_opt = OrderedDict([('color', 'red'),
                                  ('linestyle', 'solid'),
                                  ('marker', '.'),
-                                 ('markersize', 8),
+                                 ('markersize', 6),
                                  ('markerfacecolor', 'red'),
                                  ('label',None),
                                  ('antialiased', 'False')])
 
         # Creating the list of curves options dictionnaries (will be automatic)
         opts_list = list()
-        colors = ['red','blue','green','cyan','magenta','yellow','black']
+        colors = ['red','blue','green','cyan','magenta','yellow','black','sienna','navy','grey','darkorange', 'c', 'peru','y','pink','purple', 'lime', 'magenta', 'olive', 'firebrick']
         linestyles = ['solid','dashed','dashdot','dotted']
+        markerstyles = ['.','+','x','d','*','s','p']
         # Give a random rainbow color to each curve
         #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
         color = cycle(colors)
         lty = cycle(linestyles)
+        mkr = cycle(markerstyles)
         for i in range(len(DM_List)):
             new_curve_option = OrderedDict(Curve_opt)
             col = next(color)
             new_curve_option['color'] = col
+            new_curve_option['marker'] = next(mkr)
             new_curve_option['markerfacecolor'] = col
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
