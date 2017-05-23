@@ -402,14 +402,17 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 					unpackExps[i].append(probe[i])
 
 			# What happens when all values for MCC are NA?
-			# Average is not correct if some probes for a team are not scored, but still get counted as having a score
 			for exp in unpackExps:
 				total = 0
 				count = 0
 				for probe in exp:
-					total += probe[1]
-
-				exp.insert(0, float(total)/len(exp))
+					if probe[1] != None:
+						total += probe[1]
+						count += 1
+				if count == 0:
+					exp.insert(0, 0)
+				else:		
+					exp.insert(0, float(total)/count)
 
 			if sortTeams == 'desc':
 				sortedExpList = sorted(unpackExps, reverse=True)
