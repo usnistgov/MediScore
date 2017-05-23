@@ -55,7 +55,7 @@ class maskMetrics:
                  corresponding to the highest MCC chosen
         """
         #get masks for ref and sys
-        if np.array_equal(ref.bwmat,0):
+        if ref.bwmat is 0:
             ref.binarize(254) #get the black/white mask first if not already gotten
 
         self.sys_threshold = systh
@@ -72,7 +72,8 @@ class maskMetrics:
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
         self.mcc = self.matthews(self.conf)
-        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
+        self.bwL1 = self.binaryWeightedL1(self.conf)
+#        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
 
     def getMetrics(self,popt=0):
         """
@@ -160,9 +161,8 @@ class maskMetrics:
         * Output:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
-        r = ref.bwmat.astype(int)
-        #TODO: placeholder until something better covers it
-#        if sys.bwmat is 0:
+        r = ref.bwmat
+#.astype(int)
         if th == -1:
             th = 254
 
@@ -170,14 +170,17 @@ class maskMetrics:
         s = sys.matrix <= th
 #        x = (r+s)/255.
         mywts = w==1
+#        rpos = cv2.bitwise_and(r==0,mywts)
+#        rneg = cv2.bitwise_and(r==255,mywts)
+        n = np.sum(mywts)
         rpos = (r==0) & mywts
+        nrpos = np.sum(rpos)
         rneg = (r==255) & mywts
 
         tp = np.float64(np.sum(s & rpos))
         fp = np.float64(np.sum(s & rneg))
-        fn = np.float64(np.sum(rpos) - tp)
-        tn = np.float64(np.sum(rneg) - fp)
-        n = np.sum(mywts)
+        fn = np.float64(nrpos - tp)
+        tn = np.float64(n - nrpos - fp)
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
@@ -196,12 +199,13 @@ class maskMetrics:
         *     NMM score in range [c, 1]
         """
         tp = conf['TP']
-        fp = conf['FP']
         fn = conf['FN']
-        Rgt=np.sum((ref.bwmat==0) & (w==1))
+#        Rgt=np.sum((ref.bwmat==0) & (w==1))
+        Rgt = tp + fn
         if Rgt == 0:
             print("Mask {} has no region to score for the NMM.".format(ref.name))
             return np.nan
+        fp = conf['FP']
         return max(c,(tp-fn-fp)/Rgt)
 
     def matthews(self,conf):
@@ -257,34 +261,54 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def binaryWeightedL1(self,ref,sys,w,th):
+    def binaryWeightedL1(self,conf):
         """
         * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
                        for the binarized mask and normalizes the value
                        with the no score zone
         * Inputs:
-        *     ref: the reference mask object
-        *     sys: the system output mask object
-        *     w: the weight matrix
-        *     th: the threshold for binarization
+        *     conf: the confusion measures. Made explicit here to demonstrate the metric's
+                    dependency on the confusion measures
         * Outputs:
         *     Normalized binary WL1 value
         """
-        if th is -1:
-            th = 254
-
-        rmat = ref.bwmat.astype(int)/255.
-        smat = sys.matrix
-
-        wL1=np.multiply(w,abs(rmat-(smat > th)))
-        wL1=np.sum(wL1)
-        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        n=conf['N'] #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         if n == 0:
             return np.nan
-        norm_wL1=wL1/n
+
+        norm_wL1=(conf['FP'] + conf['FN'])/n
         return norm_wL1
+
+#    def binaryWeightedL1(self,ref,sys,w,th):
+#        """
+#        * Metric: binary Weighted L1
+#        * Description: this function calculates the weighted L1 loss
+#                       for the binarized mask and normalizes the value
+#                       with the no score zone
+#        * Inputs:
+#        *     ref: the reference mask object
+#        *     sys: the system output mask object
+#        *     w: the weight matrix
+#        *     th: the threshold for binarization
+#        * Outputs:
+#        *     Normalized binary WL1 value
+#        """
+#        if th is -1:
+#            th = 254
+#
+#        #TODO: take stuff from conf too?
+#        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+#        if n == 0:
+#            return np.nan
+#
+#        rmat = ref.bwmat.astype(int)/255.
+#        smat = sys.matrix
+#        wL1=np.multiply(w,abs(rmat-(smat > th)))
+#        wL1=np.sum(wL1)
+#        #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
+#        norm_wL1=wL1/n
+#        return norm_wL1
 
     @staticmethod
     def grayscaleWeightedL1(ref,sys,w):
@@ -303,6 +327,9 @@ class maskMetrics:
         * Outputs:
         *     Normalized grayscale WL1 value
         """
+        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        if n == 0:
+            return np.nan
 
         rmat = ref.bwmat.astype(int)
         smat = sys.matrix.astype(int)
@@ -310,9 +337,6 @@ class maskMetrics:
         wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
-        if n == 0:
-            return np.nan
         norm_wL1=wL1/n
         return norm_wL1
 
@@ -372,11 +396,9 @@ class maskMetrics:
         #add bns/sns totals as well
         btotal = np.sum(bns)
         stotal = np.sum(sns)
-        ptotal = 0
         w = cv2.bitwise_and(bns,sns)
         if pns is not 0:
             w = cv2.bitwise_and(w,pns)
-            ptotal = np.sum(pns)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
@@ -393,7 +415,6 @@ class maskMetrics:
                                            'FN':[0],
                                            'BNS':btotal,
                                            'SNS':stotal,
-                                           'PNS':ptotal,
                                            'N':[0]})
                 mets = self.getMetrics(popt=popt)
                 for m in ['NMM','MCC','BWL1']:
@@ -414,7 +435,6 @@ class maskMetrics:
                                            'FN':[0]*2,
                                            'BNS':btotal,
                                            'SNS':stotal,
-                                           'PNS':ptotal,
                                            'N':[0]*2})
                 rownum=0
                 #sys.binarize(0)
@@ -451,7 +471,6 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'BNS':btotal,
                                        'SNS':stotal,
-                                       'PNS':ptotal,
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
@@ -473,7 +492,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']]
+        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
         if popt==1:
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']

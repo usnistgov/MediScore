@@ -362,11 +362,9 @@ class maskMetrics:
         #add bns/sns totals as well
         btotal = np.sum(bns)
         stotal = np.sum(sns)
-        ptotal = 0
         w = cv2.bitwise_and(bns,sns)
         if pns is not 0:
             w = cv2.bitwise_and(w,pns)
-            ptotal = np.sum(pns)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
@@ -383,7 +381,6 @@ class maskMetrics:
                                            'FN':[0],
                                            'BNS':btotal,
                                            'SNS':stotal,
-                                           'PNS':ptotal,
                                            'N':[0]})
                 mets = self.getMetrics(popt=popt)
                 for m in ['NMM','MCC','BWL1']:
@@ -404,7 +401,6 @@ class maskMetrics:
                                            'FN':[0]*2,
                                            'BNS':btotal,
                                            'SNS':stotal,
-                                           'PNS':ptotal,
                                            'N':[0]*2})
                 rownum=0
                 #sys.binarize(0)
@@ -441,7 +437,6 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'BNS':btotal,
                                        'SNS':stotal,
-                                       'PNS':ptotal,
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
@@ -463,7 +458,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']]
+        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
         if popt==1:
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']

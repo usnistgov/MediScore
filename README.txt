@@ -272,6 +272,7 @@ HISTORY
       - Applied the "noNum" option for both partition and EER
     * Mask Scorer:
       - Added pns scoring capability and recording for grayscale mask case.
+      - Applied further speedup features to Mask Scorer.
 
 
 CONTACT
