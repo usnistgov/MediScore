@@ -57,13 +57,13 @@ def main():
 	#### Options for adding data from CSV to database ####
 	addDataGroup.add_argument('--addOnly', '-a', action='store_true',
 		help='Use this option to add CSV files to database without producing an HTML file')
-	addDataGroup.add_argument('--csvFilePath', type=str, default='None', nargs='+',
+	addDataGroup.add_argument('--csvFilePath', '-fp', type=str, default='None', nargs='+',
 		help='Filepath to CSV containing score results: [e.g. ~/DryRunScores/HW_NC17_DRYRUN17_Manipulation_ImgOnly_p-baseline_1-mask_scores_perimage.csv]. If none given, will query already existing data in the database.')
-	addDataGroup.add_argument('--expName', type=str, default='None', nargs='+',
-		help='Experiment Name associated with respective csvFilePath: [e.g. HW_p-baseline_1]')
-	addDataGroup.add_argument('--addDir', type=str, default=['None', 'Manipulation*perimage.csv'], nargs=2,
-		help='Use this to add all CSVs in a specified directory with glob pattern [e.g. ~/DryRunScores/ *Manipulation*perimage.csv]. This will automatically generate experiment names in the form of <TEAM>_<SYS>_<VERSION> (e.g. HW_p-baseline_1')
-	addDataGroup.add_argument('--fixFilePath', '-fp', type=str, default=['None','None'], nargs=2,
+	addDataGroup.add_argument('--expName', '-en', type=str, default='None', nargs='+',
+		help='Experiment Name associated with respective csvFilePath [e.g. HW_p-baseline_1]')
+	addDataGroup.add_argument('--addDir', '-ad', type=str, default=['None', 'Manipulation*perimage.csv'], nargs=2,
+		help='Use this to add all CSVs in a specified directory with glob pattern [e.g. ~/DryRunScores/ *Manipulation*perimage.csv]. This will automatically generate experiment names in the form of <TEAM>_<SYS>_<VERSION> [e.g. HW_p-baseline_1]')
+	addDataGroup.add_argument('--fixFilePath', '-ff', type=str, default=['None','None'], nargs=2,
 		help='Use this option to correct filepaths of images in CSV file before data is inserted into database [e.g. /oldDirectory/ /newDirectory/]')
 	addDataGroup.add_argument('--delimiter', '-d', type=str, default='|',
 		help='Use to specify if your data files are not delimited by | (pipes). [e.g. ,]')
@@ -79,7 +79,7 @@ def main():
 		help='Use to sort output results by probes based on descending (desc) or ascending (asc) order of max MCC for each probe [e.g. desc]. Default is none.')
 	queryDBGroup.add_argument('--sortTeams', '-st', type=str, default='None',
 		help='Use to sort output results by on descending (desc) or ascending (asc) order average MCC scores of each time [e.g desc]. Default is none.')
-	queryDBGroup.add_argument('--outputFileName', '-out', type=str, default='output.html',
+	queryDBGroup.add_argument('--outputFileName', '-o', type=str, default='output.html',
 		help='Name of output file: [e.g. AllDryRunResults.html]. Defaults to output.html')
 
 	#### Options for both adding to database and querying database ####
