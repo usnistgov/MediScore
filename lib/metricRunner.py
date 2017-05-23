@@ -372,7 +372,7 @@ class maskMetricRunner:
                     thresMets = ''
                 elif self.sbin == -1:
                     #get everything through an iterative run of max threshold
-                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
+                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
                     #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
                     metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                     mets = metrics[['NMM','MCC','BWL1']].to_dict()

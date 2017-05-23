@@ -346,13 +346,13 @@ myRef = pd.read_csv(myRefFile,sep="|",header=0,dtype=ref_dtype,na_filter=False)
 myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep="|",header=0,dtype=index_dtype,na_filter=False)
 
 factor_mode = ''
-query = ['']
+query = ''
 if args.query:
     factor_mode = 'q'
     query = args.query
 elif args.queryPartition:
     factor_mode = 'qp'
-    query = [args.queryPartition]
+    query = args.queryPartition
 elif args.queryManipulation:
     factor_mode = 'qm'
     query = args.queryManipulation
@@ -506,11 +506,11 @@ if args.task == 'manipulation':
             r_dfc = r_df.copy()
             r_dfc.loc[r_dfc.query('MCC == -2').index,'MCC'] = np.nan
             r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
-#            if args.queryManipulation:
-#                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),q,factor_mode,metrics) #average over queries
-#            else:
-#                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics) #average over queries
-            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
+            if args.queryManipulation:
+                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),q,factor_mode,metrics,verbose) #average over queries
+            else:
+                my_partition = pt.Partition(r_dfc.query("Scored=='Y'"),query,factor_mode,metrics,verbose) #average over queries
+#            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
             df_list = my_partition.render_table(metrics)
             
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -536,7 +536,7 @@ if args.task == 'manipulation':
                         if q == '':
                             my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
                         else:
-                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
+                            my_partition_o = pt.Partition(r_dfc.query("Scored=='Y'"),"({}) & (IsOptOut!='Y')".format(query),factor_mode,metrics,verbose) #average over queries
                         df_list_o = my_partition_o.render_table(metrics)
                         if len(df_list_o) > 0:
                             a_df = a_df.append(df_list_o[0],ignore_index=True)
@@ -709,11 +709,11 @@ elif args.task == 'splice':
             r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
             r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
             r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
-#            if args.queryManipulation:
-#                my_partition = pt.Partition(r_dfc,q,factor_mode,metrics) #average over queries
-#            else:
-#                my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries
-            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
+            if args.queryManipulation:
+                my_partition = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),q,factor_mode,metrics,verbose) #average over queries
+            else:
+                my_partition = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),query,factor_mode,metrics,verbose) #average over queries
+#            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
             df_list = my_partition.render_table(metrics)
         
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
@@ -740,7 +740,7 @@ elif args.task == 'splice':
                         if q == '':
                             my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
                         else:
-                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
+                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"({}) & (IsOptOut!='Y')".format(query),factor_mode,metrics,verbose) #average over queries
                         df_list_o = my_partition_o.render_table(metrics)
                         if len(df_list_o) > 0:
                             a_df = a_df.append(df_list_o[0],ignore_index=True)

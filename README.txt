@@ -248,7 +248,6 @@ HISTORY
       - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
       - Added the columns “TRR” and “SYS_RESPONSE” to the report table
       - Changed the number of total data to the number of the merged data for TRR’s denominator
-
     * Mask Scorer:
       - Added verbose output for image dimension checking, just in case.
       - Added catcher for each iteration of mask scoring loop for runtime stability.
@@ -268,10 +267,11 @@ HISTORY
     * Provenance:
       - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
       - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
-
   May 12, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
+    * Mask Scorer:
+      - Added pns scoring capability and recording for grayscale mask case.
 
 
 CONTACT

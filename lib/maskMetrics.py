@@ -345,7 +345,7 @@ class maskMetrics:
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
@@ -354,6 +354,7 @@ class maskMetrics:
         *     sys: the system output mask object
         *     bns: the boundary no-score weighted matrix
         *     sns: the selected no-score weighted matrix
+        *     pns: the pixel no-score weighted matrix
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
@@ -371,7 +372,11 @@ class maskMetrics:
         #add bns/sns totals as well
         btotal = np.sum(bns)
         stotal = np.sum(sns)
+        ptotal = 0
         w = cv2.bitwise_and(bns,sns)
+        if pns is not 0:
+            w = cv2.bitwise_and(w,pns)
+            ptotal = np.sum(pns)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
@@ -388,6 +393,7 @@ class maskMetrics:
                                            'FN':[0],
                                            'BNS':btotal,
                                            'SNS':stotal,
+                                           'PNS':ptotal,
                                            'N':[0]})
                 mets = self.getMetrics(popt=popt)
                 for m in ['NMM','MCC','BWL1']:
@@ -408,6 +414,7 @@ class maskMetrics:
                                            'FN':[0]*2,
                                            'BNS':btotal,
                                            'SNS':stotal,
+                                           'PNS':ptotal,
                                            'N':[0]*2})
                 rownum=0
                 #sys.binarize(0)
@@ -444,6 +451,7 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'BNS':btotal,
                                        'SNS':stotal,
+                                       'PNS':ptotal,
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
@@ -465,7 +473,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
+        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']]
         if popt==1:
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']
