@@ -487,6 +487,7 @@ class maskMetricRunner:
         totalpns = 0
         if p_weights is not 0:
             colwts[p_weights==0] = self.colordict['purple']
+            mywts = cv2.bitwise_and(mywts,p_weights)
             totalpns = np.sum(p_weights==0)
 
         cv2.imwrite(weightpath,colwts)
