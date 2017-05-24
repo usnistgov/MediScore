@@ -335,7 +335,7 @@ class maskMetrics:
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,bns,sns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
@@ -344,7 +344,6 @@ class maskMetrics:
         *     sys: the system output mask object
         *     bns: the boundary no-score weighted matrix
         *     sns: the selected no-score weighted matrix
-        *     pns: the pixel no-score weighted matrix
         *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
@@ -363,8 +362,6 @@ class maskMetrics:
         btotal = np.sum(bns)
         stotal = np.sum(sns)
         w = cv2.bitwise_and(bns,sns)
-        if pns is not 0:
-            w = cv2.bitwise_and(w,pns)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
