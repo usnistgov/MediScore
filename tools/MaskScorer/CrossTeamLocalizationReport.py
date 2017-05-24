@@ -81,6 +81,8 @@ def main():
 		help='Use to sort output results by on descending (desc) or ascending (asc) order average MCC scores of each time [e.g desc]. Default is none.')
 	queryDBGroup.add_argument('--outputFileName', '-o', type=str, default='output.html',
 		help='Name of output file: [e.g. AllDryRunResults.html]. Defaults to output.html')
+	queryDBGroup.add_argument('--highlightMax', '-hl', action='store_true',
+		help='Hightlights the image/MCC for the mask with the highest MCC for each probe')
 
 	#### Options for both adding to database and querying database ####
 	parser.add_argument('--dbName', '-db', type=str, default='ScoresPerImage.db',
@@ -135,9 +137,9 @@ def main():
 		
 		# Output overallResults to an HTML file
 		if args.verbose:
-			print(htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams))
+			print(htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax))
 		else:
-			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams)
+			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax)
 
 	sys.exit(0)
 
@@ -340,10 +342,8 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 			c.execute(sqlText3)
 			isScored = c.fetchone()
 
-			# Exits program if no data is found for a given probe and/or experiment name	
+			# If no data is found for a given probe and/or experiment name	
 			if results == None and isScored == None:
-				# print("Check input. Data for probe %s and experiment %s not found." % (probe, exp))
-				# sys.exit()
 				results = (exp, None, 'Not in Table', None)
 
 			# Need to construct output if none exists for HTML ouput
@@ -366,7 +366,7 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	conn.close()
 	return queryResults, perExpResults
 
-def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
+def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax):
 	# Generates an HTML file with data from query to DB
 	
 	headers = ['Composite', 'Binarized']
@@ -401,7 +401,6 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 				for i in range(numExps):
 					unpackExps[i].append(probe[i])
 
-			# What happens when all values for MCC are NA?
 			for exp in unpackExps:
 				total = 0
 				count = 0
@@ -434,9 +433,14 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 		# Iterates through each probe and for each probe through each exp to generate report output
 		resultsList = []
 		for probeInfo, exps in zip(general, perExp):
+
+			# Finds the max MCC for each probe
+			if highlightMax:
+				maxVal = max([sublist[1] for sublist in exps])
 			expResultsCombined = []
+		
 			for experiment in exps:
-				
+
 				if experiment[0] not in headers:
 					headers.append(experiment[0])
 				
@@ -451,7 +455,11 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 					experimentResults = '<td>Experiment didn\'t meet query criteria</td>'
 
 				else:
-					experimentResults = '<td>MCC: ' + str(experiment[1]) + '<br><a href="' + experiment[3] + '" target="_blank"><img src="' + experiment[3] + '" alt="Evaluation Results" style="width:304px;height:228px;"></td>'
+					# Highlights max value for each probe
+					if experiment[1] == maxVal and highlightMax:
+						experimentResults = '<td bgcolor="FFBB33"><b>MCC: ' + str(experiment[1]) + '</b><br><a href="' + experiment[3] + '" target="_blank"><img src="' + experiment[3] + '" alt="Evaluation Results" style="width:304px;height:228px;"></td>'
+					else:
+						experimentResults = '<td>MCC: ' + str(experiment[1]) + '<br><a href="' + experiment[3] + '" target="_blank"><img src="' + experiment[3] + '" alt="Evaluation Results" style="width:304px;height:228px;"></td>'
 
 				expResultsCombined.append(experimentResults)
 			
@@ -468,7 +476,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 					correctBinRefMaskFileName = result[2].split('/')[-1].split('.')[0] + '.ccm-bin.png'
 					binRefMaskFilePathList.append(correctBinRefMaskFileName)
 
-					# Testing with templates within this script:
+					# HTML template for each row
 					result = """<tr>
 						<td>%s<br><a href="%s" target="_blank"><img src="%s" alt="Compositie Mask with Color" style="width:304px;height:228px;"></td>
  						<td><br><a href="%s" target="_blank"><img src="%s" alt="Binarized Reference Mask" style="width:304px;height:228px;"></td>
@@ -482,6 +490,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams):
 		headersJoined = '<th>' + '</th>\n\t\t<th>'.join(headers) + '</th>'
 		rowsJoined = ''.join(resultsList)
 
+		# HTML outline for output
 		htmlOut = """<!DOCTYPE html>
 			<html>
 			<head>
