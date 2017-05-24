@@ -268,10 +268,11 @@ HISTORY
     * Provenance:
       - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
       - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
-
   May 12, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
+    * MaskScorer:
+      - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
 
 
 CONTACT

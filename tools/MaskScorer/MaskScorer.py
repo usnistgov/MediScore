@@ -348,9 +348,15 @@ myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep="|",header=0,dtype
 factor_mode = ''
 query = ['']
 if args.query:
+    #TODO: temporary measure
+    print("Query option not presently available. Run code again without this option. Terminating.")
+    exit(1)
     factor_mode = 'q'
     query = args.query
 elif args.queryPartition:
+    #TODO: temporary measure
+    print("QueryPartition option not presently available. Run code again without this option. Terminating.")
+    exit(1)
     factor_mode = 'qp'
     query = [args.queryPartition]
 elif args.queryManipulation:
@@ -516,7 +522,7 @@ if args.task == 'manipulation':
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
                 #use Partition for OOP niceness and to identify file to be written.
                 #a_df get the headers of temp_df and tack entries on one after the other
-                a_df = pd.DataFrame(columns=df_list[0].columns) 
+                a_df = pd.DataFrame(columns=df_list[0].columns)
                 for i,temp_df in enumerate(df_list):
                     temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
                     a_df = a_df.append(temp_df,ignore_index=True)
@@ -719,7 +725,7 @@ elif args.task == 'splice':
             if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
                 #use Partition for OOP niceness and to identify file to be written. 
                 #a_df get the headers of temp_df and tack entries on one after the other
-                a_df = pd.DataFrame(columns=df_list[0].columns) 
+                a_df = pd.DataFrame(columns=df_list[0].columns)
                 for i,temp_df in enumerate(df_list):
                     temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
                     a_df = a_df.append(temp_df,ignore_index=True)
