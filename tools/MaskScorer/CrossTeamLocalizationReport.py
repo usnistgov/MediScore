@@ -1,21 +1,8 @@
 """
 * File: CrossTeamLocalizationReport.py
 * Date Started: 4/26/2017
-* Date Updated: 5/22/2017
+* Date Updated: 5/25/2017
 * Status: Complete
-	- Fix filepath for images before inserting into database
-	- Add from specified directory
-	- Sort probes based on max MCC per probe
-	- Sort teams based on average MCC per team
-	- Option to specify table name
-	- preQuery option added
-	- Removed dependency on template text files
-* Status: Development
-	- NA
-* Status: Future
-	- Mouse-over image pop-up
-	- Possibly autogenerate thumbnails to improve web page loading time
-		* PHP + Javascript?
 
 * Description: This code contains functions for generating cross team localization reports
 
@@ -93,8 +80,7 @@ def main():
 		help='Control print output.')
 
 	#### Option for Jon ####
-	parser.add_argument('--preQuery', '-pq', type=str, default='None',
-		help="For Jon")
+	parser.add_argument('--preQuery', '-pq', type=str, default='None')
 
 	args = parser.parse_args()
 
@@ -314,10 +300,6 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	count = 0
 	total = len(probesList)
 
-	#### Note to self:
-	#### Maybe use the following: WHERE ProbeFileID IN ('probe1', 'probe2', ...)
-	#### Then, can avoid looping through probes and exps individually
-
 	for probe in probesList:
 
 		# Progress output
@@ -458,10 +440,15 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 				else:
 					# Highlights max value for each probe
 					if experiment[1] == maxVal and highlightMax:
-						experimentResults = '<td bgcolor="FFBB33"><b>MCC: ' + str(experiment[1]) + '</b><br><a href="' + experiment[3] + '" target="_blank"><img src="' + experiment[3] + '" alt="Evaluation Results" style="width:304px;height:228px;"></td>'
+						experimentResults = """<td bgcolor="FFBB33"><b>MCC: %s</b><br>
+						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
+						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
+						""" % (str(experiment[1]), experiment[3], experiment[3])
 					else:
-						experimentResults = '<td>MCC: ' + str(experiment[1]) + '<br><a href="' + experiment[3] + '" target="_blank"><img src="' + experiment[3] + '" alt="Evaluation Results" style="width:304px;height:228px;"></td>'
-
+						experimentResults = """<td>MCC: %s<br>
+						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
+						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
+						""" % (str(experiment[1]), experiment[3], experiment[3])
 				expResultsCombined.append(experimentResults)
 			
 			expsJoined = '\n\t\t'.join(expResultsCombined)
@@ -479,8 +466,10 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 
 					# HTML template for each row
 					result = """<tr>
-						<td>%s<br><a href="%s" target="_blank"><img src="%s" alt="Compositie Mask with Color" style="width:304px;height:228px;"></td>
- 						<td><br><a href="%s" target="_blank"><img src="%s" alt="Binarized Reference Mask" style="width:304px;height:228px;"></td>
+						<td>%s<br><a class="thumb" href="#"><img src="%s" alt="Compositie Mask with Color" height="228px" width="304px">
+						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
+ 						<td><br><a class="thumb" href="#"><img src="%s" alt="Binarized Reference Mask" height="228px" width="304px">
+ 						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
  						%s
 					</tr>""" % (result[0], result[1], result[1], '/'.join(binRefMaskFilePathList), '/'.join(binRefMaskFilePathList), expsJoined)
 
@@ -492,33 +481,55 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 		rowsJoined = ''.join(resultsList)
 
 		# HTML outline for output
-		htmlOut = """<!DOCTYPE html>
-			<html>
-			<head>
-			<style>
-			table, th, td {
-				border: 1px solid black;
-				min-width: 304px;
-				}
-				td {
-				min-height: 228px;
-				min-width: 304px;
-				max-height: 228px;
-				max-width: 304px;
-			</style>
-			</head>
-			<body>
+		htmlOut = """
+		<!DOCTYPE html>
+		<html>
+		<head>
+		<style>
+		.thumb {
+		float:left;
+		position:relative;
+		margin:3px;
+		}
+		.thumb table, th, td {
+			border: 1px solid black;
+		}
+		.thumb td {
+			height: 228px;
+			width: 310px;
+		}
+		.thumb img { 
+			vertical-align: bottom;
+		}
+		.thumb:hover {
+			z-index: 1;
+		}
+		.thumb span { 
+			position: absolute;
+			visibility: hidden;
+		}
+		.thumb:hover span { 
+			visibility: visible;
+			top: 37px; left: 37px; 
+			height: 800px;
+			width: 800px;
+			border: 3px solid purple;
+		}
 
-			<table>
-				<tr>
+		</style>
+		</head>
+		<body>
+
+		<table>
+			<tr>
 				%s
-				</tr>	
+			</tr>
 			%s
 			
-			</table>
-			</body>
-			</html>
-			""" % (headersJoined, rowsJoined)
+		</table>
+		</body>
+		</html>
+		""" % (headersJoined, rowsJoined)
 		
 		# Writes to output HTML file
 		output.write(htmlOut)
