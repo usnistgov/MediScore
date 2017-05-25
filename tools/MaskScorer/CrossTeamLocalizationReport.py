@@ -51,9 +51,9 @@ def main():
 	addDataGroup.add_argument('--addDir', '-ad', type=str, default=['None', 'Manipulation*perimage.csv'], nargs=2,
 		help='Use this to add all CSVs in a specified directory with glob pattern [e.g. ~/DryRunScores/ *Manipulation*perimage.csv]. This will automatically generate experiment names in the form of <TEAM>_<SYS>_<VERSION> [e.g. HW_p-baseline_1]')
 	addDataGroup.add_argument('--fixFilePath', '-ff', type=str, default=['None','None'], nargs=2,
-		help='Use this option to correct filepaths of images in CSV file before data is inserted into database [e.g. /oldDirectory/ /newDirectory/]')
+		help='Use this option to correct filepaths of images in CSV file before data is inserted into database [e.g. oldDirectory/ newDirectory/]')
 	addDataGroup.add_argument('--delimiter', '-d', type=str, default='|',
-		help='Use to specify if your data files are not delimited by | (pipes). [e.g. ,]')
+		help='Use to specify if your data delimiter in CSV file. [e.g. ,] Defaults to |')
 
 	#### Options for querying database and display of HTML page ####
 	queryDBGroup.add_argument('--queryProbe', '-qp', type=str, default='all', nargs='+',
