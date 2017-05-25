@@ -435,6 +435,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 		for probeInfo, exps in zip(general, perExp):
 
 			# Finds the max MCC for each probe
+			maxVal = 0
 			if highlightMax:
 				maxVal = max([sublist[1] for sublist in exps])
 			expResultsCombined = []
@@ -499,6 +500,11 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 				border: 1px solid black;
 				min-width: 304px;
 				}
+				td {
+				min-height: 228px;
+				min-width: 304px;
+				max-height: 228px;
+				max-width: 304px;
 			</style>
 			</head>
 			<body>
