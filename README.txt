@@ -1,5 +1,5 @@
 File: README.txt
-Date: April 26, 2017
+Date: May 26, 2017
 MediScore Version: 1.1.7
 
 This directory contains MediScore, the NIST Medifor scoring and
@@ -268,12 +268,13 @@ HISTORY
     * Provenance:
       - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
       - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
-
   May 12, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
     * Provenance:
       - Updated integration test runner for OS compatability
+    * MaskScorer:
+      - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
 
 
 CONTACT
