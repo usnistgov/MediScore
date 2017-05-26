@@ -19,6 +19,6 @@ makecheckfiles:
 	(./make_checkfiles.sh)
 
 render_readmes_to_html:
-	(jupyter-nbconvert --to html ProvenanceFilteringScorerReadMe.ipynb)
-	(jupyter-nbconvert --to html ProvenanceGraphBuildingScorerReadMe.ipynb)
+	(jupyter-nbconvert --execute --to html ProvenanceFilteringScorerReadMe.ipynb)
+	(jupyter-nbconvert --execute --to html ProvenanceGraphBuildingScorerReadMe.ipynb)
 	(jupyter-nbconvert --to html ProvenanceValidatorReadMe.ipynb)

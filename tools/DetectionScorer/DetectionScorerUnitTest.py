@@ -4,8 +4,10 @@
 import sys
 import numpy as np
 import pandas as pd
+import os # os.system("pause") for windows command line
 
-lib_path = "../../lib"
+#ib_path = "../../lib"
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import detMetrics as dm
 

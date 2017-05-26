@@ -27,7 +27,8 @@ import sys
 from collections import OrderedDict
 from itertools import cycle
 
-lib_path = "../../lib"
+#lib_path = "../../lib"
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 import Render as p
 import detMetrics as dm
@@ -119,6 +120,12 @@ if __name__ == '__main__':
         parser.add_argument('--outRoot',default='.',
                             help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
+        parser.add_argument('--outMeta', action='store_true',
+                            help="Save the CSV file with the system scores with minimal metadata")
+
+        parser.add_argument('--outAllmeta', action='store_true',
+                            help="Save the CSV file with the system scores with all metadata")
+
         parser.add_argument('--dump', action='store_true',
                             help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
 
@@ -126,6 +133,12 @@ if __name__ == '__main__':
                             help="Print output with procedure messages on the command-line if this option is specified.")
 
         # Plot Options
+        parser.add_argument('--plotTitle',default='Performance',
+                            help="Define the plot title (default: %(default)s)", metavar='character')
+
+        parser.add_argument('--plotSubtitle',default='',
+                            help="Define the plot subtitle (default: %(default)s)", metavar='character')
+
         parser.add_argument('--plotType',default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
 
@@ -153,8 +166,9 @@ if __name__ == '__main__':
         parser.add_argument('--optOut', action='store_true',
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
+        parser.add_argument('--noNum', action='store_true',
+                            help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
-        #TBD: may need this one for provenance filtering
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
 #        help="Provide a simple interface to evaluate algorithm performance by given query (for filtering non-target trials)", metavar='character')
@@ -182,39 +196,33 @@ if __name__ == '__main__':
 
         # Loading the reference file
         try:
-            #myRefFname = args.refDir + "/" + args.inRef
             myRefFname = os.path.join(args.refDir, args.inRef)
-
-            myRef = pd.read_csv(myRefFname, sep='|')
+            myRef = pd.read_csv(myRefFname, sep='|', low_memory=False)
             myRefDir =  os.path.dirname(myRefFname) #to use for loading JTJoin and JTMask files
         except IOError:
             print("ERROR: There was an error opening the reference csv file '" + myRefFname + "'")
             exit(1)
 
         # Loading the JTjoin and JTmask file
-#        myJTJoinFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv'
-#        myJTMaskFname = args.refDir + "/" + str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv'
         myJTJoinFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv')
         myJTMaskFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv')
-
 #        print("myRefFname {}".format(myRefFname))
 #        print("JTJoinFname {}".format(myJTJoinFname))
- #       print("JTMaskFname {}".format(myJTMaskFname))
+#        print("JTMaskFname {}".format(myJTMaskFname))
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
-            myJTJoin = pd.read_csv(myJTJoinFname, sep='|')
-            myJTMask = pd.read_csv(myJTMaskFname, sep='|')
+            myJTJoin = pd.read_csv(myJTJoinFname, sep='|', low_memory=False)
+            myJTMask = pd.read_csv(myJTMaskFname, sep='|', low_memory=False)
         else:
             v_print("Either JTjoin or JTmask csv file do not exist and merging process with the reference file will be skipped")
 
         # Loading the index file
         try:
-
-            #myIndexFname = args.refDir + "/" + args.inIndex
             myIndexFname = os.path.join(args.refDir, args.inIndex)
            # myIndex = pd.read_csv(myIndexFname, sep='|', dtype = index_dtype)
-            myIndex = pd.read_csv(myIndexFname, sep='|')
+            myIndex = pd.read_csv(myIndexFname, sep='|', low_memory=False)
+
         except IOError:
             print("ERROR: There was an error opening the index csv file")
             exit(1)
@@ -222,7 +230,7 @@ if __name__ == '__main__':
         # Loading system output for SSD and DSD due to different columns between SSD and DSD
         try:
 
-            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if args.task in ['manipulation']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
@@ -232,17 +240,17 @@ if __name__ == '__main__':
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str,
                          'DonorOutputMaskFileName':str}
-            #mySysFname = args.sysDir + "/" + args.inSys
+
             mySysFname = os.path.join(args.sysDir, args.inSys)
             v_print("Sys File Name {}".format(mySysFname))
-            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype)
+            mySys = pd.read_csv(mySysFname, sep='|', dtype = sys_dtype, low_memory=False)
             #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(str)
         except IOError:
             print("ERROR: There was an error opening the system output csv file")
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
-        if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
+        if args.task in ['manipulation']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
         elif args.task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
@@ -252,13 +260,11 @@ if __name__ == '__main__':
         # convert to the str type to the float type for computations
         m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-
-        #TODO: Error for partitions
         # to calculate TRR
-        total_num = m_df.shape[0]
-        v_print("Original total data number: {}".format(total_num))
-        ## if OptOut has chosen, all of queries should be applied
+        #total_num = m_df.shape[0]
 
+        ## if OptOut has chosen, all of queries should be applied
+        #print(list(myIndex))
 
         # the performers' result directory
         if '/' not in args.outRoot:
@@ -270,29 +276,63 @@ if __name__ == '__main__':
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
 
+        # merge the reference and index csv only
+        #SSD
+        if args.task in ['manipulation']:
+             # merge the reference and index csv only
+            subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
+            index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
+#            print("sys data size {}".format(mySys.shape))
+#            print("m data size {}".format(index_m_df.shape))
+
+            if args.outAllmeta: #save all metadata for analysis purpose
+                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+
+            mani_meta_list = ["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]
+            if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]]
+                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+            elif args.outMeta and not set(mani_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
+        #DSD
+        elif args.task in ['splice']:
+            subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
+            index_m_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
+            #print(list(pm_df))
+
+            if args.outAllmeta: #save all metadata for analysis purpose
+                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+
+            splice_meta_list = ["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]
+            if args.outMeta and set(splice_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]]
+                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+            elif args.outMeta and not set(splice_meta_list).issubset(index_m_df.columns):
+                print("Warning: The meta information is not saved because the required columns are not exist.")
+
+#        if(myIndex.shape[0] != index_m_df.shape[0]):
+#            print("Index row num: {}".format(myIndex.shape[0]))
+#            print("Merged data row num: {}".format(index_m_df.shape[0]))
+#            print ("Warning: the row number of the index file and the number of the merged data file do not match.")
+
+        total_num = index_m_df.shape[0]
+        v_print("Total data number: {}".format(total_num))
+
+        sys_response = 'all' # to distinguish use of the optout
          # Partition Mode
         if args.query or args.queryPartition or args.queryManipulation: # add or targetManiTypeSet or nontargetManiTypeSet
             v_print("Query Mode ... \n")
             partition_mode = True
             #SSD
-            if args.task in ['manipulation', 'provenancefiltering', 'provenance']:
-                 # merge the reference and index csv only
-                subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-
+            if args.task in ['manipulation']:
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
-                    # merge the reference and index csv
-                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
-                    # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
+                    # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
-                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
-            #DSD
-            elif args.task in ['splice']: #TBD
-                subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+                    index_m_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
+            #don't need JTJoin and JTMask for splice?
 
             if args.query:
                 query_mode = 'q'
@@ -305,11 +345,12 @@ if __name__ == '__main__':
                 query = args.queryManipulation
 
             if args.optOut:
-                pm_df = pm_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                sys_response = 'tr'
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(pm_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num)
+            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num, sys_res = sys_response)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
@@ -318,25 +359,26 @@ if __name__ == '__main__':
                 v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
             if args.query:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False)
+                    df.to_csv(args.outRoot + '_q_query_' + str(i) + '_report.csv', index = False, sep='|')
             elif args.queryPartition:
-                table_df.to_csv(args.outRoot + '_qp_query_report.csv')
+                table_df.to_csv(args.outRoot + '_qp_query_report.csv', sep='|')
             elif args.queryManipulation:
                 for i,df in enumerate(table_df):
-                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False)
+                    df.to_csv(args.outRoot + '_qm_query_' + str(i) + '_report.csv', index = False, sep='|')
 
 
         # No partitions
         else:
 
             if args.optOut:
-                m_df = m_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                sys_response = 'tr'
 
-            DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num)
+            DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num, sys_res = sys_response)
 
             DM_List = [DM]
             table_df = DM.render_table()
-            table_df.to_csv(args.outRoot + '_all_report.csv', index = False)
+            table_df.to_csv(args.outRoot + '_all_report.csv', index = False, sep='|')
 
         if isinstance(table_df,list):
             print("\nReport tables:\n")
@@ -359,11 +401,16 @@ if __name__ == '__main__':
             # Loading of the plot_options json config file
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
             args.plotType = plot_opts['plot_type']
+            plot_opts['title'] = args.plotTitle
+            plot_opts['subtitle'] = args.plotSubtitle
+            plot_opts['subtitle_fontsize'] = 11
+            #print("test plot title1 {}".format(plot_opts['title']))
         else:
             if args.plotType =='':
                 args.plotType = 'roc'
-            p.gen_default_plot_options(dict_plot_options_path_name, args.plotType.upper())
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            #print("test plot title2 {}".format(plot_opts['title']))
 
 
         # opening of the plot_options json config file from command-line
@@ -380,32 +427,35 @@ if __name__ == '__main__':
         Curve_opt = OrderedDict([('color', 'red'),
                                  ('linestyle', 'solid'),
                                  ('marker', '.'),
-                                 ('markersize', 8),
+                                 ('markersize', 6),
                                  ('markerfacecolor', 'red'),
                                  ('label',None),
                                  ('antialiased', 'False')])
 
         # Creating the list of curves options dictionnaries (will be automatic)
         opts_list = list()
-        colors = ['red','blue','green','cyan','magenta','yellow','black']
+        colors = ['red','blue','green','cyan','magenta','yellow','black','sienna','navy','grey','darkorange', 'c', 'peru','y','pink','purple', 'lime', 'magenta', 'olive', 'firebrick']
         linestyles = ['solid','dashed','dashdot','dotted']
+        markerstyles = ['.','+','x','d','*','s','p']
         # Give a random rainbow color to each curve
         #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
         color = cycle(colors)
         lty = cycle(linestyles)
+        mkr = cycle(markerstyles)
         for i in range(len(DM_List)):
             new_curve_option = OrderedDict(Curve_opt)
             col = next(color)
             new_curve_option['color'] = col
+            new_curve_option['marker'] = next(mkr)
             new_curve_option['markerfacecolor'] = col
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
 
         if args.optOut:
             if plot_opts['plot_type'] == 'ROC':
-                plot_opts['title'] = "trROC"
+                plot_opts['title'] = "tr" + args.plotTitle
             elif plot_opts['plot_type'] == 'DET':
-                plot_opts['title'] = "trDET"
+                plot_opts['title'] = "tr" + args.plotTitle
 
 
         # Renaming the curves for the legend
@@ -426,26 +476,28 @@ if __name__ == '__main__':
                     elif plot_opts['plot_type'] == 'DET':
                         #plot_opts['title'] = "trDET"
                         met_str = " (trEER: " + str(round(dm_list.eer,2))
-
-                curve_opts["label"] = query + met_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) + trr_str + ")"
+                if args.noNum:
+                    curve_opts["label"] = query + met_str + trr_str + ")"
+                else:
+                    curve_opts["label"] = query + met_str + trr_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) +")"
 
         # Creation of the object setRender (~DetMetricSet)
         configRender = p.setRender(DM_List, opts_list, plot_opts)
         # Creation of the Renderer
         myRender = p.Render(configRender)
         # Plotting
-        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut)
+        myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut=args.optOut, isNoNumber = args.noNum)
 
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):
             for i,fig in enumerate(myfigure):
-                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf')
+                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
         else:
-            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf')
+            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
 
     # Debugging mode
     else:
-
+        #This section need to be reimplement later
         print('Starting debug mode ...\n')
 
         refDir = '/Users/yunglee/YYL/MEDIFOR/data'
@@ -465,6 +517,7 @@ if __name__ == '__main__':
         args_queryManipulation = None
         args_query = None
         args_queryPartition = None
+        plotTitle = "Test"
         #args_queryManipulation = ["Purpose ==['add']", "Purpose ==['remove']"]
 #       factor = ["Purpose ==['remove', 'splice', 'add']"]
 #        queryManipulation = "Operation ==['PasteSplice', 'FillContentAwareFill']"
@@ -544,7 +597,7 @@ if __name__ == '__main__':
 
         try:
             # Loading system output for SSD and DSD due to different columns between SSD and DSD
-            if task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if task in ['manipulation']:
                 sys_dtype = {'ProbeFileID':str,
                          'ConfidenceScore':str, #this should be "string" due to the "nan" value, otherwise "nan"s will have different unique numbers
                          'ProbeOutputMaskFileName':str}
@@ -563,7 +616,7 @@ if __name__ == '__main__':
             exit(1)
 
         # merge the reference and system output for SSD/DSD reports
-        if task in ['manipulation', 'provenancefiltering', 'provenance']:
+        if task in ['manipulation']:
             m_df = pd.merge(myRef, mySys, how='left', on='ProbeFileID')
         elif task in ['splice']:
             m_df = pd.merge(myRef, mySys, how='left', on=['ProbeFileID','DonorFileID'])
@@ -594,20 +647,20 @@ if __name__ == '__main__':
             print("Partition Mode \n")
             partition_mode = True
 
-            if task in ['manipulation', 'provenancefiltering', 'provenance']:
+            if task in ['manipulation']:
                 # merge the reference and index csv only
                 subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-                pm_df = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
 
                 # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the reference and index csv
-                    df_1 = pd.merge(m_df, subIndex, how='left', on= 'ProbeFileID')
+                    df_1 = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
                     # merge the JournalJoinTable and the JournalMaskTable
-                    df_2 = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName')
+                    df_2 = pd.merge(myJTJoin, myJTMask, how='inner', on= 'JournalName')
                     # merge the dataframes above
-                    pm_df = pd.merge(df_1, df_2, how='left', on= 'ProbeFileID')
+                    pm_df = pd.merge(df_1, df_2, how='inner', on= 'ProbeFileID')
                     #pm_df.to_csv(outRoot + 'test.csv', index = False)
 ##    #                # for queryManipulation, drop duplicates conditioning by the chosen columns (e.g., ProbeFileID and Purpose)
 #                    if args.queryManipulation:
@@ -618,7 +671,7 @@ if __name__ == '__main__':
 
             elif task in ['splice']: #TBD
                 subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-                pm_df = pd.merge(m_df, subIndex, how='left', on= ['ProbeFileID','DonorFileID'])
+                pm_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
 
             if args_query:
                 query_mode = 'q'
@@ -682,7 +735,7 @@ if __name__ == '__main__':
         else:
             if plotType =='':
                 plotType = 'roc'
-            p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = plotTitle, plot_type=plotType.upper())
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
 
 

@@ -1,4 +1,4 @@
-"ProbeFileID"|"ConfidenceScore"|"ProbeOutputMaskFileName"|"IsOptOut"
+"ProbeFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"IsOptOut"
 "c6c6b83300cc764a6bf7d02206e3e087"|0|"mask/c6c6b83300cc764a6bf7d02206e3e087.png"|"N"
 "ba4433fd7e95f90e5b62ee0896d286e5"|0|"mask/ba4433fd7e95f90e5b62ee0896d286e5.png"|"N"
 "87ea8e893e517401d2063367aabcb244"|0|"mask/87ea8e893e517401d2063367aabcb244.png"|"N"

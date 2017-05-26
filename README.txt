@@ -1,6 +1,6 @@
 File: README.txt
-Date: March 30, 2017
-MediScore Version: 1.1.3
+Date: May 26, 2017
+MediScore Version: 1.1.12
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -13,7 +13,7 @@ example data for the following tools:
                                     (Localization) Scorer
   ProvenanceFilteringScorer       - Scorer for Provenance Filtering
   ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
-		     
+
 
 This distribution consists of a set of Python2.7 scripts intended to be run
 from a command line.  These scripts have been tested under the
@@ -26,7 +26,7 @@ following versions of Ubuntu Linux and OS X.
 INSTALLATION
 ------------
 
-(Lines starting with % are command lines)
+(Lines starting with $ are command lines)
 
 1) Install Python 2.7 (tested in Python == 2.7.12).
 
@@ -38,10 +38,15 @@ INSTALLATION
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
+  - rawpy (tested in version 0.9.0)
   - unittest
-  ImageMagick is not required, but is highly recommended to accelerate the validator.
-  Download instructions may be found in the following link:
-  http://imagemagick.org/script/download.php
+  Optional :
+  - pydot (tested in version 1.2.3) -- For graphical output from
+    ProvenanceGraphBuildingScorer.py
+
+  ImageMagick is not required, but is highly recommended to accelerate
+  the validator.  Download instructions may be found in the following
+  link: http://imagemagick.org/script/download.php
 
 * Installation example for Linux:
   - Install Anaconda for Python 2.7 version: https://www.continuum.io/downloads
@@ -172,6 +177,106 @@ HISTORY
     * Provenance:
       - Provenance validator and formal test cases added. Error messages corresponding to test cases with malformed system
         output should be expected.
+  Apr 12, 2017 - MediScore Version 1.1.4:
+    * DetectionScorer:
+      - Absolute paths added. Path dependency for the detection scorer is no longer required.
+    * MaskScorer:
+      - Mask scoring sped up. Time taken to run has decreased by approximately 25%.
+      - Other generalizations applied. Initial steps taken towards further modularization of mask scoring code.
+      - System opt out option introduced. Select pixel values in the mask can be treated as no-score zones.
+      - The threshold metric table for the HTML output is replaced by a plot of the MCC value per binarization threshold. If some issue crops up
+        during the plotting attempt, the threshold metric table will appear instead.
+    * Validator:
+      - Reference file option included. Scoring for tasks can now be limited to target reference masks for considerable speedup.
+    * Provenance:
+      - Provenance validator has added a task option for when checking the EXPID is irrelevant.
+  Apr 21, 2017 - MediScore Version 1.1.5
+    * MaskScorer:
+      - Option to use faster mask scorer for code stability.
+    * Validator:
+      - Included validation of Nimble Challenge ID.
+    * ProvenanceValidator:
+      - Included validation of Nimble Challenge ID.
+  Apr 24, 2017 - MediScore Version 1.1.6
+    * MaskScorer:
+      - Added capability to read raw image files
+    * ProvenanceValidator:
+      - Fixed a minor typo in the error message output
+      - Set default NCID to "NC17"
+    * Validator:
+      - Set default NCID to "NC17"
+      - Added option to skip IsOptOut=='Y' rows
+  Apr 26, 2017 - MediScore Version 1.1.7
+    * DetectionScorer:
+      - Changed the join method (left to inner) for merging the reference and index cvs file.
+      - Added the plotTitle option.
+      - Added the outMeta and outAllmeta options for producing the meta information along with system output.
+      - Updated the column names in the test cases.
+      - Fixed a bug on detcompcheckfile.sh
+      - Changed the csv separation ',' to '|' for all report csv files.
+    * MaskScorer:
+      - Fixed plotting issue with HTML reports.
+      - Added white mask scoring
+      - Accounts for case in which the no-score zone covers the entire image
+      - CSV outputs are now pipe-separated
+      - NaN output for columns that are not scores are substituted with empty string ''
+      - Re-distributed code in maskMetrics.py and maskMetrics_old.py to separate the metrics class (maskMetrics.py and maskMetrics_old.py)
+        and the metric runner (metricRunner.py)
+    * Provenance:
+      - Updated Provenance scoring scripts to produce mapping files, optional html reports, and optional graphical mapping for the graph building task.
+  Apr 28, 2017 - MediScore Version 1.1.8
+    * DetectionScorer:
+      - Added test cases for merging behavior between index and reference.
+      - Took out OutputProbeMaskFileName and OutputDonorMaskFileName while saving the meta csv file.
+    * MaskScorer:
+      - Added option to score on a smaller index file for testing purposes.
+      - Fixed index parsing bug.
+      - Added increased capability to read images of different formats, including raw and bmp images.
+      - Fixed bug related to parsing the extension of the images.
+    * Validator:
+      - IsOptOut column is mandated
+      - Substituted range for xrange for speedup
+    * ProvenanceValidator:
+      - ConfidenceScore and IsOptOut columns are mandated
+  May 1, 2017 - MediScore Version 1.1.9
+    * DetectionScorer:
+      - Added subtitle on the plot
+      - Added the noNum option to not print the number of trials on the plot legend.
+      - Changed the aspect of plot ratio
+    * MaskScorer:
+      - Added optout querying and some verbose printout for mask score partitioner.
+  May 2, 2017 - MediScore Version 1.1.10
+    * DetectionScorer:
+      - Added “subtitle’ and ‘subtitle_fontsize” to the plot option json file
+      - Added the columns “TRR” and “SYS_RESPONSE” to the report table
+      - Changed the number of total data to the number of the merged data for TRR’s denominator
+
+    * Mask Scorer:
+      - Added verbose output for image dimension checking, just in case.
+      - Added catcher for each iteration of mask scoring loop for runtime stability.
+      - Further stabilized mask partitioner.
+      - Revised partitioner querying based on query mode.
+    * Validator:
+      - Revised video header checking.
+    * Provenance:
+      - Changed column names is ProvenanceFilteringScorer to use 'At' instead of '@'
+      - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
+      - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
+      - Misc. optimizations
+  MediScore Version 1.1.11
+    * Mask Scorer:
+      - Revised test cases for queryPartition and queryPartition functionality.
+      - Added more verbose messages to metric runner for easier error tracking.
+    * Provenance:
+      - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
+      - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
+  May 26, 2017 - MediScore Version 1.1.12
+    * DetectionScorer:
+      - Applied the "noNum" option for both partition and EER
+    * Provenance:
+      - Updated integration test runner for OS compatability
+    * MaskScorer:
+      - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
 
 
 CONTACT

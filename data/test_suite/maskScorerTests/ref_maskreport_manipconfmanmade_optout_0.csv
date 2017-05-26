@@ -1,0 +1,2 @@
+TaskID|Query|NMM|MCC|BWL1|GWL1
+manipulation|(ConfidenceScore < 0.5) & (IsOptOut!='Y')|-1.0|0.419527187425|0.060604848331|0.060604848331

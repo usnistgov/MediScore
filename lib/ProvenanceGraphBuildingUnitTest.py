@@ -145,6 +145,13 @@ class TestDetectCycle(unittest.TestCase):
                         EdgeRecord(5, 7, Path(edge=(5, 7), rest=None)),
                         EdgeRecord(7, 8, Path(edge=(7, 8), rest=None)),
                         EdgeRecord(8, 5, Path(edge=(8, 5), rest=None))}
+        self.graph_5 = {EdgeRecord(0, 4, Path(edge=(0, 4), rest=None)),
+                        EdgeRecord(1, 4, Path(edge=(1, 4), rest=None)),
+                        EdgeRecord(2, 5, Path(edge=(2, 5), rest=None)),
+                        EdgeRecord(3, 5, Path(edge=(3, 5), rest=None)),
+                        EdgeRecord(4, 6, Path(edge=(4, 6), rest=None)),
+                        EdgeRecord(5, 5, Path(edge=(5, 5), rest=None)),
+                        EdgeRecord(5, 6, Path(edge=(5, 6), rest=None))}
 
     def test_detect_cycle(self):
         self.assertFalse(detect_cycle(self.graph_0))
@@ -152,6 +159,7 @@ class TestDetectCycle(unittest.TestCase):
         self.assertTrue(detect_cycle(self.graph_2))
         self.assertTrue(detect_cycle(self.graph_3))
         self.assertTrue(detect_cycle(self.graph_4))
+        self.assertTrue(detect_cycle(self.graph_5))
             
 if __name__ == '__main__':
     unittest.main()

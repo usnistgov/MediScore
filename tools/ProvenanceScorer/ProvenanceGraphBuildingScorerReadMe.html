@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>ProvenanceGraphBuildingScorerReadMe</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>ProvenanceGraphBuildingScorerReadMe</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11,8 +13,8 @@
 *
 */
 /*!
- * Bootstrap v3.3.7 (http://getbootstrap.com)
- * Copyright 2011-2016 Twitter, Inc.
+ * Bootstrap v3.3.6 (http://getbootstrap.com)
+ * Copyright 2011-2015 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
 /*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
@@ -1107,6 +1109,7 @@ a:focus {
   text-decoration: underline;
 }
 a:focus {
+  outline: thin dotted;
   outline: 5px auto -webkit-focus-ring-color;
   outline-offset: -2px;
 }
@@ -2535,6 +2538,7 @@ select[size] {
 input[type="file"]:focus,
 input[type="radio"]:focus,
 input[type="checkbox"]:focus {
+  outline: thin dotted;
   outline: 5px auto -webkit-focus-ring-color;
   outline-offset: -2px;
 }
@@ -3025,6 +3029,7 @@ select[multiple].input-lg {
 .btn.focus,
 .btn:active.focus,
 .btn.active.focus {
+  outline: thin dotted;
   outline: 5px auto -webkit-focus-ring-color;
   outline-offset: -2px;
 }
@@ -8755,9 +8760,6 @@ body > #header .header-bar {
     margin-left: 10px;
   }
 }
-[dir="rtl"] #ipython_notebook {
-  float: right !important;
-}
 #noscript {
   width: auto;
   padding-top: 16px;
@@ -8960,14 +8962,8 @@ span#login_widget > .button .badge,
  *
  * Author: Jupyter Development Team
  */
-[dir="rtl"] #tabs li {
-  float: right;
-}
 ul#tabs {
   margin-bottom: 4px;
-}
-[dir="rtl"] ul#tabs {
-  margin-right: 0px;
 }
 ul#tabs a {
   padding-top: 6px;
@@ -8990,16 +8986,6 @@ ul.breadcrumb span {
 }
 .list_toolbar .tree-buttons {
   padding-top: 1px;
-}
-[dir="rtl"] .list_toolbar .tree-buttons {
-  float: left !important;
-}
-[dir="rtl"] .list_toolbar .pull-right {
-  padding-top: 1px;
-  float: left !important;
-}
-[dir="rtl"] .list_toolbar .pull-left {
-  float: right !important;
 }
 .dynamic-buttons {
   padding-top: 3px;
@@ -9136,9 +9122,6 @@ ul.breadcrumb span {
 #tree-selector {
   padding-right: 0px;
 }
-[dir="rtl"] #tree-selector a {
-  float: right;
-}
 #button-select-all {
   min-width: 50px;
 }
@@ -9228,9 +9211,6 @@ ul#new-menu {
   left: auto;
   right: 0;
 }
-[dir="rtl"] #new-menu {
-  text-align: right;
-}
 .kernel-menu-icon {
   padding-right: 12px;
   width: 24px;
@@ -9275,9 +9255,6 @@ ul#new-menu {
 }
 #running .panel-group .panel .panel-body .list_container .list_item:last-child {
   border-bottom: 0px;
-}
-[dir="rtl"] #running .col-sm-8 {
-  float: right !important;
 }
 .delete-button {
   display: none;
@@ -9574,7 +9551,6 @@ div.cell.selected.jupyter-soft-selected {
   }
 }
 div.inner_cell {
-  min-width: 0;
   /* Old browsers */
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -9595,6 +9571,11 @@ div.inner_cell {
   box-flex: 1;
   /* Modern browsers */
   flex: 1;
+}
+@-moz-document url-prefix() {
+  div.inner_cell {
+    overflow-x: hidden;
+  }
 }
 /* input_area and input_prompt must match in top border and margin for alignment */
 div.input_area {
@@ -11265,7 +11246,7 @@ div#pager .ui-resizable-handle::after {
 }
 .shortcut_key {
   display: inline-block;
-  width: 21ex;
+  width: 20ex;
   text-align: right;
   font-family: monospace;
 }
@@ -11577,7 +11558,6 @@ ul.typeahead-list > li > a {
   box-shadow: 0px 0px 12px 1px rgba(87, 87, 87, 0.2);
 }
 .terminal-app .terminal {
-  width: 100%;
   float: left;
   font-family: monospace;
   color: white;
@@ -11591,9 +11571,6 @@ ul.typeahead-list > li > a {
 .terminal-app .terminal dummy-screen {
   line-height: 1em;
   font-size: 14px;
-}
-.terminal-app .terminal .xterm-rows {
-  padding: 10px;
 }
 .terminal-app .terminal-cursor {
   color: black;
@@ -11654,10 +11631,8 @@ ul.typeahead-list > li > a {
 .highlight .mh { color: #666666 } /* Literal.Number.Hex */
 .highlight .mi { color: #666666 } /* Literal.Number.Integer */
 .highlight .mo { color: #666666 } /* Literal.Number.Oct */
-.highlight .sa { color: #BA2121 } /* Literal.String.Affix */
 .highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
 .highlight .sc { color: #BA2121 } /* Literal.String.Char */
-.highlight .dl { color: #BA2121 } /* Literal.String.Delimiter */
 .highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
 .highlight .s2 { color: #BA2121 } /* Literal.String.Double */
 .highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
@@ -11668,11 +11643,9 @@ ul.typeahead-list > li > a {
 .highlight .s1 { color: #BA2121 } /* Literal.String.Single */
 .highlight .ss { color: #19177C } /* Literal.String.Symbol */
 .highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight .fm { color: #0000FF } /* Name.Function.Magic */
 .highlight .vc { color: #19177C } /* Name.Variable.Class */
 .highlight .vg { color: #19177C } /* Name.Variable.Global */
 .highlight .vi { color: #19177C } /* Name.Variable.Instance */
-.highlight .vm { color: #19177C } /* Name.Variable.Magic */
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
     </style>
 <style type="text/css">
@@ -11778,29 +11751,17 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Provenance-Graph-Building-Scorer">Provenance Graph Building Scorer<a class="anchor-link" href="#Provenance-Graph-Building-Scorer">&#182;</a></h1><h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
+<h1 id="Provenance-Graph-Building-Scorer">Provenance Graph Building Scorer<a class="anchor-link" href="#Provenance-Graph-Building-Scorer">&#182;</a></h1><p>ProvenanceGraphBuildingScorer.py</p>
+<h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ProvenanceGraphBuildingScorer</span><span class="o">.</span><span class="n">py</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script performs scoring for the Medifor Provenance Graph Building task.  The script produces output files in the form of a pipe-separated csv files, and returns an exit status of 0 if scoring was successful.  If the script aborts due to an error, the error will be written to standard out, and the script will exit with a status of 1.  The script produces two output files, 'trial_scores.csv', which reports scores at the trial (probe) level, and 'scores.csv', which aggregates metrics over trials.</p>
+<p>This script performs scoring for the Medifor Provenance Graph Building task.  The script produces output files in the form of a pipe-separated csv files, and returns an exit status of 0 if scoring was successful.  If the script aborts due to an error, the error will be written to standard out, and the script will exit with a status of 1.  The script produces two output files, 'trial_scores.csv', which reports scores at the trial (probe) level, and 'scores.csv', which aggregates metrics over trials.  The script also generates both a 'node_mapping.csv' and a 'link_mapping' file which lists individual nodes and links, respectively, for each trial and it's designation as either "Correct", "FalseAlarm", or "Missing".</p>
 <p>The script reports the following metrics:</p>
 <ul>
 <li>SimNLO - Similarity of node link overlap</li>
@@ -11851,13 +11812,33 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 <ul>
 <li>System output directory where system output json files can be found.  Paths to system output json files in the SYSTEM_OUTPUT_FILE should be relative to this directory</li>
 </ul>
-<h3 id="Optional-Arguments">Optional Arguments<a class="anchor-link" href="#Optional-Arguments">&#182;</a></h3><p>-t, --skip-trial-disparity-check</p>
+<h3 id="Optional-Arguments">Optional Arguments<a class="anchor-link" href="#Optional-Arguments">&#182;</a></h3><p>-v, --verbose</p>
 <ul>
-<li>By default the script will check that the trials in INDEX_FILE correspond one-to-one to the trials in the SYSTEM_OUTPUT_FILE.  If this option is set, no such check is performed</li>
+<li>If set, scoring progress messages and warnings are logged to standard output</li>
+</ul>
+<p>-t, --skip-trial-disparity-check</p>
+<ul>
+<li>By default the script will check that the trials in INDEX_FILE correspond one-to-one to the trials in the SYSTEM_OUTPUT_FILE.  If this option is set, extraneous trials in the SYSTEM_OUTPUT_FILE are reported as warnings instead of errors.  Note that warnings are suppressed unless the -v option is set</li>
 </ul>
 <p>-d, --direct</p>
 <ul>
 <li>Toggles on direct path scoring</li>
+</ul>
+<p>-p, --plot-scored</p>
+<ul>
+<li>If enabled, a graphical representation of each trial's mapping will be produced, where green nodes/links represent correct responses, red represents false alarms, and gray represents misses.  These figures will be placed in <code>&lt;OUTPUT_DIR&gt;</code>/figures/ as <code>&lt;ProvenanceProbeFileID&gt;</code>.jpg.  Note that this option requires an additional Python library be installed: 'pydot'.</li>
+</ul>
+<p>-H, --html-report</p>
+<ul>
+<li>Generates an HTML report file which includes tables for trial-level and aggregate scores, as well as links to the graphical representations for each trial (this option forces the -p option).  The report is saved as <code>&lt;OUTPUT_DIR&gt;</code>/report.html</li>
+</ul>
+<p>-T, --thumbnail-cache-dir THUMBNAIL_CACHE_DIR</p>
+<ul>
+<li>If used in conjunction with the -p option, thumbnails for the graphical output are placed in THUMBNAIL_CACHE_DIR.  Thumbnails are not removed at the end of a scoring run</li>
+</ul>
+<p>-c, --warn-on-system-cycle</p>
+<ul>
+<li>By default the script aborts if a cycle is detected in a system output JSON.  This flag downgrades that error to a warning.  Note that warnings are suppressed unless the -v option is set</li>
 </ul>
 <h2 id="Example-Usage">Example Usage<a class="anchor-link" href="#Example-Usage">&#182;</a></h2><p>The following example uses the test case files included with the tool</p>
 
@@ -11866,7 +11847,7 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
@@ -11880,7 +11861,9 @@ recall = \frac{|\{relevant\} \cap \{retrieved\}|}{|\{relevant\}|}
                                    -S <span class="s2">&quot;../../data/test_suite/provenanceScorerTests/&quot;</span>
                                    
 head compcheckfiles/graphbuilding_example/scores.csv <span class="se">\</span>
-     compcheckfiles/graphbuilding_example/trial_scores.csv
+     compcheckfiles/graphbuilding_example/trial_scores.csv <span class="se">\</span>
+     compcheckfiles/graphbuilding_example/node_mapping.csv <span class="se">\</span>
+     compcheckfiles/graphbuilding_example/link_mapping.csv
 </pre></div>
 
 </div>
@@ -11891,9 +11874,7 @@ head compcheckfiles/graphbuilding_example/scores.csv <span class="se">\</span>
 <div class="output">
 
 
-<div class="output_area">
-<div class="prompt"></div>
-
+<div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>==&gt; compcheckfiles/graphbuilding_example/scores.csv &lt;==
 Direct|MeanSimNLO|MeanSimNO|MeanSimLO|MeanNodeRecall
@@ -11902,6 +11883,30 @@ False|0.545454545455|0.789473684211|0.307692307692|0.833333333333
 ==&gt; compcheckfiles/graphbuilding_example/trial_scores.csv &lt;==
 JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|NumSysNodes|NumSysLinks|NumRefNodes|NumRefLinks|NumCorrectNodes|NumMissingNodes|NumFalseAlarmNodes|NumCorrectLinks|NumMissingLinks|NumFalseAlarmLinks|SimNLO|SimNO|SimLO|NodeRecall
 c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|20|21|18|18|15|3|5|6|12|15|0.545454545455|0.789473684211|0.307692307692|0.833333333333
+
+==&gt; compcheckfiles/graphbuilding_example/node_mapping.csv &lt;==
+JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|WorldFileID|NodeConfidence|Mapping
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|26ed524291d79ad35696bbe856ba7e38|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|3c109a9289f94a895a26a58b782ad994|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|5169deb7c208794ddeb8ce6b51965da4|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|6dd715c810f9e473429f47dd1e2d2cfa|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|9422d22713fe5ea39831d1858615c329|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|9e245d6ea071c715edd84e9b55649b47|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|9f796693249720d9d4eb8f1c3347c300|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|b828a804bf7c309103ace45fe784d72a|1.0|Correct
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|c257f3e674aaa597784ae6f5a402c748|1.0|Correct
+
+==&gt; compcheckfiles/graphbuilding_example/link_mapping.csv &lt;==
+JournalName|ProvenanceProbeFileID|Direct|ProvenanceOutputFileName|SourceWorldFileID|TargetWorldFileID|LinkConfidence|Mapping
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|05091cd3d392e1296004ea4f6487cfe5|e30bb951daa405ddd7fc11aa58add07d||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|05091cd3d392e1296004ea4f6487cfe5|e87a84f23af4399b570ddc8b1941ed9e||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|05576908c045ce6a2f217ad4c4c952ab|3c109a9289f94a895a26a58b782ad994||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|34a9e68f6b520cb8ed71fafbb3ca0fa0|e0e317a927f4b9c8b46d25cd1eb8b928||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|9422d22713fe5ea39831d1858615c329|05576908c045ce6a2f217ad4c4c952ab||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|9422d22713fe5ea39831d1858615c329|6dd715c810f9e473429f47dd1e2d2cfa||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|c257f3e674aaa597784ae6f5a402c748|05091cd3d392e1296004ea4f6487cfe5||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|e0e317a927f4b9c8b46d25cd1eb8b928|5169deb7c208794ddeb8ce6b51965da4||Missing
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|False|jsons/test_case_2-system_output_1.json|e30bb951daa405ddd7fc11aa58add07d|26ed524291d79ad35696bbe856ba7e38||Missing
 </pre>
 </div>
 </div>
@@ -11930,8 +11935,4 @@ reliability, or any other characteristic.</p>
     </div>
   </div>
 </body>
-
- 
-
-
 </html>

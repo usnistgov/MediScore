@@ -24,12 +24,14 @@
 """
 import cv
 import cv2
+import rawpy
 import math
 import copy
 import numpy as np
 import pandas as pd
 import os
 import random
+from scipy import misc
 from decimal import Decimal
 
 #returns a kernel matrix
@@ -90,7 +92,19 @@ class mask(object):
                    single-channel grayscale
         """
         self.name=n
-        self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
+        ext = self.name.split('.')[-1].lower()
+        if (ext == 'arw') or (ext == 'nef'):
+            self.matrix=rawpy.imread(n).postprocess()
+            #rgb2gray this if readopt==0
+            if readopt == 0:
+                self.matrix=cv2.cvtColor(self.matrix,cv2.COLOR_BGR2GRAY)
+        elif ext == 'bmp':
+            bmpmode='L'
+            if readopt==1:
+                bmpmode='RGB'
+            self.matrix=misc.imread(n,mode=bmpmode)
+        else:
+            self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
         if self.matrix is None:
             masktype = 'System'
             if isinstance(self,refmask):
@@ -240,6 +254,21 @@ class mask(object):
         else:
             self.bwmat = self.intensityBinarize3Channel(threshold,threshold,threshold,0,255)
         return self.bwmat
+
+    def pixelNoScore(self,pixelvalue):
+        """
+        * Description: this function produces a custom no-score region based on the pixel value in the function 
+        * Inputs:
+        *     pixelvalue: pixel value to treat as custom no-score region
+        * Outputs:
+        *     pns: pixel-based no-score region
+        """
+        dims = self.get_dims()
+        pns = np.ones((dims[0],dims[1])).astype(np.uint8)
+        if pixelvalue == -1:
+            return pns
+        pns[self.matrix==pixelvalue] = 0
+        return pns
 
     #save mask to file
     def save(self,fname,compression=0,th=-1):
@@ -392,3 +421,4 @@ class refmask(mask):
         weights=dImg.astype(np.uint8)
 
         return weights
+
