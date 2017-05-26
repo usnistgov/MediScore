@@ -8,7 +8,7 @@ echo "CASE 0: VALIDATING FULL SCORING"
 echo
 
 #produce the output files
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html --optOut
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2016-manipulation-ref.csv -x indexes/NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Manipulation_ImgOnly_c-me2_1/B_NC2016_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/maniptest
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/threstest -html --sbin 128
 #python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests -r reference/removal/NC2016-removal-ref.csv -x indexes/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_3 --sbin 127
@@ -154,10 +154,9 @@ else
 	cat comp_maskreport_thres-journalResults.txt
 fi
 
-if ([ $flag_s == 0 -a $flag_spi == 0 -a $flag_sjr == 0 \
- -a $flag_m == 0 -a $flag_mpi == 0 -a $flag_mjr == 0 \
- -a $flag_t == 0 -a $flag_tpi == 0 -a $flag_tjr == 0 \
-]); then
+flag_total=$(($flag_s + $flag_spi + $flag_sjr + $flag_m + $flag_mpi + $flag_mjr + $flag_t + $flag_tpi + $flag_tjr))
+
+if ([ $flag_total -eq 0 ]); then
   echo
   echo "CASE 0 SUCCESSFULLY PASSED"
   echo

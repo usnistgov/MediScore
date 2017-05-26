@@ -1,0 +1,2 @@
+../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
+../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice

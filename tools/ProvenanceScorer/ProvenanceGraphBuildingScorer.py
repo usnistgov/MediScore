@@ -7,7 +7,7 @@ sys.path.append(lib_path)
 
 import json
 import argparse
-import pandas as pd
+from pandas import DataFrame, read_csv, merge, set_option
 import errno
 
 from ProvenanceGraphBuilding import *
@@ -16,6 +16,13 @@ from ProvenanceMetrics import *
 def err_quit(msg, exit_status=1):
     print(msg)
     exit(exit_status)
+
+def build_logger(verbosity_threshold=0):
+    def _log(depth, msg):
+        if depth <= verbosity_threshold:
+            print(msg)
+
+    return _log
 
 def load_json(json_fn):
     try:
@@ -26,7 +33,7 @@ def load_json(json_fn):
 
 def load_csv(csv_fn, sep="|"):
     try:
-        return pd.read_csv(csv_fn, sep)
+        return read_csv(csv_fn, sep)
     except IOError as ioerr:
         err_quit("{}. Aborting!".format(ioerr))
 
@@ -38,7 +45,7 @@ def mkdir_p(path):
             pass
         else:
             err_quit("{}. Aborting!".format(exc))
-        
+
 def antiforensic_donor_filter(edge_list):
     ins = group_by_fun(lambda e: e["target"], edge_list)
 
@@ -48,83 +55,18 @@ def antiforensic_donor_filter(edge_list):
     return map(_filter, edge_list)
 
 def system_out_to_scorable(system_out):
-    node_lookup = {}
-    for i, node in enumerate(system_out["nodes"]):
-        node_lookup[i] = node
-    
-    node_set = { n["file"] for n in system_out["nodes"] }
-    edge_set = { (node_lookup[edge["source"]]["file"], node_lookup[edge["target"]]["file"]) for edge in system_out["links"] }
-    return (node_set, edge_set)
+    nl = { i: node for i, node in enumerate(system_out["nodes"]) }
 
-def build_provenancegraphbuilding_agg_output_df():
-    df = pd.DataFrame(columns=["Direct",
-                               "MeanSimNLO",
-                               "MeanSimNO",
-                               "MeanSimLO",
-                               "MeanNodeRecall"])
+    sys_node_dict = { n["file"]: n for n in system_out["nodes"] }
+    sys_edge_dict = { (nl[e["source"]]["file"], nl[e["target"]]["file"]): (nl[e["source"]], nl[e["target"]], e) for e in system_out["links"] }
 
-    dtypes = { "Direct": bool,
-               "MeanSimNLO": float,
-               "MeanSimNO": float,
-               "MeanSimLO": float,
-               "MeanNodeRecall": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
-
-def build_provenancegraphbuilding_output_df():
-    df = pd.DataFrame(columns=["JournalName",
-                               "ProvenanceProbeFileID",
-                               "Direct",
-                               "ProvenanceOutputFileName",
-                               "NumSysNodes",
-                               "NumSysLinks",
-                               "NumRefNodes",
-                               "NumRefLinks",
-                               "NumCorrectNodes",
-                               "NumMissingNodes",
-                               "NumFalseAlarmNodes",
-                               "NumCorrectLinks",
-                               "NumMissingLinks",
-                               "NumFalseAlarmLinks",
-                               "SimNLO",
-                               "SimNO",
-                               "SimLO",
-                               "NodeRecall"])
-    dtypes = { "JournalName": str,
-               "ProvenanceProbeFileID": str,
-               "Direct": bool,
-               "ProvenanceOutputFileName": str,
-               "NumSysNodes": int,
-               "NumSysLinks": int,
-               "NumRefNodes": int,
-               "NumRefLinks": int,
-               "NumCorrectNodes": int,
-               "NumMissingNodes": int,
-               "NumFalseAlarmNodes": int,
-               "NumCorrectLinks": int,
-               "NumMissingLinks": int,
-               "NumFalseAlarmLinks": int,
-               "SimNLO": float,
-               "SimNO": float,
-               "SimLO": float,
-               "NodeRecall": float }
-
-    # Setting column data type one by one as pandas doesn't offer a
-    # convenient way to do this
-    for col, t in dtypes.items():
-        df[col] = df[col].astype(t)
-
-    return df
+    return (sys_node_dict, sys_edge_dict)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceGraphBuilding task output")
     parser.add_argument("-d", "--direct", help="toggle direct path scoring", action="store_true")
     parser.add_argument("-t", "--skip-trial-disparity-check", help="Skip check for trial disparity between INDEX_FILE and SYSTEM_OUTPUT_FILE", action="store_true")
+    parser.add_argument("-c", "--warn-on-system-cycle", help="Produces warnings if cycles detected in system output, rather than aborting", action="store_true")
     parser.add_argument("-o", "--output-dir", help="Output directory for scores", type=str, required=True)
     parser.add_argument("-x", "--index-file", help="Task Index file", type=str, required=True)
     parser.add_argument("-r", "--reference-file", help="Reference file", type=str, required=True)
@@ -133,16 +75,41 @@ if __name__ == '__main__':
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
+    parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
+    parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
+    parser.add_argument("-T", "--thumbnail-cache-dir", help="Directory to use as thumbnail cache", type=str)
+    parser.add_argument("-v", "--verbose", help="Toggle verbose log output", action="store_true")
     args = parser.parse_args()
+
+    mkdir_p(args.output_dir)
+    figure_dir = os.path.join(os.path.abspath(args.output_dir), "figures")
+    if args.html_report == True:
+        args.plot_scored = True
+    # Import GraphVisualizer only if needed as it requires additional
+    # dependencies
+    if args.plot_scored:
+        from GraphVisualizer import *
+        mkdir_p(figure_dir)
+
+    # Logger setup, could eventually support different levels of
+    # verbosity
+    verbosity_threshold = 1 if args.verbose else 0
+    log = build_logger(verbosity_threshold)
 
     trial_index = load_csv(args.index_file)
     ref_file = load_csv(args.reference_file)
     nodes_file = load_csv(args.node_file)
     world_index = load_csv(args.world_file)
 
+    abs_reference_dir = os.path.abspath(args.reference_dir)
+
+    abs_thumb_cache_dir = None
+    if args.thumbnail_cache_dir is not None:
+        abs_thumb_cache_dir = os.path.abspath(args.thumbnail_cache_dir)
+
     system_output_index = load_csv(args.system_output_file)
 
-    def check_for_trial_disparity():
+    def check_for_trial_disparity(only_warn_on_extraneous = False):
         # detect missing trials
         ref_probes = [ t.ProvenanceProbeFileID for t in trial_index.itertuples() ]
         remaining_sys_probes = [ t.ProvenanceProbeFileID for t in system_output_index.itertuples() ]
@@ -158,30 +125,35 @@ if __name__ == '__main__':
         if len(missing_probes) > 0:
             errs.append("Error, missing the following ProvenanceProbeFileIDs from the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, missing_probes))))
         if len(remaining_sys_probes) > 0:
-            errs.append("Error, extraneous ProvenanceProbeFileIDs in the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, remaining_sys_probes))))
+            if only_warn_on_extraneous:
+                log(1, "Warning, found {} extraneous ProvenanceProbeFileIDs in the system output.".format(len(remaining_sys_probes)))
+            else:
+                errs.append("Error, extraneous ProvenanceProbeFileIDs in the system output:\n{}".format("\n".join(map(lambda p: "\t" + p, remaining_sys_probes))))
 
         if len(errs) > 0:
             errs.append("Aborting!")
             err_quit("\n".join(errs))
 
-    if not args.skip_trial_disparity_check:
-        check_for_trial_disparity()
-            
-    trial_index_ref = pd.merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
-    trial_index_ref_sysout = pd.merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
+    check_for_trial_disparity(args.skip_trial_disparity_check)
+    log(1, "Scoring {} trials ..".format(len(trial_index)))
 
-    world_nodes = pd.merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
+    trial_index_ref = merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
+    trial_index_ref_sysout = merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
 
-    output_records = build_provenancegraphbuilding_output_df()
-    
+    world_nodes = merge(nodes_file, world_index, on = "WorldFileID", how = "inner")
+
+    output_records = []
+    output_node_mapping_records = []
+    output_link_mapping_records = []
+
     world_node_lookup = {}
     for world_node in world_nodes.itertuples():
         world_node_lookup[world_node.JournalNodeID] = world_node.WorldFileName_x
-    
+
     for journal_fn, trial_index_ref_sysout_items in trial_index_ref_sysout.groupby("JournalFileName"):
-        journal_path = os.path.join(args.reference_dir, journal_fn)
-        journal = load_json(journal_path)        
-        
+        journal_path = os.path.join(abs_reference_dir, journal_fn)
+        journal = load_json(journal_path)
+
         node_lookup = {}
         node_index_by_id = {}
         for i, node in enumerate(journal["nodes"]):
@@ -204,8 +176,10 @@ if __name__ == '__main__':
             err_quit("Detected a cycle in journal file.  Aborting!")
 
         for trial in trial_index_ref_sysout_items.itertuples():
-            system_out = load_json(os.path.join(args.system_dir, trial.ProvenanceOutputFileName))
-            
+            log(1, "Working on ProvenanceProbeFileID: '{}' in JournalName: '{}'".format(trial.ProvenanceProbeFileID, trial.JournalName))
+            system_out_path = os.path.join(args.system_dir, trial.ProvenanceOutputFileName)
+            system_out = load_json(system_out_path)
+
             probe_node_id = nodes_file[nodes_file.WorldFileID == trial.ProvenanceProbeFileID].iloc[0]["JournalNodeID"]
             probe_node_wfn = trial.ProvenanceProbeFileName_x
             world_set_nodes = { node_index_by_id[x] for x in world_nodes[world_nodes.ProvenanceProbeFileID == trial.ProvenanceProbeFileID]["JournalNodeID"] }
@@ -221,11 +195,103 @@ if __name__ == '__main__':
                 else:
                     return world_node_lookup[fileid]
 
-            ref_nodes = ({ lookup_wfn(node_lookup[s]["id"]) for s, t, p in ref_graph } |
-                         { lookup_wfn(node_lookup[t]["id"]) for s, t, p in ref_graph })
-            ref_edges = { (lookup_wfn(node_lookup[s]["id"]), lookup_wfn(node_lookup[t]["id"])) for s, t, p in ref_graph }
+            ref_nodes_dict = {}
+            ref_edges_dict = {}
+            for s, t, p in ref_graph:
+                s_node = node_lookup[s]
+                t_node = node_lookup[t]
+                s_node_wfn = lookup_wfn(s_node["id"])
+                t_node_wfn = lookup_wfn(t_node["id"])
 
-            sys_nodes, sys_edges = system_out_to_scorable(system_out)
+                ref_nodes_dict[s_node_wfn] = s_node
+                ref_nodes_dict[t_node_wfn] = t_node
+                ref_edges_dict[(s_node_wfn, t_node_wfn)] = (s_node, t_node)
+
+            sys_nodes_dict, sys_edges_dict = system_out_to_scorable(system_out)
+            sys_edge_records = [ EdgeRecord(e[0], e[1], Path(e, None)) for e in sys_edges_dict.keys()]
+            if detect_cycle(sys_edge_records):
+                if args.warn_on_system_cycle:
+                    log(1, "Warning, detected cycle(s) for system output file '{}'".format(system_out_path))
+                else:
+                    err_quit("Detected cycle(s) for system output file '{}', Aborting!".format(system_out_path))
+
+            def _build_mapping(ref_nodes, ref_edges, sys_nodes, sys_edges):
+                node_mapping = [ (nk, ref_nodes.get(nk, None), sys_nodes.get(nk, None)) for nk in set(ref_nodes.keys()) | set(sys_nodes.keys()) ]
+                edge_mapping = [ (ek, ref_edges.get(ek, None), sys_edges.get(ek, None)) for ek in set(ref_edges.keys()) | set(sys_edges.keys()) ]
+
+                # a *_mapping file is a collection of (ref_*, sys_*)
+                # tuples, where ref_* is None in the case of a FA and
+                # sys_* is None in the case of a miss
+                return (node_mapping, edge_mapping)
+
+            node_mapping, edge_mapping = _build_mapping(ref_nodes_dict, ref_edges_dict, sys_nodes_dict, sys_edges_dict)
+
+            def _worldfile_path_to_id(path):
+                base, ext = os.path.splitext(os.path.basename(path))
+                return base
+
+            def _get_mapping(r, s):
+                mapping = "Correct"
+                if r == None:
+                    mapping = "FalseAlarm"
+                    if s == None:
+                        # Should never have a case where both ref and
+                        # sys are None, but let's check to be sure
+                        raise ValueError("Shouldn't have None for both ref and sys")
+                elif s == None:
+                    mapping = "Missing"
+                return mapping
+
+            def _build_node_map_record(node_key, ref_node, sys_node):
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "WorldFileID": _worldfile_path_to_id(node_key),
+                         "NodeConfidence": sys_node["nodeConfidenceScore"] if sys_node != None else None,
+                         "Mapping": _get_mapping(ref_node, sys_node) }
+
+            def _build_link_map_record(link_key, ref_link, sys_link):
+                link_key_s, link_key_t = link_key
+                if sys_link != None:
+                    sys_s_node, sys_t_node, sys_link_record = sys_link
+                return { "JournalName": trial.JournalName,
+                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
+                         "Direct": args.direct,
+                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
+                         "SourceWorldFileID": _worldfile_path_to_id(link_key_s),
+                         "TargetWorldFileID": _worldfile_path_to_id(link_key_t),
+                         "LinkConfidence": sys_link_record["relationshipConfidenceScore"] if sys_link != None else None,
+                         "Mapping": _get_mapping(ref_link, sys_link) }
+
+            output_node_mapping_records += sorted([ _build_node_map_record(*node_map) for node_map in node_mapping ])
+            output_link_mapping_records += sorted([ _build_link_map_record(*edge_map) for edge_map in edge_mapping ])
+
+            def _corr_selector(t):
+                k, r, s = t
+                return (r != None and s != None)
+
+            def _fa_selector(t):
+                k, r, s = t
+                return (r == None and s != None)
+
+            def _miss_selector(t):
+                k, r, s = t
+                return (r != None and s == None)
+
+            def _mapping_breakdown(node_mapping, edge_mapping):
+                return ({ k for k, r, s in filter(_corr_selector, node_mapping) },
+                        { k for k, r, s in filter(_miss_selector, node_mapping) },
+                        { k for k, r, s in filter(_fa_selector, node_mapping) },
+                        { k for k, r, s in filter(_corr_selector, edge_mapping) },
+                        { k for k, r, s in filter(_miss_selector, edge_mapping) },
+                        { k for k, r, s in filter(_fa_selector, edge_mapping) })
+
+            sys_nodes = set(sys_nodes_dict.keys())
+            sys_edges = set(sys_edges_dict.keys())
+            ref_nodes = set(ref_nodes_dict.keys())
+            ref_edges = set(ref_edges_dict.keys())
+            correct_nodes, missing_nodes, fa_nodes, correct_edges, missing_edges, fa_edges = _mapping_breakdown(node_mapping, edge_mapping)
 
             out_rec = { "JournalName": trial.JournalName,
                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
@@ -235,35 +301,122 @@ if __name__ == '__main__':
                         "NumSysLinks": len(sys_edges),
                         "NumRefNodes": len(ref_nodes),
                         "NumRefLinks": len(ref_edges),
-                        "NumCorrectNodes": len(sys_nodes & ref_nodes),
-                        "NumMissingNodes": len(ref_nodes - sys_nodes),
-                        "NumFalseAlarmNodes": len(sys_nodes - ref_nodes),
-                        "NumCorrectLinks": len(sys_edges & ref_edges),
-                        "NumMissingLinks": len(ref_edges - sys_edges),
-                        "NumFalseAlarmLinks": len(sys_edges - ref_edges),
+                        "NumCorrectNodes": len(correct_nodes),
+                        "NumMissingNodes": len(missing_nodes),
+                        "NumFalseAlarmNodes": len(fa_nodes),
+                        "NumCorrectLinks": len(correct_edges),
+                        "NumMissingLinks": len(missing_edges),
+                        "NumFalseAlarmLinks": len(fa_edges),
                         "SimNLO": SimNLO(ref_nodes, ref_edges, sys_nodes, sys_edges),
                         "SimNO": SimNO(ref_nodes, sys_nodes),
                         "SimLO": SimLO(ref_edges, sys_edges),
                         "NodeRecall": node_recall(ref_nodes, sys_nodes) }
-            
-            output_records = output_records.append(pd.Series(out_rec), ignore_index=True)
 
-    output_agg_records = build_provenancegraphbuilding_agg_output_df()
-    aggregated = { "Direct": args.direct,
-                   "MeanSimNLO": output_records["SimNLO"].mean(),
-                   "MeanSimNO": output_records["SimNO"].mean(),
-                   "MeanSimLO": output_records["SimLO"].mean(),
-                   "MeanNodeRecall": output_records["NodeRecall"].mean() }
-    output_agg_records = output_agg_records.append(pd.Series(aggregated), ignore_index=True)
-    
-    mkdir_p(args.output_dir)
-    try:
-        with open(os.path.join(args.output_dir, "trial_scores.csv"), 'w') as out_f:
-            output_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
-    try:
-        with open(os.path.join(args.output_dir, "scores.csv"), 'w') as out_f:
-            output_agg_records.to_csv(path_or_buf=out_f, sep="|", index=False)
-    except IOError as ioerr:
-        err_quit("{}. Aborting!".format(ioerr))
+            output_records.append(out_rec)
+
+            # Plot our scored graph if requested
+            if args.plot_scored:
+                out_fn = os.path.join(figure_dir, "{}.png".format(trial.ProvenanceProbeFileID))
+                render_provenance_graph_from_mapping(trial.ProvenanceProbeFileID,
+                                                     correct_nodes,
+                                                     fa_nodes,
+                                                     missing_nodes,
+                                                     correct_edges,
+                                                     fa_edges,
+                                                     missing_edges,
+                                                     out_fn,
+                                                     abs_reference_dir,
+                                                     abs_thumb_cache_dir)
+                log(1, "Mapping figure saved to '{}'".format(out_fn))
+
+    output_node_mapping_records_df = DataFrame(output_node_mapping_records, columns = ["JournalName",
+                                                                                       "ProvenanceProbeFileID",
+                                                                                       "Direct",
+                                                                                       "ProvenanceOutputFileName",
+                                                                                       "WorldFileID",
+                                                                                       "NodeConfidence",
+                                                                                       "Mapping"])
+    output_link_mapping_records_df = DataFrame(output_link_mapping_records, columns = ["JournalName",
+                                                                                       "ProvenanceProbeFileID",
+                                                                                       "Direct",
+                                                                                       "ProvenanceOutputFileName",
+                                                                                       "SourceWorldFileID",
+                                                                                       "TargetWorldFileID",
+                                                                                       "LinkConfidence",
+                                                                                       "Mapping"])
+    output_records_df = DataFrame(output_records, columns = ["JournalName",
+                                                             "ProvenanceProbeFileID",
+                                                             "Direct",
+                                                             "ProvenanceOutputFileName",
+                                                             "NumSysNodes",
+                                                             "NumSysLinks",
+                                                             "NumRefNodes",
+                                                             "NumRefLinks",
+                                                             "NumCorrectNodes",
+                                                             "NumMissingNodes",
+                                                             "NumFalseAlarmNodes",
+                                                             "NumCorrectLinks",
+                                                             "NumMissingLinks",
+                                                             "NumFalseAlarmLinks",
+                                                             "SimNLO",
+                                                             "SimNO",
+                                                             "SimLO",
+                                                             "NodeRecall"])
+
+    aggregated = [{ "Direct": args.direct,
+                    "MeanSimNLO": output_records_df["SimNLO"].mean(),
+                    "MeanSimNO": output_records_df["SimNO"].mean(),
+                    "MeanSimLO": output_records_df["SimLO"].mean(),
+                    "MeanNodeRecall": output_records_df["NodeRecall"].mean() }]
+    output_agg_records_df = DataFrame(aggregated, columns = ["Direct",
+                                                             "MeanSimNLO",
+                                                             "MeanSimNO",
+                                                             "MeanSimLO",
+                                                             "MeanNodeRecall"])
+
+    def _write_df_to_csv(name, df, out_fn):
+        try:
+            out_path = os.path.join(args.output_dir, out_fn)
+            with open(out_path, 'w') as out_f:
+                log(1, "Writing {} to '{}'".format(name, out_path))
+                df.to_csv(path_or_buf=out_f, sep="|", index=False)
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))
+
+    _write_df_to_csv("Trial Scores", output_records_df, "trial_scores.csv")
+    _write_df_to_csv("Aggregate Scores", output_agg_records_df, "scores.csv")
+    _write_df_to_csv("Node Mapping", output_node_mapping_records_df, "node_mapping.csv")
+    _write_df_to_csv("Link Mapping", output_link_mapping_records_df, "link_mapping.csv")
+
+    if args.html_report == True:
+        try:
+            set_option('display.max_colwidth', -1) # Keep pandas from truncating our links
+            report_out_path = os.path.join(args.output_dir, "report.html")
+            log(1, "Writing HTML Report to '{}'".format(report_out_path))
+            with open(report_out_path, 'w') as out_f:
+                out_f.write("<h2>Aggregated Scores:</h2>")
+                output_agg_records_df.to_html(buf=out_f, index=False)
+                out_f.write("<br/><br/>")
+                out_f.write("<h2>Trial Scores:</h2>")
+                output_records_df["Figure"] = output_records_df["ProvenanceProbeFileID"].map(lambda x: "<a href=\"figures/{0}.png\">link</a>".format(x))
+                output_records_df.to_html(buf=out_f, index=False, escape=False, columns=["JournalName",
+                                                                                         "ProvenanceProbeFileID",
+                                                                                         "Direct",
+                                                                                         "ProvenanceOutputFileName",
+                                                                                         "Figure",
+                                                                                         "SimNLO",
+                                                                                         "SimNO",
+                                                                                         "SimLO",
+                                                                                         "NodeRecall",
+                                                                                         "NumSysNodes",
+                                                                                         "NumSysLinks",
+                                                                                         "NumRefNodes",
+                                                                                         "NumRefLinks",
+                                                                                         "NumCorrectNodes",
+                                                                                         "NumMissingNodes",
+                                                                                         "NumFalseAlarmNodes",
+                                                                                         "NumCorrectLinks",
+                                                                                         "NumMissingLinks",
+                                                                                         "NumFalseAlarmLinks"])
+        except IOError as ioerr:
+            err_quit("{}. Aborting!".format(ioerr))

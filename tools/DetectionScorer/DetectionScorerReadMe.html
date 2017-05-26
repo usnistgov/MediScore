@@ -11983,7 +11983,7 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--outRoot</p>
 <ul>
-<li>Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder (default =.)</li>
+<li>Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.pdf" and the table "NIST_001_report.csv" in the "test" folder (default =.)</li>
 </ul>
 
 </div>
@@ -11999,6 +11999,32 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 <li>Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.<pre></li>
 <li>Dump file output: NIST_001_query_0.dm, NIST_001_query_1.dm, ...
 &lt;/pre&gt;</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--outMeta</p>
+<ul>
+<li>Save the CSV file with the system output with minimal metadata.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--outAllmeta</p>
+<ul>
+<li>Save the CSV file with the system output with all available metadata.</li>
 </ul>
 
 </div>
@@ -12044,6 +12070,45 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>--plotTitle</p>
+<ul>
+<li>Define the main title for plot (default = Performance)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--plotSubtitle</p>
+<ul>
+<li>Define the sub title for plot (default ='')</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--plotType [det, roc]</p>
+<ul>
+<li>Define the plot type (default = roc)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>--display</p>
 <ul>
 <li>Display a window with the plot (s) on the command-line if this option is specified (default = False) </li>
@@ -12062,6 +12127,19 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 <li>Generate a single curve plot per partition<pre>
 Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 </pre></li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--noNum</p>
+<ul>
+<li>Display a legend without the number of target and non-target trials.</li>
 </ul>
 
 </div>
@@ -12874,7 +12952,8 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><code>
+<p>Note that the following result may not be consistent with your result due to the number inconsistency of NC2016 data.
+<code>
 python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_100 --ci --display
 </code>
 <img src="./notebookImgs/NC16_100_roc_all.png" alt="ROC8" width="500" height="400" align="left"></p>

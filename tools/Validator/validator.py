@@ -63,11 +63,12 @@ class validator:
     def __init__(self,sysfname,idxfname):
         self.sysname=sysfname
         self.idxname=idxfname
+        self.condition=''
     @abstractmethod
-    def nameCheck(self): pass
+    def nameCheck(self,NCID): pass
     @abstractmethod
-    def contentCheck(self,identify=False,neglectMask=False): pass
-    def fullCheck(self,nc,identify,neglectMask):
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0): pass
+    def fullCheck(self,nc,identify,NCID,neglectMask,reffname=0):
         #check for existence of files
         eflag = False
         if not os.path.isfile(self.sysname):
@@ -81,7 +82,7 @@ class validator:
 
         #option to do a namecheck
         if nc:
-            if self.nameCheck() == 1:
+            if self.nameCheck(NCID) == 1:
                 return 1
 
         printq("Checking if index file is a pipe-separated csv...")
@@ -94,13 +95,13 @@ class validator:
 
         printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
 
-        if self.contentCheck(identify,neglectMask) == 1:
+        if self.contentCheck(identify,neglectMask,reffname) == 1:
             return 1
         return 0
 
 
 class SSD_Validator(validator):
-    def nameCheck(self):
+    def nameCheck(self,NCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
@@ -117,6 +118,7 @@ class SSD_Validator(validator):
             return 1
     
         taskFlag = 0
+        ncidFlag = 0
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
@@ -126,7 +128,7 @@ class SSD_Validator(validator):
             printq("ERROR: There are not enough arguments to verify in the name.")
             return 1
         elif len(arrSplit) > 7:
-            printq("ERROR: The team name must not include characters + or _",True)
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
 
         team = arrSplit[0]
@@ -136,23 +138,26 @@ class SSD_Validator(validator):
         self.condition = arrSplit[4]
         sys = arrSplit[5]
         version = arrSplit[6]
-    
-        if ('+' in team) or (team == ''):
-            printq("ERROR: The team name must not include characters + or _",True)
+
+        if ncid != NCID:
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
+            ncidFlag = 1
+        if team == '':
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
         task = task.lower()
         if (task != 'manipulation'): # and (task != 'provenance') and (task != 'provenancefiltering'):
             printq('ERROR: What kind of task is ' + task + '? It should be manipulation!',True) #, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
-        if (taskFlag == 0) and (teamFlag == 0):
+        if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
             return 0
         else:
             printq('The name of the file is not valid. Please review the requirements.',True)
             return 1 
 
-    def contentCheck(self,identify,neglectMask):
+    def contentCheck(self,identify,neglectMask,reffname):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -161,22 +166,33 @@ class SSD_Validator(validator):
                  'ProbeHeight':np.int64}
         idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
+        idxmini = 0
+
+        if reffname is not 0:
+            #filter idxfile based on ProbeFileID's in reffile
+            reffile = pd.read_csv(reffname,sep='|',na_filter=False)
+            gt_ids = reffile.query("IsTarget=='Y'")['ProbeFileID'].tolist()
+            idxmini = idxfile.query("ProbeFileID=={}".format(gt_ids))
     
         dupFlag = 0
         xrowFlag = 0
         maskFlag = 0
         matchFlag = 0
         
-        if sysfile.shape[1] < 2:
-            printq("ERROR: The number of columns of the system output file must be at least 2. Are you using '|' to separate your columns?",True)
+        if sysfile.shape[1] < 3:
+            printq("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?",True)
             return 1
 
         sysHeads = list(sysfile.columns)
         allClear = True
-#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","OptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore"]
+#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
+        truelist = ["ProbeFileID","ConfidenceScore","IsOptOut"]
+        testMask = False
+        if self.condition in ["ImgOnly","ImgMeta"]:
+            truelist.append("OutputProbeMaskFileName")
+            testMask = True 
 
-        for i in range(0,len(truelist)):
+        for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
             if not (truelist[i] in sysHeads):
 #                headlist = []
@@ -191,15 +207,15 @@ class SSD_Validator(validator):
         if not allClear:
             return 1
 
-        testMask = False
-        if "OutputProbeMaskFileName" in sysHeads: #TODO: turn this into an option
-            testMask = True
-        
+        optOut=False
+        if "IsOptOut" in sysHeads:
+            optOut=True
+
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
-            rowlist = range(0,sysfile.shape[0])
+            rowlist = xrange(sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: "
                     + ' ,'.join(list(map(str,sysfile['ProbeFileID'][sysfile.duplicated()])))    + " at row(s): "
                     + ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).",True)
@@ -224,11 +240,17 @@ class SSD_Validator(validator):
 
         sysPath = os.path.dirname(self.sysname)
     
-        for i in range(0,sysfile.shape[0]):
-            if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
-                printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
+        for i in xrange(sysfile.shape[0]):
+            probeFileID = sysfile['ProbeFileID'][i]
+            if not (probeFileID in idxfile['ProbeFileID'].unique()):
+                printq("ERROR: {} does not exist in the index file.".format(probeFileID),True)
                 matchFlag = 1
                 continue
+            elif reffname is not 0:
+                if not (probeFileID in idxmini['ProbeFileID'].unique()):
+                    printq("{} is not actually manipulated. Neglecting mask validation.".format(probeFileID))
+                    continue
+
 #                printq("The contents of your file are not valid!",True)
 #                return 1
             if not (idxfile['ProbeFileID'][i] in sysfile['ProbeFileID'].unique()):
@@ -242,7 +264,12 @@ class SSD_Validator(validator):
                 if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                     printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
                     continue
-                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,sysfile['OutputProbeMaskFileName'][i]),sysfile['ProbeFileID'][i],idxfile,identify)
+                #if IsOptOut is present
+                if optOut:
+                    if sysfile['IsOptOut'][i] == 'Y':
+                        continue
+
+                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,probeOutputMaskFileName),probeFileID,idxfile,identify)
         
         #final validation
         if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
@@ -252,7 +279,7 @@ class SSD_Validator(validator):
             return 1
 
 class DSD_Validator(validator):
-    def nameCheck(self):
+    def nameCheck(self,NCID):
         printq('Validating the name of the system file...')
 
         sys_pieces = self.sysname.rsplit('.',1)
@@ -269,11 +296,19 @@ class DSD_Validator(validator):
             return 1
     
         taskFlag = 0
+        ncidFlag = 0
         teamFlag = 0
         sysPath = os.path.dirname(self.sysname)
         sysfName = os.path.basename(self.sysname)
 
         arrSplit = sysfName.split('_')
+        if len(arrSplit) < 7:
+            printq("ERROR: There are not enough arguments to verify in the name.")
+            return 1
+        elif len(arrSplit) > 7:
+            printq("ERROR: The team name must not include underscores.",True)
+            teamFlag = 1
+
         team = arrSplit[0]
         ncid = arrSplit[1]
         data = arrSplit[2]
@@ -282,16 +317,20 @@ class DSD_Validator(validator):
         sys = arrSplit[5]
         version = arrSplit[6]
     
-        if '+' in team or team == '':
-            printq("ERROR: The team name must not include characters + or _",True)
+        if team == '':
+            printq("ERROR: The team name must not include underscores.",True)
             teamFlag = 1
     
+        if ncid != NCID:
+            printq("ERROR: The NCID must be {}.".format(NCID),True)
+            ncidFlag = 1
+
         task = task.lower()
         if task != 'splice':
             printq('ERROR: What kind of task is ' + task + '? It should be splice!',True)
             taskFlag = 1
     
-        if (taskFlag == 0) and (teamFlag == 0):
+        if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
             printq('The name of this file is valid!')
             return 0
         else:
@@ -299,7 +338,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self,identify,neglectMask):
+    def contentCheck(self,identify,neglectMask,reffname):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -325,13 +364,29 @@ class DSD_Validator(validator):
                 printq("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(s_len,i_len),True)
                 xrowFlag = 1
 
-        with open(self.idxname) as idxfile:
-            for i,l in enumerate(idxfile):
-                if i==0:
-                    i_headnames = l.split('|')
-                    for i,h in enumerate(i_headnames):
-                        i_heads[h.replace('\n','')] = i
-                else: break
+        r_files = {}
+        if reffname is not 0:
+            #TODO: filter idxfile based on ProbeFileID's in reffile
+            with open(reffname) as reffile:
+                r_heads = {}
+                for idx,l in enumerate(reffile):
+                    #print "Process index " + str(idx) + " " + l
+                    if idx == 0:
+                        r_headnames = l.rstrip().split('|')
+                        for i,h in enumerate(r_headnames):
+                            r_heads[h] = i
+                    else:
+                        r_data = l.rstrip().replace("\"","").split('|')
+                        r_files[r_data[r_heads['ProbeFileID']] + ":" + r_data[r_heads['DonorFileID']]] = r_data[r_heads['IsTarget']]
+            
+
+#        with open(self.idxname) as idxfile:
+#            for i,l in enumerate(idxfile):
+#                if i==0:
+#                    i_headnames = l.split('|')
+#                    for i,h in enumerate(i_headnames):
+#                        i_heads[h.replace('\n','')] = i
+#                else: break
 
         idxPath = os.path.dirname(self.idxname)
         ind = {}
@@ -351,6 +406,7 @@ class DSD_Validator(validator):
 
         sysPath = os.path.dirname(self.sysname)
         testMask = False
+        optOut = False
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 printq("Process {} ".format(idx) + l)
@@ -361,10 +417,10 @@ class DSD_Validator(validator):
                     #header checking
                     if len(s_headnames) < 5:
                         #check number of headers
-                        printq("ERROR: The number of columns of the system output file must be at least 5. Are you using '|' to separate your columns?",True)
+                        printq("ERROR: The number of columns of the system output file must be at least 6. Are you using '|' to separate your columns?",True)
                         return 1
                     allClear = True
-                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
+                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","IsOptOut"]
                     for th in truelist:
                         allClear = allClear and (th in s_headnames)
                         if not (th in s_headnames):
@@ -374,39 +430,51 @@ class DSD_Validator(validator):
             
                     if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
                         testMask = True
+                    if "IsOptOut" in s_headnames:
+                        optOut = True
 
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
                         s_heads[h] = i
-                else:
-                    #for non-headers
-                    l_content = l.rstrip().replace("\"","").split('|')
-                    probeID = l_content[s_heads['ProbeFileID']]
-                    donorID = l_content[s_heads['DonorFileID']]
-                    key = probeID + ":" + donorID
+                    continue
 
-                    #try catch the key lookup
-                    try:
-                        indRec = ind[key]
-                    except KeyError:
-                        printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
-                        keyFlag = 1
+                #for non-headers
+                l_content = l.rstrip().replace("\"","").split('|')
+                probeID = l_content[s_heads['ProbeFileID']]
+                donorID = l_content[s_heads['DonorFileID']]
+                key = probeID + ":" + donorID
+
+                #try catch the key lookup
+                try:
+                    indRec = ind[key]
+                except KeyError:
+                    printq("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID),True)
+                    keyFlag = 1
+                    continue
+
+                if reffname is not 0:
+                    if r_files[key] == 'N':
+                        printq("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
                         continue
 
-                    if testMask and not neglectMask:
-                        probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
-                        donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
-    
-                        if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
-                            printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                if testMask and not neglectMask:
+                    probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
+                    donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
+
+                    if (probeOutputMaskFileName == '') or (donorOutputMaskFileName == ''):
+                        printq("At least one mask for the pair (" + probeID + "," + donorID + ") appears to be absent. Skipping this pair.")
+                        continue
+
+                    if optOut:
+                        if l_content[s_heads['IsOptOut']] == 'Y':
                             continue
-     
-                        probeWidth = int(indRec[i_heads['ProbeWidth']])
-                        probeHeight = int(indRec[i_heads['ProbeHeight']])
-                        donorWidth = int(indRec[i_heads['DonorWidth']])
-                        donorHeight = int(indRec[i_heads['DonorHeight']])
-    
-                        maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
+ 
+                    probeWidth = int(indRec[i_heads['ProbeWidth']])
+                    probeHeight = int(indRec[i_heads['ProbeHeight']])
+                    donorWidth = int(indRec[i_heads['DonorWidth']])
+                    donorHeight = int(indRec[i_heads['DonorHeight']])
+
+                    maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -417,11 +485,11 @@ class DSD_Validator(validator):
 
 #                     if dupFlag == 0:
 #                         #only point in checking masks is if index file doesn't have duplicates in the first place
-    
+
 #                         os.system("grep -i {} {} > tmp.txt".format(probeID,self.idxname)) #grep to temporary file
 #                         os.system("grep -i {} tmp.txt > row.txt".format(donorID))
 #                         qlen = 0
-    
+
 #                         with open("row.txt") as row:
 #                             qlen = sum(1 for m in row)
 #                         if qlen > 0:
@@ -459,7 +527,7 @@ class DSD_Validator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-    def contentCheck_0(self,identify,neglectMask):
+    def contentCheck_0(self,identify,neglectMask,reffname):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -485,7 +553,7 @@ class DSD_Validator(validator):
         #truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","OptOut"]
         truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
 
-        for i in range(0,len(truelist)):
+        for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
             if not (truelist[i] in sysHeads):
     #            headlist = []
@@ -501,7 +569,7 @@ class DSD_Validator(validator):
             return 1
         
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
-            rowlist = range(0,sysfile.shape[0])
+            rowlist = xrange(sysfile.shape[0])
             printq("ERROR: Your system output contains duplicate rows for ProbeFileID's: " + ' ,'.join(list(sysfile['ProbeFileID'][sysfile.duplicated()])) + " at row(s): " +\
                                      ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).",True)
             dupFlag = 1
@@ -532,7 +600,7 @@ class DSD_Validator(validator):
         
         sysPath = os.path.dirname(self.sysname)
     
-        for i in range(0,sysfile.shape[0]):
+        for i in xrange(sysfile.shape[0]):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 printq("ERROR: " + sysfile['ProbeFileID'][i] + " does not exist in the index file.",True)
                 printq("The contents of your file are not valid!",True)
@@ -547,13 +615,21 @@ class DSD_Validator(validator):
                 return 1
 
             #check mask validation
+            probeFileID = sysfile['ProbeFileID'][i]
+            donorFileID = sysfile['DonorFileID'][i]
             probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
             donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
+            idxStats = idxfile.query("ProbeFileID=='{}' && DonorFileID=='{}'".format(probeFileID,donorFileID))
+            idxProbeWidth = idxStats['ProbeWidth'][0]
+            idxProbeHeight = idxStats['ProbeHeight'][0]
+            idxDonorWidth = idxStats['DonorWidth'][0]
+            idxDonorHeight = idxStats['DonorHeight'][0]
 
             if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-                printq("At least one mask for the pair (" + sysfile['ProbeFileID'][i] + "," + sysfile['DonorFileID'][i] + ") appears to be absent. Skipping this pair.")
+                printq("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeFileID,donorFileID))
                 continue
-            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
+#            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
+            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,i,identify)
         
         #final validation
         if maskFlag==0:
@@ -752,6 +828,8 @@ if __name__ == '__main__':
     help='required index file',metavar='character')
     parser.add_argument('-s','--inSys',type=str,default=None,\
     help='required system output file',metavar='character')
+    parser.add_argument('-r','--inRef',type=str,default=0,\
+    help='optional reference file for filtration',metavar='character')
     parser.add_argument('-vt','--valtype',type=str,default=None,\
     help='required validator type',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
@@ -762,6 +840,8 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-nm','--neglectMask',action="store_true",\
     help="neglect mask dimensionality validation.")
+    parser.add_argument('--ncid',type=str,default="NC17",\
+    help="the NCID to validate against.")
 
     if len(sys.argv) > 1:
 
@@ -786,11 +866,11 @@ if __name__ == '__main__':
 
         if args.valtype == 'SSD':
             ssd_validation = SSD_Validator(args.inSys,args.inIndex)
-            ssd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
+            exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef))
 
         elif args.valtype == 'DSD':
             dsd_validation = DSD_Validator(args.inSys,args.inIndex)
-            dsd_validation.fullCheck(args.nameCheck,args.identify,args.neglectMask)
+            exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef))
 
         else:
             print("Validation type must be 'SSD' or 'DSD'.")
