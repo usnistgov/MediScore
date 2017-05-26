@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>DetectionScorerReadMe</title>
+<title>DMRenderReadMe</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -11751,7 +11751,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Detection-Scorer">Detection Scorer<a class="anchor-link" href="#Detection-Scorer">&#182;</a></h1>
+<h1 id="DM-Render">DM Render<a class="anchor-link" href="#DM-Render">&#182;</a></h1><h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -11760,18 +11760,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of two distinctive detection tasks, namely 1) Manipulation Detection and 2) Splice Detection. The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image.  Please refer the detailed information in the document "Nimble Challenge 2017 Evaluation Data and Tool" </p>   
-<p>The script calculates performance measures of AUC (Area Under Curve) and EER (Equal Error Rate)
-based on a system's output (e.g., confidence scores) for the tasks described above. The output is a report table (CSV) that includes the measures of AUC, EER, and AUC_CI (confidence interval for AUC), and a graphical plot (PDF) that supports either ROC (receiver operating characteristic) or DET (detection error tradeoff) for algorithm performance results. In addition, this script allows the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries.</p>
+<p>This script loads DM (dump) files and renders plots. In addition, the code generates a JSON file that allows user to customize curves, points, and legend.</p>
 </div>
 </div>
 </div>
@@ -11791,7 +11780,7 @@ based on a system's output (e.g., confidence scores) for the tasks described abo
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Syntax:
 <code>
-python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
+python DMRender.py [OPTIONS] -i input
 </code></p>
 
 </div>
@@ -11802,29 +11791,7 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The command-line options for detection scorer can be categorized as follows:</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Task-Type-Options:">Task Type Options:<a class="anchor-link" href="#Task-Type-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-t --task [manipulation, splice]</p>
-<ul>
-<li>Define the target manipulation task type for evaluation (default = manipulation). This is a value of the "TaskID" column in the index file. </li>
-</ul>
+<p>The command-line options for DMRender can be categorized as follows:</p>
 
 </div>
 </div>
@@ -11843,125 +11810,9 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>--refDir</p>
+<p>-i --input</p>
 <ul>
-<li>Specify the reference and index data path, for example "/NC2016_Test" (default = .)</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-r --inRef</p>
-<ul>
-<li>Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information</li>
-<li>For example, the fields are: TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|...             </li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-x --inIndex</p>
-<ul>
-<li>Specify the index CSV file</li>
-<li>For example, the fields are: TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--sysDir</p>
-<ul>
-<li>Specify the system output data path, for example "mysysoutput/" (default = .) </li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-s --inSys</p>
-<ul>
-<li>Specify the CSV file of the system performance result formatted according to the specification</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Metric-Options:">Metric Options:<a class="anchor-link" href="#Metric-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--farStop</p>
-<ul>
-<li>Specify the stop point of FAR for calculating partial AUC. The default (1) provides the full AUC value.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--ci</p>
-<ul>
-<li>Calculate the lower and upper confidence interval for AUC if this option is specified. The option will slowdown the speed due to the bootstrapping method.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--ciLevel</p>
-<ul>
-<li>Specify the confidence level (range [0.8, 0.99]) to calculate the lower and upper confidence interval for AUC. The default is 0.9. </li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--dLevel</p>
-<ul>
-<li>Define the lower and upper exclusions (range [0, 0.3]) for d-prime calculation. The default is 0.
-Note that the d-prime specified in the plot is the maximum d-prime.</li>
+<li>Specify either the '.dm' or '.txt' file. The '.txt' file should contain the list of '.dm' files--note that if you specify the colon ':' after the file name, for example, 'NC16_002_query_0.dm:Splice', the string after the colon will be the legend label (e.g., Spice) for the plot. Otherwise, the legend will be the file name including the path.            </li>
 </ul>
 
 </div>
@@ -11983,48 +11834,7 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--outRoot</p>
 <ul>
-<li>Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.pdf" and the table "NIST_001_report.csv" in the "test" folder (default =.)</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--dump</p>
-<ul>
-<li>Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.<pre></li>
-<li>Dump file output: NIST_001_query_0.dm, NIST_001_query_1.dm, ...
-&lt;/pre&gt;</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--outMeta</p>
-<ul>
-<li>Save the CSV file with the system output with minimal metadata.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--outAllmeta</p>
-<ul>
-<li>Save the CSV file with the system output with all available metadata.</li>
+<li>Specify the report output path and the file name prefix for saving the plot(s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.pdf"(default =.)</li>
 </ul>
 
 </div>
@@ -12096,19 +11906,6 @@ Note that the d-prime specified in the plot is the maximum d-prime.</li>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>--plotType [det, roc]</p>
-<ul>
-<li>Define the plot type (default = roc)</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <p>--display</p>
 <ul>
 <li>Display a window with the plot (s) on the command-line if this option is specified (default = False) </li>
@@ -12150,158 +11947,26 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Custom-Plot-Options:">Custom Plot Options:<a class="anchor-link" href="#Custom-Plot-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--configPlot</p>
+<p>--curveOption</p>
 <ul>
-<li>Open a JSON file that allows the user to customize the plot (e.g. change the title font size) by augmenting the json files located in the "plotJsonFiles" folder (e.g., plotJsonFiles/plot_options.json).</li>
+<li>Generate a JSON file for defalut curve options in the "plotJsonFiles" folder (e.g., plotJsonFiles/curve_options.json).</li>
 </ul>
 <p>An example:</p>
-<div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;DET&quot;</span><span class="p">,</span>
- <span class="nt">&quot;plot_type&quot;</span><span class="p">:</span> <span class="s2">&quot;DET&quot;</span><span class="p">,</span>
- <span class="nt">&quot;title_fontsize&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
- <span class="nt">&quot;xticks_size&quot;</span><span class="p">:</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span>
- <span class="nt">&quot;yticks_size&quot;</span><span class="p">:</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span>
- <span class="nt">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;False Alarm Rate [%]&quot;</span><span class="p">,</span>
- <span class="nt">&quot;xlabel_fontsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
- <span class="nt">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;Miss Detection Rate [%]&quot;</span><span class="p">,</span>
- <span class="nt">&quot;ylabel_fontsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><span class="p">[{</span><span class="nt">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;solid&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;marker&quot;</span><span class="p">:</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;markersize&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+ <span class="nt">&quot;markerfacecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;antialiased&quot;</span><span class="p">:</span> <span class="s2">&quot;False&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;testcases/NC17_004_query_0.dm&quot;</span><span class="p">},</span>
+ <span class="p">{</span><span class="nt">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;linestyle&quot;</span><span class="p">:</span> <span class="s2">&quot;dashed&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;marker&quot;</span><span class="p">:</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;markersize&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+ <span class="nt">&quot;markerfacecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;antialiased&quot;</span><span class="p">:</span> <span class="s2">&quot;False&quot;</span><span class="p">,</span>
+ <span class="nt">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;testcases/NC17_004_query_1.dm&quot;</span><span class="p">}]</span>
 </pre></div>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="OptOut-Options:">OptOut Options:<a class="anchor-link" href="#OptOut-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--optOut</p>
-<ul>
-<li>Evaluate algorithm performance on trials where IsOptOut values are 'N'.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Performance-Evaluation-by-Query-Options:">Performance Evaluation by Query Options:<a class="anchor-link" href="#Performance-Evaluation-by-Query-Options:">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The set of the following options allow the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries. These options utilize Pandas’ queries to produce scoring reports using the metadata (e.g., Operation| Color| Purpose| OperationArgument| ...) within the reference file to subset/partition of the scored data.  There are three types of analysis supported:</p>
-<ul>
-<li>Query (-q --query): this option allows the user to specify multiple queries. Each query filters both target and non-target trials and then processes one scoring run of the system output to generate the requested scoring report.</li>
-<li>Query for partitions (-qp --queryPartition): this option allows the user to specify one query. The query separates the data set into M partitions by filtering both target and non-target trials and processes one or multiple scoring runs of the system output to generate the requested scoring report.</li>
-<li>Query for selective manipulations (-qm --queryManipulation): this option allows the user to specify multiple queries. Each query restricts filtering to target trials only (while using all non-target trials) to generate the requested scoring report.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-q --query</p>
-<ul>
-<li>Evaluate algorithm performance selecting the targets and non-targets via a query. Multiple queries can be used. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
-<li>Syntax : -q "query1" "query2" "query3" ... 
-<pre><code>- The syntax is the same with Pandas' query syntax. Please see the detailed query rule in the website: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-query.
-Examples:
-% -q "Collection==['Nimble-SCI']" =&gt; 1 query
-% -q "Collection==['Nimble-SCI'] and PostProcessing=['rescale']" =&gt; 1 query
-% -q "Collection==['Nimble-SCI','Nimble-WEB']" "PostProcessing=['rescale']" "200&lt;ProbeWidth&lt;=3000" =&gt; 3 queries</code></pre>
-</li>
-<li>Output: 
-<pre><code>- CSV report: NIST_001_q_query0.csv, NIST_001_q_query1.csv, ...
-- PDF plot: NIST_001_roc_all.pdf
-- DM file (using --dump): NIST_001_query0.dm, NIST_001_query1.dm, ...</code></pre>
-</li>
-</ul>
-</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-qp --queryPartition</p>
-<ul>
-<li>Evaluate algorithm performance partitioning the dataset via a query.  The partitions are automatically determined based on the metadata factors identified in the query.  Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves.<ul>
-<li>Syntax : -fp "query"
-<pre><code>- The query syntax only allows the three operators "==[]", "&lt;", and "&lt;=".
-Examples: 
-% -qp "Collection==['Nimble-SCI']" =&gt; 1 partition
-% -qp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale']" =&gt; 2 partitions
-% -qp "Collection==['Nimble-SCI','Nimble-WEB'] &amp; PostProcessing=['rescale','noise']" =&gt; 4 partitions</code></pre>
-</li>
-<li>Output: 
-<pre><code>- CSV report: NIST_001_qp_query.csv
-- PDF plot: NIST_001_roc_all.pdf
-- DM file (using --dump): NIST_001_query0.dm, NIST_001_query1.dm, ...</code></pre>
-</li>
-</ul>
-</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-qm --queryManipulation</p>
-<ul>
-<li>This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') while all non-target trials are used. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.<ul>
-<li>Syntax : -qm "query1" "query2" "query3" ... 
-<pre><code>- The syntax is the same with Pandas' query syntax, 
- note that your query will be converted as to ("query" and IsTarget == ['Y']) or IsTarget == ['N'])
-Examples:
-% -qm "Purpose==['remove']" =&gt; 1 query
-% -qm "Operation==['PasteSplice']" "Operation==['FillContentAwareFill']" =&gt; 2 query
-% -qm "Purpose==['remove']" "Purpose==['add']" "Purpose==['splice']"=&gt; 3 queries</code></pre>
-</li>
-<li>Output: 
-<pre><code>- CSV report: NIST_001_qm_query0.csv, NIST_001_qm_query1.csv, ...
-- PDF plot: NIST_001_roc_all.pdf
-- DM file (using --dump): NIST_001_query0.dm, NIST_001_query1.dm, ...</code></pre>
-</li>
-</ul>
-</li>
-</ul>
 
 </div>
 </div>
@@ -12320,110 +11985,12 @@ Examples:
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="NC2016-Dataset-Testcases">NC2016 Dataset Testcases<a class="anchor-link" href="#NC2016-Dataset-Testcases">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="*-Manipulation-Task">* Manipulation Task<a class="anchor-link" href="#*-Manipulation-Task">&#182;</a></h4>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Full scoring: rendering the ROC curve and the report table,
+<li>Rendering the ROC curve with the '.dm' file
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_001 --ci --display
+python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --outRoot ./testcases/dump_test1 --display
 </code>
-<img src="./notebookImgs/NC16_001_roc_all1.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="kn">as</span> <span class="nn">di</span>
-<span class="c1"># This line will hide code by default when the notebook is exported as HTML</span>
-<span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
-<span class="n">df1</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_001_all.csv&quot;</span><span class="p">)</span>
-<span class="n">df1</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt"></div>
-
-<div class="output_html rendered_html output_subarea ">
-<script>jQuery(function() {if (jQuery("body.notebook_app").length == 0) { jQuery(".input_area").toggle(); jQuery(".prompt").toggle();}});</script>
-</div>
-
-</div>
-
-<div class="output_area"><div class="prompt output_prompt">Out[1]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0.517917</td>
-      <td>1</td>
-      <td>0.516901</td>
-      <td>0.492906</td>
-      <td>0.54328</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Full scoring: rendering DET curve:
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_002 --plotType det --display
-</code>
-<img src="./notebookImgs/NC16_002_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/dump_test1_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12435,11 +12002,11 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>OptOut (IsOptOut =='N') scoring
+<li>Rendering the ROC curve with the '.txt' file (with the colon ':')
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv --outRoot ./testcases/NC16_101 --optOut --dLevel 0.1 --ci --display
+python DMRender.py -i ../../data/test_suite/dmRenderTests/dm_list_with_colon.txt --outRoot ./testcases/dump_test2 --plotTitle DMRenderTest --plotSubtitle WithColon -c --display
 </code>
-<img src="./notebookImgs/NC16_101_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/dump_test2_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12451,675 +12018,11 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Query (-q) with one query
+<li>Rendering the ROC curve with the '.txt' file (without the colon ':')
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_003 <b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> --ci --display
+python DMRender.py -i ../../data/test_suite/dmRenderTests/dm_list_without_colon.txt --outRoot ./testcases/dump_test3 --plotTitle DMRenderTest --plotSubtitle WithoutColon -c --display
 </code>
-<img src="./notebookImgs/NC16_003_roc_all.png" alt="ROC3" width="700" height="600" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_q_query_0_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df2</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[2]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>QUERY</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Collection==['Nimble-SCI','Nimble-WEB']</td>
-      <td>0.517917</td>
-      <td>1</td>
-      <td>0.516901</td>
-      <td>0.492906</td>
-      <td>0.54328</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query (-q) with two queries
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_004 <b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"  "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
-</code>
-<img src="./notebookImgs/NC16_004_roc_all.png" alt="ROC4" width="700" height="600"  align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_0_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df3</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>QUERY</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Collection==['Nimble-SCI'] &amp; 300 &lt;= ProbeWidth</td>
-      <td>0.462995</td>
-      <td>1</td>
-      <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_1_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df4</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>QUERY</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Collection==['Nimble-WEB'] &amp; 300 &lt;= ProbeWidth</td>
-      <td>0.556042</td>
-      <td>1</td>
-      <td>0.479198</td>
-      <td>0.523205</td>
-      <td>0.592781</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query for partition (-qp) with one partition
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_005 <b>-qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"</b> --ci --display
-</code>
-<img src="./notebookImgs/NC16_005_roc_all.png" alt="ROC4" width="700" height="600" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_qp_query_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df5</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Unnamed: 0</th>
-      <th>Collection</th>
-      <th>ProbeWidth</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Partition_0</td>
-      <td>'Nimble-SCI'</td>
-      <td>300&lt;=ProbeWidth</td>
-      <td>0.462995</td>
-      <td>1</td>
-      <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query for partition (-qp) with two partitions
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_006 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
-</code>
-<img src="./notebookImgs/NC16_006_roc_all.png" alt="ROC6" width="700" height="600" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_qp_query_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df6</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Unnamed: 0</th>
-      <th>Collection</th>
-      <th>ProbeWidth</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Partition_0</td>
-      <td>'Nimble-SCI'</td>
-      <td>300&lt;=ProbeWidth</td>
-      <td>0.462995</td>
-      <td>1</td>
-      <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Partition_1</td>
-      <td>'Nimble-WEB'</td>
-      <td>300&lt;=ProbeWidth</td>
-      <td>0.556042</td>
-      <td>1</td>
-      <td>0.479198</td>
-      <td>0.523205</td>
-      <td>0.592781</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query for selective manipulation (-qm) with two queries
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_010 <b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> --display
-</code>
-<img src="./notebookImgs/NC16_010_roc_all.png" alt="ROC111" width="700" height="600" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_0_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df10</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>QUERY</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Collection==['Nimble-SCI'] &amp; IsManipulationTyp...</td>
-      <td>0.4525</td>
-      <td>1</td>
-      <td>0.594643</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_1_report.csv&quot;</span><span class="p">)</span>
-<span class="n">df11</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>QUERY</th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Collection==['Nimble-WEB'] &amp; IsManipulationTyp...</td>
-      <td>0.590206</td>
-      <td>1</td>
-      <td>0.436607</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>--multiFigs with the query option
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_007 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs</b> --ci --display
-</code>
-<img src="./notebookImgs/NC16_007_roc_combine.png" alt="ROC7" width="1000" height="700" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="*-Splice-Task">* Splice Task<a class="anchor-link" href="#*-Splice-Task">&#182;</a></h4>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Note that the following result may not be consistent with your result due to the number inconsistency of NC2016 data.
-<code>
-python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_100 --ci --display
-</code>
-<img src="./notebookImgs/NC16_100_roc_all.png" alt="ROC8" width="500" height="400" align="left"></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
-<span class="n">df6</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[9]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0.872003</td>
-      <td>1</td>
-      <td>0.2148</td>
-      <td>0.853012</td>
-      <td>0.88796</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="NC2017-Dataset-Testcases">NC2017 Dataset Testcases<a class="anchor-link" href="#NC2017-Dataset-Testcases">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="*-Manipulation-Task">* Manipulation Task<a class="anchor-link" href="#*-Manipulation-Task">&#182;</a></h4>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Full scoring: rendering ROC curve
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_001 --ci --display
-</code>
-<img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
-<span class="n">df7</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt output_prompt">Out[10]:</div>
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0.679533</td>
-      <td>1</td>
-      <td>0.328889</td>
-      <td>0.620826</td>
-      <td>0.735491</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><b>The tables are omitted from now on.</b></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query (-q) with two queries
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
-</code>
-<img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/dump_test3_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -13131,11 +12034,11 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Query for selective manipulation (-qm) with the factor "Purpose"
+<li>OptOut case dm file
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
+python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_101_query_0.dm --outRoot ./testcases/dump_test4 --plotTitle "DMRender Optout Test" -c --display
 </code>
-<img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/dump_test4_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -13147,45 +12050,12 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Query for selective manipulation (-qm) with the factor "OperationArgument"
+<li>Displaying the legend without trial numbers
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
+python DMRender.py -i ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm --outRoot ./testcases/dump_test5 --plotTitle "DMRender No Trial Number Test" --display --noNum
 </code>
-<img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/dump_test5_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Query for selective manipulation (-qm) with the mixed of factors
-<code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
-</code>
-<img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Disclaimer">Disclaimer<a class="anchor-link" href="#Disclaimer">&#182;</a></h3><p>This software was developed at the National Institute of Standards
-and Technology (NIST) by employees of the Federal Government in the
-course of their official duties. Pursuant to Title 17 Section 105
-of the United States Code, this software is not subject to copyright
-protection and is in the public domain. NIST assumes no responsibility
-whatsoever for use by other parties of its source code or open source
-server, and makes no guarantees, expressed or implied, about its quality,
-reliability, or any other characteristic.</p>
 
 </div>
 </div>

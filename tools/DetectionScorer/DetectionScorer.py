@@ -167,7 +167,7 @@ if __name__ == '__main__':
                             help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
 
         parser.add_argument('--noNum', action='store_true',
-                            help="Do not print the number of trials and non-trials on the legend of the plot")
+                            help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
         #Note that this requires different mutually exclusive gropu to use both -qm and -qn at the same time
 #        parser.add_argument('-qn', '--queryNonManipulation',
@@ -427,23 +427,26 @@ if __name__ == '__main__':
         Curve_opt = OrderedDict([('color', 'red'),
                                  ('linestyle', 'solid'),
                                  ('marker', '.'),
-                                 ('markersize', 8),
+                                 ('markersize', 6),
                                  ('markerfacecolor', 'red'),
                                  ('label',None),
                                  ('antialiased', 'False')])
 
         # Creating the list of curves options dictionnaries (will be automatic)
         opts_list = list()
-        colors = ['red','blue','green','cyan','magenta','yellow','black']
+        colors = ['red','blue','green','cyan','magenta','yellow','black','sienna','navy','grey','darkorange', 'c', 'peru','y','pink','purple', 'lime', 'magenta', 'olive', 'firebrick']
         linestyles = ['solid','dashed','dashdot','dotted']
+        markerstyles = ['.','+','x','d','*','s','p']
         # Give a random rainbow color to each curve
         #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
         color = cycle(colors)
         lty = cycle(linestyles)
+        mkr = cycle(markerstyles)
         for i in range(len(DM_List)):
             new_curve_option = OrderedDict(Curve_opt)
             col = next(color)
             new_curve_option['color'] = col
+            new_curve_option['marker'] = next(mkr)
             new_curve_option['markerfacecolor'] = col
             new_curve_option['linestyle'] = next(lty)
             opts_list.append(new_curve_option)
@@ -488,9 +491,9 @@ if __name__ == '__main__':
         # save multiple figures if multi_fig == True
         if isinstance(myfigure,list):
             for i,fig in enumerate(myfigure):
-                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf')
+                fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
         else:
-            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf')
+            myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
 
     # Debugging mode
     else:
