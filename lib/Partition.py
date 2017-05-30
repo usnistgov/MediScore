@@ -150,9 +150,12 @@ class Partition:
 #                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
 
             sub_df = df.query(query)
+#            print("sub_df data size {}".format(sub_df.shape))
             #print("Removing duplicates ...\n")
-            new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
-            df_list.append(new_df)
+            #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
+#            new_df = sub_df.drop_duplicates('ProbeFileID')
+#            print("new_df data size {}".format(new_df.shape))
+            df_list.append(sub_df)
 
         return df_list
 

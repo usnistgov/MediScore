@@ -283,7 +283,7 @@ if __name__ == '__main__':
             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
             index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
 #            print("sys data size {}".format(mySys.shape))
-#            print("m data size {}".format(index_m_df.shape))
+#            print("ref_index_m data size {}".format(index_m_df.shape))
 
             if args.outAllmeta: #save all metadata for analysis purpose
                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
@@ -298,7 +298,8 @@ if __name__ == '__main__':
         elif args.task in ['splice']:
             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
             index_m_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
-            #print(list(pm_df))
+#            print("sys data size {}".format(mySys.shape))
+#            print("ref_index_m data size {}".format(index_m_df.shape))
 
             if args.outAllmeta: #save all metadata for analysis purpose
                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
@@ -332,6 +333,8 @@ if __name__ == '__main__':
                     jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
                     # merge the dataframes above
                     index_m_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
+                    #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
+                    index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
             #don't need JTJoin and JTMask for splice?
 
             if args.query:
