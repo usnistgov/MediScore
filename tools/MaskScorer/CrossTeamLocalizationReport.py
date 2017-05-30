@@ -70,6 +70,8 @@ def main():
 		help='Name of output file: [e.g. AllDryRunResults.html]. Defaults to output.html')
 	queryDBGroup.add_argument('--highlightMax', '-hl', action='store_true',
 		help='Hightlights the image/MCC for the mask with the highest MCC for each probe')
+	queryDBGroup.add_argument('--popup', '-p', action='store_true',
+		help='Creates popup image on mouseover')
 
 	#### Options for both adding to database and querying database ####
 	parser.add_argument('--dbName', '-db', type=str, default='ScoresPerImage.db',
@@ -123,9 +125,9 @@ def main():
 		
 		# Output overallResults to an HTML file
 		if args.verbose:
-			print(htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax))
+			print(htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax, args.popup))
 		else:
-			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax)
+			htmlReport(generalInfo, perExpInfo, args.outputFileName, args.sortProbes, args.sortTeams, args.highlightMax, args.popup)
 
 	sys.exit(0)
 
@@ -348,7 +350,7 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	conn.close()
 	return queryResults, perExpResults
 
-def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax):
+def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax, popup):
 	# Generates an HTML file with data from query to DB
 	
 	headers = ['Composite', 'Binarized']
@@ -429,7 +431,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 				
 				# If Scored is 'N' is an empty string, exp was not score for this particular probe
 				if experiment[2] == 'Not in Table':
-					experimentResults = '<td>Experiment/Probe not in table</td>'
+					experimentResults = '<td>Experiment/Probe combination not in table</td>'
 
 				elif experiment[2] == 'N':
 					experimentResults = '<td>Experiment was not evaluated for this probe</td>'
@@ -438,17 +440,22 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 					experimentResults = '<td>Experiment didn\'t meet query criteria</td>'
 
 				else:
-					# Highlights max value for each probe
+					experimentResults = """MCC: %s<br>
+						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
+						""" % (str(experiment[1]), experiment[3])
+
+					# If highlightMax option is used, and the experiment has the max MCC for this probe
 					if experiment[1] == maxVal and highlightMax:
-						experimentResults = """<td bgcolor="FFBB33"><b>MCC: %s</b><br>
-						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
-						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
-						""" % (str(experiment[1]), experiment[3], experiment[3])
+						experimentResults = '<td bgcolor="FFBB33">' + experimentResults
+					else: 
+						experimentResults = '<td>' + experimentResults
+
+					# Creates popup image if popup option is selected
+					if popup:
+						experimentResults = experimentResults + '<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>' % experiment[3]
 					else:
-						experimentResults = """<td>MCC: %s<br>
-						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
-						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
-						""" % (str(experiment[1]), experiment[3], experiment[3])
+						experimentResults = experimentResults + '</a></td>'
+
 				expResultsCombined.append(experimentResults)
 			
 			expsJoined = '\n\t\t'.join(expResultsCombined)
@@ -465,13 +472,22 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 					binRefMaskFilePathList.append(correctBinRefMaskFileName)
 
 					# HTML template for each row
-					result = """<tr>
-						<td>%s<br><a class="thumb" href="#"><img src="%s" alt="Compositie Mask with Color" height="228px" width="304px">
-						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
- 						<td><br><a class="thumb" href="#"><img src="%s" alt="Binarized Reference Mask" height="228px" width="304px">
- 						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
- 						%s
-					</tr>""" % (result[0], result[1], result[1], '/'.join(binRefMaskFilePathList), '/'.join(binRefMaskFilePathList), expsJoined)
+					# Creates popup image if popup option is selected
+					if popup:
+						result = """<tr>
+							<td>%s<br><a class="thumb" href="#"><img src="%s" alt="Compositie Mask with Color" height="228px" width="304px">
+							<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
+	 						<td><br><a class="thumb" href="#"><img src="%s" alt="Binarized Reference Mask" height="228px" width="304px">
+	 						<span><img src="%s" alt="" height="100%%" width="100%%"></span></a></td>
+	 						%s
+						</tr>""" % (result[0], result[1], result[1], '/'.join(binRefMaskFilePathList), '/'.join(binRefMaskFilePathList), expsJoined)
+					else:
+						result = """<tr>
+							<td>%s<br><a class="thumb" href="#"><img src="%s" alt="Compositie Mask with Color" height="228px" width="304px"></a></td>
+	 						<td><br><a class="thumb" href="#"><img src="%s" alt="Binarized Reference Mask" height="228px" width="304px"></a></td>
+	 						%s
+						</tr>""" % (result[0], result[1], '/'.join(binRefMaskFilePathList), expsJoined)
+					
 
 					resultsList.append(result)
 					break
@@ -513,7 +529,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax)
 			top: 37px; left: 37px; 
 			height: 800px;
 			width: 800px;
-			border: 3px solid purple;
+			border: 3px solid grey;
 		}
 
 		</style>
