@@ -224,7 +224,7 @@ if args.task == 'manipulation':
         #filter nan out of the below
         if len(r_df.query("Scored=='Y'").dropna()) == 0:
             #if nothing was scored, print a message and return
-            print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile. This is not an error.".format(query))
+            print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile.".format(query))
             return 0
         r_dfc = r_df.copy()
         r_dfc.loc[r_dfc.query('MCC == -2').index,'Scored'] = 'N'
@@ -600,7 +600,7 @@ if args.task == 'manipulation':
     journalData0.index = range(n_journals)
     #TODO: basic data cleanup ends here
 
-    if args.queryManipulation:
+    if factor_mode == 'qm':
         queryM = query
     else:
         queryM = ['']
@@ -610,7 +610,7 @@ if args.task == 'manipulation':
         journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
 
         m_dfc = m_df.copy()
-        if args.queryManipulation:
+        if factor_mode == 'qm':
             journalData0['Evaluated'] = pd.Series(['N']*n_journals)
         else:
             journalData0['Evaluated'] = pd.Series(['Y']*n_journals) #add column for Evaluated: 'Y'/'N'
@@ -654,7 +654,7 @@ if args.task == 'manipulation':
         
         metrics = ['NMM','MCC','BWL1','GWL1']
         a_df = 0
-        if args.queryManipulation:
+        if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
@@ -716,7 +716,7 @@ elif args.task == 'splice':
     journalData0.index = range(n_journals)
     #TODO: basic data cleanup ends here
 
-    if args.queryManipulation:
+    if factor_mode == 'qm':
         queryM = query
     else:
         queryM = ['']
@@ -726,7 +726,7 @@ elif args.task == 'splice':
         m_dfc = m_df.copy()
 
         for param in eval_pfx:
-            if args.queryManipulation:
+            if factor_mode == 'qm':
                 journalData0[param+'Evaluated'] = pd.Series(['N']*n_journals)
             else:
                 journalData0[param+'Evaluated'] = pd.Series(['Y']*n_journals)
@@ -775,7 +775,7 @@ elif args.task == 'splice':
         #filter here
         metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
         a_df = 0
-        if args.queryManipulation:
+        if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)

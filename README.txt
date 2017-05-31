@@ -277,8 +277,8 @@ HISTORY
     * Mask Scorer:
       - Introduced minor speedup for confusion measures.
       - Shrunk test cases to facilitate more frequent testing.
-      - Fixed html count for total pixels to account for pixel no-score
-
+      - Fixed html count for total pixels to account for pixel no-score.
+      - Minor fixes.
 
 CONTACT
 -------
