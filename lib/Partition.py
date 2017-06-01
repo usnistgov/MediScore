@@ -11,7 +11,7 @@ class Partition:
        It generates and stores each dataframe and their corresponding
        DetMetric objects.
     """
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1, sys_res = 'all'):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1, sys_res = 'all', task='manipulation'):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -48,7 +48,7 @@ class Partition:
             self.part_query_list = self.gen_part_query_list()
             self.n_partitions = len(self.part_values_list)
 
-        self.part_df_list = self.gen_part_df_list(dataframe)
+        self.part_df_list = self.gen_part_df_list(dataframe, task)
         self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res)
 
 
@@ -128,7 +128,7 @@ class Partition:
             List_part_query.append(''.join([x+' & ' for x in part_list])[:-3])
         return List_part_query
 
-    def gen_part_df_list(self,df):
+    def gen_part_df_list(self, df, task):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -154,9 +154,13 @@ class Partition:
 #            print("sub_df data size {}".format(sub_df.shape))
             #print("Removing duplicates ...\n")
             #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
-#            new_df = sub_df.drop_duplicates('ProbeFileID')
-#            print("new_df data size {}".format(new_df.shape))
-            df_list.append(sub_df)
+            if task == 'manipulation':
+                new_df = sub_df.drop_duplicates('ProbeFileID')
+            elif task == 'splice':
+                new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
+
+            #print("new_df data size {}".format(new_df.shape))
+            df_list.append(new_df)
 
         return df_list
 
