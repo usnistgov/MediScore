@@ -135,6 +135,7 @@ class Partition:
             This function computes and store each partition's dataframe
             generated according to its query in part_query_list.
         """
+        df = df.fillna("")
         df_list = list()
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
