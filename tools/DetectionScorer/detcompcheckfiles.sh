@@ -119,6 +119,7 @@ c1_flag4=1
 c1_flag5=1
 c1_flag6=1
 
+
 if ([ ! -e comp_NC16_C1_01_all.txt -o ! -e comp_NC16_C1_02_all.txt -o ! -e comp_NC16_C1_03_all.txt -o ! -e comp_NC17_C1_04_all.txt -o ! -e comp_NC17_C1_05_all.txt -o ! -e comp_NC16_C1_06_all.txt ]); then
   echo
   echo "DETECTION SCORER TESTS FAILED FOR CASE 1 !!! "
@@ -255,3 +256,59 @@ else
 fi
 
 
+echo
+echo "CASE 3: VALIDATING JOURNALING MASK JOIN"
+echo
+
+echo "Testing a query existed in all ProbeFileIDs - Manipulation"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2017-manipulation-ref-jt.csv -x NC2017-manipulation-index-jt.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv -qm "Operation==['PasteSplice']" --outRoot ./testcases/NC17_C3_01
+echo
+
+echo "Testing a query existed in the part of ProbeFileIDs - Manipulation"
+python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample/reference -r NC2017-manipulation-ref-jt.csv -x NC2017-manipulation-index-jt.csv --sysDir ../../data/test_suite/detectionScorerTests/sample -s D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv -qm "Operation==['FillContentAwareFill']" --outRoot ./testcases/NC17_C3_02
+echo
+
+diff testcases/NC17_C3_01_qm_query_0_report.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C3_01_qm_query_0_test.csv > comp_NC17_C3_01_all.txt
+diff testcases/NC17_C3_02_qm_query_0_report.csv ../../data/test_suite/detectionScorerTests/sample/NC17_C3_02_qm_query_0_test.csv > comp_NC17_C3_02_all.txt
+
+c3_res1="cat comp_NC17_C3_01_all.txt | grep -v CVS"
+c3_res2="cat comp_NC17_C3_02_all.txt | grep -v CVS"
+
+c3_flag1=1
+c3_flag2=1
+
+if ([ ! -e comp_NC17_C3_01_all.txt -o ! -e comp_NC17_C3_02_all.txt ]); then
+  echo
+  echo "DETECTION SCORER TESTS FAILED FOR CASE 3 !!! "
+  echo
+  exit
+fi
+
+if test "`eval $c3_res1`" = "" ; then
+  c3_flag1=0
+	rm comp_NC17_C3_01_all.txt
+else
+	cat comp_NC17_C3_01_all.txt
+fi
+
+if test "`eval $c3_res2`" = "" ; then
+  c3_flag2=0
+	rm comp_NC17_C3_02_all.txt
+else
+	cat comp_NC17_C3_02_all.txt
+fi
+
+if ([ $c3_flag1 == 0 -a $c3_flag2 == 0 ]) ; then
+	echo
+	echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED FOR CASE 3."
+	echo
+
+  if [ $clean = "TRUE" ] ; then
+    rm -rf testcases
+		rm -rf plotJsonFiles
+	fi
+else
+	echo
+	echo "DETECTION SCORER TESTS FAILED FOR CASE 3!!!"
+	echo
+fi

@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
         # Verbosity option
         if args.verbose:
-            def _print(*args):
+            def _v_print(*args):
                 for arg in args:
                    print (arg),
                 print
@@ -206,9 +206,9 @@ if __name__ == '__main__':
         # Loading the JTjoin and JTmask file
         myJTJoinFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-probejournaljoin.csv')
         myJTMaskFname = os.path.join(args.refDir, str(args.inRef.split('.')[:-1]).strip("['']") + '-journalmask.csv')
-#        print("myRefFname {}".format(myRefFname))
-#        print("JTJoinFname {}".format(myJTJoinFname))
-#        print("JTMaskFname {}".format(myJTMaskFname))
+        v_print("Ref file name {}".format(myRefFname))
+        v_print("JTJoin file name {}".format(myJTJoinFname))
+        v_print("JTMask file name {}".format(myJTMaskFname))
 
         # check existence of the JTjoin and JTmask csv files
         if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
@@ -330,11 +330,12 @@ if __name__ == '__main__':
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
                     v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
                     # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
-                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= 'JournalName') #JournalName instead of JournalID
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on= ['JournalName', 'StartNodeID', 'EndNodeID']) #JournalName instead of JournalID
+                    # v_print("JT meta: {}".format(jt_meta.shape))
                     # merge the dataframes above
                     index_m_df = pd.merge(index_m_df, jt_meta, how='left', on= 'ProbeFileID')
                     #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
-                    index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
+                    #index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
             #don't need JTJoin and JTMask for splice?
 
             if args.query:
@@ -353,7 +354,7 @@ if __name__ == '__main__':
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
-            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num, sys_res = sys_response)
+            selection = f.Partition(index_m_df, query, query_mode, fpr_stop=args.farStop, isCI = args.ci, ciLevel = args.ciLevel, total_num = total_num, sys_res = sys_response, task=args.task)
             DM_List = selection.part_dm_list
             v_print("Number of partitions generated = {}\n".format(len(DM_List)))
             v_print("Rendering csv tables...\n")
