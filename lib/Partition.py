@@ -34,6 +34,7 @@ class Partition:
         self.factor_mode = factor_mode
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
+        self.task = task
 
         # If we have a list of queries
         if self.factor_mode == 'q' or self.factor_mode == 'qm':
@@ -48,7 +49,7 @@ class Partition:
             self.part_query_list = self.gen_part_query_list()
             self.n_partitions = len(self.part_values_list)
 
-        self.part_df_list = self.gen_part_df_list(dataframe, task)
+        self.part_df_list = self.gen_part_df_list(dataframe)
         self.part_dm_list = self.gen_part_dm_list(fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res)
 
 
@@ -128,7 +129,7 @@ class Partition:
             List_part_query.append(''.join([x+' & ' for x in part_list])[:-3])
         return List_part_query
 
-    def gen_part_df_list(self, df, task):
+    def gen_part_df_list(self, df):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -154,9 +155,9 @@ class Partition:
 #            print("sub_df data size {}".format(sub_df.shape))
             #print("Removing duplicates ...\n")
             #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
-            if task == 'manipulation':
+            if self.task == 'manipulation':
                 new_df = sub_df.drop_duplicates('ProbeFileID')
-            elif task == 'splice':
+            elif self.task == 'splice':
                 new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
 
             #print("new_df data size {}".format(new_df.shape))
