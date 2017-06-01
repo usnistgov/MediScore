@@ -117,7 +117,7 @@ if __name__ == '__main__':
                             help="Define the lower and upper exclusions for d-prime calculation", metavar='float')
 
         # Output Options
-        parser.add_argument('--outRoot',default='.',
+        parser.add_argument('-o', '--outRoot',default='.',
                             help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
 
         parser.add_argument('--outMeta', action='store_true',

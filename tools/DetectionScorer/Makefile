@@ -1,11 +1,20 @@
-################# Makefile for DetectionScorer.r ##########################
+################# Makefile for ProvenanceScorer tools ##########################
 
-#### Creation Date: June 9, 2016 
+#### Creation Date: Feb 27, 2017
 MAKE=make
 
 check:
-	(python2 DetectionScorerUnitTest.py)
-	(./detcompcheckfiles.sh)
+	@(echo "** Running UnitTests **\n")
+	# Ignoring warnings here as we divide by zero for some tests,
+	# which produce warnings
+	(python2 -W ignore DetectionScorerUnitTest.py)
+	@(echo "** Running detection tests **\n")
+	@(./run_detection_tests.sh)
+	@(echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED")
 
-makecompcheckfiles:
-	(./detcompcheckfiles.sh)
+makecheckfiles:
+	(./make_checkfiles.sh)
+
+render_readmes_to_html:
+	(jupyter-nbconvert --execute --to html DetectionScorerReadMe.ipynb)
+	(jupyter-nbconvert --execute --to html DMRenderReadMe.ipynb)
