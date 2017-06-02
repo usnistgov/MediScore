@@ -18,15 +18,16 @@ run_test() {
     compcheckfile_outdir="$compcheck_outdir/$checkfile_outdir_basename"
 
     echo "** Running detection test case: '$test' **"
-    $test "$compcheckfile_outdir"
-    check_status
+    $test "$compcheckfile_outdir" 1> $compcheckfile_outdir.com.log 2>&1
+    check_status $compcheckfile_outdir.com.log
 
     # Replace paths in logfile
     if [ -f "${compcheckfile_outdir}/log.txt" ]; then
-	sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
+	     sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
     fi
-    diff -x "*.pdf" -r "$checkfile_outdir" "$compcheckfile_outdir" #exclude pdf files
-    check_status
+    #exclude pdf files
+    diff -x "*.pdf" -r "$checkfile_outdir" "$compcheckfile_outdir" 1> $compcheckfile_outdir.diff.log 2>&1
+    check_status $compcheckfile_outdir.diff.log
 
     echo "*** OK ***"
 }
