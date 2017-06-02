@@ -30,7 +30,7 @@ run_test test_c3_4 "$testsuite_directory/checkfiles/test_c3_4"
 
 
 echo
-echo "CASE 4: VALIDATING QUERIES WIDTH JOURNALING MASK JOIN"
+echo "CASE 4: VALIDATING QUERIES WITH JOURNALING MASK JOIN"
 echo
 run_test test_c4_1 "$testsuite_directory/checkfiles/test_c4_1"
 run_test test_c4_2 "$testsuite_directory/checkfiles/test_c4_2"
