@@ -18,8 +18,8 @@ run_test() {
     compcheckfile_outdir="$compcheck_outdir/$checkfile_outdir_basename"
 
     echo "** Running detection test case: '$test' **"
-    $test "$compcheckfile_outdir" 1> $compcheckfile_outdir.com.log 2>&1
-    check_status $compcheckfile_outdir.com.log
+    $test "$compcheckfile_outdir" 1> $compcheckfile_outdir.comp.log 2>&1
+    check_status $compcheckfile_outdir.comp.log
 
     # Replace paths in logfile
     if [ -f "${compcheckfile_outdir}/log.txt" ]; then

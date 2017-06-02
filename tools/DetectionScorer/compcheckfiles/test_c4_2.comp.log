@@ -1,0 +1,15 @@
+  * Testing a query existed in all ProbeFileIDs - Manipulation *  
+Query for target trials: (Operation==['PasteSplice'] and IsTarget == ['Y']) or IsTarget == ['N']
+Current query: Operation==['PasteSplice']
+Total# (3),  Target# (2),  NonTarget# (1) 
+
+
+Report tables:
+
+
+Partition 0:
+                         QUERY  AUC  FAR_STOP  EER  AUC_CI_LOWER  \
+P:  Operation==['PasteSplice']  1.0         1  0.0             0   
+
+    AUC_CI_UPPER  TRR SYS_RESPONSE  
+P:             0  1.0          all  

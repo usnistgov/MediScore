@@ -1,0 +1,6 @@
+  * Testing with the manipulation case with sub index (1 less) *  
+Total# (6),  Target# (3),  NonTarget# (3) 
+
+Report table:
+        AUC  FAR_STOP       EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
+0  0.388889         1  0.666667             0             0  1.0          all
