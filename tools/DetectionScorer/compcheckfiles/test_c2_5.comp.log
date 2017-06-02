@@ -1,0 +1,6 @@
+  * Testing with one target and one non-target trial*  
+Total# (2),  Target# (1),  NonTarget# (1) 
+
+Report table:
+   AUC  FAR_STOP  EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
+0  0.0         1  1.0             0             0  1.0          all

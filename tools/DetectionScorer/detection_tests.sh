@@ -23,7 +23,7 @@ run_test() {
 
     # Replace paths in logfile
     if [ -f "${compcheckfile_outdir}/log.txt" ]; then
-	     sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
+	    sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
     fi
     #exclude pdf files
     diff -x "*.pdf" -r "$checkfile_outdir" "$compcheckfile_outdir" 1> $compcheckfile_outdir.diff.log 2>&1
