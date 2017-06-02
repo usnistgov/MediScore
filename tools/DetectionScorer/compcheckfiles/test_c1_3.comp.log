@@ -1,6 +1,0 @@
-  * Testing NC2017 Manipulation with a baseline COPYMOVE *  
-Total# (500),  Target# (50),  NonTarget# (450) 
-
-Report table:
-        AUC  FAR_STOP       EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
-0  0.679533         1  0.328889             0             0  1.0          all

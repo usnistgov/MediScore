@@ -1,6 +1,0 @@
-  * Testing with the splice case with full index *  
-Total# (7),  Target# (4),  NonTarget# (3) 
-
-Report table:
-        AUC  FAR_STOP       EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
-0  0.333333         1  0.708333             0             0  1.0          all
