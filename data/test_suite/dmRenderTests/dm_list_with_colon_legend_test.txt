@@ -1,13 +1,6 @@
 ../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
 ../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
-../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
-../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
-../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
-../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-../../data/test_suite/dmRenderTests/NC16_001_query_0.dm:Manipulation
-../../data/test_suite/dmRenderTests/NC16_002_query_0.dm:Splice
-
+../../data/test_suite/dmRenderTests/NC16_010_query_0.dm:Query1
+../../data/test_suite/dmRenderTests/NC16_010_query_1.dm:Qeury2
+../../data/test_suite/dmRenderTests/NC17_002_query_0.dm:Query3
+../../data/test_suite/dmRenderTests/NC17_002_query_1.dm:Qeury4
