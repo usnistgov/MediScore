@@ -278,6 +278,8 @@ HISTORY
     * MaskScorer:
       - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
   June 7, 2017 - MediScore Version 1.1.13
+    * DetectionScorer:
+      - Repaired the Splice Detection Scorer introduced in 1.1.8.  The uniqueness constraint for scoring uses both ProbeID and DonorID.
     * MaskScorer:
       - Added the tools/MaskScorer/CrossTeamLocalizationReport.py script.
 
