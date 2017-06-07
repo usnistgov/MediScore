@@ -1,6 +1,6 @@
 File: README.txt
-Date: May 26, 2017
-MediScore Version: 1.1.12
+Date: June 7, 2017
+MediScore Version: 1.1.13
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -277,6 +277,9 @@ HISTORY
       - Updated integration test runner for OS compatability
     * MaskScorer:
       - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
+  June 7, 2017 - MediScore Version 1.1.13
+    * MaskScorer:
+      - Added the tools/MaskScorer/CrossTeamLocalizationReport.py script.
 
 
 CONTACT
@@ -316,7 +319,7 @@ Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
 David Joy
-
+August Pereira
 
 COPYRIGHT
 ---------
