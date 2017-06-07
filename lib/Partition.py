@@ -11,7 +11,7 @@ class Partition:
        It generates and stores each dataframe and their corresponding
        DetMetric objects.
     """
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1, sys_res = 'all'):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel = 0.0, total_num = 1, sys_res = 'all', task='manipulation'):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -34,6 +34,7 @@ class Partition:
         self.factor_mode = factor_mode
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
+        self.task = task
 
         # If we have a list of queries
         if self.factor_mode == 'q' or self.factor_mode == 'qm':
@@ -128,13 +129,14 @@ class Partition:
             List_part_query.append(''.join([x+' & ' for x in part_list])[:-3])
         return List_part_query
 
-    def gen_part_df_list(self,df):
+    def gen_part_df_list(self, df):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
             This function computes and store each partition's dataframe
             generated according to its query in part_query_list.
         """
+        df = df.fillna("")
         df_list = list()
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
@@ -150,8 +152,15 @@ class Partition:
 #                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
 
             sub_df = df.query(query)
+#            print("sub_df data size {}".format(sub_df.shape))
             #print("Removing duplicates ...\n")
-            new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
+            #Removing duplicates in case the data were merged by the JTmask metadata, not for splice
+            if self.task == 'manipulation':
+                new_df = sub_df.drop_duplicates('ProbeFileID')
+            elif self.task == 'splice':
+                new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
+
+            #print("new_df data size {}".format(new_df.shape))
             df_list.append(new_df)
 
         return df_list
