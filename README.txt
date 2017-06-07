@@ -263,7 +263,7 @@ HISTORY
       - Added option for specifiying a thumbnails directory for ProvenanceGraphBuildingScorer when graphical output is requested with -p
       - Added cycle detection for system output provided to ProvenanceGraphBuildingScorer
       - Misc. optimizations
-  MediScore Version 1.1.11
+  May 12, 2017 - MediScore Version 1.1.11
     * Mask Scorer:
       - Revised test cases for queryPartition and queryPartition functionality.
       - Added more verbose messages to metric runner for easier error tracking.
@@ -282,8 +282,14 @@ HISTORY
       - Repaired the Splice Detection Scorer introduced in 1.1.8.  The uniqueness constraint for scoring uses both ProbeID and DonorID.
     * MaskScorer:
       - Added the tools/MaskScorer/CrossTeamLocalizationReport.py script.
-
-
+      - Introduced minor speedup for confusion measures.
+      - Restructured code to be more modular.
+      - Introduced speedup to mask color filtering and NMM and BWL1 metrics.
+      - Fixed pixel-based no-score region for grayscale mask case.
+      - Shrunk test cases to facilitate more frequent testing.
+      - Fixed html count for total pixels to account for pixel no-score.
+      - Minor fixes.
+     
 CONTACT
 -------
 

@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import re
 import json
 import argparse
 from operator import itemgetter
@@ -67,8 +68,8 @@ if not os.path.isdir(args.outRoot):
     os.system('mkdir ' + os.path.join(args.outRoot,'jsons'))
 
 #GTProbes = myRef.query("IsTarget=='Y'")
-GTProbes = myRef #NOTE: in case of further need to filter
-
+GTProbes = myRef.copy() #NOTE: in case of further need to filter
+refDir = os.path.dirname(args.inRef) + '/../..'
 #construct outer-joined system output by ProvenanceProbeFileID
 
 def aggregateSystem(syslist):
@@ -112,7 +113,11 @@ for i,row in GTProbes.iterrows():
         tempSys = 0
         for d in dirlist.keys():
             team = d.split('_')[0]
-            sysjs = mySys.query("ProvenanceProbeFileID==['{}']".format(row['ProvenanceProbeFileID']))["{}ProvenanceOutputFileName".format(team)].iloc[0]
+            sysjs = mySys.query("ProvenanceProbeFileID==['{}']".format(row['ProvenanceProbeFileID']))["{}ProvenanceOutputFileName".format(team)]
+            if len(sysjs) == 0:
+                print("ProvenanceProbeFileID {} not found for team {}. Continuing...".format(row['ProvenanceProbeFileID'],team))
+                continue
+            sysjs = sysjs.iloc[0]
             with open(os.path.join(dirlist[d],sysjs)) as jsonfile:
                 js = json.load(jsonfile)
                 jsdfs = [pd.DataFrame(e,index=[idx]) for idx,e in enumerate(js['nodes'])]
@@ -129,6 +134,29 @@ for i,row in GTProbes.iterrows():
                     tempSys = jsdf.copy()
                 else:
                     tempSys = pd.merge(tempSys,jsdf,how='outer',on=["fileid","file"])
+
+        if tempSys is 0:
+#            #copy ground truth with same format
+#            with open(os.path.join(refDir,row['JournalFileName'])) as refjson:
+#                rjs = json.load(refjson)
+#                jsdfs = [pd.DataFrame(e,index=[idx]) for idx,e in enumerate(rjs['nodes'])]
+#                jsdf = pd.concat(jsdfs).drop('id',1)
+#                jsdf['nodeConfidenceScore'] = 1
+#                #fileid, parse it
+#                jsdf['fileid'] = [re.split('/|.',f)[-2] for f in jsdf['file']]
+#                jsdf['id'] = ['id' + str(n) for n in range(len(jsdf))]
+#
+#                if len(jsdf) > N:
+#                    jsdf = jsdf.head(n=N)
+
+            #output it
+            nodes = sorted(nodes,key=itemgetter('fileid'))
+            for idx,n in enumerate(nodes):
+                n['id'] = 'id{}'.format(idx)
+            jsonout = {'directed':True,'nodes':nodes}
+            with open(os.path.join(args.outRoot,"jsons/{}.json".format(row['ProvenanceProbeFileID'])),'w') as outfile:
+                json.dump(jsonout,outfile,indent = 4)
+            continue
 
         #filter out all the nodes from dataframe already in nodes
         tempSys = tempSys.query("fileid != {}".format(GTFiles))
@@ -154,6 +182,9 @@ for i,row in GTProbes.iterrows():
     nodes = sorted(nodes,key=itemgetter('fileid'))
     for idx,n in enumerate(nodes):
         n['id'] = 'id{}'.format(idx)
+
+    if len(nodes) > N:
+        nodes = nodes[:N]
 
     jsonout = {'directed':True,'nodes':nodes}
     with open(os.path.join(args.outRoot,"jsons/{}.json".format(row['ProvenanceProbeFileID'])),'w') as outfile:

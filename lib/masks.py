@@ -173,11 +173,14 @@ class mask(object):
         """
 
         if len(img.shape) == 3:
-            colors = list(set(tuple(p) for m2d in img for p in m2d))
+#            colors = list(set(tuple(p) for m2d in img for p in m2d))
+            img1L = img[:,:,0]*65536+img[:,:,1]*256+img[:,:,2]
+            colors = np.unique(img1L)
+            colors = [(c//65536,(c % 65536)//256,c % 256) for c in colors]
             if (255,255,255) in colors:
                 colors.remove((255,255,255))
         elif len(img.shape) == 2:
-            colors = list(set(p for m2d in img for p in m2d))
+            colors = np.unique(img)
             if 255 in colors:
                 colors.remove(255) 
 
