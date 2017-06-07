@@ -784,63 +784,6 @@ elif args.task == 'splice':
         if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
-<<<<<<< HEAD
-            metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
-            r_dfc = r_df.copy()
-            r_dfc.loc[p_idx,'ProbeScored'] = 'N'
-            r_dfc.loc[d_idx,'DonorScored'] = 'N'
-            #p_dummyscores = r_dfc.query("pMCC > -2")[metrics].mean(axis=0)
-            #d_dummyscores = r_dfc.query("dMCC > -2")[metrics].mean(axis=0)
-    
-            #substitute for other values that won't get counted in the average
-            r_dfc.loc[p_idx,'pNMM'] = np.nan #p_dummyscores['pNMM']
-            r_dfc.loc[p_idx,'pBWL1'] = np.nan #p_dummyscores['pBWL1']
-            r_dfc.loc[p_idx,'pGWL1'] = np.nan#$p_dummyscores['pGWL1']
-            r_dfc.loc[d_idx,'dNMM'] = np.nan #d_dummyscores['dNMM']
-            r_dfc.loc[d_idx,'dBWL1'] = np.nan #d_dummyscores['dBWL1']
-            r_dfc.loc[d_idx,'dGWL1'] = np.nan #d_dummyscores['dGWL1']
-            r_dfc.loc[p_idx,'pMCC'] = np.nan #p_dummyscores['pMCC']
-            r_dfc.loc[d_idx,'dMCC'] = np.nan #d_dummyscores['dMCC']
-#            if args.queryManipulation:
-#                my_partition = pt.Partition(r_dfc,q,factor_mode,metrics) #average over queries
-#            else:
-#                my_partition = pt.Partition(r_dfc,query,factor_mode,metrics) #average over queries
-            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
-            df_list = my_partition.render_table(metrics)
-        
-            if args.query and (len(df_list) > 0): #don't print anything if there's nothing to print
-                #use Partition for OOP niceness and to identify file to be written. 
-                #a_df get the headers of temp_df and tack entries on one after the other
-                a_df = pd.DataFrame(columns=df_list[0].columns)
-                for i,temp_df in enumerate(df_list):
-                    temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
-                    a_df = a_df.append(temp_df,ignore_index=True)
-                #at the same time do an optOut filter where relevant and save that
-                if args.optOut:
-                    my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),["({}) & (IsOptOut!='Y')".format(q) for q in query],factor_mode,metrics,verbose) #average over queries
-                    df_list_o = my_partition_o.render_table(metrics)
-                    if len(df_list_o) > 0:
-                        for i,temp_df_o in enumerate(df_list_o):
-                            temp_df_o.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores_optout'),i),sep="|",index=False)
-                            a_df = a_df.append(temp_df_o,ignore_index=True)
-                    
-            elif (args.queryPartition or (factor_mode == '') or (factor_mode == 'qm')) and (len(df_list) > 0):
-                a_df = df_list[0]
-                if len(a_df) > 0:
-                    #add optOut scoring in addition to (not replacing) the averaging procedure
-                    if args.optOut:
-                        if q == '':
-                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"IsOptOut!='Y'",factor_mode,metrics,verbose) #average over queries
-                        else:
-                            my_partition_o = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),"({}) & (IsOptOut!='Y')".format(q),factor_mode,metrics,verbose) #average over queries
-                        df_list_o = my_partition_o.render_table(metrics)
-                        if len(df_list_o) > 0:
-                            a_df = a_df.append(df_list_o[0],ignore_index=True)
-                    a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
-                else:
-                    a_df = 0
-            #TODO: averaging procedure ends here
-=======
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
 
         r_df.loc[r_df.query('pMCC == -2').index,'ProbeScored'] = 'N'
@@ -851,7 +794,6 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
         r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
         r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
->>>>>>> origin/dfztemp
 
         #generate HTML table report
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
