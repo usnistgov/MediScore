@@ -1,5 +1,5 @@
 File: README.txt
-Date: April 26, 2017
+Date: May 26, 2017
 MediScore Version: 1.1.7
 
 This directory contains MediScore, the NIST Medifor scoring and
@@ -279,6 +279,11 @@ HISTORY
       - Shrunk test cases to facilitate more frequent testing.
       - Fixed html count for total pixels to account for pixel no-score.
       - Minor fixes.
+    * Provenance:
+      - Updated integration test runner for OS compatability
+  June 7, 2017 - MediScore Version 1.1.13
+    * Mask Scorer:
+      - Parallelization option and features added.
 
 CONTACT
 -------

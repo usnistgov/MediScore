@@ -134,18 +134,18 @@ class Render:
 
                 if isNoNumber:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f)" %(DM.auc,DM.fpr_stop, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f)" %(DM.auc, DM.fpr_stop, DM.trr), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc,DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f at FAR=%.2f" %(DM.auc, DM.fpr_stop), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
                 else:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " %(DM.trr, DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f at FAR=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " %(DM.auc, DM.fpr_stop, DM.trr, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc,DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f at FAR=%.2f\n(T#: %d, NT#: %d) " %(DM.auc, DM.fpr_stop, DM.t_num, DM.nt_num), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 
@@ -189,11 +189,13 @@ class Render:
         plt.grid()
 
         if self.opts_list[0]['label'] != None:
-            plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
+#            lgd = plt.legend(loc='lower right', prop={'size':8}, shadow=True, fontsize='medium', bbox_to_anchor=(0., -0.35, 1., .102))
             # Put a nicer background color on the legend.
             #legend.get_frame().set_facecolor('#00FFCC')
             #plt.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
-            fig.tight_layout(pad=7)
+            fig.tight_layout(pad=2.5)
+
+            plt.legend(loc='upper left', bbox_to_anchor=(0.6, 0.4), borderaxespad=0, prop={'size':8}, shadow=True, fontsize='small')
 
         if display is True:
             plt.show()
@@ -201,7 +203,7 @@ class Render:
         return fig
 
 
-def gen_default_plot_options(path='./plotJsonFiles/plot_options.json', plot_title = 'Performance', plot_subtitle = '', plot_type='DET'):
+def gen_default_plot_options(path='./plotJsonFiles/plot_options.json', plot_title = 'Performance', plot_subtitle = '', plot_type='ROC'):
     """ This function generates JSON file to customize the plot.
         path: JSON file name along with the path
         plot_type: either DET or ROC"""

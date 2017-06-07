@@ -31,9 +31,16 @@ import os
 import sys
 import random
 import masks
+import multiprocessing
 from decimal import Decimal
 from string import Template
+from functools import partial
+from maskMetrics import maskMetrics
+
 lib_path = os.path.dirname(os.path.abspath(__file__))
+
+def scoreMask(args):
+    return maskMetricRunner.scoreMoreMasks(*args)
 
 class maskMetricRunner:
     """
@@ -85,8 +92,8 @@ class maskMetricRunner:
         self.joinData = joindf
         self.index = index
         self.mode=mode
-        self.colordict=colordict
         self.speedup=speedup
+        self.colordict=colordict
        
     def getSubOutRoot(self,outputRoot,task,mymode,row):
         """
@@ -171,7 +178,7 @@ class maskMetricRunner:
                 #get the target colors
                 #joins = self.joinData.query("{}FileID=='{}'".format(mymode,myProbeID))[['JournalName','StartNodeID','EndNodeID']]
                 #color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])[['Color','Purpose']].drop_duplicates()
-                color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,probeID,evalcol))[['Color','Purpose']]
+		color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,probeID,evalcol))[['Color','Purpose']]
                 colorlist = list(color_purpose['Color'])
                 colorlist = list(filter(lambda a: a != '',colorlist))
                 purposes = list(color_purpose['Purpose'])
@@ -200,6 +207,199 @@ class maskMetricRunner:
         sImg = masks.mask(sysMaskName)
         return rImg,sImg 
 
+    #for apply
+    def scoreOneMask(self,maskRow):
+        #parameter control
+        binpfx = self.binpfx
+        mymode = self.mymode
+        outputRoot = self.outputRoot
+        task = self.task
+        evalcol = self.evalcol
+        verbose = self.verbose
+        html = self.html
+        precision = self.precision
+        erodeKernSize = self.erodeKernSize
+        dilateKernSize = self.dilateKernSize
+        distractionKernSize = self.distractionKernSize
+        noScorePixel = self.noScorePixel
+        kern = self.kern
+        
+        manipFileID = maskRow[mymode+'FileID']
+        refMaskName = maskRow['{}{}MaskFileName'.format(binpfx,mymode)]
+        sysMaskName = maskRow['Output{}MaskFileName'.format(mymode)] 
+        try:
+            subOutRoot = self.getSubOutRoot(outputRoot,task,mymode,maskRow)
+            index_row = self.index.query("{}FileID=='{}'".format(mymode,manipFileID))
+            if len(index_row) == 0:
+                if verbose: print("The probe '{}' is not in the index file. Skipping.".format(manipFileID))
+                return maskRow
+            index_row = index_row.iloc[0]
+
+            if sysMaskName in [None,'',np.nan]:
+#                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+                #self.journalData.set_value(i,evalcol,'N')
+#                df.set_value(i,'Scored','N')
+                if verbose: print("Empty system {} mask file.".format(mymode.lower()))
+                #save white matrix as mask in question
+                whitemask = 255*np.ones((index_row[mymode+'Height'],index_row[mymode+'Width']))
+                cv2.imwrite(os.path.join(subOutRoot,'whitemask.png'),whitemask)
+#                continue
+
+            rImg,sImg = self.readMasks(refMaskName,sysMaskName,manipFileID,subOutRoot,verbose)
+            if (rImg is 0) and (sImg is 0):
+                #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
+                #self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manipFileID)).index,evalcol] = 'N'
+                #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
+                #self.journalData.set_value(i,evalcol,'N')
+                maskRow['Scored'] = 'N'
+                maskRow['MCC'] = -2 #for reference to filter later
+                return maskRow
+
+            rdims = rImg.get_dims()
+            if verbose: print("Beginning scoring for reference image {} with dims {} and systen image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
+            idxdims = self.index.query("{}FileID=='{}'".format(mymode,manipFileID)).iloc[0]
+            idxW = idxdims[mymode+'Width']
+            idxH = idxdims[mymode+'Height']
+
+#                if (rdims[0] != idxH) or (rdims[1] != idxW):
+#                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
+#                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
+#                    #self.journalData.set_value(i,evalcol,'N')
+#                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
+# Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
+#                    #write mask name, mask dimensions, and image dimensions to index_log.txt
+#                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
+#                    continue
+
+            if (rImg.matrix is None) or (sImg.matrix is None):
+                #Likely this could be FP or FN. Set scores as usual.
+                if verbose: print("The index is at %d." % i)
+                return maskRow
+
+            #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
+            sbin_name = ''
+            if self.sbin >= 0:
+                sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                sImg.save(sbin_name,th=self.sbin)
+
+            #save the image separately for html and further review. Use that in the html report
+            if verbose: print("Generating no-score zones...")
+            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
+
+            #do a 3-channel combine with bns and sns for their colors before saving
+            rImgbin = rImg.get_copy()
+            rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
+            rbinmat = np.copy(rImgbin.bwmat)
+            if verbose: print("Generating reference mask with no-score zones...")
+            rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
+            rImgbin.matrix[bns==0] = self.colordict['yellow']
+            rImgbin.matrix[sns==0] = self.colordict['pink']
+
+            #noScorePixel here
+            pns=0
+            if noScorePixel >= 0:
+                if verbose: print("Setting system optOut no-score zone...")
+                pns=sImg.pixelNoScore(noScorePixel)
+                rImgbin.matrix[pns==0] = self.colordict['purple'] #TODO: temporary measure until different color is picked
+                wts = cv2.bitwise_and(wts,pns)
+
+            if verbose: print("Saving binarized reference mask...")
+            rImgbin.save(rbin_name)
+            #if wts allows for nothing to be scored, (i.e. no GT pos), print error message and record all scores as np.nan 
+            if np.sum(cv2.bitwise_and(wts,rImgbin.bwmat)) == 0:
+                print("Warning: No region in the mask {} is score-able.".format(rImg.name))
+
+            #computes differently depending on choice to binarize system output mask
+            mets = 0
+            mymeas = 0
+            threshold = 0
+            if verbose: print("Generating metrics...")
+            metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
+            #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
+            if verbose: print("Metrics generated. Getting metrics...")
+            if self.sbin >= 0:
+                #just get scores in one run if threshold is chosen
+                mets = metricRunner.getMetrics(popt=verbose)
+                mymeas = metricRunner.conf
+                threshold = self.sbin
+                thresMets = ''
+            elif self.sbin == -1:
+                #get everything through an iterative run of max threshold
+                thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
+                #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
+                metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
+                mets = metrics[['NMM','MCC','BWL1']].to_dict()
+                mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
+                if len(thresMets) == 1:
+                    thresMets='' #to minimize redundancy
+
+            if self.sbin == -1:
+                if verbose: print("Saving binarized system mask...")
+                sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
+                sImg.save(sbin_name,th=threshold)
+ 
+            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
+            for met in ['NMM','MCC','BWL1','GWL1']:
+                if verbose: print("Setting value for {}...".format(met))
+                maskRow[met] = round(mets[met],precision)
+
+            if verbose: print("Metrics computed.")
+
+            if html:
+                manipFileName = maskRow[mymode+'FileName']
+                baseFileName = maskRow['BaseFileName']
+                maniImgName = os.path.join(self.refDir,manipFileName)
+                if verbose: print("Generating aggregate color mask for HTML report...")
+                colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,maniImgName,subOutRoot,self.colordict)
+                colMaskName=colordirs['mask']
+                aggImgName=colordirs['agg']
+                maskRow['ColMaskFileName'] = colMaskName
+                maskRow['AggMaskFileName'] = aggImgName
+                #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
+                if verbose: print("Generating HTML report...")
+                self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
+            return maskRow
+        except:
+            exc_type,exc_obj,exc_tb = sys.exc_info()
+            print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
+            self.errlist.append(exc_type)
+
+    def scoreMoreMasks(self,maskData):
+        return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
+
+    def scoreMasks(self,maskData,processors):
+        maxprocs = multiprocessing.cpu_count() - 2
+        #if more, print warning message and use max processors
+        nrow = len(maskData)
+        if (processors > nrow) and (nrow > 0):
+            print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
+            processors = nrow
+        if processors > maxprocs:
+            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
+            processors = maxprocs
+
+        #split maskData into array of dataframes based on number of processors (and rows in the file)
+        chunksize = nrow//processors
+        maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
+
+#        lock = multiprocessing.Lock()
+#        def init(l):
+#            global lock
+#            lock = l
+
+        p = multiprocessing.Pool(processes=processors)
+        maskDataS = p.map(scoreMask,maskDataS)
+        p.close()
+
+        #re-merge in the order found and return
+        maskData = pd.concat(maskDataS)
+        if isinstance(maskData,pd.Series):
+            maskData = maskData.to_frame().transpose()
+
+        if len(maskData.query('MCC==-2')) > 0:
+            self.journalData.loc[self.journalData.query("{}FileID=={}".format(self.mymode,maskData.query('MCC==-2')[self.mymode+'FileID'].tolist())).index,self.evalcol] = 'N'
+        return maskData
+
     def getMetricList(self,
                       erodeKernSize,
                       dilateKernSize,
@@ -209,7 +409,8 @@ class maskMetricRunner:
                       outputRoot,
                       verbose,
                       html,
-                      precision=16):
+                      precision=16,
+                      processors=1):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
@@ -223,18 +424,15 @@ class maskMetricRunner:
         *     verbose: permit printout from metrics
         *     html: whether or not to generate an HTML report
         *     precision: the number of digits to round the computed metrics to.
+        *     processors: the number of processors to use to score the maskss.
         * Output:
         *     df: a dataframe of the computed metrics
         """
         #reflist and syslist should come from the same dataframe, so length checking is not required
-        if self.speedup:
-            from maskMetrics import maskMetrics
-        else:
-            from maskMetrics_old import maskMetrics
-
         mymode='Probe'
         if self.mode==2:
             mymode='Donor'
+        self.mymode = mymode
 
         binpfx = ''
         evalcol='Evaluated'
@@ -244,17 +442,16 @@ class maskMetricRunner:
         elif self.mode == 2:
             evalcol='DonorEvaluated'
 
-        reflist = self.maskData['{}{}MaskFileName'.format(binpfx,mymode)]
-        syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
+#        reflist = self.maskData['{}{}MaskFileName'.format(binpfx,mymode)]
+#        syslist = self.maskData['Output{}MaskFileName'.format(mymode)]
 
-        manip_ids = self.maskData[mymode+'FileID']
-        maniImageFName = 0
-        baseImageFName = 0
-        if html:
-            maniImageFName = self.maskData[mymode+'FileName']
-            baseImageFName = self.maskData['BaseFileName']
+#        manip_ids = self.maskData[mymode+'FileID']
+#        maniImageFName = 0
+#        baseImageFName = 0
+#        if html:
+#            maniImageFName = self.maskData[mymode+'FileName']
+#            baseImageFName = self.maskData['BaseFileName']
 
-        nrow = len(reflist) 
 
         #initialize empty frame to minimum scores
 #        df=pd.DataFrame({mymode+'FileID':manip_ids,
@@ -265,7 +462,8 @@ class maskMetricRunner:
 #                         'ColMaskFileName':['']*nrow,
 #                         'AggMaskFileName':['']*nrow})
 
-        df=self.maskData[[mymode+'FileID',mymode+'MaskFileName','Scored']].copy()
+        df=self.maskData.copy()
+        nrow = len(df) 
         df['NMM'] = [-1.]*nrow
         df['MCC'] = [0.]*nrow
         df['BWL1'] = [1.]*nrow
@@ -275,138 +473,33 @@ class maskMetricRunner:
 
         task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
         ilog = open('index_log.txt','w+')
-        errlist = []
+        self.errlist = []
 
-        for i,row in self.maskData.iterrows():
-            try:
-                if verbose: print("Scoring {} mask {} out of {}...".format(mymode.lower(),i+1,nrow))
-                subOutRoot = self.getSubOutRoot(outputRoot,task,mymode,row)
-                index_row = self.index.query("{}FileID=='{}'".format(mymode,row[mymode+'FileID']))
-                if len(index_row) == 0:
-                    if verbose: print("The probe '{}' is not in the index file. Skipping.".format(row[mymode+'FileID']))
-                    continue
-                index_row = index_row.iloc[0]
-    
-                if syslist[i] in [None,'',np.nan]:
-    #                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                    #self.journalData.set_value(i,evalcol,'N')
-    #                df.set_value(i,'Scored','N')
-                    if verbose: print("Empty system {} mask file at index {}.".format(mymode.lower(),i))
-                    #save white matrix as mask in question
-                    whitemask = 255*np.ones((index_row[mymode+'Height'],index_row[mymode+'Width']))
-                    cv2.imwrite(os.path.join(subOutRoot,'whitemask.png'),whitemask)
-    #                continue
-    
-                rImg,sImg = self.readMasks(reflist[i],syslist[i],row[mymode+'FileID'],subOutRoot,verbose)
-                if (rImg is 0) and (sImg is 0):
-                    #no masks detected with score-able regions, so set to not scored
-                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
-                    #self.journalData.set_value(i,evalcol,'N')
-                    df.set_value(i,'Scored','N')
-                    df.set_value(i,'MCC',-2) #for reference to filter later
-                    continue
-    
-    
-                rdims = rImg.get_dims()
-                if verbose: print("Beginning scoring for reference image {} with dims {} and systen image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
-                idxdims = self.index.query("{}FileID=='{}'".format(mymode,manip_ids[i])).iloc[0]
-                idxW = idxdims[mymode+'Width']
-                idxH = idxdims[mymode+'Height']
-    
-    #                if (rdims[0] != idxH) or (rdims[1] != idxW):
-    #                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-    #                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
-    #                    #self.journalData.set_value(i,evalcol,'N')
-    #                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
-    # Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
-    #                    #write mask name, mask dimensions, and image dimensions to index_log.txt
-    #                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
-    #                    continue
-    
-                if (rImg.matrix is None) or (sImg.matrix is None):
-                    #Likely this could be FP or FN. Set scores as usual.
-                    if verbose: print("The index is at %d." % i)
-                    continue
-    
-                #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
-                sbin_name = ''
-                if self.sbin >= 0:
-                    sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                    sImg.save(sbin_name,th=self.sbin)
-    
-                #save the image separately for html and further review. Use that in the html report
-                wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
-    
-                #do a 3-channel combine with bns and sns for their colors before saving
-                rImgbin = rImg.get_copy()
-                rbin_name = os.path.join(subOutRoot,rImg.name.split('/')[-1][:-4] + '-bin.png')
-                rbinmat = np.copy(rImgbin.bwmat)
-                rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
-                rImgbin.matrix[bns==0] = self.colordict['yellow']
-                rImgbin.matrix[sns==0] = self.colordict['pink']
-    
-                #noScorePixel here
-                pns=0
-                if noScorePixel >= 0:
-                    pns=sImg.pixelNoScore(noScorePixel)
-                    rImgbin.matrix[pns==0] = self.colordict['purple'] #TODO: temporary measure until different color is picked
-                    wts = cv2.bitwise_and(wts,pns)
-    
-                rImgbin.save(rbin_name)
-                #if wts allows for nothing to be scored, (i.e. no GT pos), print error message and record all scores as np.nan 
-                if np.sum(cv2.bitwise_and(wts,rImgbin.bwmat)) == 0:
-                    print("Warning: No region in the mask {} is score-able.".format(rImg.name))
-    
-                #computes differently depending on choice to binarize system output mask
-                mets = 0
-                mymeas = 0
-                threshold = 0
-                metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
-                #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
-                if self.sbin >= 0:
-                    #just get scores in one run if threshold is chosen
-                    mets = metricRunner.getMetrics(popt=verbose)
-                    mymeas = metricRunner.conf
-                    threshold = self.sbin
-                    thresMets = ''
-                elif self.sbin == -1:
-                    #get everything through an iterative run of max threshold
-                    thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern=kern,popt=verbose)
-                    #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
-                    metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
-                    mets = metrics[['NMM','MCC','BWL1']].to_dict()
-                    mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
-                    if len(thresMets) == 1:
-                        thresMets='' #to minimize redundancy
-    
-                if self.sbin == -1:
-                    sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                    sImg.save(sbin_name,th=threshold)
-     
-                mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
-                for met in ['NMM','MCC','BWL1','GWL1']:
-                    df.set_value(i,met,round(mets[met],precision))
-     
-                if html:
-                    maniImgName = os.path.join(self.refDir,maniImageFName[i])
-                    colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,maniImgName,subOutRoot,self.colordict)
-                    colMaskName=colordirs['mask']
-                    aggImgName=colordirs['agg']
-                    df.set_value(i,'ColMaskFileName',colMaskName)
-                    df.set_value(i,'AggMaskFileName',aggImgName)
-                    #TODO: trim the arguments here down a little? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                    self.manipReport(task,subOutRoot,row[mymode+'FileID'],row[mymode+'FileName'],baseImageFName[i],rImg.name,sImg.name,rbin_name,sbin_name,threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,verbose)
-            except:
-                e = sys.exc_info()[0]
-                print("{}FileName {} for {}FileID {} encountered exception {}.".format(mymode,row[mymode+'FileName'],mymode,row[mymode+'FileID'],e))
-                errlist.append(e)
+        #parameter control
+        self.task = task
+        self.binpfx = binpfx
+        self.evalcol = evalcol
+        self.erodeKernSize = erodeKernSize
+        self.dilateKernSize = dilateKernSize
+        self.distractionKernSize = distractionKernSize
+        self.noScorePixel = noScorePixel
+        self.kern = kern
+        self.verbose = verbose
+        self.html = html
+        self.precision = precision
+        self.outputRoot = outputRoot
+
+        df = self.scoreMasks(df,processors)
+#        for i,row in self.maskData.iterrows():
+#            if verbose: print("Scoring {} mask {} out of {}...".format(mymode.lower(),i+1,nrow))
+#            scoreMask(row)
 
         #print all error output at very end and exit (1) if failed at any iteration of loop
-        if len(errlist) > 1:
+        if len(self.errlist) > 1:
             exit(1)
         ilog.close()
-        return df.drop(mymode+'MaskFileName',1)
+        df=df[[mymode+'FileID',mymode+'FileName','Scored','NMM','MCC','BWL1','GWL1','ColMaskFileName','AggMaskFileName']]
+        return df.drop(mymode+'FileName',1)
 
     def num2hex(self,color):
         """
@@ -476,6 +569,8 @@ class maskMetricRunner:
         sysBase = os.path.basename(sImg_name)[:-4]
         weightFName = sysBase + '-weights.png'
         weightpath = os.path.join(outputRoot,weightFName)
+
+        if verbose: print("Generating weights image...")
         mywts = cv2.bitwise_and(b_weights,s_weights)
 
         dims = bwts.shape
@@ -487,15 +582,16 @@ class maskMetricRunner:
         totalpns = 0
         if p_weights is not 0:
             colwts[p_weights==0] = self.colordict['purple']
-            mywts = cv2.bitwise_and(mywts,p_weights)
             totalpns = np.sum(p_weights==0)
 
+        if verbose: print("Saving weights image...")
         cv2.imwrite(weightpath,colwts)
 
         mPath = os.path.join(self.refDir,maniImageFName)
         allshapes=min(dims[1],640) #limit on width for readability of the report
 
         # generate HTML files
+        if verbose: print("Reading HTML template...")
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/html_template.txt"), 'r') as f:
             htmlstr = Template(f.read())
 
@@ -512,6 +608,7 @@ class maskMetricRunner:
             if self.mode == 1:
                 evalcol='ProbeEvaluated'
 
+            if verbose: print("Composing journal table...")
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
             jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]]
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
@@ -524,7 +621,8 @@ class maskMetricRunner:
             jdata['Color'] = 'td bgcolor="#' + jDataHex + '"btd'
             jtable = jdata.to_html(index=False)
             jtable = jtable.replace('<td>td','<td').replace('btd','>')
-        
+       
+        if verbose: print("Computing pixel count...") 
         totalpx = np.sum(mywts==1)
         totalbns = np.sum(bwts==0)
         totalsns = np.sum(swts==0)
@@ -547,6 +645,7 @@ class maskMetricRunner:
 
         thresString = ''
         if len(thresMets) > 1:
+            if verbose: print("Generating MCC per threshold graph...")
             #plot MCC
             try:
                 import matplotlib
@@ -583,7 +682,7 @@ class maskMetricRunner:
                 os.remove(bPathNew)
             except OSError:
                 None
-            if verbose: print "Creating link for base image " + baseImageFName
+            if verbose: print("Creating link for base image " + baseImageFName)
             os.symlink(os.path.abspath(bPath),bPathNew)
             basehtml="<img src={} alt='base image' style='width:{}px;'>".format('baseFile' + baseImageFName[-4:],allshapes)
 
@@ -667,6 +766,7 @@ class maskMetricRunner:
         fname=os.path.join(outputRoot,fprefix + '.html')
         myhtml=open(fname,'w')
         myhtml.write(htmlstr)
+        if verbose: print("HTML page written.")
         myhtml.close()
 
     #prints out the aggregate mask, reference and other data
