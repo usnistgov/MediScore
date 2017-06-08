@@ -656,6 +656,7 @@ class maskMetricRunner:
                 plt.ylabel("Matthews Correlation Coefficient (MCC)")
                 thresString = os.path.join(outputRoot,'thresMets.png')
                 plt.savefig(thresString,bbox_inches='tight') #save the graph
+                plt.close()
                 thresString = "<img src=\"{}\" alt=\"thresholds graph\" style=\"width:{}px;\">".format('thresMets.png',allshapes)
             except:
                 e = sys.exc_info()[0]
