@@ -75,7 +75,7 @@ class maskMetrics:
         self.bwL1 = self.binaryWeightedL1(self.conf)
 #        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
 
-    def getMetrics(self,popt=0):
+    def getMetrics(self,myprintbuffer):
         """
         * Description: this function calculates the metrics with an implemented no-score zone.
                        Due to its repeated use for the same reference and system masks, the
@@ -85,11 +85,10 @@ class maskMetrics:
         *     dictionary of the NMM, MCC, BWL1, and the confusion measures.
         """
 
-        if popt==1:
-            #for nicer printout
-            print("NMM: {}".format(self.nmm))
-            print("MCC (Matthews correlation coeff.): {}".format(self.mcc))
-            print("Binary Weighted L1: {}".format(self.bwL1))
+        #for nicer printout
+        myprintbuffer.append("NMM: {}".format(self.nmm))
+        myprintbuffer.append("MCC (Matthews correlation coeff.): {}".format(self.mcc))
+        myprintbuffer.append("Binary Weighted L1: {}".format(self.bwL1))
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
@@ -369,7 +368,7 @@ class maskMetrics:
         return hL1
 
     #computes metrics running over the set of thresholds for grayscale mask
-    def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern='box',popt=0):
+    def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer):
         """
         * Description: this function computes the metrics over a set of thresholds given a grayscale mask
 
@@ -383,8 +382,8 @@ class maskMetrics:
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
         *     kern: kernel shape to be used (default: 'box')
-        *     popt: whether or not to print messages for getMetrics.
-                    This option is directly tied to the verbose option through MaskScorer.py
+        *     myprintbuffer: buffer to store verbose printout for atomic printout.
+                           This option is directly tied to the verbose option through MaskScorer.py
        
         * Outputs:
         *     thresMets: a dataframe of the computed threshold metrics
@@ -416,7 +415,7 @@ class maskMetrics:
                                            'BNS':btotal,
                                            'SNS':stotal,
                                            'N':[0]})
-                mets = self.getMetrics(popt=popt)
+                mets = self.getMetrics(myprintbuffer)
                 for m in ['NMM','MCC','BWL1']:
                     thresMets.set_value(0,m,mets[m])
                 for m in ['TP','TN','FP','FN','N']:
@@ -493,150 +492,22 @@ class maskMetrics:
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
         thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
-        if popt==1:
-            maxMets = thresMets.query("Threshold=={}".format(tmax))
-            maxNMM = maxMets.iloc[0]['NMM']
-            maxMCC = maxMets.iloc[0]['MCC']
-            maxBWL1 = maxMets.iloc[0]['BWL1']
-            if (maxNMM==1) or (maxNMM==-1):
-                print("NMM: %d" % maxNMM)
-            else:
-                print("NMM: %0.3f" % maxNMM)
-            if (maxMCC==1) or (maxMCC==-1):
-                print("MCC: %d" % maxMCC)
-            else:
-                print("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
-            if (maxBWL1==1) or (maxBWL1==0):
-                print("BWL1: %d" % maxBWL1)
-            else:
-                print("Binary Weighted L1: %0.3f" % maxBWL1)
+        maxMets = thresMets.query("Threshold=={}".format(tmax))
+        maxNMM = maxMets.iloc[0]['NMM']
+        maxMCC = maxMets.iloc[0]['MCC']
+        maxBWL1 = maxMets.iloc[0]['BWL1']
+
+        if (maxNMM==1) or (maxNMM==-1):
+            myprintbuffer.append("NMM: %d" % maxNMM)
+        else:
+            myprintbuffer.append("NMM: %0.3f" % maxNMM)
+        if (maxMCC==1) or (maxMCC==-1):
+            myprintbuffer.append("MCC (Matthews correlation coeff.): %d" % maxMCC)
+        else:
+            myprintbuffer.append("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
+        if (maxBWL1==1) or (maxBWL1==0):
+            myprintbuffer.append("BWL1: %d" % maxBWL1)
+        else:
+            myprintbuffer.append("Binary Weighted L1: %0.3f" % maxBWL1)
 
         return thresMets,tmax
-
-
-#    def getPlot(self,thresMets,metric='all',display=True,multi_fig=False):
-#        """
-#        *Description: this function plots a curve of the running threshold values
-#			obtained from the above runningThreshold function
-#
-#        *Inputs
-#            * thresMets: the DataFrame of metrics computed in the runningThreshold function
-#            * metric: a string denoting the metrics to trace out on the plot. Default: 'all'
-#            * display: whether or not to display the plot in a window. Default: True
-#            * multi_fig: whether or not to save the plots for each metric on separate images. Default: False
-#
-#        * Outputs
-#            * path where the plots for the function are saved
-#        """
-#        import Render as p
-#        import json
-#        from collections import OrderedDict
-#        from itertools import cycle
-#
-#        #TODO: put this in Render.py. Combine later.
-#        #generate plot options
-#        ptitle = 'Running Thresholds'
-#        if metric!='all':
-#            ptitle=metric
-#        mon_dict = OrderedDict([
-#            ('title', ptitle),
-#            ('plot_type', ptitle),
-#            ('title_fontsize', 15),
-#            ('xticks_size', 'medium'),
-#            ('yticks_size', 'medium'),
-#            ('xlabel', "Thresholds"),
-#            ('xlabel_fontsize', 12),
-#            ('ylabel', "Metric values"),
-#            ('ylabel_fontsize', 12)])
-#        with open('./plot_options.json', 'w') as f:
-#            f.write(json.dumps(mon_dict).replace(',', ',\n'))
-#
-#        plot_opts = p.load_plot_options()
-#        Curve_opt = OrderedDict([('color', 'red'),
-#                                 ('linestyle', 'solid'),
-#                                 ('marker', '.'),
-#                                 ('markersize', 8),
-#                                 ('markerfacecolor', 'red'),
-#                                 ('label',None),
-#                                 ('antialiased', 'False')])
-#
-#        opts_list = list() #do the same as in DetectionScorer.py. Generate defaults.
-#        colors = ['red','blue','green','cyan','magenta','yellow','black']
-#        linestyles = ['solid','dashed','dashdot','dotted']
-#        # Give a random rainbow color to each curve
-#        #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
-#        color = cycle(colors)
-#        lty = cycle(linestyles)
-#
-#        #TODO: make the metric plot option a list instead?
-#        if metric=='all':
-#            metvals = [thresMets[m] for m in ['NMM','MCC','HAM','WL1','HL1']]
-#        else:
-#            metvals = [thresMets[metric]]
-#        thresholds = thresMets['Threshold']
-#
-#        for i in range(len(metvals)):
-#            new_curve_option = OrderedDict(Curve_opt)
-#            col = next(color)
-#            new_curve_option['color'] = col
-#            new_curve_option['markerfacecolor'] = col
-#            new_curve_option['linestyle'] = next(lty)
-#            opts_list.append(new_curve_option)
-#
-#        #a function defined to serve as the main plotter for getPlot. Put as separate function rather than nested?
-#        def plot_fig(metvals,fig_number,opts_list,plot_opts,display, multi_fig=False):
-#            fig = plt.figure(num=fig_number, figsize=(7,6), dpi=120, facecolor='w', edgecolor='k')
-#
-#            xtick_labels = range(0,256,15)
-#            xtick = xtick_labels
-#            x_tick_labels = [str(x) for x in xtick_labels]
-#            ytick_labels = np.linspace(metvals.min(),metvals.max(),17)
-#            ytick = ytick_labels
-#            y_tick_labels = [str(y) for y in ytick_labels]
-#
-#            #TODO: faulty curve function. Get help.
-#            print(len(opts_list))
-#            print(len(metvals))
-#            if multi_fig:
-#                plt.plot(thresholds, metvals, **opts_list[fig_number])
-#            else:
-#                for i in range(len(metvals)):
-#                    plt.plot(thresholds, metvals[i], **opts_list[i])
-#
-#            plt.plot((0, 1), '--', lw=0.5) # plot bisector
-#            plt.xlim([0, 255])
-#
-#            #plot formatting options.
-#            plt.xticks(xtick, x_tick_labels, size=plot_opts['xticks_size'])
-#            plt.yticks(ytick, y_tick_labels, size=plot_opts['yticks_size'])
-#            plt.suptitle(plot_opts['title'], fontsize=plot_opts['title_fontsize'])
-#            plt.xlabel(plot_opts['xlabel'], fontsize=plot_opts['xlabel_fontsize'])
-#            plt.ylabel(plot_opts['ylabel'], fontsize=plot_opts['ylabel_fontsize'])
-#            plt.grid()
-#
-#    #        plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
-#    #        fig.tight_layout(pad=7)
-#
-#            if opts_list[0]['label'] != None:
-#                plt.legend(bbox_to_anchor=(0., -0.35, 1., .102), loc='lower center', prop={'size':8}, shadow=True, fontsize='medium')
-#                # Put a nicer background color on the legend.
-#                #legend.get_frame().set_facecolor('#00FFCC')
-#                #plt.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
-#                fig.tight_layout(pad=7)
-#
-#            if display:
-#                plt.show()
-#
-#            return fig
-#
-#        #different plotting options depending on multi_fig
-#        if multi_fig:
-#            fig_list = list()
-#            for i,mm in enumerate(metvals):
-#                fig = plot_fig(mm,i,opts_list,plot_opts,display,multi_fig)
-#                fig_list.append(fig)
-#            return fig_list
-#        else:
-#            fig = plot_fig(metvals[0],1,opts_list,plot_opts,display,multi_fig)
-#            return fig
-

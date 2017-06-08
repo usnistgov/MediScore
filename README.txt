@@ -285,6 +285,7 @@ HISTORY
     * Mask Scorer:
       - Parallelization option and features added.
       - Fixed plotting bug aggregating all plots onto each subsequent plot.
+      - Added atomic printout per mask generated.
 
 CONTACT
 -------
