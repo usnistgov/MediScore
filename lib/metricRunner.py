@@ -56,6 +56,7 @@ class printbuffer:
 
     def atomprint(self,lock):
         if self.verbose == 1:
+            self.s.append("================================================================================")
             with lock:
                 print('\n'.join(self.s))
 
