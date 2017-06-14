@@ -44,7 +44,7 @@ $jtable
       <td><img src="$binSysMask" alt="binarized system output mask" style="width:${width}px;"><br/><b>Binarized System Output Mask (Black = Manipulated, Threshold &lt;= $systh)</b></td>
     </tr>
     <tr>
-      <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone)</b></td>
+      <td><img src="$noScoreZone" alt="no-score zone" style="width:${width}px;"><br/><b>No-Score Zone (Yellow = Boundary No-Score Zone, Pink = Selective No-Score Zone, Purple = System Opt Out)</b></td>
       <td><img src="$colorMask" alt="color mask" style="width:${width}px;"><br/><b>Evaluation Result Visualization</b></td>
     </tr>
     <tr>
