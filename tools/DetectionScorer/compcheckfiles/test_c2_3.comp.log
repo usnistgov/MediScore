@@ -1,0 +1,6 @@
+  * Testing with the same scores across all image files *  
+Total# (7),  Target# (4),  NonTarget# (3) 
+
+Report table:
+   AUC  FAR_STOP  EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
+0  0.5         1  0.5             0             0  1.0          all

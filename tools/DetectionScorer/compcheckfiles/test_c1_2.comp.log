@@ -1,0 +1,6 @@
+  * Testing NC2016 Splice with a baseline  * 
+Total# (1195),  Target# (600),  NonTarget# (595) 
+
+Report table:
+       AUC  FAR_STOP      EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
+0  0.86436         1  0.23348             0             0  1.0          all

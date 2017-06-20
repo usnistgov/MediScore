@@ -1,0 +1,4 @@
+"ProbeFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"IsOptOut"
+"43e1d6f0a9306a629a51062729549d76"|0.5|"mask/leaves-mask.png"|"Y"
+"07e65ca7be451f9fc756e9cc7a458eb6"|0.7|"mask/plus-mask.png"|"Y"
+"06e65ca7be451f9fc756e9cc7a458eb6"|0.1|"mask/plus-mask1.png"|"Y"

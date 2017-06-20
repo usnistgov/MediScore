@@ -5,8 +5,8 @@ procs=4
 echo "BEGINNING FUNCTIONALITY TEST OF MASK SCORER"
 
 #produce the output files
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html --optOut -xF -p $procs
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade -html -q "ConfidenceScore < 0.5" "ManMade=='no'" --optOut -p $procs
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html --optOut -xF -p $procs --speedup
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade -html -q "ConfidenceScore < 0.5" "ManMade=='no'" --optOut -p $procs --speedup
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splice.csv > comp_maskreport_splice.txt

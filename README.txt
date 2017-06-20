@@ -1,6 +1,6 @@
 File: README.txt
-Date: May 26, 2017
-MediScore Version: 1.1.7
+Date: June 7, 2017
+MediScore Version: 1.1.13
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -168,13 +168,15 @@ HISTORY
       - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
   Mar 31, 2017 - MediScore Version 1.1.3:
     * Validator:
-      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the validator before it can run over the files.
+      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the 
+        validator before it can run over the files.
     * MaskScorer:
       - Absolute paths added. Path dependency for the mask scorer is no longer required.
       - Bug to averaging procedure for splice portion of the mask scorer is fixed.
       - Bug regarding indexing and averaging for splice portion of the mask scorer is fixed.
     * Provenance:
-      - Provenance validator and formal test cases added. Error messages should be expected in testing.
+      - Provenance validator and formal test cases added. Error messages corresponding to test cases with malformed system
+        output should be expected.
   Apr 12, 2017 - MediScore Version 1.1.4:
     * DetectionScorer:
       - Absolute paths added. Path dependency for the detection scorer is no longer required.
@@ -265,28 +267,36 @@ HISTORY
     * Mask Scorer:
       - Revised test cases for queryPartition and queryPartition functionality.
       - Added more verbose messages to metric runner for easier error tracking.
-      - Restructured code to be more modular.
-      - Introduced speedup to mask color filtering and NMM and BWL1 metrics.
-      - Fixed pixel-based no-score region for grayscale mask case.
     * Provenance:
       - Added system confidence scores to mapping output for GraphBuilding and Filtering scorers
       - Rearranged column order in HTML report output for GraphBuilding and Filtering scorers
-  May 12, 2017 - MediScore Version 1.1.12
+  May 26, 2017 - MediScore Version 1.1.12
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
-    * Mask Scorer:
+    * Provenance:
+      - Updated integration test runner for OS compatability
+    * MaskScorer:
+      - Temporarily commented out the query and queryPartition options for Mask Scorer to stabilize code.
+  June 7, 2017 - MediScore Version 1.1.13
+    * DetectionScorer:
+      - Repaired the Splice Detection Scorer introduced in 1.1.8.  The uniqueness constraint for scoring uses both ProbeID and DonorID.
+    * MaskScorer:
+      - Added the tools/MaskScorer/CrossTeamLocalizationReport.py script.
       - Introduced minor speedup for confusion measures.
+      - Restructured code to be more modular.
+      - Introduced speedup to mask color filtering and NMM and BWL1 metrics.
+      - Fixed pixel-based no-score region for grayscale mask case.
       - Shrunk test cases to facilitate more frequent testing.
       - Fixed html count for total pixels to account for pixel no-score.
+      - Parallelization option and features added.
+      - Fixed plotting bug aggregating all plots onto each subsequent plot.
+      - Added atomic printout per mask generated.
+      - Minor edit to HTML template.
       - Minor fixes.
     * Provenance:
       - Updated integration test runner for OS compatability
   June 7, 2017 - MediScore Version 1.1.13
     * Mask Scorer:
-      - Parallelization option and features added.
-      - Fixed plotting bug aggregating all plots onto each subsequent plot.
-      - Added atomic printout per mask generated.
-      - Minor edit to HTML template.
   June 19, 2017
     * Mask Scorer:
       - Added confusion measures and no-score pixel counts to extensive report.
@@ -330,7 +340,7 @@ Timothee Kheyrkhah
 Yooyoung Lee
 Daniel F. Zhou
 David Joy
-
+August Pereira
 
 COPYRIGHT
 ---------

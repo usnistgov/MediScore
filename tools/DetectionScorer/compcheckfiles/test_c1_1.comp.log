@@ -1,0 +1,6 @@
+  * Testing NC2016 Manipulation with a baseline DCT  * 
+Total# (1124),  Target# (564),  NonTarget# (560) 
+
+Report table:
+        AUC  FAR_STOP       EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
+0  0.517917         1  0.516901             0             0  1.0          all
