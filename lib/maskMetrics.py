@@ -393,11 +393,15 @@ class maskMetrics:
         uniques=np.unique(smat.astype(float))
 
         #add bns/sns totals as well
-        btotal = np.sum(bns)
-        stotal = np.sum(sns)
         w = cv2.bitwise_and(bns,sns)
+        weighted_weights = (1-bns) + 2*(1-sns)
+        btotal = np.sum(weighted_weights == 1)
+        stotal = np.sum(weighted_weights >= 2)
+        ptotal = 0
         if pns is not 0:
             w = cv2.bitwise_and(w,pns)
+            weighted_weights = weighted_weights + 4*(1-pns)
+            ptotal = np.sum(weighted_weights >= 4)
 
         if len(uniques) == 1:
             #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
@@ -414,6 +418,7 @@ class maskMetrics:
                                            'FN':[0],
                                            'BNS':btotal,
                                            'SNS':stotal,
+                                           'PNS':ptotal,
                                            'N':[0]})
                 mets = self.getMetrics(myprintbuffer)
                 for m in ['NMM','MCC','BWL1']:
@@ -434,6 +439,7 @@ class maskMetrics:
                                            'FN':[0]*2,
                                            'BNS':btotal,
                                            'SNS':stotal,
+                                           'PNS':ptotal,
                                            'N':[0]*2})
                 rownum=0
                 #sys.binarize(0)
@@ -470,6 +476,7 @@ class maskMetrics:
                                        'FN':[0]*len(thresholds),
                                        'BNS':btotal,
                                        'SNS':stotal,
+                                       'PNS':ptotal,
                                        'N':[0]*len(thresholds)})
             #for all thresholds
             rownum=0
@@ -491,7 +498,7 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','N']]
+        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']]
         maxMets = thresMets.query("Threshold=={}".format(tmax))
         maxNMM = maxMets.iloc[0]['NMM']
         maxMCC = maxMets.iloc[0]['MCC']

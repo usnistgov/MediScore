@@ -134,7 +134,7 @@ $jtable
     </tr>
     <tr>
       <td>
-<b>System Opt Out (<font style="color:#$pnshex">SNS: $pnscol</font>)</b>:
+<b>System Opt Out (<font style="color:#$pnshex">PNS: $pnscol</font>)</b>:
       </td>
       <td align="left">
       $pns

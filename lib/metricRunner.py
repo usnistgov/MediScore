@@ -35,7 +35,8 @@ import multiprocessing
 from decimal import Decimal
 from string import Template
 lib_path = os.path.dirname(os.path.abspath(__file__))
-from maskMetrics import maskMetrics
+from maskMetrics import maskMetrics as maskMetrics1
+from maskMetrics_old import maskMetrics as maskMetrics2
 
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
@@ -248,6 +249,9 @@ class maskMetricRunner:
         myprintbuffer = printbuffer(verbose)
 
         try:
+            maskMetrics = maskMetrics2
+            if self.speedup:
+                maskMetrics = maskMetrics1
             subOutRoot = self.getSubOutRoot(outputRoot,task,mymode,maskRow)
             index_row = self.index.query("{}FileID=='{}'".format(mymode,manipFileID))
             if len(index_row) == 0:
@@ -344,16 +348,24 @@ class maskMetricRunner:
                 #just get scores in one run if threshold is chosen
                 mets = metricRunner.getMetrics(myprintbuffer)
                 mymeas = metricRunner.conf
+                totalpx = idxW*idxH
+                weighted_weights = 3 - bns - 2*sns
+                mymeas['BNS'] = np.sum(weighted_weights == 1)
+                mymeas['SNS'] = np.sum(weighted_weights >= 2)
+                if pns is not 0:
+                    weighted_weights = weighted_weights + 4*(1-pns)
+                    mymeas['PNS'] = np.sum(weighted_weights >= 4)
+                else:
+                    mymeas['PNS'] = 0
                 threshold = self.sbin
                 thresMets = ''
             elif self.sbin == -1:
                 #get everything through an iterative run of max threshold
-                #TODO: name error here. What is going on?
                 thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
                 #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
                 metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                 mets = metrics[['NMM','MCC','BWL1']].to_dict()
-                mymeas = metrics[['TP','TN','FP','FN','N']].to_dict()
+                mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
                 if len(thresMets) == 1:
                     thresMets='' #to minimize redundancy
 
@@ -366,6 +378,10 @@ class maskMetricRunner:
             for met in ['NMM','MCC','BWL1','GWL1']:
                 myprintbuffer.append("Setting value for {}...".format(met))
                 maskRow[met] = round(mets[met],precision)
+
+            for mes in ['TP','TN','FP','FN','N','BNS','SNS','PNS']:
+                myprintbuffer.append("Setting value for {}...".format(mes))
+                maskRow[mes] = mymeas[mes]
 
             myprintbuffer.append("Metrics computed.")
 
@@ -386,9 +402,9 @@ class maskMetricRunner:
             return maskRow
         except:
             exc_type,exc_obj,exc_tb = sys.exc_info()
-            myprintbuffer.append("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
+            print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
-            myprintbuffer.atomprint(print_lock)
+#            myprintbuffer.atomprint(print_lock)
 
     def scoreMoreMasks(self,maskData):
         return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
@@ -417,8 +433,8 @@ class maskMetricRunner:
         if isinstance(maskData,pd.Series):
             maskData = maskData.to_frame().transpose()
 
-        if len(maskData.query('MCC==-2')) > 0:
-            self.journalData.loc[self.journalData.query("{}FileID=={}".format(self.mymode,maskData.query('MCC==-2')[self.mymode+'FileID'].tolist())).index,self.evalcol] = 'N'
+        if len(maskData.query("MCC==-2")) > 0:
+            self.journalData.loc[self.journalData.query("{}FileID=={}".format(self.mymode,maskData.query("MCC==-2")[self.mymode+'FileID'].tolist())).index,self.evalcol] = 'N'
         return maskData
 
     def getMetricList(self,
@@ -489,6 +505,16 @@ class maskMetricRunner:
         df['MCC'] = [0.]*nrow
         df['BWL1'] = [1.]*nrow
         df['GWL1'] = [1.]*nrow
+
+        df['N'] = [0]*nrow
+        df['TP'] = [0]*nrow
+        df['TN'] = [0]*nrow
+        df['FP'] = [0]*nrow
+        df['FN'] = [0]*nrow
+        df['BNS'] = [0]*nrow
+        df['SNS'] = [0]*nrow
+        df['PNS'] = [0]*nrow
+
         df['ColMaskFileName'] = ['']*nrow
         df['AggMaskFileName'] = ['']*nrow
 
@@ -519,7 +545,18 @@ class maskMetricRunner:
         if len(self.errlist) > 1:
             exit(1)
         ilog.close()
-        df=df[[mymode+'FileID',mymode+'FileName','Scored','NMM','MCC','BWL1','GWL1','ColMaskFileName','AggMaskFileName']]
+
+        df.N = df.N.astype(int)
+        df.TP = df.TP.astype(int)
+        df.TN = df.TN.astype(int)
+        df.FP = df.FP.astype(int)
+        df.FN = df.FN.astype(int)
+        df.BNS = df.BNS.astype(int)
+        df.SNS = df.SNS.astype(int)
+        df.PNS = df.PNS.astype(int)
+        df.SNS = df.SNS.astype(int)
+
+        df=df[[mymode+'FileID',mymode+'FileName','Scored','NMM','MCC','BWL1','GWL1','N','TP','TN','FP','FN','BNS','SNS','PNS','ColMaskFileName','AggMaskFileName']]
         return df.drop(mymode+'FileName',1)
 
     def num2hex(self,color):
@@ -645,8 +682,8 @@ class maskMetricRunner:
        
         myprintbuffer.append("Computing pixel count...") 
         totalpx = np.sum(mywts==1)
-        totalbns = np.sum(bwts==0)
-        totalsns = np.sum(swts==0)
+        totalbns = confmeasures['BNS'] #np.sum(bwts==0)
+        totalsns = confmeasures['SNS'] #np.sum(swts==0)
 
         perctp="nan"
         percfp="nan"

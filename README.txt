@@ -287,6 +287,11 @@ HISTORY
       - Fixed plotting bug aggregating all plots onto each subsequent plot.
       - Added atomic printout per mask generated.
       - Minor edit to HTML template.
+  June 19, 2017
+    * Mask Scorer:
+      - Added confusion measures and no-score pixel counts to extensive report.
+      - Fixed minor bug in error printout.
+      - Fixed minor typo in HTML template.
 
 CONTACT
 -------

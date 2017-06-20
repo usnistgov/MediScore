@@ -51,7 +51,6 @@ import Partition_mask as pt
 
 
 ########### Command line interface ########################################################
-#TODO: drop into main() when MaskScorer.py has been OOP'ed
 
 #data_path = "../../data"
 refFname = "reference/manipulation/NC2016-manipulation-ref.csv"
@@ -166,9 +165,6 @@ if args.outRoot is None:
 if not os.path.isdir(args.outRoot):
     os.system('mkdir ' + args.outRoot)
 
-#TODO: turn this into a class after scores come in, a'la validator
-#methods: __init__, createReport, journalUpdate, averageByFactors, and df2html
-
 #define HTML functions here
 df2html = lambda *a:None
 if args.task == 'manipulation':
@@ -191,7 +187,7 @@ if args.task == 'manipulation':
     
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored','N','TP','TN','FP','FN','BNS','SNS','PNS']
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
@@ -329,6 +325,14 @@ elif args.task == 'splice':
                                            "MCC":"pMCC",
                                            "BWL1":"pBWL1",
                                            "GWL1":"pGWL1",
+                                           'N':'pN',
+                                           'TP':'pTP',
+                                           'TN':'pTN',
+                                           'FP':'pFP',
+                                           'FN':'pFN',
+                                           'BNS':'pBNS',
+                                           'SNS':'pSNS',
+                                           'PNS':'pPNS',
                                            "ColMaskFileName":"ProbeColMaskFileName",
                                            "AggMaskFileName":"ProbeAggMaskFileName",
                                            "Scored":"ProbeScored"},inplace=True)
@@ -337,6 +341,14 @@ elif args.task == 'splice':
                                            "MCC":"dMCC",
                                            "BWL1":"dBWL1",
                                            "GWL1":"dGWL1",
+                                           'N':'dN',
+                                           'TP':'dTP',
+                                           'TN':'dTN',
+                                           'FP':'dFP',
+                                           'FN':'dFN',
+                                           'BNS':'dBNS',
+                                           'SNS':'dSNS',
+                                           'PNS':'dPNS',
                                            "ColMaskFileName":"DonorColMaskFileName",
                                            "AggMaskFileName":"DonorAggMaskFileName",
                                            "Scored":"DonorScored"},inplace=True)
