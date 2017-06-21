@@ -76,6 +76,8 @@ parser.add_argument('-x','--inIndex',type=str,default=indexFname,
 help='Task Index csv file name: [e.g., indexes/NC2016-manipulation-index.csv]',metavar='character')
 parser.add_argument('-oR','--outRoot',type=str,default='.',
 help="Directory root to save outputs.",metavar='character')
+parser.add_argument('--outMeta',action='store_true',help='Save the CSV file with the system scores with minimal metadata')
+parser.add_argument('--outAllmeta',action='store_true',help='Save the CSV file with the system scores with all metadata')
 
 #added from DetectionScorer.py
 factor_group = parser.add_mutually_exclusive_group()
@@ -320,7 +322,30 @@ elif args.task == 'splice':
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
-    
+
+        #make another dataframe here that's formatted distinctly from the first.
+        stackp = probe_df.copy()
+        stackd = donor_df.copy()
+        stackp['DonorFileID'] = stackd['DonorFileID']
+        stackd['ProbeFileID'] = stackp['ProbeFileID']
+        stackp['ScoredMask'] = 'Probe'
+        stackd['ScoredMask'] = 'Donor'
+ 
+        stackdf = pd.concat([stackp,stackd],axis=0)
+        stackmerge = pd.merge(stackdf,m_df.drop('Scored',1),how='left',on=['ProbeFileID','DonorFileID'])
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','NMM','MCC','BWL1','GWL1']
+        rcols = stackmerge.columns.tolist()
+        metadata = [t for t in rcols if t not in firstcols]
+        firstcols.extend(metadata)
+        stackmerge = stackmerge[firstcols]
+
+        sidx = stackmerge.query('MCC==-2').index
+        stackmerge.loc[sidx,'Scored'] = 'N'
+        stackmerge.loc[sidx,'NMM'] = np.nan
+        stackmerge.loc[sidx,'BWL1'] = np.nan
+        stackmerge.loc[sidx,'GWL1'] = np.nan
+        stackmerge.loc[sidx,'MCC'] = np.nan
+        
         probe_df.rename(index=str,columns={"NMM":"pNMM",
                                            "MCC":"pMCC",
                                            "BWL1":"pBWL1",
@@ -371,7 +396,7 @@ elif args.task == 'splice':
         merged_df.loc[d_idx,'dNMM'] = np.nan
         merged_df.loc[d_idx,'dBWL1'] = np.nan
         merged_df.loc[d_idx,'dGWL1'] = np.nan
-        return merged_df
+        return merged_df,stackmerge
 
     def journalUpdate(probeJournalJoin,journalData,r_df):
         #set where the rows are the same in the join
@@ -683,6 +708,16 @@ if args.task == 'manipulation':
 
         r_df.loc[r_df.query('MCC == -2').index,'MCC'] = ''
         prefix = os.path.basename(args.inSys).split('.')[0]
+
+        if args.outMeta:
+            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore','IsOptOut','NMM','MCC','BWL1','GWL1']]
+            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
+        if args.outAllmeta:
+            #left join with index file and journal data
+            rAM_df = pd.merge(r_df,myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName'])
+            rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','JournalName'])
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-allMeta.csv'),sep="|",index=False)
+
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
     
 #commenting out for the time being
@@ -699,7 +734,6 @@ if args.task == 'manipulation':
 #    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
 #
 elif args.task == 'splice':
-    #TODO: don't generalize procedure. Just put it all into an object.
     #TODO: basic data cleanup
     param_pfx = ['Probe','Donor']
     param_ids = [e + 'FileID' for e in param_pfx]
@@ -783,7 +817,7 @@ elif args.task == 'splice':
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         printq("Beginning mask scoring...")
-        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
@@ -810,6 +844,17 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('dMCC == -2').index,'dMCC'] = ''
 
         prefix = os.path.basename(args.inSys).split('.')[0]
+
+        #other reports of varying
+        if args.outMeta:
+            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore','IsOptOut','NMM','MCC','BWL1','GWL1']]
+            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
+        if args.outAllmeta:
+            #left join with index file and journal data
+            rAM_df = pd.merge(stackdf.copy(),myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName'])
+            rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','DonorFileID','JournalName'])
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-allMeta.csv'),sep="|",index=False)
+
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
 
 printq("Ending the mask scoring report.")

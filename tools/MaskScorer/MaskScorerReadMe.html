@@ -11786,7 +11786,7 @@ NMM(GT,sys,weights,c)=\max{\left(\frac{TP - FN - FP}{\Sigma_{px\in GT}weights(px
 \end{equation*}<p>$\Sigma_{px \in GT}$ refers to the sum over the pixels in the ground truth that are marked black. $c$ denotes a minimum cutoff value for the scoring to have any meaning; by default, $c=-1$.</p>
 <h3 id="Matthews-Correlation-Coefficient-(MCC)">Matthews Correlation Coefficient (MCC)<a class="anchor-link" href="#Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
 MCC(GT,sys) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
-\end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation.</p>
+\end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation. If any of the sums in the denominator equals 0, the MCC is taken to be 0 by convention.</p>
 <h3 id="Weighted-L1-Loss-(BWL1-and-GWL1)">Weighted L1 Loss (BWL1 and GWL1)<a class="anchor-link" href="#Weighted-L1-Loss-(BWL1-and-GWL1)">&#182;</a></h3>\begin{equation*}
 WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 \end{equation*}<p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
@@ -11954,6 +11954,14 @@ WL1(GT,sys,weights)=\frac{(FP+FN)_{weights > 0}}{\Sigma weights(px)}
 <p>--outRoot</p>
 <ul>
 <li>Specify the report output path and the file name suffix for saving the plot and table (e.g., test/sys_xxx). For example, if you specify "--outRoot test/NIST_001", you will find the aggregate score report "NIST_001.csv" and the per-image report "NIST_001-perimage.csv" in the "test" folder.</li>
+</ul>
+<p>--outMeta</p>
+<ul>
+<li>Save the CSV file with the system output with minimal metadata.</li>
+</ul>
+<p>--outAllMeta</p>
+<ul>
+<li>Save the CSV file with the system output with all available metadata.</li>
 </ul>
 
 </div>

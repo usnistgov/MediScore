@@ -297,11 +297,12 @@ HISTORY
       - Updated integration test runner for OS compatability
   June 7, 2017 - MediScore Version 1.1.13
     * Mask Scorer:
+      - Fixed minor bug in error printout.
   June 19, 2017
     * Mask Scorer:
       - Added confusion measures and no-score pixel counts to extensive report.
-      - Fixed minor bug in error printout.
       - Fixed minor typo in HTML template.
+      - Added outMeta and outAllmeta options for some control of reporting detail.
 
 CONTACT
 -------
