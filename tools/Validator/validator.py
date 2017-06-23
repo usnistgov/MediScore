@@ -43,6 +43,7 @@ import pandas as pd
 import contextlib
 import StringIO
 import subprocess
+import multiprocessing
 from abc import ABCMeta, abstractmethod
 
 @contextlib.contextmanager
@@ -167,6 +168,7 @@ class SSD_Validator(validator):
         idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
         idxmini = 0
+        self.identify = identify
 
         if reffname is not 0:
             #filter idxfile based on ProbeFileID's in reffile
@@ -191,6 +193,7 @@ class SSD_Validator(validator):
         if self.condition in ["ImgOnly","ImgMeta"]:
             truelist.append("OutputProbeMaskFileName")
             testMask = True 
+        self.testMask = testMask
 
         for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -210,9 +213,11 @@ class SSD_Validator(validator):
         optOut=False
         if "IsOptOut" in sysHeads:
             optOut=True
+        self.optOut = optOut
 
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
+        self.neglectMask = neglectMask
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
             rowlist = xrange(sysfile.shape[0])
@@ -239,44 +244,88 @@ class SSD_Validator(validator):
 #        idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.float64) 
 
         sysPath = os.path.dirname(self.sysname)
-    
-        for i in xrange(sysfile.shape[0]):
-            probeFileID = sysfile['ProbeFileID'][i]
-            if not (probeFileID in idxfile['ProbeFileID'].unique()):
-                printq("ERROR: {} does not exist in the index file.".format(probeFileID),True)
+
+        sysProbes = sysfile['ProbeFileID'].unique()
+        idxProbes = idxfile['ProbeFileID'].unique()
+        iminiProbes = 0
+        if idxmini is not 0:
+            iminiProbes = idxmini['ProbeFileID'].unique()
+
+        self.sysProbes = sysProbes
+        self.idxProbes = idxProbes
+        self.iminiProbes = iminiProbes
+
+        for probeID in idxProbes:
+            if not (probeID in sysProbes):
+                printq("ERROR: {} seems to have been missed by the system file.".format(probeID),True)
                 matchFlag = 1
                 continue
-            elif reffname is not 0:
-                if not (probeFileID in idxmini['ProbeFileID'].unique()):
-                    printq("{} is not actually manipulated. Neglecting mask validation.".format(probeFileID))
-                    continue
 
-#                printq("The contents of your file are not valid!",True)
-#                return 1
-            if not (idxfile['ProbeFileID'][i] in sysfile['ProbeFileID'].unique()):
-                printq("ERROR: " + idxfile['ProbeFileID'][i] + " seems to have been missed by the system file.",True)
-                matchFlag = 1
-                continue
+        self.sysfile = sysfile
+        self.idxfile = idxfile
+        self.sysPath = sysPath
 
-            #check mask validation
-            if testMask and not neglectMask:
-                probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
-                if probeOutputMaskFileName in [None,'',np.nan,'nan']:
-                    printq("The mask for file " + sysfile['ProbeFileID'][i] + " appears to be absent. Skipping it.")
-                    continue
-                #if IsOptOut is present
-                if optOut:
-                    if sysfile['IsOptOut'][i] == 'Y':
-                        continue
+        self.sysfile['maskFlag'] = 0
+        self.sysfile['matchFlag'] = 0
 
-                maskFlag = maskFlag | maskCheck1(os.path.join(sysPath,probeOutputMaskFileName),probeFileID,idxfile,identify)
+        #TODO: parallelize with multiprocessing a'la localization scorer
+        sysfile=self.checkMoreProbes(sysfile)
+        maskFlag = np.sum(sysfile['maskFlag'])
+        matchFlag = np.sum(sysfile['matchFlag'])
         
         #final validation
         if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
             printq("The contents of your file are valid!")
+            return 0
         else:
             printq("The contents of your file are not valid!",True)
             return 1
+
+    def checkProbes(self,maskData,processors):
+        maxprocs = multiprocessing.cpu_count() - 2
+        nrow = len(maskData)
+        if (processors > nrow) and (nrow > 0):
+            print("Warning: too many processors for rows in the data. Defaulting th rows in data ({}).".format(nrow))
+            processors = nrow
+        if processors > maxprocs:
+            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
+            processors = maxprocs
+
+        return maskData
+
+    def checkMoreProbes(self,maskData):
+        return maskData.apply(self.checkOneProbe,axis=1,reduce=False)
+
+    #attach the flag to each row and send the row back
+    def checkOneProbe(self,sysrow):
+        probeFileID = sysrow['ProbeFileID']
+        maskFlag = 0
+        matchFlag = 0
+        if not (probeFileID in self.idxProbes):
+            printq("ERROR: {} does not exist in the index file.".format(probeFileID),True)
+            sysrow['matchFlag'] = 1
+            return sysrow
+        elif self.iminiProbes is not 0:
+            if not (probeFileID in self.iminiProbes):
+                printq("{} is not actually manipulated. Neglecting mask validation.".format(probeFileID))
+                return sysrow
+
+#                printq("The contents of your file are not valid!",True)
+#                return 1
+        #check mask validation
+        if self.testMask and not self.neglectMask:
+            probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
+            if probeOutputMaskFileName in [None,'',np.nan,'nan']:
+                printq("The mask for file {} appears to be absent. Skipping it.".format(probeFileID))
+                return sysrow
+            #if IsOptOut is present
+            if self.optOut:
+                if sysrow['IsOptOut'] == 'Y':
+                    return sysrow
+
+            sysrow['maskFlag'] = sysrow['maskFlag'] | maskCheck1(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify)
+        return sysrow
+
 
 class DSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -338,6 +387,7 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
+    #TODO: pandas apply and parallelize    
     def contentCheck(self,identify,neglectMask,reffname):
         printq('Validating the syntactic content of the system output.')
         #read csv line by line

@@ -303,6 +303,9 @@ HISTORY
       - Added confusion measures and no-score pixel counts to extensive report.
       - Fixed minor typo in HTML template.
       - Added outMeta and outAllmeta options for some control of reporting detail.
+    * Validator:
+      - Sped up manipulation validator with pandas apply implementation. Preparing to extend to splice validator. This is the first step
+        to parallelizing the validators.
 
 CONTACT
 -------
