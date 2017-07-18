@@ -14,9 +14,10 @@ import pandas as pd
 import numpy as np
 
 class ProvenanceValidator(validator):
-    def __init__(self,sysfname,idxfname):
+    def __init__(self,sysfname,idxfname,verbose):
         self.sysname=sysfname
         self.idxname=idxfname
+        self.verbose = verbose
 
     def nameCheck(self,NCID):
         printq('Validating the name of the system file...')
@@ -220,7 +221,7 @@ if __name__ == '__main__':
             if iserr:
                 print(mystring)
 
-    validation = ProvenanceValidator(args.system_output_file,args.index_file)
+    validation = ProvenanceValidator(args.system_output_file,args.index_file,verbose)
     if args.task:
         validation.task = args.task
     exit(validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON))

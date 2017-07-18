@@ -282,8 +282,8 @@ if args.task == 'manipulation':
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
         if args.displayScoredOnly:
             #TODO: get the list of non-scored and delete them
-#            nonscore_df['ProbeFileID'].apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,x))))
-            nonscore_df['ProbeFileID'].apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,x))))
+            nonscore_df['ProbeFileID'].apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,x))))
+#            nonscore_df['ProbeFileID'].apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,x))))
             merged_df = merged_df.query('MCC > -2')
     
         #reorder merged_df's columns. Names first, then scores, then other metadata
@@ -560,8 +560,8 @@ elif args.task == 'splice':
 
         if args.displayScoredOnly:
             #TODO: get the list of non-scored and delete them
-#            nonscore_df.apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
-            nonscore_df.apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
+            nonscore_df.apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
+#            nonscore_df.apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
             merged_df = merged_df.query('(pMCC > -2) and (dMCC > -2)')
         return merged_df,stackmerge
 
