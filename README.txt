@@ -303,9 +303,14 @@ HISTORY
       - Added confusion measures and no-score pixel counts to extensive report.
       - Fixed minor typo in HTML template.
       - Added outMeta and outAllmeta options for some control of reporting detail.
+      - Added TRR and related figures to the per trial data file.
+      - Changed --optOut behavior to more closely match that of Detection Scorer --optOut behavior.
+      - Updated test cases to reflect above changes.
+      - Moved the print buffer class to a separate file for use by other modules that may need parallelization.
+      - Added displayScoredOnly to display scored images only.
     * Validator:
-      - Sped up manipulation validator with pandas apply implementation. Preparing to extend to splice validator. This is the first step
-        to parallelizing the validators.
+      - Sped up validator with pandas apply implementation.
+      - Parallelization options and features added.
 
 CONTACT
 -------

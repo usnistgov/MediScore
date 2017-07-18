@@ -1,2 +1,2 @@
-TaskID|Query|NMM|MCC|BWL1|GWL1
-manipulation|Purpose==['add']|0.0810332930826|0.695000631984|0.0437672707544|0.0959912810506
+TaskID|Query|NMM|MCC|BWL1|GWL1|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
+manipulation|Purpose==['add']|0.0810332930826|0.695000631984|0.0437672707544|0.0959912810506|0.75|4|4|3|1|N

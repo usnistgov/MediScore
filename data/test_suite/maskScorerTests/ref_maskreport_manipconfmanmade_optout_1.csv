@@ -1,2 +1,2 @@
-TaskID|Query|NMM|MCC|BWL1|GWL1
-manipulation|(ManMade=='no') & (IsOptOut!='Y')|0.33038232529|0.752026111134|0.0420039297587|0.144863411931
+TaskID|Query|NMM|MCC|BWL1|GWL1|TRR|totalTrials|totalOptIn|totalOptOut
+manipulation|(ManMade=='no') & (IsOptOut!='Y')|0.33038232529|0.752026111134|0.0420039297587|0.144863411931|0.75|4|3|1

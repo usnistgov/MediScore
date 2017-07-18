@@ -50,9 +50,9 @@ $jtable
     <tr>
       <td><b>NIMBLE Mask Metric (NMM)</b>: $nmm <br/>
       <b>Matthews Correlation Coefficient (MCC)</b>: $mcc <br/>
-      <b>Binary Weighted L1 Loss (WL1)</b>: $bwL1 <br/>
-      <b>Grayscale Weighted L1 Loss (WL1)</b>: $gwL1 <br/></td>
-      <td><b>Total Pixels</b>: $totalPixels <br/>
+      <b>Binary Weighted L1 Loss (BWL1)</b>: $bwL1 <br/>
+      <b>Grayscale Weighted L1 Loss (GWL1)</b>: $gwL1 <br/></td>
+      <td><b>Total Pixels (N)</b>: $totalPixels <br/>
 <table border="1" bgcolor="#C8C8C8">
   <tbody>
     <tr>

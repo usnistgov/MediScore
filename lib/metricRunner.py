@@ -35,6 +35,7 @@ import multiprocessing
 from decimal import Decimal
 from string import Template
 lib_path = os.path.dirname(os.path.abspath(__file__))
+from printbuffer import printbuffer
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
 
@@ -42,24 +43,6 @@ def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
 
 print_lock = multiprocessing.Lock() #for printout to std_out
-
-class printbuffer:
-    """
-    This class aggregates verbose printout for verbose atomic printout
-    """
-    def __init__(self,verbose):
-        self.verbose = verbose
-        self.s=[]
-
-    def append(self,mystring):
-        if self.verbose == 1:
-            self.s.append(mystring)
-
-    def atomprint(self,lock):
-        if self.verbose == 1:
-            self.s.append("================================================================================")
-            with lock:
-                print('\n'.join(self.s))
 
 class maskMetricRunner:
     """
@@ -282,7 +265,7 @@ class maskMetricRunner:
                 return maskRow
 
             rdims = rImg.get_dims()
-            myprintbuffer.append("Beginning scoring for reference image {} with dims {} and systen image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
+            myprintbuffer.append("Beginning scoring for reference image {} with dims {} and system image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
             idxdims = self.index.query("{}FileID=='{}'".format(mymode,manipFileID)).iloc[0]
             idxW = idxdims[mymode+'Width']
             idxH = idxdims[mymode+'Height']
@@ -369,6 +352,15 @@ class maskMetricRunner:
                 if len(thresMets) == 1:
                     thresMets='' #to minimize redundancy
 
+            mymeas['PixelN'] = mymeas.pop('N')
+            mymeas['PixelTP'] = mymeas.pop('TP')
+            mymeas['PixelFP'] = mymeas.pop('FP')
+            mymeas['PixelFN'] = mymeas.pop('FN')
+            mymeas['PixelTN'] = mymeas.pop('TN')
+            mymeas['PixelBNS'] = mymeas.pop('BNS')
+            mymeas['PixelSNS'] = mymeas.pop('SNS')
+            mymeas['PixelPNS'] = mymeas.pop('PNS')
+
             if self.sbin == -1:
                 myprintbuffer.append("Saving binarized system mask...")
                 sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
@@ -379,7 +371,7 @@ class maskMetricRunner:
                 myprintbuffer.append("Setting value for {}...".format(met))
                 maskRow[met] = round(mets[met],precision)
 
-            for mes in ['TP','TN','FP','FN','N','BNS','SNS','PNS']:
+            for mes in ['PixelTP','PixelTN','PixelFP','PixelFN','PixelN','PixelBNS','PixelSNS','PixelPNS']:
                 myprintbuffer.append("Setting value for {}...".format(mes))
                 maskRow[mes] = mymeas[mes]
 
@@ -506,14 +498,14 @@ class maskMetricRunner:
         df['BWL1'] = [1.]*nrow
         df['GWL1'] = [1.]*nrow
 
-        df['N'] = [0]*nrow
-        df['TP'] = [0]*nrow
-        df['TN'] = [0]*nrow
-        df['FP'] = [0]*nrow
-        df['FN'] = [0]*nrow
-        df['BNS'] = [0]*nrow
-        df['SNS'] = [0]*nrow
-        df['PNS'] = [0]*nrow
+        df['PixelN'] = [0]*nrow
+        df['PixelTP'] = [0]*nrow
+        df['PixelTN'] = [0]*nrow
+        df['PixelFP'] = [0]*nrow
+        df['PixelFN'] = [0]*nrow
+        df['PixelBNS'] = [0]*nrow
+        df['PixelSNS'] = [0]*nrow
+        df['PixelPNS'] = [0]*nrow
 
         df['ColMaskFileName'] = ['']*nrow
         df['AggMaskFileName'] = ['']*nrow
@@ -546,17 +538,16 @@ class maskMetricRunner:
             exit(1)
         ilog.close()
 
-        df.N = df.N.astype(int)
-        df.TP = df.TP.astype(int)
-        df.TN = df.TN.astype(int)
-        df.FP = df.FP.astype(int)
-        df.FN = df.FN.astype(int)
-        df.BNS = df.BNS.astype(int)
-        df.SNS = df.SNS.astype(int)
-        df.PNS = df.PNS.astype(int)
-        df.SNS = df.SNS.astype(int)
+        df.PixelN = df.PixelN.astype(int)
+        df.PixelTP = df.PixelTP.astype(int)
+        df.PixelTN = df.PixelTN.astype(int)
+        df.PixelFP = df.PixelFP.astype(int)
+        df.PixelFN = df.PixelFN.astype(int)
+        df.PixelBNS = df.PixelBNS.astype(int)
+        df.PixelSNS = df.PixelSNS.astype(int)
+        df.PixelPNS = df.PixelPNS.astype(int)
 
-        df=df[[mymode+'FileID',mymode+'FileName','Scored','NMM','MCC','BWL1','GWL1','N','TP','TN','FP','FN','BNS','SNS','PNS','ColMaskFileName','AggMaskFileName']]
+        df=df[[mymode+'FileID',mymode+'FileName','Scored','NMM','MCC','BWL1','GWL1','PixelN','PixelTP','PixelTN','PixelFP','PixelFN','PixelBNS','PixelSNS','PixelPNS','ColMaskFileName','AggMaskFileName']]
         return df.drop(mymode+'FileName',1)
 
     def num2hex(self,color):
@@ -682,8 +673,8 @@ class maskMetricRunner:
        
         myprintbuffer.append("Computing pixel count...") 
         totalpx = np.sum(mywts==1)
-        totalbns = confmeasures['BNS'] #np.sum(bwts==0)
-        totalsns = confmeasures['SNS'] #np.sum(swts==0)
+        totalbns = confmeasures['PixelBNS'] #np.sum(bwts==0)
+        totalsns = confmeasures['PixelSNS'] #np.sum(swts==0)
 
         perctp="nan"
         percfp="nan"
@@ -693,10 +684,10 @@ class maskMetricRunner:
         percsns="nan"
         percpns="nan"
         if totalpx > 0:
-            perctp=round(float(confmeasures['TP'])/totalpx,3)
-            percfp=round(float(confmeasures['FP'])/totalpx,3)
-            perctn=round(float(confmeasures['TN'])/totalpx,3)
-            percfn=round(float(confmeasures['FN'])/totalpx,3)
+            perctp=round(float(confmeasures['PixelTP'])/totalpx,3)
+            percfp=round(float(confmeasures['PixelFP'])/totalpx,3)
+            perctn=round(float(confmeasures['PixelTN'])/totalpx,3)
+            percfn=round(float(confmeasures['PixelFN'])/totalpx,3)
             percbns=round(float(totalbns)/totalpx,3)
             percsns=round(float(totalsns)/totalpx,3)
             percpns=round(float(totalpns)/totalpx,3)
@@ -788,10 +779,10 @@ class maskMetricRunner:
   				      'bwL1' : round(metrics['BWL1'],3),
   				      'gwL1' : round(metrics['GWL1'],3),
                                       'totalPixels' : totalpx,
-                                      'tp' : int(confmeasures['TP']),
-                                      'fp' : int(confmeasures['FP']),
-                                      'tn' : int(confmeasures['TN']),
-                                      'fn' : int(confmeasures['FN']),
+                                      'tp' : int(confmeasures['PixelTP']),
+                                      'fp' : int(confmeasures['PixelFP']),
+                                      'tn' : int(confmeasures['PixelTN']),
+                                      'fn' : int(confmeasures['PixelFN']),
                                       'bns' : totalbns,
                                       'sns' : totalsns,
                                       'pns' : totalpns,
