@@ -74,6 +74,7 @@ if __name__ == '__main__':
     parser.add_argument("-w", "--world-file", help="World file", type=str, required=True)
     parser.add_argument("-R", "--reference-dir", help="Reference directory", type=str, required=True)
     parser.add_argument("-s", "--system-output-file", help="System output file (i.e. <EXPID>.csv)", type=str, required=True)
+    parser.add_argument("-u", "--undirected-graph", help="Toggles undirect graph support", action="store_true")
     parser.add_argument("-S", "--system-dir", help="System output directory where system output json files can be found", type=str, required=True)
     parser.add_argument("-p", "--plot-scored", help="Toggles graphical output of scored provenance graphs", action="store_true")
     parser.add_argument("-H", "--html-report", help="Generate an HTML report of the scores with plots (forces -p)", action="store_true")
@@ -215,16 +216,32 @@ if __name__ == '__main__':
                 else:
                     err_quit("Detected cycle(s) for system output file '{}', Aborting!".format(system_out_path))
 
-            def _build_mapping(ref_nodes, ref_edges, sys_nodes, sys_edges):
-                node_mapping = [ (nk, ref_nodes.get(nk, None), sys_nodes.get(nk, None)) for nk in set(ref_nodes.keys()) | set(sys_nodes.keys()) ]
-                edge_mapping = [ (ek, ref_edges.get(ek, None), sys_edges.get(ek, None)) for ek in set(ref_edges.keys()) | set(sys_edges.keys()) ]
+            def _build_mapping(ref_nodes, ref_edges, sys_nodes, sys_edges, undirect_flag):
+                node_mapping = [ (nk, ref_nodes.get(nk, None), sys_nodes.get(nk, None)) for nk in set(ref_nodes) | set(sys_nodes) ]
+                if not undirect_flag:
+                    edge_mapping = [ (ek, ref_edges.get(ek, None), sys_edges.get(ek, None)) for ek in set(ref_edges) | set(sys_edges) ]
+                else:
+                    edge_mapping = []
+                    ref_set, sys_set = set(ref_edges), set(sys_edges)
+                    for (a,b) in ref_set:
+                       if (a,b) in sys_set:
+                           sys_set.remove((a,b))
+                           edge_mapping.append(((a,b), ref_edges[(a,b)], sys_edges[(a,b)]))
+                       elif (b,a) in sys_set:
+                           sys_set.remove((b,a))
+                           edge_mapping.append(((a,b), ref_edges[(a,b)], sys_edges[(b,a)]))
+                       else:
+                           edge_mapping.append(((a,b), ref_edges[(a,b)], None))
+                           
+                    for edge in sys_set:
+                       edge_mapping.append((edge, None, sys_edges[edge]))
 
                 # a *_mapping file is a collection of (ref_*, sys_*)
                 # tuples, where ref_* is None in the case of a FA and
                 # sys_* is None in the case of a miss
                 return (node_mapping, edge_mapping)
 
-            node_mapping, edge_mapping = _build_mapping(ref_nodes_dict, ref_edges_dict, sys_nodes_dict, sys_edges_dict)
+            node_mapping, edge_mapping = _build_mapping(ref_nodes_dict, ref_edges_dict, sys_nodes_dict, sys_edges_dict, args.undirected_graph)
 
             def _worldfile_path_to_id(path):
                 base, ext = os.path.splitext(os.path.basename(path))

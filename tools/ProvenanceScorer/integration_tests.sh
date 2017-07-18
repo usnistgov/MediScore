@@ -105,6 +105,19 @@ test_2_1() {
 				       -S "$testsuite_directory/"
 }
 
+# Graph Building test 2_1 undirected
+test_2_1_undirect() {
+    ./ProvenanceGraphBuildingScorer.py -o "$1" \
+				       -x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
+				       -r "$testsuite_directory/test_case_2-provenance-ref.csv" \
+				       -n "$testsuite_directory/test_case_2-provenance-node.csv" \
+				       -w "$testsuite_directory/test_case_2-provenancegraphbuilding-world.csv" \
+				       -u \
+				       -R "$testsuite_directory/" \
+				       -s "$testsuite_directory/test_case_2-system_output_1_undirect_index.csv" \
+				       -S "$testsuite_directory/"
+}
+
 # Graph Building test 3_1
 test_3_1() {
     mkdir -p "$1"
