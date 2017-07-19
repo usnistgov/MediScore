@@ -185,23 +185,6 @@ if __name__ == '__main__':
                          "NodeConfidence": sys_node["nodeConfidenceScore"] if sys_node != None else None,
                          "Mapping": _get_mapping(ref_node, sys_node) }
 
-            def _corr_selector(t):
-                k, r, s = t
-                return (r != None and s != None)
-
-            def _fa_selector(t):
-                k, r, s = t
-                return (r == None and s != None)
-
-            def _miss_selector(t):
-                k, r, s = t
-                return (r != None and s == None)
-
-            def _mapping_breakdown(node_mapping):
-                return ({ k for k, r, s in filter(_corr_selector, node_mapping) },
-                        { k for k, r, s in filter(_miss_selector, node_mapping) },
-                        { k for k, r, s in filter(_fa_selector, node_mapping) })
-
             for n in [ 50, 100, 200 ]:
                 sys_nodes_at_n = { node.file for node in ordered_sys_nodes[0:n] }
 
@@ -210,14 +193,10 @@ if __name__ == '__main__':
                 node_mapping = _build_mapping(ref_nodes_dict, sys_nodes_dict)
                 output_mapping_records += sorted([ _build_node_map_record(n, *node_map) for node_map in node_mapping ])
 
-                sys_nodes = set(sys_nodes_dict.keys())
-                ref_nodes = set(ref_nodes_dict.keys())
-                correct_nodes, missing_nodes, false_alarm_nodes = _mapping_breakdown(node_mapping)
-
-                out_rec.update({ "NumCorrectNodesAt{}".format(n): len(correct_nodes),
-                                 "NumMissingNodesAt{}".format(n): len(missing_nodes),
-                                 "NumFalseAlarmNodesAt{}".format(n): len(false_alarm_nodes),
-                                 "NodeRecallAt{}".format(n): node_recall(ref_nodes, sys_nodes) })
+                out_rec.update({ "NumCorrectNodesAt{}".format(n): num_corr(node_mapping),
+                                 "NumMissingNodesAt{}".format(n): num_miss(node_mapping),
+                                 "NumFalseAlarmNodesAt{}".format(n): num_fa(node_mapping),
+                                 "NodeRecallAt{}".format(n): node_recall(node_mapping) })
 
             output_records.append(out_rec)
 

@@ -284,50 +284,24 @@ if __name__ == '__main__':
             output_node_mapping_records += sorted([ _build_node_map_record(*node_map) for node_map in node_mapping ])
             output_link_mapping_records += sorted([ _build_link_map_record(*edge_map) for edge_map in edge_mapping ])
 
-            def _corr_selector(t):
-                k, r, s = t
-                return (r != None and s != None)
-
-            def _fa_selector(t):
-                k, r, s = t
-                return (r == None and s != None)
-
-            def _miss_selector(t):
-                k, r, s = t
-                return (r != None and s == None)
-
-            def _mapping_breakdown(node_mapping, edge_mapping):
-                return ({ k for k, r, s in filter(_corr_selector, node_mapping) },
-                        { k for k, r, s in filter(_miss_selector, node_mapping) },
-                        { k for k, r, s in filter(_fa_selector, node_mapping) },
-                        { k for k, r, s in filter(_corr_selector, edge_mapping) },
-                        { k for k, r, s in filter(_miss_selector, edge_mapping) },
-                        { k for k, r, s in filter(_fa_selector, edge_mapping) })
-
-            sys_nodes = set(sys_nodes_dict.keys())
-            sys_edges = set(sys_edges_dict.keys())
-            ref_nodes = set(ref_nodes_dict.keys())
-            ref_edges = set(ref_edges_dict.keys())
-            correct_nodes, missing_nodes, fa_nodes, correct_edges, missing_edges, fa_edges = _mapping_breakdown(node_mapping, edge_mapping)
-
             out_rec = { "JournalName": trial.JournalName,
                         "ProvenanceProbeFileID": trial.ProvenanceProbeFileID,
                         "Direct": args.direct,
                         "ProvenanceOutputFileName": trial.ProvenanceOutputFileName,
-                        "NumSysNodes": len(sys_nodes),
-                        "NumSysLinks": len(sys_edges),
-                        "NumRefNodes": len(ref_nodes),
-                        "NumRefLinks": len(ref_edges),
-                        "NumCorrectNodes": len(correct_nodes),
-                        "NumMissingNodes": len(missing_nodes),
-                        "NumFalseAlarmNodes": len(fa_nodes),
-                        "NumCorrectLinks": len(correct_edges),
-                        "NumMissingLinks": len(missing_edges),
-                        "NumFalseAlarmLinks": len(fa_edges),
-                        "SimNLO": SimNLO(ref_nodes, ref_edges, sys_nodes, sys_edges),
-                        "SimNO": SimNO(ref_nodes, sys_nodes),
-                        "SimLO": SimLO(ref_edges, sys_edges),
-                        "NodeRecall": node_recall(ref_nodes, sys_nodes) }
+                        "NumSysNodes": num_sys(node_mapping),
+                        "NumSysLinks": num_sys(edge_mapping),
+                        "NumRefNodes": num_ref(node_mapping),
+                        "NumRefLinks": num_ref(edge_mapping),
+                        "NumCorrectNodes": num_corr(node_mapping),
+                        "NumMissingNodes": num_miss(node_mapping),
+                        "NumFalseAlarmNodes": num_fa(node_mapping),
+                        "NumCorrectLinks": num_corr(edge_mapping),
+                        "NumMissingLinks": num_miss(edge_mapping),
+                        "NumFalseAlarmLinks": num_fa(edge_mapping),
+                        "SimNLO": SimNLO(node_mapping, edge_mapping),
+                        "SimNO": SimNO(node_mapping),
+                        "SimLO": SimLO(edge_mapping),
+                        "NodeRecall": node_recall(node_mapping) }
 
             output_records.append(out_rec)
 
