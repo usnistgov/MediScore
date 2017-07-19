@@ -68,13 +68,13 @@
 	  "relationshipConfidenceScore": 1
       },
       {
-	  "source": 0,
-	  "target": 2,
+	  "source": 2,
+	  "target": 0,
 	  "relationshipConfidenceScore": 1
       },
       {
-	  "source": 0,
-	  "target": 5,
+	  "source": 5,
+	  "target": 0,
 	  "relationshipConfidenceScore": 1
       },
       {
@@ -88,8 +88,8 @@
 	  "relationshipConfidenceScore": 1
       },
       {
-	  "source": 3,
-	  "target": 8,
+	  "source": 8,
+	  "target": 3,
 	  "relationshipConfidenceScore": 1
       },
       {
@@ -103,8 +103,8 @@
 	  "relationshipConfidenceScore": 1
       },
       {
-	  "source": 7,
-	  "target": 9,
+	  "source": 9,
+	  "target": 7,
 	  "relationshipConfidenceScore": 1
       },
       {

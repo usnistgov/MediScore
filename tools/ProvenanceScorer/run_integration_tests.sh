@@ -3,6 +3,7 @@
 source integration_tests.sh
 
 run_test test_1_0 "$testsuite_directory/checkfiles/test_1_0"
+run_test test_1_0_undirect "$testsuite_directory/checkfiles/test_1_0_undirect"
 run_test test_1_0_direct "$testsuite_directory/checkfiles/test_1_0_direct"
 run_test test_1_0and1_direct "$testsuite_directory/checkfiles/test_1_0and1_direct"
 run_test test_1_1_direct "$testsuite_directory/checkfiles/test_1_1_direct"
