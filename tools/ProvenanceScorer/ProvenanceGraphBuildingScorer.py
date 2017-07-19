@@ -309,15 +309,12 @@ if __name__ == '__main__':
             if args.plot_scored:
                 out_fn = os.path.join(figure_dir, "{}.png".format(trial.ProvenanceProbeFileID))
                 render_provenance_graph_from_mapping(trial.ProvenanceProbeFileID,
-                                                     correct_nodes,
-                                                     fa_nodes,
-                                                     missing_nodes,
-                                                     correct_edges,
-                                                     fa_edges,
-                                                     missing_edges,
+                                                     node_mapping,
+                                                     edge_mapping,
                                                      out_fn,
                                                      abs_reference_dir,
-                                                     abs_thumb_cache_dir)
+                                                     abs_thumb_cache_dir,
+                                                     args.undirected_graph)
                 log(1, "Mapping figure saved to '{}'".format(out_fn))
 
     output_node_mapping_records_df = DataFrame(output_node_mapping_records, columns = ["JournalName",
