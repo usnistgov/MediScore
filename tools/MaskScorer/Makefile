@@ -14,6 +14,7 @@ check:
 	(./maskcompcheckfiles_0.sh)
 	(./maskcompcheckfiles_1.sh)
 	(./maskcompcheckfiles_2.sh)
+	(./maskcompcheckfiles_3.sh)
 
 render_readmes_to_html:
 	(jupyter-nbconvert --to html MaskScorerReadMe.ipynb)

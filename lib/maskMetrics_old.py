@@ -463,9 +463,22 @@ class maskMetrics:
                 thresMets.set_value(rownum,'N',thismet.conf['N'])
                 rownum=rownum+1
 
+        #generate ROC dataframe for image, preferably from existing library.
+        #TPR = TP/(TP + FN); FPR = FP/(FP + TN)
+        #no need for roc curve if any of the denominator is zero
+        numNullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)").shape[0]
+        if numNullRows == 0:
+            #set rows for ROC curve
+            thresMets['TPR'] = thresMets['TP']/(thresMets['TP'] + thresMets['FN'])
+            thresMets['FPR'] = thresMets['FP']/(thresMets['FP'] + thresMets['TN'])
+
+        columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']
+        if numNullRows == 0:
+            columns = columns + ['TPR','FPR']
+
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']]
+        thresMets = thresMets[columns]
         if popt==1:
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']

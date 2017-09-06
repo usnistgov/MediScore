@@ -9,21 +9,21 @@ echo "CASE 0: VALIDATING FULL SCORING"
 echo
 
 #produce the output files
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html --optOut -p $procs
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2016-manipulation-ref.csv -x indexes/NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Manipulation_ImgOnly_c-me2_1/B_NC2016_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/maniptest -p $procs
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/threstest -html --sbin 128 -p $procs
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Splice_ImgOnly_p-me_1/B_NC2017_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest -html --optOut -p $procs --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2016-manipulation-ref.csv -x indexes/NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Manipulation_ImgOnly_c-me2_1/B_NC2016_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/maniptest -p $procs --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/threstest -html --sbin 128 -p $procs --color
 #python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests -r reference/removal/NC2016-removal-ref.csv -x indexes/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_3 --sbin 127
 
 #compare them to ground truth files
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splice.csv > comp_maskreport_splice.txt
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splice-perimage.csv > comp_maskreport_splice-perimage.txt
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-journalResults.csv ../../data/test_suite/maskScorerTests/ref_maskreport_splice-journalResults.csv > comp_maskreport_splice-journalResults.txt
-diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_manip.csv > comp_maskreport_manip.txt
-diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_manip-perimage.csv > comp_maskreport_manip-perimage.txt
-diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/ref_maskreport_manip-journalResults.csv > comp_maskreport_manip-journalResults.txt
-diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/ref_maskreport_thres.csv > comp_maskreport_thres.txt
-diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/ref_maskreport_thres-perimage.csv > comp_maskreport_thres-perimage.txt
-diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/ref_maskreport_thres-journalResults.csv > comp_maskreport_thres-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice.csv > comp_maskreport_splice.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-perimage.csv > comp_maskreport_splice-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Splice_ImgOnly_p-me_1-journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-journalResults.csv > comp_maskreport_splice-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip.csv > comp_maskreport_manip.txt
+diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip-perimage.csv > comp_maskreport_manip-perimage.txt
+diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip-journalResults.csv > comp_maskreport_manip-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres.csv > comp_maskreport_thres.txt
+diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres-perimage.csv > comp_maskreport_thres-perimage.txt
+diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Manipulation_ImgOnly_c-me2_1-journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres-journalResults.csv > comp_maskreport_thres-journalResults.txt
 
 flag_s=1
 flag_spi=1

@@ -178,7 +178,7 @@ class TestValidator(ut.TestCase):
         validatorRoot = '../../data/test_suite/validatorTests/'
         global verbose
         verbose = None
-        print("Validating syntactic content of system output.\nCASE 4: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...")
+        print("Validating syntactic content of system output.\nCASE 4: Validating behavior for incorrect headers and different number of rows than in index file...")
         print("CASE 4a: Validating behavior for incorrect headers")
 #        myval = SSD_Validator(validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_2/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv') 
         myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm4a.log".format(NCID,validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_2/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_2.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 

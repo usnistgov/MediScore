@@ -65,11 +65,8 @@ def printq(mystring,iserr=False):
     if iserr:
         print(mystring)
 
-def checkProbeSSD(args):
+def checkProbe(args):
     return SSD_Validator.checkMoreProbes(*args)
-
-def checkProbeDSD(args):
-    return DSD_Validator.checkMoreProbes(*args)
 
 class validator:
     __metaclass__ = ABCMeta
@@ -223,9 +220,7 @@ class SSD_Validator(validator):
             testMask = True 
         self.testMask = testMask
 
-        collength = len(truelist)
-
-        for i in xrange(collength):
+        for i in xrange(len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
             if not (truelist[i] in sysHeads):
 #                headlist = []
@@ -325,7 +320,7 @@ class SSD_Validator(validator):
         chunksize = nrow//processors
         maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
         p = multiprocessing.Pool(processes=processors)
-        maskDataS = p.map(checkProbeSSD,maskDataS)
+        maskDataS = p.map(checkProbe,maskDataS)
         p.close()
         maskData = pd.concat(maskDataS)
         #add all mask 'Message' entries to printBuffer
@@ -475,7 +470,7 @@ class DSD_Validator(validator):
 
     #redesigned pipeline
     #TODO: pandas apply and parallelize    
-    def contentCheck_0(self,identify,neglectMask,reffname):
+    def contentCheck(self,identify,neglectMask,reffname):
         self.printbuffer.append('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -611,7 +606,7 @@ class DSD_Validator(validator):
                     donorWidth = int(indRec[i_heads['DonorWidth']])
                     donorHeight = int(indRec[i_heads['DonorHeight']])
 
-                    maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,self.identify)
+                    maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -664,7 +659,7 @@ class DSD_Validator(validator):
             self.printbuffer.append("The contents of your file are not valid!")
             return 1
 
-    def contentCheck(self,identify,neglectMask,reffname):
+    def contentCheck_0(self,identify,neglectMask,reffname):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -676,7 +671,6 @@ class DSD_Validator(validator):
                  'DonorHeight':np.int64}
         idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
-        self.identify = identify
 
         dupFlag = 0
         xrowFlag = 0
@@ -738,54 +732,38 @@ class DSD_Validator(validator):
         
         sysPath = os.path.dirname(self.sysname)
 
-        self.sysfile = sysfile
-        self.idxfile = idxfile
-        self.sysPath = sysPath
+        #TODO: parallelize this a'la SSD
+        for i in xrange(sysfile.shape[0]):
+            if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
+                self.printbuffer.append("ERROR: {} does not exist in the index file.".format(sysfile['ProbeFileID'][i]))
+                self.printbuffer.append("The contents of your file are not valid!",True)
+                return 1
 
-        self.sysfile['maskFlag'] = 0
-        self.sysfile['matchFlag'] = 0
-        self.sysfile['Message'] = '' #for return print messages
+            #First get all the matching probe rows
+            rowset = idxfile[idxfile['ProbeFileID'] == sysfile['ProbeFileID'][i]].copy()
+            #search in these rows for DonorFileID matches. If empty, pair does not exist. Quit status 1
+            if not (sysfile['DonorFileID'][i] in rowset['DonorFileID'].unique()):
+                self.printbuffer.append("ERROR: The pair ({},{}) does not exist in the index file.".format(sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i]))
+                self.printbuffer.append("The contents of your file are not valid!")
+                return 1
 
-        #parallelize with multiprocessing a'la localization scorer
-        sysfile=self.checkProbes(sysfile,self.procs)
-        maskFlag = np.sum(sysfile['maskFlag'])
-        matchFlag = np.sum(sysfile['matchFlag'])
+            #check mask validation
+            probeFileID = sysfile['ProbeFileID'][i]
+            donorFileID = sysfile['DonorFileID'][i]
+            probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
+            donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
+            idxStats = idxfile.query("ProbeFileID=='{}' and DonorFileID=='{}'".format(probeFileID,donorFileID))
+            idxProbeWidth = idxStats['ProbeWidth'].iloc[0]
+            idxProbeHeight = idxStats['ProbeHeight'].iloc[0]
+            idxDonorWidth = idxStats['DonorWidth'].iloc[0]
+            idxDonorHeight = idxStats['DonorHeight'].iloc[0]
 
-        #TODO: parallelize this a'la SSD. Imitate its exact structure.
-        #TODO: the following for loop should all go into checkOneProbe
-#        for i in xrange(sysfile.shape[0]):
-#            if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
-#                self.printbuffer.append("ERROR: {} does not exist in the index file.".format(sysfile['ProbeFileID'][i]))
-#                self.printbuffer.append("The contents of your file are not valid!",True)
-#                return 1
-#
-#            #First get all the matching probe rows
-#            rowset = idxfile[idxfile['ProbeFileID'] == sysfile['ProbeFileID'][i]].copy()
-#            #search in these rows for DonorFileID matches. If empty, pair does not exist. Quit status 1
-#            if not (sysfile['DonorFileID'][i] in rowset['DonorFileID'].unique()):
-#                self.printbuffer.append("ERROR: The pair ({},{}) does not exist in the index file.".format(sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i]))
-#                self.printbuffer.append("The contents of your file are not valid!")
-#                return 1
-#
-#            #check mask validation
-#            probeFileID = sysfile['ProbeFileID'][i]
-#            donorFileID = sysfile['DonorFileID'][i]
-#            probeOutputMaskFileName = sysfile['OutputProbeMaskFileName'][i]
-#            donorOutputMaskFileName = sysfile['OutputDonorMaskFileName'][i]
-#            idxStats = idxfile.query("ProbeFileID=='{}' and DonorFileID=='{}'".format(probeFileID,donorFileID))
-#            idxProbeWidth = idxStats['ProbeWidth'][0]
-#            idxProbeHeight = idxStats['ProbeHeight'][0]
-#            idxDonorWidth = idxStats['DonorWidth'][0]
-#            idxDonorHeight = idxStats['DonorHeight'][0]
-#
-#            if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-#                self.printbuffer.append("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeFileID,donorFileID))
-#                continue
+            if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
+                self.printbuffer.append("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeFileID,donorFileID))
+                continue
 #            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
-#            maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,i,identify)
-       
-        #TODO: move ends here
- 
+            maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,i,identify)
+        
         #final validation
         if maskFlag==0:
             self.printbuffer.append("The contents of your file are valid!")
@@ -793,140 +771,79 @@ class DSD_Validator(validator):
             self.printbuffer.append("The contents of your file are not valid!")
             return 1
 
-    def checkOneProbe(self,sysrow):
-        probeFileID = sysrow['ProbeFileID']
-        donorFileID = sysrow['DonorFileID']
-        sysPath = self.sysPath
-
-        if not (probeFileID in self.idxfile['ProbeFileID'].unique()):
-            errmsg=["ERROR: {} does not exist in the index file.".format(probeFileID)]
-            errmsg.append("The contents of your file are not valid!")
-            sysrow['Message'] = "\n".join(errmsg)
-            sysrow['matchFlag'] = 1
-            return sysrow
-
-        #First get all the matching probe rows
-        rowset = self.idxfile[self.idxfile['ProbeFileID'] == probeFileID].copy()
-        #search in these rows for DonorFileID matches. If empty, pair does not exist. Quit status 1
-        if not (donorFileID in rowset['DonorFileID'].unique()):
-            errmsg=["ERROR: The pair ({},{}) does not exist in the index file.".format(probeFileID,donorFileID)]
-            errmsg.append("The contents of your file are not valid!")
-            sysrow['Message'] = "\n".join(errmsg)
-            sysrow['matchFlag'] = 1
-            return sysrow
-
-        #check mask validation
-        probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
-        donorOutputMaskFileName = sysrow['OutputDonorMaskFileName']
-        idxStats = self.idxfile.query("ProbeFileID=='{}' and DonorFileID=='{}'".format(probeFileID,donorFileID))
-        idxProbeWidth = idxStats['ProbeWidth'].iloc[0]
-        idxProbeHeight = idxStats['ProbeHeight'].iloc[0]
-        idxDonorWidth = idxStats['DonorWidth'].iloc[0]
-        idxDonorHeight = idxStats['DonorHeight'].iloc[0]
-
-        if (probeOutputMaskFileName in [None,'',np.nan,'nan']) or (donorOutputMaskFileName in [None,'',np.nan,'nan']):
-            sysrow['Message'] = "At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeFileID,donorFileID)
-            return sysrow
-#            maskFlag = maskFlag | maskCheck2(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),sysfile['ProbeFileID'][i],sysfile['DonorFileID'][i],idxfile,i,identify)
-        mskflag,msg = self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,sysrow.name,self.identify)
-        sysrow['Message'] = msg
-        sysrow['maskFlag'] = sysrow['maskFlag'] | mskflag 
-#        maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeFileID,donorFileID,idxProbeWidth,idxProbeHeight,idxDonorWidth,idxDonorHeight,i,identify)
-        return sysrow
-
-    def checkProbes(self,maskData,processors):
-        maxprocs = multiprocessing.cpu_count() - 2
-        nrow = len(maskData)
-        if (processors > nrow) and (nrow > 0):
-            print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
-            processors = nrow
-        if processors > maxprocs:
-            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
-            processors = maxprocs
-
-        chunksize = nrow//processors
-        maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
-        p = multiprocessing.Pool(processes=processors)
-        maskDataS = p.map(checkProbeDSD,maskDataS)
-        p.close()
-        maskData = pd.concat(maskDataS)
-        #add all mask 'Message' entries to printBuffer
-        maskData.apply(lambda x: self.printbuffer.append(x['Message']),axis=1,reduce=False)
-
-        return maskData
-
-    def checkMoreProbes(self,maskData):
-        return maskData.apply(self.checkOneProbe,axis=1,reduce=False)
-
     def maskCheck(self,pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum,identify):
         #check to see if index file input image files are consistent with system output
         flag = 0
-        msg = ["Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum)]
+        self.printbuffer.append("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
     
         #check to see if index file input image files are consistent with system output
         pmask_pieces,pmask_ext = os.path.splitext(pmaskname)
         if pmask_ext != '.png':
-            msg.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum))
-            return 1,"\n".join(msg)
+            self.printbuffer.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum))
+            return 1
     
         dmask_pieces,dmask_ext = os.path.splitext(dmaskname)
         if dmask_ext != '.png':
-            msg.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum))
-            return 1,"\n".join(msg)
+            self.printbuffer.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum))
+            return 1
     
         #check to see if png files exist before doing anything with them.
         eflag = False
         if not os.path.isfile(pmaskname):
-            msg.append("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname))
+            self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname))
             eflag = True
         if not os.path.isfile(dmaskname):
-            msg.append("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname))
+            self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname))
             eflag = True
         if eflag:
-            return 1,"\n".join(msg)
+            return 1
     
         #subprocess with imagemagick identify for speed
         if identify:
             dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",pmaskname]).rstrip().replace("'","").split('|')
             pdims = (int(dimoutput[2]),int(dimoutput[1]))
-            channel = subprocess.check_output(["identify","-format","%[channels]",pmaskname]).rstrip()
-            if channel != "gray":
-                msg.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(pmaskname,channel))
-                flag = 1
         else:
             pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
-            if len(pdims) > 2:
-                msg.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]))
+    
+        if identify:
+            channel = subprocess.check_output(["identify","-format","%[channels]",pmaskname]).rstrip()
+            if channel != "gray":
+                self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(pmaskname,channel))
                 flag = 1
-
+        elif len(pdims)>2:
+            self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]))
+            flag = 1
+    
         if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
-            msg.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
-            msg.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
-            msg.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+            self.printbuffer.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
+            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
+            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
             flag = 1
     
         if identify:
             dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",dmaskname]).rstrip().replace("'","").split('|')
             ddims = (int(dimoutput[2]),int(dimoutput[1]))
-            channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname]).rstrip()
-            if channel != "gray":
-                msg.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(dmaskname,channel))
-                flag = 1
         else: 
             ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
-            if len(ddims) > 2:
-                msg.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]))
+    
+        if identify:
+            channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname]).rstrip()
+            if channel != "gray":
+                self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(dmaskname,channel))
                 flag = 1
+        elif len(ddims)>2:
+            self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]))
+            flag = 1
     
         if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
-            msg.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
-            msg.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
-            msg.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+            self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
+            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
+            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
             flag = 1
      
         if flag == 0:
-            msg.append("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
-        return flag,"\n".join(msg)
+            self.printbuffer.append("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
+        return flag
 
     def maskCheck_0(self,pmaskname,dmaskname,probeid,donorid,indexfile,rownum):
         #check to see if index file input image files are consistent with system output

@@ -29,6 +29,7 @@ import pandas as pd
 #import matplotlib.pyplot as plt
 import os
 import random
+import glymur
 import masks
 import maskMetrics as mm
 from decimal import Decimal
@@ -47,7 +48,7 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',testimg,params)
 
         #read it back in as an image
-        mytest=masks.refmask('testImg.png',readopt=0)
+        mytest=masks.refmask_color('testImg.png',readopt=0)
         #test if image is grayscale
         self.assertEqual(len(mytest.matrix.shape),2)
         #mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
@@ -94,11 +95,11 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg_color.png',testimg_color,params)
 
         #read it back in as a color mask image
-        mytest_color=masks.refmask('testImg_color.png')
+        mytest_color=masks.refmask_color('testImg_color.png')
         self.assertEqual(len(mytest_color.matrix.shape),3) #test if image is color
         mytest_color.matrix = mytest_color.binarize(254) #fully binarize the mask for some threshold
 
-        mytest_bw=masks.refmask('testImg_color.png',readopt=0)
+        mytest_bw=masks.refmask_color('testImg_color.png',readopt=0)
         self.assertEqual(len(mytest_bw.matrix.shape),2) #test if image is grayscale
         mytest_bw.matrix = mytest_bw.binarize(254)
 
@@ -115,7 +116,7 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',testimg,params)
 
         #read it back in as an image. Also test erode and dilate images.
-        mytest=masks.refmask('testImg.png',readopt=0)
+        mytest=masks.refmask_color('testImg.png',readopt=0)
         #mytest.matrix = mytest.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
         zones=mytest.boundaryNoScoreRegion(0,0,'gaussian')
         self.assertTrue(np.array_equal(zones['wimg'],np.ones((100,100))))
@@ -139,16 +140,21 @@ class TestImageMethods(ut.TestCase):
         testimg[11:20,81:90,0] = 0 #green
         testimg[11:20,81:90,2] = 0
         testimg[81:90,81:90,0:2]=0 #red
+        
         testimg = testimg.astype(np.uint8)
         params=list()
         params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
         params.append(0)
+
+        #generate journal data
+        jData = pd.DataFrame({'Color':['255 0 0','0 255 0'],'Purpose':['remove','remove'],'Evaluated':['Y','Y']})
+
         cv2.imwrite('testImgC.png',testimg,params)
-        mytest=masks.refmask('testImgC.png',cs=['255 0 0','0 255 0'],purposes='remove') #red,green
+        mytest=masks.refmask_color('testImgC.png',jData=jData,mode=0) #red,green
         
         #generate masks
         baseNoScore = mytest.boundaryNoScoreRegion(3,5,'box')['wimg']
-        distractionNoScore = mytest.unselectedNoScoreRegion(5,'box')
+        distractionNoScore = mytest.unselectedNoScoreRegion(5,5,'box')
 
         #generate comparators
         baseNScompare = np.ones((100,100),dtype=np.uint8)
@@ -165,6 +171,215 @@ class TestImageMethods(ut.TestCase):
         aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box',0)
         self.assertTrue(np.array_equal(aggwts,baseNoScore & distractionNoScore))
 
+    #test if the no-score zone comes out exactly as expected. Box kernel for now. 
+    def test_jp2_noScore(self):
+        #build sample mask
+#        sample_mask = np.zeros((100,100),dtype=np.uint8)
+#        sample_mask[0:50,:] = 255
+
+#        png_params = [16,0]
+#        cv2.imwrite('testsysmask.png',sample_mask,png_params)
+#        sImg = masks.mask('testsysmask.png')
+#        os.system('rm testsysmask.png')
+
+        journal_df = pd.DataFrame({'JournalName':['Foo','Foo'],'Color':['255 0 0','0 255 0'],'Operation':['PasteSplice','LocalBlur'],'BitPlane':[3,2],'Sequence':[3,2],'Evaluated':['Y','Y']})
+
+        #blank mask, erosion and dilation should yield total weighted matrix
+        blank_mask = np.zeros((100,150),dtype=np.uint8)
+        #glymur write to jp2
+        glymur.Jp2k('testrefmask_0.jp2',blank_mask)
+        rImg = masks.refmask('testrefmask_0.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        self.assertTrue(np.array_equal(aggwts,np.ones((100,150))))
+        self.assertTrue(np.array_equal(bns,np.ones((100,150))))
+        self.assertTrue(np.array_equal(sns,np.ones((100,150))))
+        os.system('rm testrefmask_0.jp2')
+
+        #single mask of 1
+        mask1 = np.zeros((100,100),dtype=np.uint8)
+        mask1[40:60,40:60] = 1
+
+        glymur.Jp2k('testrefmask_1.jp2',mask1)
+        rImg = masks.refmask('testrefmask_1.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        selmask = np.ones(mask1.shape)
+        selmask[38:62,38:62] = 0
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,np.ones(aggwts.shape)))
+        self.assertTrue(np.array_equal(sns,selmask))
+        os.system('rm testrefmask_1.jp2')
+
+        #single mask of 2
+        mask2 = np.zeros((100,100),dtype=np.uint8)
+        mask2[40:60,40:60] = 2
+        
+        glymur.Jp2k('testrefmask_2.jp2',mask2)
+        rImg = masks.refmask('testrefmask_2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        selmask = np.ones(mask1.shape)
+        selmask[38:62,38:62] = 0
+        selmask[41:59,41:59] = 1
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,selmask))
+        self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        os.system('rm testrefmask_2.jp2')
+
+        #2 contained in 1
+        mask2in1 = np.zeros((100,100),dtype=np.uint8)
+        mask2in1[10:90,10:70] = 1
+        mask2in1[30:60,30:50] = 3
+        glymur.Jp2k('testrefmask_2in1.jp2',mask2in1)
+        rImg = masks.refmask('testrefmask_2in1.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        selmask = np.ones((100,100))
+        selmask[8:92,8:72] = 0
+        selmask[31:59,31:49] = 1
+        boundmask = np.ones((100,100))
+        boundmask[28:62,28:52] = 0
+        boundmask[31:59,31:49] = 1
+
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(sns,selmask))
+        os.system('rm testrefmask_2in1.jp2')
+
+        #1 contained in 2
+        mask1in2 = np.zeros((100,100),dtype=np.uint8)
+        mask1in2[10:90,10:70] = 2
+        mask1in2[30:60,30:50] = 3
+        glymur.Jp2k('testrefmask_1in2.jp2',mask1in2)
+        rImg = masks.refmask('testrefmask_1in2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        selmask = np.ones((100,100))
+        selmask[8:92,8:72] = 0
+        selmask[11:89,11:69] = 1
+        boundmask = np.ones((100,100))
+        boundmask[8:92,8:72] = 0
+        boundmask[11:89,11:69] = 1
+
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        os.system('rm testrefmask_1in2.jp2')
+
+        #2 and 1 coincide
+        mask1and2 = np.zeros((100,100),dtype=np.uint8)
+        mask1and2[30:50,30:50] = 3
+        glymur.Jp2k('testrefmask_1and2.jp2',mask1and2)
+        rImg = masks.refmask('testrefmask_1and2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+
+        selmask = np.ones((100,100))
+        selmask[27:53,27:53] = 0
+        selmask[31:49,31:49] = 1
+
+        boundmask = np.ones((100,100))
+        boundmask[28:52,28:52] = 0
+        boundmask[31:49,31:49] = 1
+
+        dismask = np.ones((100,100))
+        dismask[27:53,27:53] = 0
+        dismask[31:49,31:49] = 1
+        
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(sns,dismask))
+        os.system('rm testrefmask_1and2.jp2')
+        
+        #2 and 1 intersect
+        mask1x2 = np.zeros((100,100),dtype=np.uint8)
+        mask1x2[40:60,20:80] = 1
+        mask1x2[20:80,40:60] = 2
+        mask1x2[40:60,40:60] = 3
+        glymur.Jp2k('testrefmask_1x2.jp2',mask1x2)
+        rImg = masks.refmask('testrefmask_1x2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        
+        selmask = np.ones((100,100))
+        selmask[38:62,18:82] = 0
+        selmask[18:82,38:62] = 0
+        selmask[21:79,41:59] = 1
+
+        boundmask = np.ones((100,100))
+        boundmask[18:82,38:62] = 0
+        boundmask[21:79,41:59] = 1
+
+        dismask = np.ones((100,100))
+        dismask[38:62,18:82] = 0
+        dismask[21:79,41:59] = 1
+        
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(sns,dismask))
+        os.system('rm testrefmask_1x2.jp2')
+
+        #2 and 1 are adjacent
+        mask1n2 = np.zeros((100,100),dtype=np.uint8)
+        mask1n2[40:60,40:50] = 1
+        mask1n2[40:60,50:60] = 2
+        glymur.Jp2k('testrefmask_1n2.jp2',mask1n2)
+        rImg = masks.refmask('testrefmask_1n2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+
+        selmask = np.ones((100,100))
+        selmask[37:63,37:53] = 0
+        selmask[38:62,48:62] = 0
+        selmask[41:59,51:59] = 1
+
+        boundmask = np.ones((100,100))
+        boundmask[38:62,48:62] = 0
+        boundmask[41:59,51:59] = 1
+
+        dismask = np.ones((100,100))
+        dismask[37:63,37:53] = 0
+        dismask[41:59,51:59] = 1
+
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(sns,dismask))
+        os.system('rm testrefmask_1n2.jp2')
+
+        #2 and 1 are separate
+        mask1_2 = np.zeros((100,100),dtype=np.uint8)
+        mask1_2[40:60,20:40] = 1
+        mask1_2[40:60,60:80] = 2
+        glymur.Jp2k('testrefmask_1_2.jp2',mask1_2)
+        rImg = masks.refmask('testrefmask_1_2.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+        
+#        mask1vis = np.copy(mask1_2) #debug for images
+#        mask1vis[mask1_2 == 1] = 255
+#        cv2.imwrite('testrefmask_1_2.png',mask1vis,[16,0])
+        selmask = np.ones((100,100))
+        selmask[37:63,17:43] = 0
+        selmask[38:62,58:82] = 0
+        selmask[41:59,61:79] = 1
+
+        boundmask = np.ones((100,100))
+        boundmask[38:62,58:82] = 0
+        boundmask[41:59,61:79] = 1
+
+        dismask = np.ones((100,100))
+        dismask[37:63,17:43] = 0
+
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(sns,dismask))
+        os.system('rm testrefmask_1_2.jp2')
+
     def test_metrics(self):
         random.seed(1998)
         eps=10**-10 #account for floating point errors
@@ -177,7 +392,7 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg2.png',testimg,params)
 
         #read it back in as an image
-        rImg=masks.refmask('testImg2.png',readopt=0)
+        rImg=masks.refmask_color('testImg2.png',readopt=0)
 #        rImg.matrix = rImg.bw(230) #reading the image back in doesn't automatically make it 0 or 255.
         sImg=masks.mask('testImg2.png')  #test copy is absolutely equal
 #        sImg.matrix = sImg.bw(230)
@@ -267,14 +482,14 @@ class TestImageMethods(ut.TestCase):
         print("CASE 1c: Testing for equality under rotation and reflection...")
 
         ### rotate by 90 degrees #######################
-        rImg=masks.refmask('testImg2.png',readopt=0)
+        rImg=masks.refmask_color('testImg2.png',readopt=0)
         rImg.matrix = np.rot90(rImg.matrix)
         sImg=masks.mask('testImg2.png')
         sImg.matrix = np.rot90(sImg.matrix)
         absoluteEquality(rImg,sImg)
 
         ### flip horizontally
-        rImg=masks.refmask('testImg2.png',readopt=0)
+        rImg=masks.refmask_color('testImg2.png',readopt=0)
         rImg.matrix = np.fliplr(rImg.matrix)
         sImg=masks.mask('testImg2.png')
         sImg.matrix = np.fliplr(sImg.matrix)
@@ -291,7 +506,7 @@ class TestImageMethods(ut.TestCase):
         cv2.imwrite('testImg.png',rImg,params)
 
         #read it back in as an image
-        rImg=masks.refmask('testImg.png',readopt=0)
+        rImg=masks.refmask_color('testImg.png',readopt=0)
 #        rImg.matrix = rImg.bw(230).astype(np.uint8) #reading the image back in doesn't automatically make it 0 or 255.
  
         #erode by small amount so that we still get 0
@@ -465,7 +680,7 @@ class TestImageMethods(ut.TestCase):
 #            print("Case 5, translate out of range: hingeL1 is not greater than 0. Are you too forgiving?")
 #            exit(1)
 
-        print("CASE 5 testing complete.\n\nAll mask scorer unit tests successfully complete.")
+        print("CASE 5 testing complete.")
 
 #if __name__ == '__main__':
 #    ut.main()

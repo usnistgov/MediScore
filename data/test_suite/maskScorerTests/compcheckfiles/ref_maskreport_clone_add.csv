@@ -1,0 +1,2 @@
+TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
+manipulation|Purpose==['clone','add']|0.0375413907285|0.681127803189|0.0457891155608|0.0976564734076|0.75|4|4|3|1|N

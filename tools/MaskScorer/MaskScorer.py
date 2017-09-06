@@ -49,6 +49,8 @@ import Partition_mask as pt
 #execfile(os.path.join(lib_path,"masks.py"))
 #execfile('maskreport.py')
 
+########### Temporary Variable ############################################################
+localOptOutColName = "IsOptOut"
 
 ########### Command line interface ########################################################
 
@@ -100,6 +102,7 @@ parser.add_argument('--rbin',type=int,default=-1,
 help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to evaluate the relevant regions based on the other arguments. [default=-1]",metavar='integer')
 parser.add_argument('--sbin',type=int,default=-1,
 help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. -1 indicates that the threshold for the mask will be chosen at the maximal absolute MCC value. [default=-1]",metavar='integer')
+parser.add_argument('--color',action='store_true',help="Evaluate colorized referenced masks. Individual regions in the colorized masks are identifiable by region and do not intersect.")
 parser.add_argument('--nspx',type=int,default=-1,
 help="Set a pixel value in the system output mask to be the no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
 
@@ -112,7 +115,7 @@ help="The number of processors to use in the computation. Choosing too many proc
 parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
-parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the {} value is 'N' only.".format(localOptOutColName))
 parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
 parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
@@ -223,8 +226,8 @@ m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[e + 'MaskFileName' f
 sysCols = list(mySys)
 refCols = list(sub_ref)
 
-if args.optOut and not ('IsOptOut' in sysCols):
-    print("ERROR: No IsOptOut column detected. Filtration is meaningless.")
+if args.optOut and not (localOptOutColName in sysCols):
+    print("ERROR: No {} column detected. Filtration is meaningless.".format(localOptOutColName))
     exit(1)
 
 sysCols = [c for c in sysCols if c not in refCols]
@@ -242,53 +245,55 @@ if len(m_df) == 0:
 
 #apply to post-index filtering
 totalTrials = len(m_df)
-totalOptOut = len(m_df.query("IsOptOut=='Y'"))
+totalOptOut = len(m_df.query('=='.join([localOptOutColName,"'Y'"])))
 totalOptIn = totalTrials - totalOptOut
 TRR = float(totalOptIn)/totalTrials
-m_df = m_df.query("IsTarget=='Y'") #TODO: check with Jon. Is optOut filtering before or after target filtering?
+m_df = m_df.query("IsTarget=='Y'")
 
 #opting out at the beginning
 if args.optOut:
-    m_df = m_df.query("IsOptOut!='Y'")
+    m_df = m_df.query('!='.join([localOptOutColName,"'Y'"]))
 
 #define HTML functions here
 df2html = lambda *a:None
 if args.task == 'manipulation':
-    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision):
         # if the confidence score are 'nan', replace the values with the mininum score
         #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=0,speedup=args.speedup)
-        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=0,speedup=args.speedup,color=args.color)
+        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
 
-        nonscore_df = merged_df.query("MCC == -2")
+        nonscore_df = merged_df.query("OptimumMCC == -2")
 #        merged_df['Scored'] = pd.Series(['Y']*len(merged_df))
 #        merged_df.loc[merged_df.query('MCC == -2').index,'Scored'] = 'N'
         midx = nonscore_df.index
-        merged_df.loc[midx,'NMM'] = np.nan
-        merged_df.loc[midx,'BWL1'] = np.nan
-        merged_df.loc[midx,'GWL1'] = np.nan
-        merged_df.loc[midx,'PixelN'] = np.nan
-        merged_df.loc[midx,'PixelTP'] = np.nan
-        merged_df.loc[midx,'PixelTN'] = np.nan
-        merged_df.loc[midx,'PixelFP'] = np.nan
-        merged_df.loc[midx,'PixelFN'] = np.nan
-        merged_df.loc[midx,'PixelBNS'] = np.nan
-        merged_df.loc[midx,'PixelSNS'] = np.nan
-        merged_df.loc[midx,'PixelPNS'] = np.nan
+        if len(midx) > 0:
+            merged_df.loc[midx,'OptimumNMM'] = np.nan
+            merged_df.loc[midx,'OptimumBWL1'] = np.nan
+            merged_df.loc[midx,'GWL1'] = np.nan
+            merged_df.loc[midx,'OptimumPixelN'] = np.nan
+            merged_df.loc[midx,'OptimumPixelTP'] = np.nan
+            merged_df.loc[midx,'OptimumPixelTN'] = np.nan
+            merged_df.loc[midx,'OptimumPixelFP'] = np.nan
+            merged_df.loc[midx,'OptimumPixelFN'] = np.nan
+            merged_df.loc[midx,'PixelBNS'] = np.nan
+            merged_df.loc[midx,'PixelSNS'] = np.nan
+            merged_df.loc[midx,'PixelPNS'] = np.nan
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
         if args.displayScoredOnly:
-            #TODO: get the list of non-scored and delete them
+            #get the list of non-scored and delete them
             nonscore_df['ProbeFileID'].apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,x))))
 #            nonscore_df['ProbeFileID'].apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,x))))
-            merged_df = merged_df.query('MCC > -2')
+            merged_df = merged_df.query('OptimumMCC > -2')
     
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','NMM','MCC','BWL1','GWL1','Scored','PixelN','PixelTP','PixelTN','PixelFP','PixelFN','PixelBNS','PixelSNS','PixelPNS']
+        #TODO: tack on other columns if sbin >= 0
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','Scored','OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
@@ -297,7 +302,7 @@ if args.task == 'manipulation':
 
     def journalUpdate(probeJournalJoin,journalData,r_df):
         #get the manipulations that were not scored and set the same columns in journalData to 'N'
-        pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('MCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
+        pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('OptimumMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
         pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
 #        p_idx = pjoins.reset_index().merge(journalData,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
         p_idx = journalData.reset_index().merge(pjoins,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
@@ -312,23 +317,24 @@ if args.task == 'manipulation':
         journalcols = ['ProbeFileID']
         journalcols.extend(journalcols_else)
         journalData = journalData[journalcols]
-        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
+        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'journalResults.csv'])),sep="|",index=False)
         return 0
 
     #averaging procedure starts here.
-    def averageByFactors(r_df,metrics,factor_mode,query):
-        if 'MCC' not in metrics:
-            print("ERROR: MCC is not in the metrics provided.")
+    def averageByFactors(r_df,metrics,factor_mode,query): #TODO: next time pass in object of parameters instead of tacking on new ones every time
+        if 'OptimumMCC' not in metrics:
+            print("ERROR: OptimumMCC is not in the metrics provided.")
             return 1
         #filter nan out of the below
-        if len(r_df.query("Scored=='Y'").dropna()) == 0:
+        metrics_to_be_scored = ['OptimumMCC','OptimumNMM','OptimumBWL1','GWL1']
+        if r_df.query("Scored=='Y'")[metrics_to_be_scored].dropna().shape[0] == 0:
             #if nothing was scored, print a message and return
             print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile.".format(query))
             return 0
         r_dfc = r_df.copy()
-        r_idx = r_dfc.query('MCC == -2').index
+        r_idx = r_dfc.query('OptimumMCC == -2').index
         r_dfc.loc[r_idx,'Scored'] = 'N'
-        r_dfc.loc[r_idx,'MCC'] = np.nan
+        r_dfc.loc[r_idx,'OptimumMCC'] = np.nan
         r_df_scored = r_dfc.query("Scored=='Y'")
         ScoreableTrials = len(r_df_scored)
         my_partition = pt.Partition(r_df_scored,query,factor_mode,metrics) #average over queries
@@ -419,11 +425,12 @@ if args.task == 'manipulation':
 #            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out.loc[html_out['Scored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileID'] + '/' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
 
-            html_out = html_out.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+            #TODO: add other metrics where relevant
+            html_out = html_out.round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
 
             #final filtering
-            html_out.loc[html_out.query("MCC == -2").index,'MCC'] = ''
-            html_out.loc[html_out.query("MCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("OptimumMCC == -2").index,'OptimumMCC'] = ''
+            html_out.loc[html_out.query("OptimumMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
 
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
@@ -431,7 +438,7 @@ if args.task == 'manipulation':
 
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
+                a_df_copy = average_df.copy().round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -445,7 +452,8 @@ if args.task == 'manipulation':
             myf.close()
 
 elif args.task == 'splice':
-    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,verbose,precision):
+    #TODO: add color option
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision):
         #finds rows in index and sys which correspond to target reference
         #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
         #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
@@ -455,12 +463,12 @@ elif args.task == 'splice':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=1,speedup=args.speedup)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=1,speedup=args.speedup,color=args.color)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
@@ -474,28 +482,29 @@ elif args.task == 'splice':
  
         stackdf = pd.concat([stackp,stackd],axis=0)
         stackmerge = pd.merge(stackdf,m_df.drop('Scored',1),how='left',on=['ProbeFileID','DonorFileID'])
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','NMM','MCC','BWL1','GWL1']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']
         rcols = stackmerge.columns.tolist()
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         stackmerge = stackmerge[firstcols]
 
-        sidx = stackmerge.query('MCC==-2').index
+        sidx = stackmerge.query('OptimumMCC==-2').index
         stackmerge.loc[sidx,'Scored'] = 'N'
-        stackmerge.loc[sidx,'NMM'] = np.nan
-        stackmerge.loc[sidx,'BWL1'] = np.nan
+        stackmerge.loc[sidx,'OptimumNMM'] = np.nan
+        stackmerge.loc[sidx,'OptimumBWL1'] = np.nan
         stackmerge.loc[sidx,'GWL1'] = np.nan
-        stackmerge.loc[sidx,'MCC'] = np.nan
+        stackmerge.loc[sidx,'OptimumMCC'] = np.nan
         
-        probe_df.rename(index=str,columns={"NMM":"pNMM",
-                                           "MCC":"pMCC",
-                                           "BWL1":"pBWL1",
+        #add other scores for case sbin >= 0
+        probe_df.rename(index=str,columns={"OptimumNMM":"pOptimumNMM",
+                                           "OptimumMCC":"pOptimumMCC",
+                                           "OptimumBWL1":"pOptimumBWL1",
                                            "GWL1":"pGWL1",
-                                           'PixelN':'pPixelN',
-                                           'PixelTP':'pPixelTP',
-                                           'PixelTN':'pPixelTN',
-                                           'PixelFP':'pPixelFP',
-                                           'PixelFN':'pPixelFN',
+                                           'OptimumPixelN':'pOptimumPixelN',
+                                           'OptimumPixelTP':'pOptimumPixelTP',
+                                           'OptimumPixelTN':'pOptimumPixelTN',
+                                           'OptimumPixelFP':'pOptimumPixelFP',
+                                           'OptimumPixelFN':'pOptimumPixelFN',
                                            'PixelBNS':'pPixelBNS',
                                            'PixelSNS':'pPixelSNS',
                                            'PixelPNS':'pPixelPNS',
@@ -503,15 +512,15 @@ elif args.task == 'splice':
                                            "AggMaskFileName":"ProbeAggMaskFileName",
                                            "Scored":"ProbeScored"},inplace=True)
     
-        donor_df.rename(index=str,columns={"NMM":"dNMM",
-                                           "MCC":"dMCC",
-                                           "BWL1":"dBWL1",
+        donor_df.rename(index=str,columns={"OptimumNMM":"dOptimumNMM",
+                                           "OptimumMCC":"dOptimumMCC",
+                                           "OptimumBWL1":"dOptimumBWL1",
                                            "GWL1":"dGWL1",
-                                           'PixelN':'dPixelN',
-                                           'PixelTP':'dPixelTP',
-                                           'PixelTN':'dPixelTN',
-                                           'PixelFP':'dPixelFP',
-                                           'PixelFN':'dPixelFN',
+                                           'OptimumPixelN':'dOptimumPixelN',
+                                           'OptimumPixelTP':'dOptimumPixelTP',
+                                           'OptimumPixelTN':'dOptimumPixelTN',
+                                           'OptimumPixelFP':'dOptimumPixelFP',
+                                           'OptimumPixelFN':'dOptimumPixelFN',
                                            'PixelBNS':'dPixelBNS',
                                            'PixelSNS':'dPixelSNS',
                                            'PixelPNS':'dPixelPNS',
@@ -521,57 +530,47 @@ elif args.task == 'splice':
     
         pd_df = pd.concat([probe_df,donor_df],axis=1)
         merged_df = pd.merge(m_df,pd_df,how='left',on=['ProbeFileID','DonorFileID']).drop('Scored',1)
-        nonscore_df = merged_df.query('(pMCC == -2) and (dMCC == -2)')
+        nonscore_df = merged_df.query('(pOptimumMCC == -2) and (dOptimumMCC == -2)')
 
         #reorder merged_df's columns. Names first, then scores, then other metadata
-        p_idx = merged_df.query('pMCC == -2').index
-        d_idx = merged_df.query('dMCC == -2').index
+        p_idx = merged_df.query('pOptimumMCC == -2').index
+        d_idx = merged_df.query('dOptimumMCC == -2').index
         rcols = merged_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1']
+        if args.sbin >= 0:
+            firstcols.extend(['ActualNMM','ActualMCC','ActualBWL1',
+                              'ActualPixelN','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']) #TODO: add Maximum pixels after having implemented it
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
-   
-        merged_df.loc[p_idx,'pNMM'] = np.nan
-        merged_df.loc[p_idx,'pMCC'] = np.nan
-        merged_df.loc[p_idx,'pBWL1'] = np.nan
-        merged_df.loc[p_idx,'pGWL1'] = np.nan
-        merged_df.loc[p_idx,'pPixelN'] = np.nan
-        merged_df.loc[p_idx,'pPixelTP'] = np.nan
-        merged_df.loc[p_idx,'pPixelTN'] = np.nan
-        merged_df.loc[p_idx,'pPixelFP'] = np.nan
-        merged_df.loc[p_idx,'pPixelFN'] = np.nan
-        merged_df.loc[p_idx,'pPixelBNS'] = np.nan
-        merged_df.loc[p_idx,'pPixelSNS'] = np.nan
-        merged_df.loc[p_idx,'pPixelPNS'] = np.nan
-
-        merged_df.loc[d_idx,'dNMM'] = np.nan
-        merged_df.loc[d_idx,'dMCC'] = np.nan
-        merged_df.loc[d_idx,'dBWL1'] = np.nan
-        merged_df.loc[d_idx,'dGWL1'] = np.nan
-        merged_df.loc[p_idx,'dPixelN'] = np.nan
-        merged_df.loc[p_idx,'dPixelTP'] = np.nan
-        merged_df.loc[p_idx,'dPixelTN'] = np.nan
-        merged_df.loc[p_idx,'dPixelFP'] = np.nan
-        merged_df.loc[p_idx,'dPixelFN'] = np.nan
-        merged_df.loc[p_idx,'dPixelBNS'] = np.nan
-        merged_df.loc[p_idx,'dPixelSNS'] = np.nan
-        merged_df.loc[p_idx,'dPixelPNS'] = np.nan
+  
+        #TODO: account for other metrics
+        if (len(p_idx) > 0) or (len(d_idx) > 0):
+            metriclist = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1',
+                          'OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
+                          'PixelBNS','PixelSNS','PixelPNS']
+            if args.sbin >= 0:
+                metriclist = metriclist + ['ActualNMM','ActualMCC','ActualBWL1',
+                                           'ActualPixelN','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'] #TODO: add Maximum pixels after having implemented it
+            
+            for met in metriclist:
+                merged_df.loc[p_idx,''.join(['p',met])] = np.nan
+                merged_df.loc[d_idx,''.join(['d',met])] = np.nan
 
         if args.displayScoredOnly:
             #TODO: get the list of non-scored and delete them
             nonscore_df.apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
 #            nonscore_df.apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
-            merged_df = merged_df.query('(pMCC > -2) and (dMCC > -2)')
+            merged_df = merged_df.query('(pOptimumMCC > -2) and (dOptimumMCC > -2)')
         return merged_df,stackmerge
 
     def journalUpdate(probeJournalJoin,journalData,r_df):
         #set where the rows are the same in the join
-        pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
+        pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pOptimumMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
         pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
         p_idx = journalData.reset_index().merge(pjoins,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
 #        p_idx = pjoins.reset_index().merge(journalData,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
-        djoins = probeJournalJoin.query("DonorFileID=={}".format(r_df.query('dMCC == -2')['DonorFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','DonorFileID']]
+        djoins = probeJournalJoin.query("DonorFileID=={}".format(r_df.query('dOptimumMCC == -2')['DonorFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','DonorFileID']]
         djoins['Foo'] = pd.Series([0]*len(djoins)) #dummy variable to be deleted later
         d_idx = journalData.reset_index().merge(djoins,how='left',on=['DonorFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
 #        d_idx = djoins.reset_index().merge(journalData,how='left',on=['DonorFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
@@ -590,23 +589,24 @@ elif args.task == 'splice':
         return 0
 
     def averageByFactors(r_df,metrics,factor_mode,query):
-        if ('pMCC' not in metrics) or ('dMCC' not in metrics):
-            print("ERROR: pMCC or dMCC are not in the metrics you have provided.")
+        if ('pOptimumMCC' not in metrics) or ('dOptimumMCC' not in metrics):
+            print("ERROR: pOptimumMCC or dOptimumMCC are not in the metrics.")
             return 1
         #filter nan out of the below
-        if len(r_df.query("(ProbeScored == 'Y') | (DonorScored == 'Y')").dropna()) == 0:
+        metrics_to_be_scored = ['pOptimumMCC','pOptimumNMM','pOptimumBWL1','pGWL1','dOptimumMCC','dOptimumNMM','dOptimumBWL1','dGWL1'] #TODO: dump this into another paramter or use a parameter object
+        if r_df.query("(ProbeScored == 'Y') | (DonorScored == 'Y')")[metrics_to_be_scored].dropna().shape[0] == 0:
             #if nothing was scored, print a message and return
             print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile.".format(query))
             return 0
-        p_idx = r_df.query('pMCC == -2').index
-        d_idx = r_df.query('dMCC == -2').index
+        p_idx = r_df.query('pOptimumMCC == -2').index
+        d_idx = r_df.query('dOptimumMCC == -2').index
         r_dfc = r_df.copy()
         r_dfc.loc[p_idx,'ProbeScored'] = 'N'
         r_dfc.loc[d_idx,'DonorScored'] = 'N'
 
         #substitute for other values that won't get counted in the average
-        r_dfc.loc[p_idx,'pMCC'] = np.nan
-        r_dfc.loc[d_idx,'dMCC'] = np.nan
+        r_dfc.loc[p_idx,'pOptimumMCC'] = np.nan
+        r_dfc.loc[d_idx,'dOptimumMCC'] = np.nan
         my_partition = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),query,factor_mode,metrics) #average over queries
 #            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
         df_list = my_partition.render_table(metrics)
@@ -702,19 +702,19 @@ elif args.task == 'splice':
             html_out.loc[html_out['ProbeScored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['ProbeScored'] == 'Y','DonorFileID'] + '/probe/' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out.loc[html_out['DonorScored'] == 'Y','DonorFileName'] = '<a href="' + html_out.ix[html_out['DonorScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileID'] + '/donor/' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1) + '</a>'
 
-            html_out = html_out.round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
+            html_out = html_out.round({'pOptimumNMM':3,'pOptimumMCC':3,'pOptimumBWL1':3,'pGWL1':3,'dOptimumNMM':3,'dOptimumMCC':3,'dOptimumBWL1':3,'dGWL1':3})
 
-            html_out.loc[html_out.query("pMCC == -2").index,'pMCC'] = ''
-            html_out.loc[html_out.query("dMCC == -2").index,'dMCC'] = ''
-            html_out.loc[html_out.query("pMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
-            html_out.loc[html_out.query("dMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
+            html_out.loc[html_out.query("pOptimumMCC == -2").index,'pOptimumMCC'] = ''
+            html_out.loc[html_out.query("dOptimumMCC == -2").index,'dOptimumMCC'] = ''
+            html_out.loc[html_out.query("pOptimumMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
+            html_out.loc[html_out.query("dOptimumMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
 
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'pNMM':3,'pMCC':3,'pBWL1':3,'pGWL1':3,'dNMM':3,'dMCC':3,'dBWL1':3,'dGWL1':3})
+                a_df_copy = average_df.copy().round({'pOptimumNMM':3,'pOptimumMCC':3,'pOptimumBWL1':3,'pGWL1':3,'dOptimumNMM':3,'dOptimumMCC':3,'dOptimumBWL1':3,'dGWL1':3})
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -781,7 +781,8 @@ if args.task == 'manipulation':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    journalData0 = pd.merge(probeJournalJoin[['ProbeFileID','JournalName']].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
+#    journalData0 = pd.merge(probeJournalJoin[['ProbeFileID','JournalName']].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
+    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
     n_journals = len(journalData0)
     journalData0.index = range(n_journals)
     #TODO: basic data cleanup ends here
@@ -815,6 +816,7 @@ if args.task == 'manipulation':
             m_dfc = m_dfc.query("ProbeFileID=={}".format(np.unique(big_df.ProbeFileID).tolist()))
             #journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
+#            journalData_df = journalData_df.merge(big_df[['ProbeFileID','JournalName','StartNodeID','EndNodeID']],how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID'])
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','ProbeMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'Evaluated'] = 'Y'
         m_dfc.index = range(len(m_dfc))
@@ -833,32 +835,36 @@ if args.task == 'manipulation':
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         printq("Beginning mask scoring...")
-        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.color,verbose=reportq,precision=args.precision)
 
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
-        metrics = ['NMM','MCC','BWL1','GWL1']
+        metrics = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']
+        if args.sbin >= 0:
+            metrics.extend(['ActualNMM','ActualMCC','ActualBWL1']) #TODO: add Maximum metrics once complete
+
         a_df = 0
         if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
 
-        r_idx = r_df.query('MCC == -2').index
-        r_df.loc[r_idx,'Scored'] = 'N'
-        r_df.loc[r_idx,'NMM'] = ''
-        r_df.loc[r_idx,'BWL1'] = ''
-        r_df.loc[r_idx,'GWL1'] = ''
+        r_idx = r_df.query('OptimumMCC == -2').index
+        if len(r_idx) > 0:
+            r_df.loc[r_idx,'Scored'] = 'N'
+            r_df.loc[r_idx,'OptimumNMM'] = ''
+            r_df.loc[r_idx,'OptimumBWL1'] = ''
+            r_df.loc[r_idx,'GWL1'] = ''
 
         #generate HTML table report
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
-        r_df.loc[r_idx,'MCC'] = ''
+        r_df.loc[r_idx,'OptimumMCC'] = ''
         prefix = os.path.basename(args.inSys).split('.')[0]
 
         if args.outMeta:
-            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore','IsOptOut','NMM','MCC','BWL1','GWL1']]
+            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
@@ -930,7 +936,7 @@ elif args.task == 'splice':
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','DonorMaskFileName']],\
                              how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
 
-        m_dfc.index = range(len(m_dfc))
+        m_dfc.index = range(m_dfc.shape[0])
             #journalData.index = range(0,len(journalData))
 
         #if no (ProbeFileID,DonorFileID) pairs match between the two, there is nothing to be scored.
@@ -944,40 +950,42 @@ elif args.task == 'splice':
             if not os.path.isdir(outRootQuery):
                 os.system('mkdir ' + outRootQuery)
    
-        m_dfc['Scored'] = ['Y']*len(m_dfc)
+        m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
         printq("Beginning mask scoring...")
-        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,verbose=reportq,precision=args.precision)
+        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.color,verbose=reportq,precision=args.precision)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
-        metrics = ['pNMM','pMCC','pBWL1','pGWL1','dNMM','dMCC','dBWL1','dGWL1']
+        metrics = ['pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1']
+        if args.sbin >= 0:
+            metrics.extend(['pActualNMM','pActualMCC','pActualBWL1','dActualNMM','dActualMCC','dActualBWL1']) #TODO: add Maximum metrics once complete
         a_df = 0
         if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
 
-        r_df.loc[r_df.query('pMCC == -2').index,'ProbeScored'] = 'N'
-        r_df.loc[r_df.query('pMCC == -2').index,'pNMM'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pBWL1'] = ''
-        r_df.loc[r_df.query('pMCC == -2').index,'pGWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'DonorScored'] = 'N'
-        r_df.loc[r_df.query('dMCC == -2').index,'dNMM'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dBWL1'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dGWL1'] = ''
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'ProbeScored'] = 'N'
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumNMM'] = ''
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumBWL1'] = ''
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pGWL1'] = ''
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'DonorScored'] = 'N'
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumNMM'] = ''
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumBWL1'] = ''
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dGWL1'] = ''
 
         #generate HTML table report
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
-        r_df.loc[r_df.query('pMCC == -2').index,'pMCC'] = ''
-        r_df.loc[r_df.query('dMCC == -2').index,'dMCC'] = ''
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
 
         prefix = os.path.basename(args.inSys).split('.')[0]
 
         #other reports of varying
         if args.outMeta:
-            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore','IsOptOut','NMM','MCC','BWL1','GWL1']]
+            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
@@ -988,6 +996,7 @@ elif args.task == 'splice':
         r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
 
 printq("Ending the mask scoring report.")
+exit(0)
 
 #if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
 #    precision = args.precision

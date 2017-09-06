@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import os
 import random
+import glymur
 from scipy import misc
 from decimal import Decimal
 
@@ -77,6 +78,30 @@ def getKern(kernopt,size):
         print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
     return kern
 
+def count_bits(n):
+    """
+    * Description: counts the number of bits in an unsigned integer.
+    * Input:
+    *     n: the unsigned integer with bits to be counted
+    * Output:
+    *     c: the number of bits in the integer
+    """
+    if n == 0:
+        return 0
+    c = 0
+    top_bit = 0
+    if n > 0:
+        top_bit = int(math.floor(math.log(n,2)))
+    else: # n < 0
+        print("The integer put into count_bits {} is not unsigned.")
+        return -1
+    all_bits = range(0,top_bit + 1)
+    all_bits = [ 1 << b for b in all_bits ]
+    for b in all_bits:
+        if b & n != 0:
+            c = c + 1
+    return c
+
 class mask(object):
     """
     This class is used to read in and hold the system mask and its relevant parameters.
@@ -103,11 +128,14 @@ class mask(object):
             if readopt==1:
                 bmpmode='RGB'
             self.matrix=misc.imread(n,mode=bmpmode)
+        elif ext == 'jp2':
+            jp2 = glymur.Jp2k(n)
+            self.matrix = jp2[:]
         else:
             self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
         if self.matrix is None:
             masktype = 'System'
-            if isinstance(self,refmask):
+            if isinstance(self,refmask) or isinstance(self,refmask_color):
                 masktype = 'Reference'
             print("{} mask file {} is unreadable.".format(masktype,n))
         self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
@@ -252,6 +280,13 @@ class mask(object):
         * Output:
         *     self.bwmat: single-channel binarized image
         """
+        if self.name.split('.')[-1] == 'jp2':
+#            intmat = np.zeros(self.matrix.shape)
+#            intmat[self.matrix == 0] = 255
+            _,intmat = cv2.threshold(self.matrix,0,255,cv2.THRESH_BINARY_INV)
+            self.bwmat = intmat
+            return self.bwmat
+
         if len(self.matrix.shape)==2:
             self.bwmat = self.bw(threshold)
         else:
@@ -303,7 +338,255 @@ class refmask(mask):
     This class is used to read in and hold the reference mask and its relevant parameters.
     It inherits from the (system output) mask above.
     """
-    def __init__(self,n,readopt=1,cs=[],purposes='all'):
+#    def __init__(self,n,readopt=1,cs=[],purposes='all'):
+    def __init__(self,n,readopt=1,jData=0,mode=0):
+        """
+        Constructor
+
+        Attributes:
+        - n: the name of the reference mask file
+        - readopt: the option to read in the reference mask file. Choose 1 to read in
+                   as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
+                   single-channel grayscale
+        - jData: the journal data needed for the reference mask to select manipulated regions
+        - mode: evaluation mode. 0 for manipulation, 1 for splice on probe, 2 for splice on donor.
+        """
+        super(refmask,self).__init__(n,readopt)
+        #rework the init and other functions to support bit masking
+        #default to all regions if it is 0
+        self.bitlist=0
+        if jData is not 0:
+#            self.colors = [[0,0,0]]
+#            self.purposes = ['add']
+#        else:
+#            if (mode == 2) or (mode == 1):
+#                #TODO: temporary measure until splice task supports individual tasks again
+#                self.colors = [[0,0,0]]
+#                self.purposes = ['add']
+#            else:
+            evalcol='Evaluated'
+            if mode==1:
+                evalcol='ProbeEvaluated'
+            elif mode==2:
+                evalcol='DonorEvaluated'
+
+            self.journalData = jData
+            desired_rows = jData.query("{}=='Y'".format(evalcol))
+
+            bitlist = desired_rows['BitPlane'].unique().tolist()
+            if '' in bitlist:
+                bitlist.remove('')
+            if 'None' in bitlist:
+                bitlist.remove('None')
+            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
+
+#            purposes = list(jData['Purpose'])
+#            purposes_unique = []
+#            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+#            self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
+#            self.purposes = purposes
+
+    def regionIsPresent(self):
+        """
+        * Description: return True if a scoreable region is present. Does not account for no-score zones yet. False if otherwise.
+        """
+        presence = 0
+        rmat = self.matrix
+        bits = self.bitlist
+        for b in bits:
+            presence = presence + np.sum(rmat & b)
+            if presence > 0:
+                return True
+        return False
+
+    def getColor(self,b):
+        if count_bits(b) != 1:
+            raise ValueError("The input pixel number should be a power of 2.")
+
+        cID = int(math.log(b,2)) + 1
+        color = self.journalData.query("BitPlane=='{}'".format(cID)).iloc[0]['Color'] #TODO: Sequence vs BitPlane?
+        color = [int(p) for p in color.split(' ')]#[::-1]
+        return color
+
+    def getAnimatedMask(self,option='all'):
+        """
+        * Description: return the array of color masks that can then be saved as an animated png.
+                       This function will return all the colors, not just the ones scored.
+        * Inputs:
+        *     option: select 'all' to return all the regions in the animated mask, 'partial' to return
+                      only the regions scored
+        """
+        dims = self.get_dims()
+        base_mask = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
+        unique_px = np.unique(self.matrix)
+        top_bit = int(math.floor(math.log(max(unique_px),2)))
+        all_bits = [1 << b for b in range(top_bit + 1)]
+
+        #get all the non-intersecting regions first
+        mybitlist = all_bits
+        if option=='partial':
+            mybitlist = self.bitlist
+
+        for p in unique_px:
+            if count_bits(p) == 1 and (p in mybitlist):
+                base_mask[self.matrix == p] = self.getColor(p)
+
+        seq = []
+        
+        for b in mybitlist:
+            pixel_catch = 0
+            pixel_list = []
+            tempmask = np.copy(base_mask)
+            for p in unique_px:
+                if count_bits(p) == 1:
+                    continue
+                if b & p != 0:
+                    pixel_catch = pixel_catch + 1
+                    pixel_list.append(p)
+                    tempmask[self.matrix == p] = self.getColor(b)
+            if pixel_catch > 0:
+#                print("The mask generator caught pixels at {}.".format(pixel_list))
+                 seq.append(tempmask)
+        if len(seq) == 0:
+            seq.append(base_mask)
+
+        return seq
+
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode):
+        """
+        * Description: this function calculates and generates the aggregate no score zone of the mask
+                       by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
+                       unselectedNoScoreRegion functions
+        * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix
+        *     dilateKernSize: total length of the dilation kernel matrix
+        *     distractionKernSize: total length of the dilation kernel matrix for the distraction no-score zone
+        *     kern: kernel shape to be used
+        *     mode: determines the task used. 0 denotes the evaluation of the  manipulation task, 1 denotes the evaluation
+                    of the probe image in the splice task, 2 denotes the evaluation of the donor image in the splice task.
+        """
+        baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
+#        wimg = baseNoScore
+#        distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
+#        if (distractionKernSize > 0) and (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
+        distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
+        wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
+
+        return wimg,baseNoScore,distractionNoScore
+
+    def boundaryNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
+        """
+        * Description: this function calculates and generates the no score zone of the mask,
+                             as well as the eroded and dilated masks for additional reference
+        * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix
+        *     dilateKernSize: total length of the dilation kernel matrix
+        *     kern: kernel shape to be used 
+        """
+        if (erodeKernSize==0) and (dilateKernSize==0):
+            dims = self.get_dims()
+            weight = np.ones(dims,dtype=np.uint8)
+            return {'rimg':self.matrix,'wimg':weight}
+
+        mymat = 0
+#        if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'):
+        selfmat = self.matrix
+        if self.bitlist is not 0:
+            #thorough computation for individual bits 
+            mymat = np.zeros(self.get_dims(),dtype=np.uint8)
+            for b in self.bitlist: #                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
+                mymat = mymat | ((selfmat & b) > 0)
+            mymat = 255*(1-mymat).astype(np.uint8)
+            self.bwmat = mymat
+        else:
+            mymat = 255*(1-(selfmat > 0))
+        kern = kern.lower()
+        eKern=getKern(kern,erodeKernSize)
+        dKern=getKern(kern,dilateKernSize)
+
+        #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
+        eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+        dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+
+        weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
+        wFlip=1-weight
+
+        return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
+
+    def unselectedNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
+        """
+        * Description: this function calculates the no score zone of the unselected mask regions.
+                            The resulting mask is meant to be paired with the no score zone function above to form
+                            a comprehensive no-score region
+                            
+                            It parses the BGR color codes to determine the color corresponding to the
+                            type of manipulation
+        * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix for establishing the scored region
+        *     dilateKernSize: total length of the dilation kernel matrix for the unselected no-score region
+        *     kern: kernel shape to be used
+        * Output:
+        *     weights: the weighted matrix computed from the distraction zones
+        """
+
+        mymat = self.matrix
+        dims = self.get_dims()
+        kern = kern.lower()
+        eKern=getKern(kern,erodeKernSize)
+        dKern=getKern(kern,dilateKernSize)
+        
+        #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
+#        notcolors = mask.getColors(mymat)
+        notcolors = np.unique(mymat)
+        top_px = max(notcolors)
+        if (top_px == 0) or (self.bitlist is 0):
+            weights = np.ones(dims,dtype=np.uint8)
+            return weights
+
+        #decompose into individual bit channels.
+        #but this won't represent all colors, so max with the max bit in self.bitlist
+        top_bit = max([int(math.floor(math.log(top_px,2))),int(math.floor(math.log(max(self.bitlist),2)))])
+        notcolors = range(0,top_bit + 1)
+        notcolors = [ 1 << b for b in notcolors ]
+
+#        for c in self.colors:
+        scored = np.zeros((dims[0],dims[1]),dtype=np.uint8)
+
+        for c in self.bitlist:
+#            if tuple(c) in notcolors:
+            scored = scored | ((mymat & c) > 0)
+            if c in notcolors:
+                notcolors.remove(c)
+            #skip the colors that aren't present, in case they haven't made it to the mask in question
+        if len(notcolors)==0:
+            weights = np.ones(dims,dtype=np.uint8)
+            return weights
+
+        #edit for bit masks
+        mybin = np.zeros((dims[0],dims[1]),dtype=np.uint8)
+        for c in notcolors:
+            #set equal to cs
+#            tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
+            tbin = (mymat & c) > 0
+            mybin = mybin | tbin
+
+        mybin = mybin.astype(np.uint8)
+        #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
+        #eroded region must be set to 1 and must not be overrideen by the unselected NSR
+        eImg = cv2.erode(scored,eKern,iterations=1)
+        dImg = 1 - cv2.dilate(mybin,dKern,iterations=1)
+        dImg = dImg | eImg
+        weights=dImg.astype(np.uint8)
+
+        return weights
+
+class refmask_color(mask):
+    """
+    This class is used to read in and hold the reference mask and its relevant parameters.
+    It inherits from the (system output) mask above.
+    """
+#    def __init__(self,n,readopt=1,cs=[],purposes='all'):
+    def __init__(self,n,readopt=1,jData=0,mode=0):
         """
         Constructor
 
@@ -317,10 +600,35 @@ class refmask(mask):
         - purposes: the target manipulations, a string if single, a list if multiple, to be evaluated.
                'all' means all non-white regions will be evaluated
         """
-        super(refmask,self).__init__(n,readopt)
+        super(refmask_color,self).__init__(n,readopt)
         #store colors and corresponding type
-        self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in cs]
-        self.purposes = purposes
+        if jData is 0:
+            self.colors = [[0,0,0]]
+            self.purposes = ['add']
+        else:
+            if (mode == 2) or (mode == 1):
+                #TODO: temporary measure until splice task supports individual tasks again
+                self.colors = [[0,0,0]]
+                self.purposes = ['add']
+            else:
+                filteredJournal = jData.query("Evaluated=='Y'")
+                colorlist = filteredJournal['Color'].tolist()
+                colorlist = list(filter(lambda a: a != '',colorlist))
+                purposes = filteredJournal['Purpose'].tolist()
+                purposes_unique = []
+                [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+                self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
+                self.purposes = purposes
+
+    def regionIsPresent(self):
+        #return True if a scoreable region is present. False if otherwise.
+        presence = 0
+        rmat = self.matrix
+        for c in self.colors:
+            presence = presence + np.sum((rmat[:,:,0] == c[0]) & (rmat[:,:,1] == c[1]) & (rmat[:,:,2] == c[2]))
+            if presence > 0:
+                return True
+        return False
 
     def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode):
         """
@@ -339,7 +647,7 @@ class refmask(mask):
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
         if (distractionKernSize > 0) and (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
-            distractionNoScore = self.unselectedNoScoreRegion(distractionKernSize,kern)
+            distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
         return wimg,baseNoScore,distractionNoScore
@@ -381,7 +689,7 @@ class refmask(mask):
 
         return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
 
-    def unselectedNoScoreRegion(self,dilateKernSize,kern):
+    def unselectedNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
         """
         * Description: this function calculates the no score zone of the unselected mask regions.
                             The resulting mask is meant to be paired with the no score zone function above to form
@@ -390,6 +698,7 @@ class refmask(mask):
                             It parses the BGR color codes to determine the color corresponding to the
                             type of manipulation
         * Inputs:
+        *     erodeKernSize: total length of the erosion kernel matrix
         *     dilateKernSize: total length of the dilation kernel matrix for the unselected no-score region
         *     kern: kernel shape to be used
         * Output:
@@ -400,19 +709,24 @@ class refmask(mask):
         dims = self.get_dims()
         kern = kern.lower()
         dKern=getKern(kern,dilateKernSize)
+        eKern=getKern(kern,erodeKernSize)
+        scoredregion = np.zeros(dims)
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
         notcolors = mask.getColors(mymat)
 
+        #set erode region to all 1's. Must be in erode region at all times.
         for c in self.colors:
             if tuple(c) in notcolors:
                 notcolors.remove(tuple(c))
+                scoredregion = (mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2])
+        scoredregion = scoredregion.astype(np.uint8)
             #skip the colors that aren't present, in case they haven't made it to the mask in question
         if len(notcolors)==0:
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
-        mybin = np.ones((dims[0],dims[1])).astype(np.uint8)
+        mybin = np.ones((dims[0],dims[1]),dtype=np.uint8)
         for c in notcolors:
             #set equal to cs
             tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
@@ -420,8 +734,9 @@ class refmask(mask):
             mybin = mybin & tbin
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
+        eImg=cv2.erode(scoredregion,eKern,iterations=1)
         dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+        dImg=dImg | eImg
         weights=dImg.astype(np.uint8)
 
         return weights
-

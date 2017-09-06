@@ -1,2 +1,0 @@
-TaskID|Query|NMM|MCC|BWL1|GWL1|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
-manipulation|ConfidenceScore < 0.5|-1.0|0.419527187425|0.060604848331|0.060604848331|0.75|4|3|3|1|Y

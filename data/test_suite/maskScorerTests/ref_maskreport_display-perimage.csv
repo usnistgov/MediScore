@@ -1,1 +1,0 @@
-TaskID|ProbeFileID|ProbeFileName|ProbeMaskFileName|IsTarget|OutputProbeMaskFileName|ConfidenceScore|NMM|MCC|BWL1|GWL1|Scored|PixelN|PixelTP|PixelTN|PixelFP|PixelFN|PixelBNS|PixelSNS|PixelPNS|BaseFileName|JournalName|ProjectDescription|ManipulationCategory|Collection|PostProcessing|ManMade|Face|People|Remove|Splice|Clone|BlurLocal|Cropping|IsOptOut|ColMaskFileName|AggMaskFileName

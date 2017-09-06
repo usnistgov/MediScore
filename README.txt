@@ -311,6 +311,15 @@ HISTORY
     * Validator:
       - Sped up validator with pandas apply implementation.
       - Parallelization options and features added.
+  August 1, 2017
+    * Mask Scorer:
+      - Redirected control of selective regions to mask object to prepare for introduction of JPEG2000 bit-mask references.
+      - Added animated png creation function to mask object for JPEG2000 bit-mask references.
+      - HTML output now supports animated png's and multiple ways of computing the metrics involved.
+    * Validator:
+      - Reverting splice validator to serial dictionary implementation for stability.
+    * Provenance Validator:
+      - Reworded the -task option in the ReadMe for clarity.
 
 CONTACT
 -------
