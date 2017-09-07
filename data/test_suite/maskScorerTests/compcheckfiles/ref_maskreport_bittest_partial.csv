@@ -1,2 +1,2 @@
-TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
-manipulation|Operation==['PasteSampled']|-1.0|0.0302327722329|0.0654566994536|0.255891326009|1.0|2|1|2|0|N
+TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|AUC|EER|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
+manipulation|Operation==['PasteSampled']|-1.0|0.0302327722329|0.0654566994536|0.255891326009|0.93623383819|0.0637661618095|1.0|2|1|2|0|N

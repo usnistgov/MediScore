@@ -1,2 +1,2 @@
-TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
-manipulation|ManMade=='no'|0.33038232529|0.752026111134|0.0420039297587|0.144863411931|0.75|4|3|3|1|Y
+TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|AUC|EER|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
+manipulation|ManMade=='no'|0.33038232529|0.752026111134|0.0420039297587|0.144863411931|0.935332482119|0.0646675178809|0.75|4|3|3|1|Y

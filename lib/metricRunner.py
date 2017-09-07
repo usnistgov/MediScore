@@ -384,6 +384,7 @@ class maskMetricRunner:
             rocvalues = thresMets[['TPR','FPR']]
 
             #initialize plot options for ROC
+            #TODO: make into separate function taking in TPR and FPR values?
             dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
             p.gen_default_plot_options(dict_plot_options_path_name,plot_title=' '.join(['ROC of',maskRow['ProbeFileID']]),plot_type='ROC')
             plot_opts = p.load_plot_options(dict_plot_options_path_name)
@@ -397,11 +398,13 @@ class maskMetricRunner:
                                       ('antialiased', 'False')])]
 
             #lowercase rocvalues' keys
-            #TODO: append 0 and 1 to beginning and end of tpr and fpr respectively
 #            rocvalues['tpr'] = rocvalues.pop('TPR')
 #            rocvalues['fpr'] = rocvalues.pop('FPR')
 
+            #append 0 and 1 to beginning and end of tpr and fpr respectively
             rocvalues = rocvalues.append(pd.DataFrame([[0,0],[1,1]],columns=list(rocvalues)),ignore_index=True)
+            #reindex rocvalues
+            rocvalues = rocvalues.sort_values(by=['FPR']).reset_index(drop=True)
 
             #compute AUC and EER with detection metrics and store in 
             maskRow['AUC'] = dmets.compute_auc(rocvalues['FPR'],rocvalues['TPR'])
@@ -501,7 +504,7 @@ class maskMetricRunner:
             myprintbuffer.atomprint(print_lock)
             return maskRow
         except:
-            raise  #TODO: debug
+#            raise  #TODO: debug
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
@@ -708,6 +711,8 @@ class maskMetricRunner:
                'OptimumBWL1',
                'OptimumThreshold',
                'GWL1',
+               'AUC',
+               'EER',
                'OptimumPixelN',
                'OptimumPixelTP',
                'OptimumPixelTN',

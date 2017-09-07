@@ -275,6 +275,8 @@ if args.task == 'manipulation':
             merged_df.loc[midx,'OptimumNMM'] = np.nan
             merged_df.loc[midx,'OptimumBWL1'] = np.nan
             merged_df.loc[midx,'GWL1'] = np.nan
+            merged_df.loc[midx,'AUC'] = np.nan
+            merged_df.loc[midx,'EER'] = np.nan
             merged_df.loc[midx,'OptimumPixelN'] = np.nan
             merged_df.loc[midx,'OptimumPixelTP'] = np.nan
             merged_df.loc[midx,'OptimumPixelTN'] = np.nan
@@ -293,7 +295,7 @@ if args.task == 'manipulation':
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
         #TODO: tack on other columns if sbin >= 0
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','Scored','OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','Scored','OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
@@ -500,6 +502,8 @@ elif args.task == 'splice':
                                            "OptimumMCC":"pOptimumMCC",
                                            "OptimumBWL1":"pOptimumBWL1",
                                            "GWL1":"pGWL1",
+                                           "AUC":"pAUC",
+                                           "EER":"pEER",
                                            'OptimumPixelN':'pOptimumPixelN',
                                            'OptimumPixelTP':'pOptimumPixelTP',
                                            'OptimumPixelTN':'pOptimumPixelTN',
@@ -516,6 +520,8 @@ elif args.task == 'splice':
                                            "OptimumMCC":"dOptimumMCC",
                                            "OptimumBWL1":"dOptimumBWL1",
                                            "GWL1":"dGWL1",
+                                           "AUC":"dAUC",
+                                           "EER":"dEER",
                                            'OptimumPixelN':'dOptimumPixelN',
                                            'OptimumPixelTP':'dOptimumPixelTP',
                                            'OptimumPixelTN':'dOptimumPixelTN',
@@ -536,7 +542,7 @@ elif args.task == 'splice':
         p_idx = merged_df.query('pOptimumMCC == -2').index
         d_idx = merged_df.query('dOptimumMCC == -2').index
         rcols = merged_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
         if args.sbin >= 0:
             firstcols.extend(['ActualNMM','ActualMCC','ActualBWL1',
                               'ActualPixelN','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']) #TODO: add Maximum pixels after having implemented it
@@ -840,7 +846,7 @@ if args.task == 'manipulation':
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
-        metrics = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']
+        metrics = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
         if args.sbin >= 0:
             metrics.extend(['ActualNMM','ActualMCC','ActualBWL1']) #TODO: add Maximum metrics once complete
 
@@ -957,7 +963,7 @@ elif args.task == 'splice':
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
-        metrics = ['pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1']
+        metrics = ['pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
         if args.sbin >= 0:
             metrics.extend(['pActualNMM','pActualMCC','pActualBWL1','dActualNMM','dActualMCC','dActualBWL1']) #TODO: add Maximum metrics once complete
         a_df = 0
