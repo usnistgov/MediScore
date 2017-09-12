@@ -316,6 +316,11 @@ HISTORY
       - Redirected control of selective regions to mask object to prepare for introduction of JPEG2000 bit-mask references.
       - Added animated png creation function to mask object for JPEG2000 bit-mask references.
       - HTML output now supports animated png's and multiple ways of computing the metrics involved.
+      - Added Maximum Threshold metrics and Threshold averaging.
+      - Added ROC curve averages.
+      - Added standard deviation for metrics.
+    * Detection Scorer:
+      - Fixed plot leakage issue for rendering.
     * Validator:
       - Reverting splice validator to serial dictionary implementation for stability.
     * Provenance Validator:

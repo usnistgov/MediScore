@@ -192,7 +192,6 @@ class maskMetrics:
         fn = conf['FN']
         Rgt=np.sum((ref.bwmat==0) & (w==1))
         if Rgt == 0:
-            print("Mask {} has no region to score for the NMM.".format(ref.name))
             return np.nan
         return max(c,(tp-fn-fp)/Rgt)
 
@@ -375,7 +374,7 @@ class maskMetrics:
             if (uniques[0] == 255) or (uniques[0] == 0):
                 thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                            'System Output Mask':sys.name,
-                                           'Threshold':127,
+                                           'Threshold':0,
                                            'NMM':[-1.],
                                            'MCC':[0.],
                                            'BWL1':[1.],
@@ -428,9 +427,6 @@ class maskMetrics:
         else:
             #get actual thresholds. Remove 255.
             thresholds=uniques.tolist()
-            if 255 in thresholds:
-                thresholds.remove(255)
-            
             thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                        'System Output Mask':sys.name,
                                        'Threshold':127,
@@ -465,16 +461,27 @@ class maskMetrics:
 
         #generate ROC dataframe for image, preferably from existing library.
         #TPR = TP/(TP + FN); FPR = FP/(FP + TN)
-        #no need for roc curve if any of the denominator is zero
-        numNullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)").shape[0]
-        if numNullRows == 0:
-            #set rows for ROC curve
-            thresMets['TPR'] = thresMets['TP']/(thresMets['TP'] + thresMets['FN'])
-            thresMets['FPR'] = thresMets['FP']/(thresMets['FP'] + thresMets['TN'])
+        thresMets['TPR'] = 0
+        thresMets['FPR'] = 0
 
-        columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']
-        if numNullRows == 0:
-            columns = columns + ['TPR','FPR']
+        #no need for roc curve if any of the denominator is zero
+        nullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)")
+        nonNullRows = thresMets.query("(TP + FN != 0) and (FP + TN != 0)")
+        numNullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)").shape[0]
+        if numNullRows < thresMets.shape[0]:
+            #set rows for ROC curve
+            thresMets.set_value(nonNullRows.index,'TPR',nonNullRows['TP']/(nonNullRows['TP'] + nonNullRows['FN']))
+            thresMets.set_value(nonNullRows.index,'FPR',nonNullRows['FP']/(nonNullRows['FP'] + nonNullRows['TN']))
+#            thresMets['FPR'] = thresMets['FP']/(thresMets['FP'] + thresMets['TN'])
+
+        #pick max threshold for max MCC
+        columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N','TPR','FPR']
+        tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
+        thresMets = thresMets[columns]
+        maxMets = thresMets.query("Threshold=={}".format(tmax))
+        maxNMM = maxMets.iloc[0]['NMM']
+        maxMCC = maxMets.iloc[0]['MCC']
+        maxBWL1 = maxMets.iloc[0]['BWL1']
 
         #pick max threshold for max MCC
         tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]

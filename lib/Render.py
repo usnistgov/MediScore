@@ -200,6 +200,7 @@ class Render:
         if display is True:
             plt.show()
 
+        plt.close()
         return fig
 
 

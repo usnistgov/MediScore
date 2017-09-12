@@ -11760,7 +11760,38 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Synopsis">Synopsis<a class="anchor-link" href="#Synopsis">&#182;</a></h2><p>python2 MaskScorer.py -t task-type<br/>
+<h2 id="Table-of-Contents">Table of Contents<a class="anchor-link" href="#Table-of-Contents">&#182;</a></h2><p>0. <a href="#Synopsis">Synopsis</a></p>
+<p>1. <a href="#Description">Description</a></p>
+<p>2. <a href="#Readmasks">Reading the Masks</a></p>
+<p>3. <a href="#Binmasks">Binarizing the Reference Mask</a></p>
+<p>4. <a href="#noscorezone">Generating No-Score Zones</a></p>
+<p>5. <a href="#metrics">Metrics</a></p>
+<p>5.1 <a href="#metricsthresholding">System Mask Thresholding</a></p>
+<p>5.2 <a href="#metricsnotation">Notation</a></p>
+<p>5.3 <a href="#metricsmcc">Matthews Correlation Coefficient (MCC)</a></p>
+<p>5.4 <a href="#metricsnmm">Nimble Mask Metric (NMM)</a></p>
+<p>5.5 <a href="#metricswl1">Weighted L1 Loss (BWL1 and GWL1)</a></p>
+<p>5.6 <a href="#metricsauc">Area Under Curve (AUC)</a></p>
+<p>5.7 <a href="#metricseer">Equal Error Rate (EER)</a></p>
+<p>6. <a href="#roccurves">ROC Curves</a></p>
+<p>7. <a href="#options">Options</a></p>
+<p>7.1 <a href="#optionstask">Task Type Options</a></p>
+<p>7.2 <a href="#optionsinputs">Input Options</a></p>
+<p>7.3 <a href="#optionsoutputs">Output Options</a></p>
+<p>7.4 <a href="#optionsscoring">Scoring Options</a></p>
+<p>7.5 <a href="#optionsquery">Performance Evaluation by Query</a></p>
+<p>7.6 <a href="#optionsreport">Report Options</a></p>
+<p>8. <a href="#examples">Examples</a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="0.-Synopsis">0. Synopsis<a name="Synopsis" /><a class="anchor-link" href="#0.-Synopsis">&#182;</a></h2><p>python2 MaskScorer.py -t task-type<br/>
                       --refDir reference-directory<br/>
                       -r reference-file<br/>
                       -x index-file<br/>
@@ -11776,7 +11807,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h2>
+<h2 id="1.-Description">1. Description<a name="Description" /><a class="anchor-link" href="#1.-Description">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -11785,7 +11816,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The mask scorer calculates performance scores that measure the accuracy of the system output masks to their corresponding reference masks. The script produces output files in the form of pipe-separated ("|") CSV files, one containing scores at the trial level (*-mask_scores-perimage.csv), another containing an average of the metrics in the first CSV (*-mask_score.csv), and a third containing a list of manipulations that were evaluated corresponding to the journal in each probe (*-journalResults.csv). If the -html option is selected, the script will generate a detailed HTML file for the mask region performance results.</p>
+<p>The mask scorer calculates performance scores that measure the accuracy of the system output masks to their corresponding reference masks. The script produces output files in the form of pipe-separated ("|") CSV files, one containing scores at the trial level (*-mask_scores-perimage.csv), another containing an average of the metrics in the first CSV (*-mask_score.csv), and a third containing a list of manipulations that were evaluated or skipped over (*-journalResults.csv). If the -html option is selected, the script will generate a detailed HTML file for the mask region performance results.</p>
 <p>The mask scorer takes the following steps to score a mask:</p>
 <ol>
 <li>Reads in the reference and system masks.</li>
@@ -11803,7 +11834,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Reading-the-Masks">Reading the Masks<a class="anchor-link" href="#Reading-the-Masks">&#182;</a></h2><p>The system mask is read in as a single-layer grayscale png. (Note that the validator will fail the mask if it is not.) The reference mask is read in as a single-layer JPEG2000 containing bit values corresponding to localizable manipulations. If the evaluation is against color reference masks where mutually exclusive regions are RGB color-coded and different regions are easily distinguishable, the mask is read in as a three-channel (BGR-channel) png mask.</p>
+<h2 id="2.-Reading-the-Masks">2. Reading the Masks<a name="Readmasks" /><a class="anchor-link" href="#2.-Reading-the-Masks">&#182;</a></h2><p>The system mask is read in as a single-layer grayscale png. (Note that the validator will fail the mask if it is not.)</p>
+<p>The reference mask is read in as either a single-layer JPEG2000 containing bit values corresponding to localizable manipulations or a color png if the evaluation is against color reference masks where mutually exclusive regions are RGB color-coded and different regions are easily distinguishable.</p>
 
 </div>
 </div>
@@ -11813,7 +11845,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Binarizing-the-Reference-Mask">Binarizing the Reference Mask<a class="anchor-link" href="#Binarizing-the-Reference-Mask">&#182;</a></h2><p>In order to score the system output mask against the reference mask, the reference mask also needs to be converted to a single-channel mask. The obvious way to do this would be to treat each of the regions with bit values (color regions for the color masks) as manipulated regions and to score accordingly.</p>
+<h2 id="3.-Binarizing-the-Reference-Mask">3. Binarizing the Reference Mask<a name="Binmasks" /><a class="anchor-link" href="#3.-Binarizing-the-Reference-Mask">&#182;</a></h2><p>In order to score the system output mask against the reference mask, the reference mask also needs to be converted to a single-channel mask. The default way to do this would be to treat each of the regions with bit values (color regions for the color masks) as manipulated regions and to score accordingly.</p>
 <p>If selective scoring is utilized (via the -qm option), only regions that match the query will be scored against. The rest will be treated as no-score regions, to be discussed below.</p>
 
 </div>
@@ -11824,9 +11856,11 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Generating-No-Score-Zones">Generating No-Score Zones<a class="anchor-link" href="#Generating-No-Score-Zones">&#182;</a></h2><p>No-score zones are generated by differencing the erosion and dilation of the ground truth positive pixels in the reference mask. The difference between the two is called the boundary no-score zone.</p>
-<p>If selective scoring is utilized (via the -qm option), the mask scorer also generates the distraction no-score zone by dilating the positive pixels of the irrelevant regions in the reference mask. This number need not be the same as the dilation parameter used to generate the boundary no-score zone.</p>
-<p>An additional system-generated no-score zone may be used by the performer. The performer specifies a particular pixel value to treat as a no-score zone. This no-score zone is joined with the aforementioned no-score zones.</p>
+<h2 id="4.-Generating-No-Score-Zones">4. Generating No-Score Zones<a name="noscorezone" /><a class="anchor-link" href="#4.-Generating-No-Score-Zones">&#182;</a></h2><p>No-score zones are automatically established for three reasons: to grant an amount of flexibility to the performer, to exclude manipulated regions that are not of interest, and to exclude regions that the performer does not deem of interest. Each subset of the no-score zone is denoted by a specified type of no-score zone based on these motivations: the boundary no-score zone, selective no-score zone, and pixel no-score zone respectively.</p>
+<p>To ease the demand in identifying the region manipulated, the boundary around each region is eroded and dilated, with the difference serving as the boundary no-score zone.</p>
+<p>If selective scoring is utilized (via the -qm option), the mask scorer also generates the distraction no-score zone by dilating the positive pixels of the irrelevant regions in the reference mask. This number need not be the same as the dilation parameter used to generate the boundary no-score zone and may be adjusted via option --ntdks.</p>
+<p>An additional system-generated no-score zone may be used by the performer. The performer specifies a particular pixel value to treat as a no-score zone via option --nspx, and all pixels with the same value in the system mask serves as the no-score zone.</p>
+<p>The three are merged to generate the overall no-score zone.</p>
 
 </div>
 </div>
@@ -11836,24 +11870,29 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Metrics">Metrics<a class="anchor-link" href="#Metrics">&#182;</a></h2><p>The system computes the following metrics:</p>
+<h2 id="5.-Metrics">5. Metrics<a name="metrics" /><a class="anchor-link" href="#5.-Metrics">&#182;</a></h2><p>The system computes the following metrics:</p>
 <ul>
 <li>Matthews Correlation Coefficient (MCC)</li>
 <li>Nimble Mask Metric (NMM)</li>
 <li>Weighted L1 Loss: Binary (BWL1) and Grayscale (GWL1)</li>
 <li>Area Under the ROC Curve (AUC)</li>
+<li>Equal Error Rate (EER)</li>
 </ul>
-<p>The set of metrics returned will be the ones with the largest MCC. These are called the "optimum" metrics. Additionally specifying a threshold for all images to be binarized via the --sbin option will yield the "maximum" and "actual" metrics: the maximum metrics are defined as the metric values that yield the largest average MCC for a fixed threshold across all images; the actual metrics are defined as the metric values at the binarization threshold chosen by the performer.</p>
+<h3 id="5.1-System-Mask-Thresholding">5.1 System Mask Thresholding<a name="metricsthresholding" /><a class="anchor-link" href="#5.1-System-Mask-Thresholding">&#182;</a></h3><p>Most of these metrics depend on the binarized values of the grayscale system mask. There are various ways binarize the system mask, namely by picking the threshold that determines whether to treat a particular grayscale pixel as white or black.</p>
+<p>One is to threshold each mask according to whether a threshold returns the greatest MCC; these are called the "optimum" metrics. Another is to specify a fixed threshold for all masks to be binarized with the --sbin option; the metrics computed from this fixed threshold are called the "actual" metrics. Specifying said threshold will also prompt the scorer to compute the threshold that yields the maximum average MCC; the metrics computed by this threshold are called the "maximum" metrics.</p>
 <p>Averages of the metrics will be recorded across all probes. The average and standard deviation of the optimum thresholds will also be recorded.</p>
-<h3 id="Notation">Notation<a class="anchor-link" href="#Notation">&#182;</a></h3><p>The following notation is used in discussing the metrics:</p>
+<h3 id="5.2-Notation">5.2 Notation<a name="metricsnotation" /><a class="anchor-link" href="#5.2-Notation">&#182;</a></h3><p>The following notation is used in discussing the metrics:</p>
 <ul>
-<li>$gt$ refers to the binarized reference mask</li>
-<li>$sys_{\theta}$ refers to the system output mask binarized by threshold $\theta$<ul>
+<li>$gt$ refers to the binarized reference mask discussed in section 3.</li>
+<li>$sys_{\theta}$ refers to the system output mask binarized by specified threshold $\theta$<ul>
 <li>$sys_{*}$ refers to the unbinarized grayscale system output mask</li>
 </ul>
 </li>
-<li>$wts$ is a matrix of 1's and 0's, which denote the pixels scored and exempt by the system respectively. It is generated by a difference in the erosion and dilation of the manipulated area of $gt$.</li>
-<li>$TP$, $TN$, $FP$, and $FN$ are functions of $gt$, $sys_{\theta}$, and $wts$. All four are measures derived from the confusion matrix. Pixels for which the weights matrix is equal to 0 are not counted in the confusion measures. These will also be reported in the perimage output file:<ul>
+<li>$wts$ is a matrix of the overall no-score region discussed in section 4.<ul>
+<li>The no-score region can be further subdivided into the boundary, distraction, and system-generated no-score zones. The pixel counts corresponding to these regions are denoted $BNS$, $SNS$, and $PNS$ respectively. In cases where regions from different types of no-score zone intersect, the pixels count towards $PNS$, then $SNS$, or $BNS$, in order of decreasing priority.</li>
+</ul>
+</li>
+<li>$TP$, $TN$, $FP$, and $FN$ are functions of $gt$, $sys_{\theta}$, and $wts$. All four are measures derived from the confusion matrix. Pixels for which the weights matrix is equal to 0 are not counted in the confusion measures:<ul>
 <li>$TP$ refers to the total number of True Positives, pixels where $gt$ is positive and $sys_{\theta}$ is thresholded positive (manipulated)</li>
 <li>$TN$ refers to the total number of True Negatives, pixels where $gt$ is negative and $sys_{\theta}$ is positive (not manipulated)</li>
 <li>$FP$ refers to the total number of False Positives, pixels where $gt$ is negative but $sys_{\theta}$ is positive.</li>
@@ -11861,19 +11900,19 @@ div#notebook {
 </ul>
 </li>
 </ul>
-<h3 id="Matthews-Correlation-Coefficient-(MCC)">Matthews Correlation Coefficient (MCC)<a class="anchor-link" href="#Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
+<h3 id="5.3-Matthews-Correlation-Coefficient-(MCC)">5.3 Matthews Correlation Coefficient (MCC)<a name="metricsmcc" /><a class="anchor-link" href="#5.3-Matthews-Correlation-Coefficient-(MCC)">&#182;</a></h3>\begin{equation*}
 MCC(gt,sys_{\theta}) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
 \end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation. If any of the sums in the denominator equals 0, the MCC is taken to be 0 by convention.</p>
-<h3 id="Nimble-Mask-Metric-(NMM)">Nimble Mask Metric (NMM)<a class="anchor-link" href="#Nimble-Mask-Metric-(NMM)">&#182;</a></h3>\begin{equation*}
+<h3 id="5.4-Nimble-Mask-Metric-(NMM)">5.4 Nimble Mask Metric (NMM)<a name="metricsnmm" /><a class="anchor-link" href="#5.4-Nimble-Mask-Metric-(NMM)">&#182;</a></h3>\begin{equation*}
 NMM(gt,sys_{\theta},wts,c)=\max{\left(\frac{TP - FN - FP}{\sum\limits_{px\in gt}wts(px)},c\right)}
 \end{equation*}<p>$\Sigma_{px \in GT}$ refers to the sum over the pixels in the ground truth that are marked black. $c$ denotes a minimum cutoff value for the scoring to have any meaning; by default, $c=-1$.</p>
-<h3 id="Weighted-L1-Loss-(BWL1-and-GWL1)">Weighted L1 Loss (BWL1 and GWL1)<a class="anchor-link" href="#Weighted-L1-Loss-(BWL1-and-GWL1)">&#182;</a></h3><p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
+<h3 id="5.5-Weighted-L1-Loss-(BWL1-and-GWL1)">5.5 Weighted L1 Loss (BWL1 and GWL1)<a name="metricswl1" /><a class="anchor-link" href="#5.5-Weighted-L1-Loss-(BWL1-and-GWL1)">&#182;</a></h3><p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
 <p>The Weighted L1 is applied separately to the original grayscale system output and the binarized mask, producing the grayscale Weighted L1 (GWL1) and binarized Weighted L1 (BWL1) metrics respectively. In the case of the original grayscale, the value is summed over the weighted difference in pixel intensity.</p>
 \begin{equation*}
 BWL1(gt,sys_{\theta},wts)=\frac{(FP+FN)_{wts > 0}}{\sum\limits_{px\in gt}wts(px)}
 \end{equation*}\begin{equation*}
 GWL1(gt,sys_{*},wts)=\frac{\sum\limits_{px\in gt} \left|gt(px) - sys_{*}(px)\right|wts(px)}{\sum\limits_{px\in gt}wts(px)}
-\end{equation*}<h3 id="Area-Under-Curve-(AUC)">Area Under Curve (AUC)<a class="anchor-link" href="#Area-Under-Curve-(AUC)">&#182;</a></h3><p>The possibility of multiple thresholds giving rise to a set of varying confusion measures gives rise to the receiver operating characteristic (ROC). The ROC curve measures a relation between the true positive rate ($TPR$) and false positive rate ($FPR$), defined as follows:</p>
+\end{equation*}<h3 id="5.6-Area-Under-Curve-(AUC)">5.6 Area Under Curve (AUC)<a name="metricsauc" /><a class="anchor-link" href="#5.6-Area-Under-Curve-(AUC)">&#182;</a></h3><p>The possibility of multiple thresholds giving rise to a set of varying confusion measures gives rise to the receiver operating characteristic (ROC). The ROC curve measures a relation between the true positive rate ($TPR$) and false positive rate ($FPR$), defined as follows:</p>
 \begin{equation*}
 TPR = \frac{TP}{TP + FN}
 \end{equation*}\begin{equation*}
@@ -11881,21 +11920,7 @@ FPR = \frac{FP}{FP + TN}
 \end{equation*}<p>The area under the ROC curve (AUC) is a measure for the accuracy of the system.</p>
 \begin{equation*}
 AUC(gt,sys_{*},wts) = \sum\limits_{\theta_{n} \in \{\theta_{0},\ldots,\theta_{N-1}\}} \left(TPR(gt,sys_{\theta_{n+1}},wts) + TPR(gt,sys_{\theta_{n}},wts)\right)\left(FPR(gt,sys_{\theta_{n+1}},wts) - FPR(gt,sys_{\theta_{n}},wts)\right)
-\end{equation*}
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="ROC-Curves">ROC Curves<a class="anchor-link" href="#ROC-Curves">&#182;</a></h2><p>A pixel-weighted average ROC curve and probe-weighted average ROC curve will be recorded and defined across all thresholds relevant to all system masks. For a given threshold $\theta$, the true positive rate (TPR) for the ROC curves are as follows:</p>
-\begin{equation*}
-TPR_{pixel}(\theta) = \frac{\sum_{probes}TP_{\theta}}{\sum_{probes}\left(TP_{\theta} + FN_{\theta}\right)}
-\end{equation*}\begin{equation*}
-TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\theta} + FN_{\theta}}
-\end{equation*}<p>The false postive rates (FPR) are defined similarly. The pixel weighted average and probe weighted average ROC curves are drawn from the pairs of (FPR,TPR) points.</p>
+\end{equation*}<h3 id="5.7-Equal-Error-Rate-(EER)">5.7 Equal Error Rate (EER)<a name="metricseer" /><a class="anchor-link" href="#5.7-Equal-Error-Rate-(EER)">&#182;</a></h3><p>The value of the $FPR$ at the threshold where it is equal to the $FNR$ (or vice versa). $FPR$ is given by the formula in 5.6. $FNR$ is simply $1 - TPR$.</p>
 
 </div>
 </div>
@@ -11905,7 +11930,22 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Options">Options<a class="anchor-link" href="#Options">&#182;</a></h2>
+<h2 id="6.-ROC-Curves">6. ROC Curves<a name="roccurves" /><a class="anchor-link" href="#6.-ROC-Curves">&#182;</a></h2><p>A pixel-weighted average ROC curve and probe-weighted average ROC curve will be recorded and defined across all thresholds relevant to all system masks. For a given threshold $\theta$, the true positive rate (TPR) for the ROC curves are as follows:</p>
+\begin{equation*}
+TPR_{pixel}(\theta) = \frac{\sum_{probes}TP_{\theta}}{\sum_{probes}\left(TP_{\theta} + FN_{\theta}\right)}
+\end{equation*}\begin{equation*}
+TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\theta} + FN_{\theta}}
+\end{equation*}<p>The false postive rates (FPR) are defined similarly. The pixel weighted average and probe weighted average ROC curves are drawn from the pairs of (FPR,TPR) points. Their AUC's are recorded with the average metrics mentioned at the end of section 5.1.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="7.-Options">7. Options<a name="options" /><a class="anchor-link" href="#7.-Options">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -11924,7 +11964,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Task-Type-Options">Task Type Options<a class="anchor-link" href="#Task-Type-Options">&#182;</a></h3>
+<h3 id="7.1-Task-Type-Options">7.1 Task Type Options<a name="optionstask" /><a class="anchor-link" href="#7.1-Task-Type-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -11946,7 +11986,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Input-Options">Input Options<a class="anchor-link" href="#Input-Options">&#182;</a></h3><p>All CSV files passed to the Mask Scorer must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the CSV should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this in the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
+<h3 id="7.2-Input-Options">7.2 Input Options<a name="optionsinputs" /><a class="anchor-link" href="#7.2-Input-Options">&#182;</a></h3><p>All CSV files passed to the Mask Scorer must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the CSV should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this in the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
 
 </div>
 </div>
@@ -12047,7 +12087,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Output-Options">Output Options<a class="anchor-link" href="#Output-Options">&#182;</a></h3>
+<h3 id="7.3-Output-Options">7.3 Output Options<a name="optionsoutputs" /><a class="anchor-link" href="#7.3-Output-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12077,7 +12117,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Scoring-Options">Scoring Options<a class="anchor-link" href="#Scoring-Options">&#182;</a></h3>
+<h3 id="7.4-Scoring-Options">7.4 Scoring Options<a name="optionsscoring" /><a class="anchor-link" href="#7.4-Scoring-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12127,7 +12167,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Performance-Evaluation-by-Query">Performance Evaluation by Query<a class="anchor-link" href="#Performance-Evaluation-by-Query">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified queries and query options. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting none of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
+<h3 id="7.5-Performance-Evaluation-by-Query">7.5 Performance Evaluation by Query<a name="optionsquery" /><a class="anchor-link" href="#7.5-Performance-Evaluation-by-Query">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified queries and query options. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting none of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
 
 </div>
 </div>
@@ -12184,7 +12224,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Report-Options">Report Options<a class="anchor-link" href="#Report-Options">&#182;</a></h3>
+<h3 id="7.6-Report-Options">7.6 Report Options<a name="optionsreport" /><a class="anchor-link" href="#7.6-Report-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12222,7 +12262,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Examples">Examples<a class="anchor-link" href="#Examples">&#182;</a></h2>
+<h2 id="8.-Examples">8. Examples<a name="examples" /><a class="anchor-link" href="#8.-Examples">&#182;</a></h2>
 </div>
 </div>
 </div>

@@ -11,7 +11,6 @@ class Partition:
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
-    #TODO: add verbose option
     def __init__(self,dataframe,query,factor_mode,metrics,verbose=False): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
@@ -240,14 +239,21 @@ class Partition:
             #base case
             data = dict()
             dm = self.part_metric_list[0]
+            metsplus = []
             for m in metrics:
                 data[m] = [dm[m].mean(skipna=True)]
+                metsplus.append(m)
+                #add standard deviations too if length of data not nan is > 1
+                if dm[m].count() > 1:
+                    stdname = '_'.join(['stddev',m])
+                    data[stdname] = [dm[m].std(skipna=True)]
+                    metsplus.append(stdname)
             data['TaskID'] = [self.task]
             data['Query'] = self.part_query_list
             if data['Query'] == ['']:
                 data['Query'] = ['Full']
             columns = ['TaskID','Query']
-            columns.extend(metrics)
+            columns.extend(metsplus)
             return [pd.DataFrame(data=data,columns=columns)]
 
         if self.factor_mode == 'q':
@@ -259,8 +265,15 @@ class Partition:
                     #skip where dm is empty
                     continue
                 data = {'Query': query}
+                metsplus = []
                 for m in metrics:
                     data[m] = dm[m].mean(skipna=True) #average this
+                    metsplus.append(m)
+                    #add standard deviations too if length of data not nan is > 1
+                    if dm[m].count() > 1:
+                        stdname = '_'.join(['stddev',m])
+                        data[stdname] = [dm[m].std(skipna=True)]
+                        metsplus.append(stdname)
 
 #                data = {'Query': query,
 #                         'auc': dm.auc,
@@ -271,7 +284,7 @@ class Partition:
 #                columns = ['Query','auc','fpr_stop','eer','auc_ci_lower','auc_ci_upper']
                 data['TaskID'] = [self.task]
                 columns = ['TaskID','Query']
-                columns.extend(metrics)
+                columns.extend(metsplus)
                 df_list.append(pd.DataFrame(data=data,columns=columns))
             return df_list
 
@@ -283,6 +296,7 @@ class Partition:
 
 #            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
             n_emptydf = 0
+            metsplus = []
             for i,partition in enumerate(self.part_values_list):
                 dm = self.part_metric_list[i]
                 if len(dm) == 0:
@@ -303,6 +317,14 @@ class Partition:
 #                dm = self.part_dm_list[i]
                 for m in metrics:
                     data[m] = dm[m].mean(skipna=True) #average this
+                    metsplus.append(m)
+                    #add standard deviations too if length of data not nan is > 1
+                    if dm[m].count() > 1:
+                        stdname = '_'.join(['stddev',m])
+                        data[stdname] = [dm[m].std(skipna=True)]
+                        if stdname not in metsplus:
+                            metsplus.append(stdname)
+
 #                data['auc'].append(dm.auc)
 #                data['fpr_stop'].append(dm.fpr_stop)
 #                data['eer'].append(dm.eer)
@@ -311,7 +333,7 @@ class Partition:
             data['TaskID'] = self.task
             columns = ['TaskID']
             columns.extend(self.factors_order)
-            columns.extend(metrics)
+            columns.extend(metsplus)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
             index = ['Partition_'+str(i) for i in range(self.n_partitions-n_emptydf)]
 

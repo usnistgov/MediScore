@@ -43,11 +43,16 @@ from printbuffer import printbuffer
 from detMetrics import Metrics as dmets
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
+#from conn2db import *
+
+debug_mode = True
+
+print_lock = multiprocessing.Lock() #for printout to std_out
 
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
 
-#TODO: for use with detection metrics implementation
+#for use with detection metrics plotter
 class detPackage:
     def __init__(self,
                  tpr,
@@ -70,8 +75,31 @@ class detPackage:
         self.nt_num = nNonTarget
         self.d = None #TODO: possibility of computing d in the future
         
+def plotROC(mydets,plotname,plot_title,outdir):
+    #initialize plot options for ROC
+    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
+    p.gen_default_plot_options(dict_plot_options_path_name,plot_title=plot_title,plot_type='ROC')
+    plot_opts = p.load_plot_options(dict_plot_options_path_name)
+    
+    opts_list = [OrderedDict([('color', 'red'),
+                              ('linestyle', 'solid'),
+                              ('marker', '.'),
+                              ('markersize', 6),
+                              ('markerfacecolor', 'red'),
+                              ('label',None),
+                              ('antialiased', 'False')])]
 
-print_lock = multiprocessing.Lock() #for printout to std_out
+    #compute AUC and EER with detection metrics and store in 
+    #add ci_tpr to rocvalues
+#            rocvalues['ci_tpr'] = 0
+
+    configRender = p.setRender([mydets],opts_list,plot_opts)
+    myRender = p.Render(configRender)
+    myroc = myRender.plot_curve()
+
+    #save roc curve in the output. Automatically closes the plot.
+    myroc.savefig(os.path.join(outdir,'.'.join([plotname,'pdf'])), bbox_inches='tight')
+    return myroc
 
 class maskMetricRunner:
     """
@@ -372,75 +400,60 @@ class maskMetricRunner:
             #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
             myprintbuffer.append("Metrics generated. Getting metrics...")
 
-            #TODO: somewhere, aggregate the confusion measure (and per-threshold TPR) counts for all thresholds in some variable
-            #TODO: need two global arrays of dictionaries? If can't do dictionaries, go with arrays of arrays (with entries for confusion measures, TPR, etc.).
-            #this should be evaluated always, under Oracle Optimum metrics
-            #get everything through an iterative run of max threshold
             thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
             #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
+            if thresMets['NMM'].count() == 0:
+                print("Mask {} has no region to score for the NMM, BWL1, and GWL1 metrics.".format(rImg.name))
+
             metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
             mets = metrics[['NMM','MCC','BWL1']].to_dict()
             mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
             rocvalues = thresMets[['TPR','FPR']]
 
-            #initialize plot options for ROC
-            #TODO: make into separate function taking in TPR and FPR values?
-            dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
-            p.gen_default_plot_options(dict_plot_options_path_name,plot_title=' '.join(['ROC of',maskRow['ProbeFileID']]),plot_type='ROC')
-            plot_opts = p.load_plot_options(dict_plot_options_path_name)
-            
-            opts_list = [OrderedDict([('color', 'red'),
-                                      ('linestyle', 'solid'),
-                                      ('marker', '.'),
-                                      ('markersize', 6),
-                                      ('markerfacecolor', 'red'),
-                                      ('label',None),
-                                      ('antialiased', 'False')])]
+            maskRow['OptimumThreshold'] = threshold
+            #insert the ProbeFileID into the manager dict
+            self.thresholds.extend(thresMets['Threshold'].tolist())
+            self.thresscores[maskRow[''.join([mymode,'FileID'])]] = thresMets
 
             #lowercase rocvalues' keys
 #            rocvalues['tpr'] = rocvalues.pop('TPR')
 #            rocvalues['fpr'] = rocvalues.pop('FPR')
 
             #append 0 and 1 to beginning and end of tpr and fpr respectively
-            rocvalues = rocvalues.append(pd.DataFrame([[0,0],[1,1]],columns=list(rocvalues)),ignore_index=True)
+            rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
             #reindex rocvalues
-            rocvalues = rocvalues.sort_values(by=['FPR']).reset_index(drop=True)
+            rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
 
-            #compute AUC and EER with detection metrics and store in 
-            maskRow['AUC'] = dmets.compute_auc(rocvalues['FPR'],rocvalues['TPR'])
-            maskRow['EER'] = dmets.compute_auc(rocvalues['FPR'],1-rocvalues['TPR'])
+            #generate a plot and get detection metrics
+            fpr = rocvalues['FPR']
+            tpr = rocvalues['TPR']
 
-            #add ci_tpr to rocvalues
-#            rocvalues['ci_tpr'] = 0
-            mydets = detPackage(rocvalues['TPR'],
-                                rocvalues['FPR'],
+            myauc = dmets.compute_auc(fpr,tpr)
+            myeer = dmets.compute_eer(fpr,1-tpr)
+
+            maskRow['AUC'] = myauc
+            maskRow['EER'] = myeer
+
+            mydets = detPackage(tpr,
+                                fpr,
                                 1,
                                 0,
-                                maskRow['AUC'],
+                                myauc,
                                 mymeas['TP'] + mymeas['FN'],
                                 mymeas['FP'] + mymeas['TN'])
-
-            configRender = p.setRender([mydets],opts_list,plot_opts)
-            myRender = p.Render(configRender)
-            myroc = myRender.plot_curve()
-
-            #save roc curve in the output
-            myroc.savefig(os.path.join(subOutRoot,'roc.pdf'), bbox_inches='tight')
-            #TODO: remind YY to close her plots so that they don't leak onto any future plots. i.e. plt.close()
+        
+            myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
 
 #            if len(thresMets) == 1:
 #                thresMets='' #to minimize redundancy
 
-            maskRow['Threshold'] = threshold
-            for mes in ['BNS','SNS','PNS']:
+            for mes in ['BNS','SNS','PNS','N']:
                 myprintbuffer.append("Setting value for {}...".format(mes))
                 maskRow[''.join(['Pixel',mes])] = mymeas[mes]
 
             amets = 0
             myameas = 0
             if self.sbin >= 0:
-                #TODO: save thresMets in a dictionary of dataframes for future access. I wonder if it can be done for a dataframe of dataframes
-                #TODO: append distinct thresholds to a set of thresholds for the Maximum metrics
                 #just get scores in one run if threshold is chosen
                 amets = metricRunner.getMetrics(myprintbuffer)
                 myameas = metricRunner.conf
@@ -471,7 +484,7 @@ class maskMetricRunner:
                     #record Actual metrics
                     maskRow[''.join(['Actual',met])] = round(amets[met],precision)
 
-            for mes in ['TP','TN','FP','FN','N']:#,'BNS','SNS','PNS']:
+            for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                 myprintbuffer.append("Setting value for {}...".format(mes))
                 maskRow[''.join(['OptimumPixel',mes])] = mymeas[mes]
                 if self.sbin >= 0:
@@ -479,6 +492,9 @@ class maskMetricRunner:
 
             myprintbuffer.append("Metrics computed.")
 
+            #TODO: throw into some shared queue of strings,
+            # wait for maximum threshold to be applied, query the maximum threshold
+            # and then bring in the maximum threshold values and update?
             if html:
                 manipFileName = maskRow[''.join([mymode,'FileName'])]
                 baseFileName = maskRow['BaseFileName']
@@ -490,7 +506,7 @@ class maskMetricRunner:
                 maskRow['ColMaskFileName'] = colMaskName
                 maskRow['AggMaskFileName'] = aggImgName
                 #TODO: update mets and mymeas
-                for met in ['N','TP','TN','FP','FN']:
+                for met in ['TP','TN','FP','FN']:
                     mymeas[''.join(['OptimumPixel',met])] = mymeas.pop(met)
                     if self.sbin >= 0:
                         mymeas[''.join(['AcutalPixel',met])] = myameas.pop(met)
@@ -504,7 +520,8 @@ class maskMetricRunner:
             myprintbuffer.atomprint(print_lock)
             return maskRow
         except:
-#            raise  #TODO: debug
+            if debug_mode == True:
+                raise  #TODO: debug assistant
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
@@ -545,8 +562,6 @@ class maskMetricRunner:
         if maskData.query("OptimumMCC==-2").shape[0] > 0:
             self.journalData.loc[self.journalData.query("{}FileID=={}".format(self.mymode,maskData.query("OptimumMCC==-2")[self.mymode+'FileID'].tolist())).index,self.evalcol] = 'N'
 
-#        if self.sbin >= 0:
-            #TODO: compute Maximum metrics. Optimized for maximal average MCC per threshold.
         return maskData
 
     def getMetricList(self,
@@ -621,35 +636,23 @@ class maskMetricRunner:
         df['AUC'] = [0.]*nrow
         df['EER'] = [1.]*nrow
 
-        df['MaximumNMM'] = [np.nan]*nrow
-        df['MaximumMCC'] = [np.nan]*nrow
-        df['MaximumBWL1'] = [np.nan]*nrow
-
         df['ActualNMM'] = [np.nan]*nrow
         df['ActualMCC'] = [np.nan]*nrow
         df['ActualBWL1'] = [np.nan]*nrow
 
-        df['OptimumPixelN'] = [0]*nrow
         df['OptimumPixelTP'] = [0]*nrow
         df['OptimumPixelTN'] = [0]*nrow
         df['OptimumPixelFP'] = [0]*nrow
         df['OptimumPixelFN'] = [0]*nrow
         df['OptimumThreshold'] = [-1]*nrow
 
-        df['MaximumPixelN'] = [np.nan]*nrow
-        df['MaximumPixelTP'] = [np.nan]*nrow
-        df['MaximumPixelTN'] = [np.nan]*nrow
-        df['MaximumPixelFP'] = [np.nan]*nrow
-        df['MaximumPixelFN'] = [np.nan]*nrow
-        df['MaximumThreshold'] = [np.nan]*nrow
-
-        df['ActualPixelN'] = [np.nan]*nrow
         df['ActualPixelTP'] = [np.nan]*nrow
         df['ActualPixelTN'] = [np.nan]*nrow
         df['ActualPixelFP'] = [np.nan]*nrow
         df['ActualPixelFN'] = [np.nan]*nrow
         df['ActualThreshold'] = [np.nan]*nrow
 
+        df['PixelN'] = [0]*nrow
         df['PixelBNS'] = [0]*nrow #NOTE: BNS, SNS, and PNS are not dependent on any thresholding
         df['PixelSNS'] = [0]*nrow
         df['PixelPNS'] = [0]*nrow
@@ -675,6 +678,11 @@ class maskMetricRunner:
         self.precision = precision
         self.outputRoot = outputRoot
 
+        #shared object with multiprocessing manager
+        manager = multiprocessing.Manager()
+        self.thresscores = manager.dict()
+        self.thresholds = manager.list()
+
         #the scoring
         df = self.scoreMasks(df,processors)
 #        for i,row in self.maskData.iterrows():
@@ -686,24 +694,216 @@ class maskMetricRunner:
             exit(1)
         ilog.close()
 
+        templist = self.thresholds
+        self.thresholds = list(set(templist))
+        probelist = self.thresscores.keys()
+
+        #TODO: drop into separate function in maskMetrics and maskMetrics_old
+        #compute maximum metrics here
+        maxmets = {}
+        maxavgMCC = -1
+        maxThreshold = 0
+
+        roc_values = pd.DataFrame({'PixelTPR':0.,
+                                   'PixelFPR':0.,
+                                   'ProbeTPR':0.,
+                                   'ProbeFPR':0.},index=self.thresholds)
+
+        for t in self.thresholds:
+            pixel_tpr = 0
+            pixel_fpr = 0
+            probe_tpr = 0
+            probe_fpr = 0
+
+            maxmet_threshold = pd.DataFrame({''.join([mymode,'FileID']):probelist,
+                                    'Threshold':t,
+                                    'NMM':-1.,
+                                    'MCC':0.,
+                                    'BWL1':1.,
+                                    'TP':0,
+                                    'TN':0,
+                                    'FP':0,
+                                    'FN':0,
+                                    'TPR':0.,
+                                    'FPR':0.})
+            for pix,probeID in enumerate(probelist):
+                probedf = self.thresscores[probeID]
+                mets = 0
+                if t in probedf['Threshold'].tolist():
+                    # if threshold is in the dataframe list of thresholds, get the corresponding metrics.
+                    mets = probedf.query("Threshold=={}".format(t)).iloc[0]
+                    maxmet_threshold.set_value(pix,'TP',mets['TP'])
+                    maxmet_threshold.set_value(pix,'TN',mets['TN'])
+                    maxmet_threshold.set_value(pix,'FP',mets['FP'])
+                    maxmet_threshold.set_value(pix,'FN',mets['FN'])
+                    maxmet_threshold.set_value(pix,'NMM',mets['NMM'])
+                    maxmet_threshold.set_value(pix,'MCC',mets['MCC'])
+                    maxmet_threshold.set_value(pix,'BWL1',mets['BWL1'])
+                else:
+                    # attempt to get the metric from the threshold right below it
+                    t_list = [s for s in probedf['Threshold'].tolist() if s <= t]
+                    if len(t_list) == 0:
+                        # if nothing is right below it, treat everything as black and recompute NMM and BWL1.
+                        mets = probedf.iloc[0]
+                        maxmet_threshold.set_value(pix,'TP',mets['TP'] + mets['FN'])
+                        maxmet_threshold.set_value(pix,'FP',mets['FP'] + mets['TN'])
+                        if mets['N'] > 0:
+                            maxmet_threshold.set_value(pix,'NMM',max([(mets['TP'] - mets['FP'])/mets['N'],-1]))
+                            maxmet_threshold.set_value(pix,'BWL1',mets['FP']/mets['N'])
+                        else:
+                            maxmet_threshold.set_value(pix,'NMM',np.nan)
+                            maxmet_threshold.set_value(pix,'BWL1',np.nan)
+                    else:
+                        myt = max(t_list)
+                        mets = probedf.query("Threshold=={}".format(myt)).iloc[0]
+                        maxmet_threshold.set_value(pix,'TP',mets['TP'])
+                        maxmet_threshold.set_value(pix,'TN',mets['TN'])
+                        maxmet_threshold.set_value(pix,'FP',mets['FP'])
+                        maxmet_threshold.set_value(pix,'FN',mets['FN'])
+                        maxmet_threshold.set_value(pix,'NMM',mets['NMM'])
+                        maxmet_threshold.set_value(pix,'MCC',mets['MCC'])
+                        maxmet_threshold.set_value(pix,'BWL1',mets['BWL1'])
+                if (mets['TP'] + mets['FN']) > 0:
+                    maxmet_threshold.set_value(pix,'TPR',float(mets['TP'])/(mets['TP'] + mets['FN']))
+                else:
+                    maxmet_threshold.set_value(pix,'TPR',np.nan)
+                if (mets['FP'] + mets['TN']) > 0:
+                    maxmet_threshold.set_value(pix,'FPR',float(mets['FP'])/(mets['FP'] + mets['TN']))
+                else:
+                    maxmet_threshold.set_value(pix,'FPR',np.nan)
+
+            # probe- and pixel-weighted ROC curves 
+            metsum = maxmet_threshold[['TP','TN','FP','FN','TPR','FPR']].sum(axis=0)
+            if (metsum['TP'] + metsum['FN']) > 0:
+                roc_values.set_value(t,'PixelTPR',float(metsum['TP'])/(metsum['TP'] + metsum['FN']))
+            else:
+                roc_values.set_value(t,'PixelTPR',np.nan)
+            if (metsum['FP'] + metsum['TN']) > 0:
+                roc_values.set_value(t,'PixelFPR',float(metsum['FP'])/(metsum['FP'] + metsum['TN']))
+            else:
+                roc_values.set_value(t,'PixelFPR',np.nan)
+
+            if ~np.isnan(metsum['TPR']):
+                roc_values.set_value(t,'ProbeTPR',metsum['TPR']/maxmet_threshold.shape[0])
+            else:
+                roc_values.set_value(t,'ProbeTPR',np.nan)
+            if ~np.isnan(metsum['FPR']):
+                roc_values.set_value(t,'ProbeFPR',metsum['FPR']/maxmet_threshold.shape[0])
+            else:
+                roc_values.set_value(t,'ProbeFPR',np.nan)
+            
+            maxmets[t] = maxmet_threshold
+            #compute biggest average MCC fixing threshold
+            avgMCC = maxmet_threshold['MCC'].mean()
+            if avgMCC > maxavgMCC:
+                maxavgMCC = avgMCC
+                maxThreshold = t
+
+        #generate pixel and probe average ROC's.
+        #only plot if there are any scores to be plot at all
+        df['PixelAverageAUC'] = np.nan
+        df['MaskAverageAUC'] = np.nan
+
+        if (roc_values['PixelTPR'].count() > 0) and (roc_values['PixelFPR'].count() > 0):
+            p_roc_values = roc_values[['PixelFPR','PixelTPR']]
+            p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=['PixelFPR','PixelTPR']),ignore_index=True)
+            p_roc = p_roc_values.sort_values(by=['PixelFPR','PixelTPR'],ascending=[True,True]).reset_index(drop=True)
+            fpr = p_roc['PixelFPR']
+            tpr = p_roc['PixelTPR']
+            myauc = dmets.compute_auc(fpr,tpr)
+            df['PixelAverageAUC'] = myauc #store in df to tack onto average dataframe later
+    
+            #compute confusion measures by using the totals across all probes
+            confsum = df[['OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN']].sum(axis=0)
+            mydets = detPackage(tpr,
+                                fpr,
+                                1,
+                                0,
+                                myauc,
+                                confsum['OptimumPixelTP'] + confsum['OptimumPixelFN'],
+                                confsum['OptimumPixelFP'] + confsum['OptimumPixelTN'])
+        
+            if task == 'manipulation':
+                myroc = plotROC(mydets,'pixel_average_roc','Pixel Average ROC',outputRoot)
+            elif task == 'splice':
+                if self.mode == 1:
+                    myroc = plotROC(mydets,'pixel_average_roc_probe','Pixel Average ROC - Probe',outputRoot)
+                if self.mode == 2:
+                    myroc = plotROC(mydets,'pixel_average_roc_donor','Pixel Average ROC - Donor',outputRoot)
+
+        if (roc_values['ProbeTPR'].count() > 0) and (roc_values['ProbeFPR'].count() > 0):
+            p_roc_values = roc_values[['ProbeFPR','ProbeTPR']]
+            p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=['ProbeFPR','ProbeTPR']),ignore_index=True)
+            p_roc = p_roc_values[['ProbeFPR','ProbeTPR']].sort_values(by=['ProbeFPR','ProbeTPR'],ascending=[True,True]).reset_index(drop=True)
+            fpr = p_roc['ProbeFPR']
+            tpr = p_roc['ProbeTPR']
+            myauc = dmets.compute_auc(fpr,tpr)
+            df['MaskAverageAUC'] = myauc #store in df to tack onto average dataframe later
+    
+            #same total number of targets and non-targets as above
+            mydets = detPackage(tpr,
+                                fpr,
+                                1,
+                                0,
+                                myauc,
+                                confsum['OptimumPixelTP'] + confsum['OptimumPixelFN'],
+                                confsum['OptimumPixelFP'] + confsum['OptimumPixelTN'])
+            
+            if task == 'manipulation':
+                myroc = plotROC(mydets,'mask_average_roc','Mask Average ROC',outputRoot)
+            elif task == 'splice':
+                if self.mode == 1:
+                    myroc = plotROC(mydets,'mask_average_roc_probe','Mask Average ROC - Probe',outputRoot)
+                if self.mode == 2:
+                    myroc = plotROC(mydets,'mask_average_roc_donor','Mask Average ROC - Donor',outputRoot)
+
+        if self.sbin >= 0:
+            #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
+            df['MaximumThreshold'] = maxThreshold
+            maxMCCdf = maxmets[t]
+            maxMCCdf.rename(columns={'NMM':'MaximumNMM',
+                                     'MCC':'MaximumMCC',
+                                     'BWL1':'MaximumBWL1',
+                                     'TP':'MaximumPixelTP',
+                                     'TN':'MaximumPixelTN',
+                                     'FP':'MaximumPixelFP',
+                                     'FN':'MaximumPixelFN'},inplace=True)
+            df = df.merge(maxMCCdf[[''.join([mymode,'FileID']),'MaximumNMM','MaximumMCC','MaximumBWL1','MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN']],on=[''.join([mymode,'FileID'])],how='left')
+            
+        else:
+            df['MaximumNMM'] = [np.nan]*nrow
+            df['MaximumMCC'] = [np.nan]*nrow
+            df['MaximumBWL1'] = [np.nan]*nrow
+    
+            df['MaximumPixelTP'] = [np.nan]*nrow
+            df['MaximumPixelTN'] = [np.nan]*nrow
+            df['MaximumPixelFP'] = [np.nan]*nrow
+            df['MaximumPixelFN'] = [np.nan]*nrow
+            df['MaximumThreshold'] = [np.nan]*nrow
+
         #extend Optimum, Maximum, Actual to Pixel values also
         df.OptimumThreshold = df.OptimumThreshold.astype(int)
-        df.OptimumPixelN = df.OptimumPixelN.astype(int)
         df.OptimumPixelTP = df.OptimumPixelTP.astype(int)
         df.OptimumPixelTN = df.OptimumPixelTN.astype(int)
         df.OptimumPixelFP = df.OptimumPixelFP.astype(int)
         df.OptimumPixelFN = df.OptimumPixelFN.astype(int)
+        df.PixelN = df.PixelN.astype(int)
         df.PixelBNS = df.PixelBNS.astype(int)
         df.PixelSNS = df.PixelSNS.astype(int)
         df.PixelPNS = df.PixelPNS.astype(int)
 
         if self.sbin >= 0:
             df.ActualThreshold = df.ActualThreshold.astype(int)
-            df.ActualPixelN = df.ActualPixelN.astype(int)
             df.ActualPixelTP = df.ActualPixelTP.astype(int)
             df.ActualPixelTN = df.ActualPixelTN.astype(int)
             df.ActualPixelFP = df.ActualPixelFP.astype(int)
             df.ActualPixelFN = df.ActualPixelFN.astype(int)
+
+            df.MaximumThreshold = df.MaximumThreshold.astype(int)
+            df.MaximumPixelTP = df.MaximumPixelTP.astype(int)
+            df.MaximumPixelTN = df.MaximumPixelTN.astype(int)
+            df.MaximumPixelFP = df.MaximumPixelFP.astype(int)
+            df.MaximumPixelFN = df.MaximumPixelFN.astype(int)
 
         df=df[[mymode+'FileID',mymode+'FileName','Scored',
                'OptimumNMM',
@@ -713,7 +913,8 @@ class maskMetricRunner:
                'GWL1',
                'AUC',
                'EER',
-               'OptimumPixelN',
+               'PixelAverageAUC',
+               'MaskAverageAUC',
                'OptimumPixelTP',
                'OptimumPixelTN',
                'OptimumPixelFP',
@@ -722,7 +923,6 @@ class maskMetricRunner:
                'MaximumMCC',
                'MaximumBWL1',
                'MaximumThreshold',
-               'MaximumPixelN',
                'MaximumPixelTP',
                'MaximumPixelTN',
                'MaximumPixelFP',
@@ -731,11 +931,11 @@ class maskMetricRunner:
                'ActualMCC',
                'ActualBWL1',
                'ActualThreshold',
-               'ActualPixelN',
                'ActualPixelTP',
                'ActualPixelTN',
                'ActualPixelFP',
                'ActualPixelFN',
+               'PixelN',
                'PixelBNS',
                'PixelSNS',
                'PixelPNS',

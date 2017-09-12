@@ -1,2 +1,2 @@
-TaskID|Query|OptimumNMM|OptimumMCC|OptimumBWL1|GWL1|AUC|EER|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
-manipulation|Full|-0.401374109541|0.241227222482|0.42770014643|0.475037610902|0.553908848526|0.446091151474|1.0|2|2|2|0|N
+TaskID|Query|OptimumThreshold|stddev_OptimumThreshold|OptimumNMM|stddev_OptimumNMM|OptimumMCC|stddev_OptimumMCC|OptimumBWL1|stddev_OptimumBWL1|GWL1|stddev_GWL1|AUC|stddev_AUC|EER|stddev_EER|PixelAverageAUC|stddev_PixelAverageAUC|MaskAverageAUC|stddev_MaskAverageAUC|TRR|totalTrials|ScoreableTrials|totalOptIn|totalOptOut|optOutScoring
+manipulation|Full|65.0|87.6812408671|-0.401374109541|0.816579153617|0.241227222482|0.332893754558|0.42770014643|0.218260849029|0.475037610902|0.184086964682|0.553908848526|0.358858311666|0.462679272996|0.280523091635|0.555749457057|0.0|0.558924414256|0.0|1.0|2|2|2|0|N

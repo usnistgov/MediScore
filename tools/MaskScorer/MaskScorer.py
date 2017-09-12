@@ -272,16 +272,18 @@ if args.task == 'manipulation':
 #        merged_df.loc[merged_df.query('MCC == -2').index,'Scored'] = 'N'
         midx = nonscore_df.index
         if len(midx) > 0:
+            merged_df.loc[midx,'OptimumThreshold'] = np.nan
             merged_df.loc[midx,'OptimumNMM'] = np.nan
             merged_df.loc[midx,'OptimumBWL1'] = np.nan
             merged_df.loc[midx,'GWL1'] = np.nan
             merged_df.loc[midx,'AUC'] = np.nan
             merged_df.loc[midx,'EER'] = np.nan
-            merged_df.loc[midx,'OptimumPixelN'] = np.nan
+            merged_df.loc[midx,'OptimumThreshold'] = np.nan
             merged_df.loc[midx,'OptimumPixelTP'] = np.nan
             merged_df.loc[midx,'OptimumPixelTN'] = np.nan
             merged_df.loc[midx,'OptimumPixelFP'] = np.nan
             merged_df.loc[midx,'OptimumPixelFN'] = np.nan
+            merged_df.loc[midx,'PixelN'] = np.nan
             merged_df.loc[midx,'PixelBNS'] = np.nan
             merged_df.loc[midx,'PixelSNS'] = np.nan
             merged_df.loc[midx,'PixelPNS'] = np.nan
@@ -294,8 +296,13 @@ if args.task == 'manipulation':
     
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
-        #TODO: tack on other columns if sbin >= 0
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','Scored','OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','Scored','PixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
+        if args.sbin >= 0:
+            firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                              'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                              'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
+                              'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
+
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
@@ -328,7 +335,10 @@ if args.task == 'manipulation':
             print("ERROR: OptimumMCC is not in the metrics provided.")
             return 1
         #filter nan out of the below
-        metrics_to_be_scored = ['OptimumMCC','OptimumNMM','OptimumBWL1','GWL1']
+        metrics_to_be_scored = ['OptimumThreshold','OptimumMCC','OptimumNMM','OptimumBWL1','GWL1','AUC','EER']
+        if args.sbin >= 0:
+            metrics_to_be_scored.extend(['MaximumThreshold','MaximumMCC','MaximumNMM','MaximumBWL1',
+                                         'ActualThreshold','ActualMCC','ActualNMM','ActualBWL1'])
         if r_df.query("Scored=='Y'")[metrics_to_be_scored].dropna().shape[0] == 0:
             #if nothing was scored, print a message and return
             print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile.".format(query))
@@ -440,7 +450,16 @@ if args.task == 'manipulation':
 
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
+                metriclist = {}
+                for met in ['Threshold','NMM','MCC','BWL1']:
+                    metriclist[''.join(['Optimum',met])] = 3
+                    if args.sbin >= 0:
+                        metriclist[''.join(['Maximum',met])] = 3
+                        metriclist[''.join(['Actual',met])] = 3
+                for met in ['GWL1','AUC','EER']:
+                    metriclist[met] = 3
+                
+                a_df_copy = average_df.copy().round(metriclist)
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -484,7 +503,10 @@ elif args.task == 'splice':
  
         stackdf = pd.concat([stackp,stackd],axis=0)
         stackmerge = pd.merge(stackdf,m_df.drop('Scored',1),how='left',on=['ProbeFileID','DonorFileID'])
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
+        if args.sbin >= 0:
+            firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                              'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
         rcols = stackmerge.columns.tolist()
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
@@ -492,9 +514,12 @@ elif args.task == 'splice':
 
         sidx = stackmerge.query('OptimumMCC==-2').index
         stackmerge.loc[sidx,'Scored'] = 'N'
+        stackmerge.loc[sidx,'OptimumThreshold'] = np.nan
         stackmerge.loc[sidx,'OptimumNMM'] = np.nan
         stackmerge.loc[sidx,'OptimumBWL1'] = np.nan
         stackmerge.loc[sidx,'GWL1'] = np.nan
+        stackmerge.loc[sidx,'AUC'] = np.nan
+        stackmerge.loc[sidx,'EER'] = np.nan
         stackmerge.loc[sidx,'OptimumMCC'] = np.nan
         
         #add other scores for case sbin >= 0
@@ -504,11 +529,30 @@ elif args.task == 'splice':
                                            "GWL1":"pGWL1",
                                            "AUC":"pAUC",
                                            "EER":"pEER",
-                                           'OptimumPixelN':'pOptimumPixelN',
+                                           'OptimumThreshold':'pOptimumThreshold',
                                            'OptimumPixelTP':'pOptimumPixelTP',
                                            'OptimumPixelTN':'pOptimumPixelTN',
                                            'OptimumPixelFP':'pOptimumPixelFP',
                                            'OptimumPixelFN':'pOptimumPixelFN',
+                                           "MaximumNMM":"pMaximumNMM",
+                                           "MaximumMCC":"pMaximumMCC",
+                                           "MaximumBWL1":"pMaximumBWL1",
+                                           'MaximumThreshold':'pMaximumThreshold',
+                                           'MaximumPixelTP':'pMaximumPixelTP',
+                                           'MaximumPixelTN':'pMaximumPixelTN',
+                                           'MaximumPixelFP':'pMaximumPixelFP',
+                                           'MaximumPixelFN':'pMaximumPixelFN',
+                                           "ActualNMM":"pActualNMM",
+                                           "ActualMCC":"pActualMCC",
+                                           "ActualBWL1":"pActualBWL1",
+                                           'ActualThreshold':'pActualThreshold',
+                                           'ActualPixelTP':'pActualPixelTP',
+                                           'ActualPixelTN':'pActualPixelTN',
+                                           'ActualPixelFP':'pActualPixelFP',
+                                           'ActualPixelFN':'pActualPixelFN',
+                                           'PixelAverageAUC':'pPixelAverageAUC',
+                                           'MaskAverageAUC':'pMaskAverageAUC',
+                                           'PixelN':'pPixelN',
                                            'PixelBNS':'pPixelBNS',
                                            'PixelSNS':'pPixelSNS',
                                            'PixelPNS':'pPixelPNS',
@@ -522,11 +566,30 @@ elif args.task == 'splice':
                                            "GWL1":"dGWL1",
                                            "AUC":"dAUC",
                                            "EER":"dEER",
-                                           'OptimumPixelN':'dOptimumPixelN',
+                                           'OptimumThreshold':'dOptimumThreshold',
                                            'OptimumPixelTP':'dOptimumPixelTP',
                                            'OptimumPixelTN':'dOptimumPixelTN',
                                            'OptimumPixelFP':'dOptimumPixelFP',
                                            'OptimumPixelFN':'dOptimumPixelFN',
+                                           "MaximumNMM":"dMaximumNMM",
+                                           "MaximumMCC":"dMaximumMCC",
+                                           "MaximumBWL1":"dMaximumBWL1",
+                                           'MaximumThreshold':'dMaximumThreshold',
+                                           'MaximumPixelTP':'dMaximumPixelTP',
+                                           'MaximumPixelTN':'dMaximumPixelTN',
+                                           'MaximumPixelFP':'dMaximumPixelFP',
+                                           'MaximumPixelFN':'dMaximumPixelFN',
+                                           "ActualNMM":"dActualNMM",
+                                           "ActualMCC":"dActualMCC",
+                                           "ActualBWL1":"dActualBWL1",
+                                           'ActualThreshold':'dActualThreshold',
+                                           'ActualPixelTP':'dActualPixelTP',
+                                           'ActualPixelTN':'dActualPixelTN',
+                                           'ActualPixelFP':'dActualPixelFP',
+                                           'ActualPixelFN':'dActualPixelFN',
+                                           'PixelAverageAUC':'dPixelAverageAUC',
+                                           'MaskAverageAUC':'dMaskAverageAUC',
+                                           'PixelN':'dPixelN',
                                            'PixelBNS':'dPixelBNS',
                                            'PixelSNS':'dPixelSNS',
                                            'PixelPNS':'dPixelPNS',
@@ -542,22 +605,30 @@ elif args.task == 'splice':
         p_idx = merged_df.query('pOptimumMCC == -2').index
         d_idx = merged_df.query('dOptimumMCC == -2').index
         rcols = merged_df.columns.tolist()
-        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
+        firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
         if args.sbin >= 0:
-            firstcols.extend(['ActualNMM','ActualMCC','ActualBWL1',
-                              'ActualPixelN','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']) #TODO: add Maximum pixels after having implemented it
+            firstcols.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
+                              'pMaximumPixelTP','pMaximumPixelTN','pMaximumPixelFP','pMaximumPixelFN',
+                              'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
+                              'dMaximumPixelTP','dMaximumPixelTN','dMaximumPixelFP','dMaximumPixelFN',
+                              'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
+                              'pActualPixelTP','pActualPixelTN','pActualPixelFP','pActualPixelFN',
+                              'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1',
+                              'dActualPixelTP','dActualPixelTN','dActualPixelFP','dActualPixelFN'])
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
   
-        #TODO: account for other metrics
+        #account for other metrics
         if (len(p_idx) > 0) or (len(d_idx) > 0):
-            metriclist = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1',
-                          'OptimumPixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
-                          'PixelBNS','PixelSNS','PixelPNS']
+            metriclist = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1',
+                          'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
+                          'PixelN','PixelBNS','PixelSNS','PixelPNS']
             if args.sbin >= 0:
-                metriclist = metriclist + ['ActualNMM','ActualMCC','ActualBWL1',
-                                           'ActualPixelN','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'] #TODO: add Maximum pixels after having implemented it
+                metriclist = metriclist + ['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                                           'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                                           'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
+                                           'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']
             
             for met in metriclist:
                 merged_df.loc[p_idx,''.join(['p',met])] = np.nan
@@ -599,7 +670,16 @@ elif args.task == 'splice':
             print("ERROR: pOptimumMCC or dOptimumMCC are not in the metrics.")
             return 1
         #filter nan out of the below
-        metrics_to_be_scored = ['pOptimumMCC','pOptimumNMM','pOptimumBWL1','pGWL1','dOptimumMCC','dOptimumNMM','dOptimumBWL1','dGWL1'] #TODO: dump this into another paramter or use a parameter object
+        metrics_to_be_scored = []
+        for pfx in ['p','d']:
+            for met in ['Threshold','MCC','NMM','BWL1']:
+                metrics_to_be_scored.append(''.join([pfx,'Optimum',met]))
+                if args.sbin >= 0:
+                    metrics_to_be_scored.append(''.join([pfx,'Maximum',met]))
+                    metrics_to_be_scored.append(''.join([pfx,'Actual',met]))
+            for met in ['GWL1','AUC','EER']:
+                 metrics_to_be_scored.append(''.join([pfx,met]))
+        
         if r_df.query("(ProbeScored == 'Y') | (DonorScored == 'Y')")[metrics_to_be_scored].dropna().shape[0] == 0:
             #if nothing was scored, print a message and return
             print("None of the masks that we attempted to score for query {} had regions to be scored. Further factor analysis is futile.".format(query))
@@ -720,7 +800,17 @@ elif args.task == 'splice':
 
             if average_df is not 0:
                 #write title and then average_df
-                a_df_copy = average_df.copy().round({'pOptimumNMM':3,'pOptimumMCC':3,'pOptimumBWL1':3,'pGWL1':3,'dOptimumNMM':3,'dOptimumMCC':3,'dOptimumBWL1':3,'dGWL1':3})
+                metriclist = {}
+                for pfx in ['p','d']:
+                    for met in ['Threshold','NMM','MCC','BWL1']:
+                        metriclist[''.join([pfx,'Optimum',met])] = 3
+                        if args.sbin >= 0:
+                            metriclist[''.join([pfx,'Maximum',met])] = 3
+                            metriclist[''.join([pfx,'Actual',met])] = 3
+                    for met in ['GWL1','AUC','EER']:
+                        metriclist[''.join([pfx,met])] = 3
+
+                a_df_copy = average_df.copy().round(metriclist)
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
@@ -846,15 +936,19 @@ if args.task == 'manipulation':
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
-        metrics = ['OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
+        metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','PixelAverageAUC','MaskAverageAUC']
         if args.sbin >= 0:
-            metrics.extend(['ActualNMM','ActualMCC','ActualBWL1']) #TODO: add Maximum metrics once complete
+            metrics.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                            'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
 
         a_df = 0
         if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
+
+        # tack on PixelAverageAUC and MaskAverageAUC to a_df and remove from r_df
+        r_df = r_df.drop(['PixelAverageAUC','MaskAverageAUC'],1)
 
         r_idx = r_df.query('OptimumMCC == -2').index
         if len(r_idx) > 0:
@@ -963,14 +1057,20 @@ elif args.task == 'splice':
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
-        metrics = ['pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
+        metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','pPixelAverageAUC','pMaskAverageAUC',
+                   'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER','dPixelAverageAUC','dMaskAverageAUC']
         if args.sbin >= 0:
-            metrics.extend(['pActualNMM','pActualMCC','pActualBWL1','dActualNMM','dActualMCC','dActualBWL1']) #TODO: add Maximum metrics once complete
+            metrics.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
+                            'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
+                            'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
+                            'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1'])
         a_df = 0
         if factor_mode == 'qm':
             a_df = averageByFactors(r_df,metrics,factor_mode,q)
         else:
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
+
+        r_df = r_df.drop(['pPixelAverageAUC','pMaskAverageAUC','dPixelAverageAUC','dMaskAverageAUC'],1)
 
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'ProbeScored'] = 'N'
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumNMM'] = ''
@@ -1003,31 +1103,4 @@ elif args.task == 'splice':
 
 printq("Ending the mask scoring report.")
 exit(0)
-
-#if verbose and (a_df is not 0): #to avoid complications of print formatting when not verbose
-#    precision = args.precision
-#    if args.task == 'manipulation':
-#        myavgs = [a_df[mets][0] for mets in ['NMM','MCC','BWL1','GWL1']]
-#    
-#        allmets = "Avg NMM: {}, Avg MCC: {}, Avg BWL1: {}, Avg GWL1: {}".format(round(myavgs[0],precision),
-#                                                                 round(myavgs[1],precision),
-#                                                                 round(myavgs[2],precision),
-#                                                                 round(myavgs[3],precision))
-#        printq(allmets)
-#    
-#    elif args.task == 'splice':
-#        pavgs  = [a_df[mets][0] for mets in ['pNMM','pMCC','pBWL1','pGWL1']]
-#        davgs  = [a_df[mets][0] for mets in ['dNMM','dMCC','dBWL1','dGWL1']]
-#        pallmets = "Avg pNMM: {}, Avg pMCC: {}, Avg pBWL1: {}, Avg pGWL1: {}".format(round(pavgs[0],precision),
-#                                                                     round(pavgs[1],precision),
-#                                                                     round(pavgs[2],precision),
-#                                                                     round(pavgs[3],precision))
-#        dallmets = "Avg dNMM: {}, Avg dMCC: {}, Avg dBWL1: {}, Avg dGWL1: {}".format(round(davgs[0],precision),
-#                                                                     round(davgs[1],precision),
-#                                                                     round(davgs[2],precision),
-#                                                                     round(davgs[3],precision))
-#        printq(pallmets)
-#        printq(dallmets)
-#    else:
-#        printerr("ERROR: Task not recognized.")
 
