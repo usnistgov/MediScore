@@ -748,8 +748,8 @@ class maskMetricRunner:
                         maxmet_threshold.set_value(pix,'TP',mets['TP'] + mets['FN'])
                         maxmet_threshold.set_value(pix,'FP',mets['FP'] + mets['TN'])
                         if mets['N'] > 0:
-                            maxmet_threshold.set_value(pix,'NMM',max([(mets['TP'] - mets['FP'])/mets['N'],-1]))
-                            maxmet_threshold.set_value(pix,'BWL1',mets['FP']/mets['N'])
+                            maxmet_threshold.set_value(pix,'NMM',max([(mets['TP'] + mets['FN'] - mets['FP'] - mets['TN'])/mets['N'],-1]))
+                            maxmet_threshold.set_value(pix,'BWL1',(mets['FP'] + mets['TN'])/mets['N'])
                         else:
                             maxmet_threshold.set_value(pix,'NMM',np.nan)
                             maxmet_threshold.set_value(pix,'BWL1',np.nan)
