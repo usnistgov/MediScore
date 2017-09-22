@@ -23,6 +23,7 @@
 """
 import cv
 import cv2
+import glymur
 import math
 import copy
 import numpy as np
@@ -321,13 +322,26 @@ class maskMetricRunner:
                 return maskRow
             index_row = index_row.iloc[0]
 
+            if refMaskName in [None,'',np.nan]:
+                myprintbuffer.append("Empty reference {} mask file.".format(mymode.lower()))
+                #save white matrix as mask in question. Dependent on index file dimensions?
+                if self.usecolor:
+                    refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.png'))
+                    whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
+                    cv2.imwrite(refMaskName,whitemask)
+                else:
+                    refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.jp2'))
+                    whitemask = np.zeros((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
+                    glymur.Jp2k(refMaskName,whitemask)
+#                continue
+
             if sysMaskName in [None,'',np.nan]:
 #                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
                 #self.journalData.set_value(i,evalcol,'N')
 #                df.set_value(i,'Scored','N')
                 myprintbuffer.append("Empty system {} mask file.".format(mymode.lower()))
-                #save white matrix as mask in question. Dependent on index file?
-                whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]))
+                #save white matrix as mask in question. Dependent on index file dimensions?
+                whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
                 cv2.imwrite(os.path.join(subOutRoot,'whitemask.png'),whitemask)
 #                continue
 

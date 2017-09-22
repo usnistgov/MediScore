@@ -321,6 +321,7 @@ HISTORY
       - Added Maximum Threshold metrics and Threshold averaging.
       - Added ROC curve averages.
       - Added standard deviation for metrics.
+      - Added reading functionality for empty reference masks.
       - Output reformatting.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
