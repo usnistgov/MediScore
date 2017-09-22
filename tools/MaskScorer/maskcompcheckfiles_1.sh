@@ -1,5 +1,5 @@
 #!/bin/bash
-clean=TRUE
+clean=FALSE
 procs=2
 
 echo

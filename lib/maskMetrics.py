@@ -223,6 +223,9 @@ class maskMetrics:
         fn = conf['FN']
         n = conf['N']
 
+        if n == 0:
+            return np.nan
+
         s=tp+fn
         p=tp+fp
 
@@ -509,25 +512,23 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N','TPR','FPR']
-        tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[columns]
-        maxMets = thresMets.query("Threshold=={}".format(tmax))
-        maxNMM = maxMets.iloc[0]['NMM']
-        maxMCC = maxMets.iloc[0]['MCC']
-        maxBWL1 = maxMets.iloc[0]['BWL1']
 
-        if (maxNMM==1) or (maxNMM==-1):
-            myprintbuffer.append("NMM: %d" % maxNMM)
+        if len(nonNullRows) > 0:
+            tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
+            maxMets = thresMets.query("Threshold=={}".format(tmax))
+            maxNMM = maxMets.iloc[0]['NMM']
+            maxMCC = maxMets.iloc[0]['MCC']
+            maxBWL1 = maxMets.iloc[0]['BWL1']
         else:
-            myprintbuffer.append("NMM: %0.3f" % maxNMM)
-        if (maxMCC==1) or (maxMCC==-1):
-            myprintbuffer.append("MCC (Matthews correlation coeff.): %d" % maxMCC)
-        else:
-            myprintbuffer.append("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
-        if (maxBWL1==1) or (maxBWL1==0):
-            myprintbuffer.append("BWL1: %d" % maxBWL1)
-        else:
-            myprintbuffer.append("Binary Weighted L1: %0.3f" % maxBWL1)
+            tmax = np.nan
+            maxNMM = np.nan
+            maxMCC = np.nan
+            maxBWL1 = np.nan
+
+        thresMets = thresMets[columns]
+        myprintbuffer.append("NMM: {}".format(maxNMM))
+        myprintbuffer.append("MCC: {}".format(maxMCC))
+        myprintbuffer.append("BWL1: {}".format(maxBWL1))
 
         return thresMets,tmax
 

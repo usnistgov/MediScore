@@ -104,7 +104,10 @@ parser.add_argument('--sbin',type=int,default=-1,
 help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. -1 indicates that the threshold for the mask will be chosen at the maximal absolute MCC value. [default=-1]",metavar='integer')
 parser.add_argument('--color',action='store_true',help="Evaluate colorized referenced masks. Individual regions in the colorized masks are identifiable by region and do not intersect.")
 parser.add_argument('--nspx',type=int,default=-1,
-help="Set a pixel value in the system output mask to be the no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
+help="Set a pixel value for all system output masks to serve as a no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
+parser.add_argument('-pppns','--perProbePixelNoScore',action='store_true',
+help="Use the pixel values in the OptOutPixel column of the system output to designate no-score zones.")
+#TODO: include functionality for this
 
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
@@ -245,14 +248,15 @@ if len(m_df) == 0:
 
 #apply to post-index filtering
 totalTrials = len(m_df)
-totalOptOut = len(m_df.query('=='.join([localOptOutColName,"'Y'"])))
+#NOTE: IsOptOut values can be any one of "Y", "N", "Detection", or "Localization"
+totalOptOut = len(m_df.query("({}) or ({})".format('=='.join([localOptOutColName,"'Y'"]),'=='.join([localOptOutColName,"'Localization'"]))))
 totalOptIn = totalTrials - totalOptOut
 TRR = float(totalOptIn)/totalTrials
-m_df = m_df.query("IsTarget=='Y'")
+m_df = m_df.query("IsTarget=='Y'") #TODO: don't filter anymore, but see Jon first.
 
 #opting out at the beginning
 if args.optOut:
-    m_df = m_df.query('!='.join([localOptOutColName,"'Y'"]))
+    m_df = m_df.query("({}) and ({})".format('!='.join([localOptOutColName,"'Y'"]),"!=".join([localOptOutColName,"'Localization'"])))
 
 #define HTML functions here
 df2html = lambda *a:None
@@ -375,9 +379,19 @@ if args.task == 'manipulation':
                 if args.optOut:
                     temp_df['optOutScoring'] = 'Y'
 
+                temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                if args.sbin >= 0:
+                    temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
+
                 heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
+                if temp_df is not 0:
+                    temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    if args.sbin >= 0:
+                        temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                        temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
                 a_df = a_df.append(temp_df,ignore_index=True)
                 
             #at the same time do an optOut filter where relevant and save that
@@ -417,9 +431,13 @@ if args.task == 'manipulation':
             a_df['optOutScoring'] = 'N'
             if args.optOut:
                 a_df['optOutScoring'] = 'Y'
+            a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+            if args.sbin >= 0:
+                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
-            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
+            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"-".join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
 
@@ -437,7 +455,6 @@ if args.task == 'manipulation':
 #            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
             html_out.loc[html_out['Scored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileID'] + '/' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
 
-            #TODO: add other metrics where relevant
             html_out = html_out.round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
 
             #final filtering
@@ -448,10 +465,11 @@ if args.task == 'manipulation':
             fname = os.path.join(outputRoot,'index.html')
             myf = open(fname,'w')
 
+            #add other metrics where relevant
             if average_df is not 0:
                 #write title and then average_df
                 metriclist = {}
-                for met in ['Threshold','NMM','MCC','BWL1']:
+                for met in ['NMM','MCC','BWL1']:
                     metriclist[''.join(['Optimum',met])] = 3
                     if args.sbin >= 0:
                         metriclist[''.join(['Maximum',met])] = 3
@@ -635,7 +653,7 @@ elif args.task == 'splice':
                 merged_df.loc[d_idx,''.join(['d',met])] = np.nan
 
         if args.displayScoredOnly:
-            #TODO: get the list of non-scored and delete them
+            #get the list of non-scored and delete them
             nonscore_df.apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
 #            nonscore_df.apply(lambda x: os.system('echo {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
             merged_df = merged_df.query('(pOptimumMCC > -2) and (dOptimumMCC > -2)')
@@ -721,6 +739,14 @@ elif args.task == 'splice':
                 if args.optOut:
                     temp_df['optOutScoring'] = 'Y'
 
+                temp_df['pOptimumThreshold'] = temp_df['pOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                temp_df['dOptimumThreshold'] = temp_df['dOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                if args.sbin >= 0:
+                    temp_df['pMaximumThreshold'] = temp_df['pMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df['pActualThreshold'] = temp_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df['dMaximumThreshold'] = temp_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df['dActualThreshold'] = temp_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
+
                 heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
@@ -766,6 +792,14 @@ elif args.task == 'splice':
                 a_df['optOutScoring'] = 'Y'
             heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
+            if a_df is not 0:
+                a_df['pOptimumThreshold'] = a_df['pOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                a_df['dOptimumThreshold'] = a_df['dOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                if args.sbin >= 0:
+                    a_df['pMaximumThreshold'] = a_df['pMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    a_df['pActualThreshold'] = a_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                    a_df['dMaximumThreshold'] = a_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    a_df['dActualThreshold'] = a_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
 
         return a_df
@@ -802,7 +836,7 @@ elif args.task == 'splice':
                 #write title and then average_df
                 metriclist = {}
                 for pfx in ['p','d']:
-                    for met in ['Threshold','NMM','MCC','BWL1']:
+                    for met in ['NMM','MCC','BWL1']:
                         metriclist[''.join([pfx,'Optimum',met])] = 3
                         if args.sbin >= 0:
                             metriclist[''.join([pfx,'Maximum',met])] = 3
@@ -949,6 +983,14 @@ if args.task == 'manipulation':
 
         # tack on PixelAverageAUC and MaskAverageAUC to a_df and remove from r_df
         r_df = r_df.drop(['PixelAverageAUC','MaskAverageAUC'],1)
+        if args.sbin >= 0:
+            r_df = r_df.drop(['MaximumThreshold','ActualThreshold'],1)
+
+#        if a_df is not 0:
+#            a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+#            if args.sbin >= 0:
+#                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+#                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
 
         r_idx = r_df.query('OptimumMCC == -2').index
         if len(r_idx) > 0:
@@ -963,30 +1005,27 @@ if args.task == 'manipulation':
         r_df.loc[r_idx,'OptimumMCC'] = ''
         prefix = os.path.basename(args.inSys).split('.')[0]
 
+        #convert all pixel values to decimal-less strings
+        pix2ints = ['OptimumThreshold','OptimumPixelTP','OptimumPixelFP','OptimumPixelTN','OptimumPixelFN',
+                    'PixelN','PixelBNS','PixelSNS','PixelPNS']
+        if args.sbin >= 0:
+            pix2ints.extend(['MaximumPixelTP','MaximumPixelFP','MaximumPixelTN','MaximumPixelFN',
+                             'ActualPixelTP','ActualPixelFP','ActualPixelTN','ActualPixelFN'])
+
+        for pix in pix2ints:
+            r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
+
         if args.outMeta:
             roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
-            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
+            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
             rAM_df = pd.merge(r_df,myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName'])
             rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','JournalName'])
-            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-allMeta.csv'),sep="|",index=False)
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
 
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
     
-#commenting out for the time being
-#elif args.task in ['removal','clone']:
-#    m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
-#    # get rid of inf values from the merge and entries for which there is nothing to work with.
-#    m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=['ProbeMaskFileName'])
-#
-#    # if the confidence score are 'nan', replace the values with the mininum score
-#    m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
-#    # convert to the str type to the float type for computations
-#    m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
-#    r_df = createReportSSD(m_df, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.outRoot, html=args.html,verbose=reportq,precision=args.precision) # default eks 15, dks 9
-#    a_df = avg_scores_by_factors_SSD(r_df,args.task,avglist,precision=args.precision)
-#
 elif args.task == 'splice':
     #TODO: basic data cleanup
     # if the confidence score are 'nan', replace the values with the mininum score
@@ -1071,6 +1110,18 @@ elif args.task == 'splice':
             a_df = averageByFactors(r_df,metrics,factor_mode,query)
 
         r_df = r_df.drop(['pPixelAverageAUC','pMaskAverageAUC','dPixelAverageAUC','dMaskAverageAUC'],1)
+        if args.sbin >= 0:
+            r_df = r_df.drop(['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold'],1)
+
+        #convert all to ints.
+#        if a_df is not 0:
+#            a_df['pOptimumThreshold'] = a_df['pOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+#            a_df['dOptimumThreshold'] = a_df['dOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+#            if args.sbin >= 0:
+#                a_df['pMaximumThreshold'] = a_df['pMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+#                a_df['pActualThreshold'] = a_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
+#                a_df['dMaximumThreshold'] = a_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
+#                a_df['dActualThreshold'] = a_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
 
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'ProbeScored'] = 'N'
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumNMM'] = ''
@@ -1089,6 +1140,20 @@ elif args.task == 'splice':
 
         prefix = os.path.basename(args.inSys).split('.')[0]
 
+        #convert all pixel values to decimal-less strings
+        pix2ints = ['pOptimumThreshold','pOptimumPixelTP','pOptimumPixelFP','pOptimumPixelTN','pOptimumPixelFN',
+                    'pPixelN','pPixelBNS','pPixelSNS','pPixelPNS',
+                    'dOptimumThreshold','dOptimumPixelTP','dOptimumPixelFP','dOptimumPixelTN','dOptimumPixelFN',
+                    'dPixelN','dPixelBNS','dPixelSNS','dPixelPNS']
+        if args.sbin >= 0:
+            pix2ints.extend(['pMaximumPixelTP','pMaximumPixelFP','pMaximumPixelTN','pMaximumPixelFN',
+                             'pActualPixelTP','pActualPixelFP','pActualPixelTN','pActualPixelFN',
+                             'dMaximumPixelTP','dMaximumPixelFP','dMaximumPixelTN','dMaximumPixelFN',
+                             'dActualPixelTP','dActualPixelFP','dActualPixelTN','dActualPixelFN'])
+
+        for pix in pix2ints:
+            r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
+
         #other reports of varying
         if args.outMeta:
             roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
@@ -1097,9 +1162,9 @@ elif args.task == 'splice':
             #left join with index file and journal data
             rAM_df = pd.merge(stackdf.copy(),myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName'])
             rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','DonorFileID','JournalName'])
-            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-allMeta.csv'),sep="|",index=False)
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
 
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-mask_scores_perimage.csv'),sep="|",index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
 
 printq("Ending the mask scoring report.")
 exit(0)

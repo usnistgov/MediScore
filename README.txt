@@ -28,7 +28,7 @@ INSTALLATION
 
 (Lines starting with $ are command lines)
 
-1) Install Python 2.7 (tested in Python == 2.7.12).
+1) Install Python 2.7 (tested in Python == 2.7.13).
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
@@ -39,7 +39,9 @@ INSTALLATION
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
   - rawpy (tested in version 0.9.0)
-  - unittest
+  - numpngw (tested in version 0.0.6)
+  Most of these packages can be installed by running basic_install.sh on your machine.
+
   Optional :
   - pydot (tested in version 1.2.3) -- For graphical output from
     ProvenanceGraphBuildingScorer.py
@@ -319,6 +321,7 @@ HISTORY
       - Added Maximum Threshold metrics and Threshold averaging.
       - Added ROC curve averages.
       - Added standard deviation for metrics.
+      - Output reformatting.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:

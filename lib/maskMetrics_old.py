@@ -212,6 +212,9 @@ class maskMetrics:
         fn = conf['FN']
         n = conf['N']
 
+        if n == 0:
+            return np.nan
+
         s=tp+fn
         p=tp+fp
 
@@ -292,6 +295,9 @@ class maskMetrics:
         * Outputs:
         *     Normalized grayscale WL1 value
         """
+        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        if n==0:
+            return np.nan
 
         rmat = ref.bwmat.astype(int)
         smat = sys.matrix.astype(int)
@@ -299,9 +305,6 @@ class maskMetrics:
         wL1=np.multiply(w,abs(rmat-smat)/255.)
         wL1=np.sum(wL1)
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
-        if n==0:
-            return np.nan
         norm_wL1=wL1/n
         return norm_wL1
 
@@ -476,33 +479,26 @@ class maskMetrics:
 
         #pick max threshold for max MCC
         columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N','TPR','FPR']
-        tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[columns]
-        maxMets = thresMets.query("Threshold=={}".format(tmax))
-        maxNMM = maxMets.iloc[0]['NMM']
-        maxMCC = maxMets.iloc[0]['MCC']
-        maxBWL1 = maxMets.iloc[0]['BWL1']
-
         #pick max threshold for max MCC
-        tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
-        thresMets = thresMets[columns]
-        if popt==1:
+
+        if len(nonNullRows) > 0:
+            tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']
             maxMCC = maxMets.iloc[0]['MCC']
             maxBWL1 = maxMets.iloc[0]['BWL1']
-            if (maxNMM==1) or (maxNMM==-1):
-                print("NMM: %d" % maxNMM)
-            else:
-                print("NMM: %0.3f" % maxNMM)
-            if (maxMCC==1) or (maxMCC==-1):
-                print("MCC: %d" % maxMCC)
-            else:
-                print("MCC (Matthews correlation coeff.): %0.3f" % maxMCC)
-            if (maxBWL1==1) or (maxBWL1==0):
-                print("BWL1: %d" % maxBWL1)
-            else:
-                print("Binary Weighted L1: %0.3f" % maxBWL1)
+        else:
+            tmax = np.nan
+            maxNMM = np.nan
+            maxMCC = np.nan
+            maxBWL1 = np.nan
+
+        thresMets = thresMets[columns]
+
+        if popt==1:
+            print("NMM: {}".format(maxNMM))
+            print("MCC: {}".format(maxMCC))
+            print("BWL1: {}".format(maxBWL1))
 
         return thresMets,tmax
 
