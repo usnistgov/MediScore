@@ -50,7 +50,8 @@ import Partition_mask as pt
 #execfile('maskreport.py')
 
 ########### Temporary Variable ############################################################
-localOptOutColName = "IsOptOut"
+localOptOutColName = "ProbeStatus"
+pastOptOutColName = "IsOptOut"
 
 ########### Command line interface ########################################################
 
@@ -118,7 +119,7 @@ help="The number of processors to use in the computation. Choosing too many proc
 parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
-parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on trials where the {} value is 'N' only.".format(localOptOutColName))
+parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column.")
 parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
 parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
@@ -218,7 +219,7 @@ myIndex = pd.read_csv(os.path.join(myRefDir,args.inIndex),sep="|",header=0,dtype
 param_pfx = ['Probe']
 if args.task == 'splice':
     param_pfx = ['Probe','Donor']
-param_ids = [e + 'FileID' for e in param_pfx]
+param_ids = [''.join([e,'FileID']) for e in param_pfx]
 
 m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
 m_df = pd.merge(sub_ref, mySys, how='left', on=param_ids)
@@ -229,7 +230,7 @@ m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[e + 'MaskFileName' f
 sysCols = list(mySys)
 refCols = list(sub_ref)
 
-if args.optOut and not (localOptOutColName in sysCols):
+if args.optOut and (not (localOptOutColName in sysCols) and not (pastOptOutColName in sysCols)):
     print("ERROR: No {} column detected. Filtration is meaningless.".format(localOptOutColName))
     exit(1)
 
@@ -249,14 +250,24 @@ if len(m_df) == 0:
 #apply to post-index filtering
 totalTrials = len(m_df)
 #NOTE: IsOptOut values can be any one of "Y", "N", "Detection", or "Localization"
-totalOptOut = len(m_df.query("({}) or ({})".format('=='.join([localOptOutColName,"'Y'"]),'=='.join([localOptOutColName,"'Localization'"]))))
+#NOTE: ProbeStatus values can be any one of "Processed", "NonProcessed", "OptOutAll", "OptOutDetection", "OptOutLocalization"
+optOutCol = localOptOutColName
+if localOptOutColName in sysCols:
+    undesirables = str(['NonProcessed','OptOutAll','OptOutLocalization'])
+elif pastOptOutColName in sysCols:
+    optOutCol = pastOptOutColName
+    undesirables = str(['Y','Localization'])
+
+optOutQuery = "==".join([optOutCol,undesirables])
+
+totalOptOut = len(m_df.query(optOutQuery))
 totalOptIn = totalTrials - totalOptOut
 TRR = float(totalOptIn)/totalTrials
 m_df = m_df.query("IsTarget=='Y'") #TODO: don't filter anymore, but see Jon first.
 
 #opting out at the beginning
 if args.optOut:
-    m_df = m_df.query("({}) and ({})".format('!='.join([localOptOutColName,"'Y'"]),"!=".join([localOptOutColName,"'Localization'"])))
+    m_df = m_df.query(" ".join(['not',optOutQuery]))
 
 #define HTML functions here
 df2html = lambda *a:None
@@ -1016,7 +1027,7 @@ if args.task == 'manipulation':
             r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
 
         if args.outMeta:
-            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
+            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
@@ -1156,7 +1167,7 @@ elif args.task == 'splice':
 
         #other reports of varying
         if args.outMeta:
-            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',localOptOutColName,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
+            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data

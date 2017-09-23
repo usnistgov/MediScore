@@ -12247,7 +12247,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </ul>
 <p>--optOut</p>
 <ul>
-<li>Evaluate algorithm performance on trials where the IsOptOut value is not 'Y'.</li>
+<li>Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column. The values in the column that are opted out of the evaluation are "NonProcessed" (denoting some kind of system failure on that probe), "OptOutLocalization" (denoting opting out of the localization task only), and "OptOutAll" (denoting opting out of both the detection and localization tasks),.</li>
 </ul>
 <p>--displayScoredOnly</p>
 <ul>
@@ -12275,7 +12275,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
--oR outputs/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span>
+-oR outputs/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span> --color
 </pre></div>
 
 </div>
@@ -12328,7 +12328,7 @@ Current query: ManMade==[&#39;no&#39;]
 python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
--oR outputs/maniptargets -html -qm <span class="s2">&quot;Purpose==[&#39;remove&#39;]&quot;</span> <span class="s2">&quot;Purpose==[&#39;clone&#39;,&#39;add&#39;]&quot;</span>
+-oR outputs/maniptargets -html -qm <span class="s2">&quot;Purpose==[&#39;remove&#39;]&quot;</span> <span class="s2">&quot;Purpose==[&#39;clone&#39;,&#39;add&#39;]&quot;</span> --color
 </pre></div>
 
 </div>
