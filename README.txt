@@ -323,6 +323,7 @@ HISTORY
       - Added standard deviation for metrics.
       - Added reading functionality for empty reference masks.
       - Output reformatting.
+      - File prefix added to --outRoot option as a requirement.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:

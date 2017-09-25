@@ -77,8 +77,8 @@ parser.add_argument('-s','--inSys',type=str,
 help='System output csv file name: [e.g., ~/expid/system_output.csv]',metavar='character')
 parser.add_argument('-x','--inIndex',type=str,default=indexFname,
 help='Task Index csv file name: [e.g., indexes/NC2016-manipulation-index.csv]',metavar='character')
-parser.add_argument('-oR','--outRoot',type=str,default='.',
-help="Directory root to save outputs.",metavar='character')
+parser.add_argument('-oR','--outRoot',type=str,
+help="Directory root plus prefix to save outputs.",metavar='character')
 parser.add_argument('--outMeta',action='store_true',help='Save the CSV file with the system scores with minimal metadata')
 parser.add_argument('--outAllmeta',action='store_true',help='Save the CSV file with the system scores with all metadata')
 
@@ -169,11 +169,14 @@ if args.inIndex is None:
 #set.seed(1)
 
 #assume outRoot exists
-if args.outRoot is None:
-    printerr("ERROR: the folder name for outputs must be supplied.")
+if args.outRoot in [None,'']:
+    printerr("ERROR: the folder name and prefix for outputs must be supplied.")
 
-if not os.path.isdir(args.outRoot):
-    os.system('mkdir ' + args.outRoot)
+outdir=os.path.dirname(args.outRoot)
+outpfx=os.path.basename(args.outRoot)
+
+if not os.path.isdir(outdir):
+    os.system(' '.join(['mkdir',outdir]))
 
 if args.task == 'manipulation':
     index_dtype = {'TaskID':str,
@@ -221,10 +224,9 @@ if args.task == 'splice':
     param_pfx = ['Probe','Donor']
 param_ids = [''.join([e,'FileID']) for e in param_pfx]
 
-m_df = pd.merge(sub_ref, mySys, how='left', on='ProbeFileID')
 m_df = pd.merge(sub_ref, mySys, how='left', on=param_ids)
 # get rid of inf values from the merge and entries for which there is nothing to work with.
-m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[e + 'MaskFileName' for e in param_pfx])
+m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[''.join([e,'MaskFileName']) for e in param_pfx])
 
 #for all columns unique to mySys except ConfidenceScore, replace np.nan with empty string
 sysCols = list(mySys)
@@ -341,7 +343,7 @@ if args.task == 'manipulation':
         journalcols = ['ProbeFileID']
         journalcols.extend(journalcols_else)
         journalData = journalData[journalcols]
-        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'journalResults.csv'])),sep="|",index=False)
+        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'journalResults.csv'])),sep="|",index=False)
         return 0
 
     #averaging procedure starts here.
@@ -397,7 +399,7 @@ if args.task == 'manipulation':
 
                 heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 if temp_df is not 0:
                     temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
                     if args.sbin >= 0:
@@ -448,7 +450,7 @@ if args.task == 'manipulation':
                 a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
-            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"-".join([prefix,"mask_score.csv"])),sep="|",index=False)
+            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
 
@@ -520,7 +522,7 @@ elif args.task == 'splice':
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,args.outRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
         #make another dataframe here that's formatted distinctly from the first.
         stackp = probe_df.copy()
@@ -691,7 +693,7 @@ elif args.task == 'splice':
 
 #        journalData = pd.merge(journalData,probeJournalJoin[['ProbeFileID','DonorFileID','JournalName','StartNodeID','EndNodeID']],how='right',on=['JournalName','StartNodeID','EndNodeID'])
         journalData = journalData[journalcols]
-        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-journalResults.csv'),sep="|",index=False)
+        journalData.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'journalResults.csv'])),sep="|",index=False)
         return 0
 
     def averageByFactors(r_df,metrics,factor_mode,query):
@@ -760,7 +762,7 @@ elif args.task == 'splice':
 
                 heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,prefix + '-mask_scores'),i),sep="|",index=False)
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
             #at the same time do an optOut filter where relevant and save that
 #            if args.optOut:
@@ -811,7 +813,7 @@ elif args.task == 'splice':
                     a_df['pActualThreshold'] = a_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
                     a_df['dMaximumThreshold'] = a_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
                     a_df['dActualThreshold'] = a_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
-            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + "-mask_score.csv"),sep="|",index=False)
+            a_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
 
@@ -886,8 +888,8 @@ elif args.queryManipulation:
 ## convert to the str type to the float type for computations
 #mySys['ConfidenceScore'] = mySys['ConfidenceScore'].astype(np.float)
 
-outRoot = args.outRoot
-prefix = os.path.basename(args.inSys).split('.')[0]
+outRoot = outdir
+prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
 
 reportq = 0
 if args.verbose:
@@ -972,7 +974,7 @@ if args.task == 'manipulation':
         if len(queryM) > 1:
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
             if not os.path.isdir(outRootQuery):
-                os.system('mkdir ' + outRootQuery)
+                os.system(' '.join(['mkdir',outRootQuery]))
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         printq("Beginning mask scoring...")
@@ -1014,7 +1016,7 @@ if args.task == 'manipulation':
         df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
         r_df.loc[r_idx,'OptimumMCC'] = ''
-        prefix = os.path.basename(args.inSys).split('.')[0]
+        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
 
         #convert all pixel values to decimal-less strings
         pix2ints = ['OptimumThreshold','OptimumPixelTP','OptimumPixelFP','OptimumPixelTN','OptimumPixelFN',
@@ -1028,14 +1030,14 @@ if args.task == 'manipulation':
 
         if args.outMeta:
             roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
-            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
+            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
             rAM_df = pd.merge(r_df,myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName'])
             rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','JournalName'])
-            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
 
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
     
 elif args.task == 'splice':
     #TODO: basic data cleanup
@@ -1098,7 +1100,7 @@ elif args.task == 'splice':
         if len(queryM) > 1:
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
             if not os.path.isdir(outRootQuery):
-                os.system('mkdir ' + outRootQuery)
+                os.system(' '.join(['mkdir',outRootQuery]))
    
         m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
@@ -1149,7 +1151,7 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
         r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
 
-        prefix = os.path.basename(args.inSys).split('.')[0]
+        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
 
         #convert all pixel values to decimal-less strings
         pix2ints = ['pOptimumThreshold','pOptimumPixelTP','pOptimumPixelFP','pOptimumPixelTN','pOptimumPixelFN',
@@ -1168,14 +1170,14 @@ elif args.task == 'splice':
         #other reports of varying
         if args.outMeta:
             roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
-            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,prefix + '-perimage-outMeta.csv'),sep="|",index=False)
+            roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
             rAM_df = pd.merge(stackdf.copy(),myIndex,how='left',on=['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName'])
             rAM_df = pd.merge(rAM_df,journalData0,how='left',on=['ProbeFileID','DonorFileID','JournalName'])
-            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
+            rAM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-allMeta.csv'])),sep="|",index=False)
 
-        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'-'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
+        r_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'mask_scores_perimage.csv'])),sep="|",index=False)
 
 printq("Ending the mask scoring report.")
 exit(0)
