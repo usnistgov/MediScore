@@ -25,8 +25,11 @@ run_test() {
     if [ -f "${compcheckfile_outdir}/log.txt" ]; then
 	    sed -e "s:${compcheckfile_outdir}/:${checkfile_outdir}/:g" -i "" "${compcheckfile_outdir}/log.txt"
     fi
-    #exclude pdf files
-    diff -x "*.pdf" -r "$checkfile_outdir" "$compcheckfile_outdir" 1> $compcheckfile_outdir.diff.log 2>&1
+    #exclude pdf and .DS_Store files
+    #diff -x "*.pdf" -r "$checkfile_outdir" "$compcheckfile_outdir" 1> $compcheckfile_outdir.diff.log 2>&1
+    #check_status $compcheckfile_outdir.diff.log
+
+    diff --exclude="*.pdf" --exclude="*DS_Store" -r "$checkfile_outdir" "$compcheckfile_outdir" 1> $compcheckfile_outdir.diff.log 2>&1
     check_status $compcheckfile_outdir.diff.log
 
     echo "*** OK ***"

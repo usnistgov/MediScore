@@ -349,7 +349,7 @@ if __name__ == '__main__':
                 query = args.queryManipulation
 
             if args.optOut:
-                index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 sys_response = 'tr'
 
             v_print("Query : {}\n".format(query))
@@ -375,7 +375,7 @@ if __name__ == '__main__':
         else:
 
             if args.optOut:
-                index_m_df = index_m_df.query(" IsOptOut=='N' ")
+                index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 sys_response = 'tr'
 
             DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num, sys_res = sys_response)
@@ -633,7 +633,7 @@ if __name__ == '__main__':
         total_num = m_df.shape[0]
         ## if OptOut has chosen, all of queries should be applied
         if args_optOut:
-            m_df = m_df.query(" IsOptOut=='N' ")
+            m_df = m_df.query(" IsOptOut==['N', 'Localization'] ")
             optout_num = m_df.shape[0]
 
         # the performers' result directory
