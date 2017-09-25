@@ -45,6 +45,7 @@ lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 from metricRunner import maskMetricRunner
 import Partition_mask as pt
+import Render
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
 #execfile('maskreport.py')
@@ -167,6 +168,12 @@ if args.inIndex is None:
 
 #create the folder and save the mask outputs
 #set.seed(1)
+
+#generate plotjson options
+detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../DetectionScorer/plotJsonFiles')
+if not os.path.isdir(detpath):
+    os.system(' '.join(['mkdir',detpath]))
+Render.gen_default_plot_options(path=os.path.join(detpath,'plot_options.json'))
 
 #assume outRoot exists
 if args.outRoot in [None,'']:
