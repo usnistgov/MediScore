@@ -109,7 +109,6 @@ parser.add_argument('--nspx',type=int,default=-1,
 help="Set a pixel value for all system output masks to serve as a no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
 parser.add_argument('-pppns','--perProbePixelNoScore',action='store_true',
 help="Use the pixel values in the OptOutPixel column of the system output to designate no-score zones.")
-#TODO: include functionality for this
 
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")
@@ -274,9 +273,41 @@ totalOptIn = totalTrials - totalOptOut
 TRR = float(totalOptIn)/totalTrials
 m_df = m_df.query("IsTarget=='Y'") #TODO: don't filter anymore, but see Jon first.
 
+if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((args.task == 'splice') and ('DonorOptOutPixelValue' not in sysCols))):
+    if args.task == 'manipulation':
+        print("ERROR: 'ProbeOptOutPixelValue' is not found in the columns of the system output.")
+    elif args.task == 'splice':
+        print("ERROR: 'ProbeOptOutPixelValue' or 'DonorOptOutPixelValue' is not found in the columns of the system output.")
+    exit(1)
+
 #opting out at the beginning
 if args.optOut:
     m_df = m_df.query(" ".join(['not',optOutQuery]))
+
+class loc_scoring_params:
+    def __init__(self,
+                 mode,
+                 eks,
+                 dks,
+                 ntdks,
+                 nspx,
+                 pppns,
+                 kernel,
+                 verbose,
+                 html,
+                 precision,
+                 processors):
+        self.mode = mode
+        self.eks = eks
+        self.dks = dks
+        self.ntdks = ntdks
+        self.nspx = nspx
+        self.pppns = pppns
+        self.kernel = kernel
+        self.verbose = verbose
+        self.html = html
+        self.precision = precision
+        self.processors = processors
 
 #define HTML functions here
 df2html = lambda *a:None
@@ -287,8 +318,11 @@ if args.task == 'manipulation':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=0,speedup=args.speedup,color=args.color)
-        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.color)
+        #revise this to outputRoot and loc_scoring_params
+        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        df = metricRunner.getMetricList(outputRoot,params)
+#        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
 
         nonscore_df = merged_df.query("OptimumMCC == -2")
@@ -511,7 +545,6 @@ if args.task == 'manipulation':
             myf.close()
 
 elif args.task == 'splice':
-    #TODO: add color option
     def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision):
         #finds rows in index and sys which correspond to target reference
         #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
@@ -522,14 +555,19 @@ elif args.task == 'splice':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=1,speedup=args.speedup,color=args.color)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.color)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        #TODO: temporary until we can evaluate color for the splice task
+        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        probe_df = metricRunner.getMetricList(outputRoot,params)
+#        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
+#        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
+        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        donor_df = metricRunner.getMetricList(outputRoot,params)
+#        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
         #make another dataframe here that's formatted distinctly from the first.
         stackp = probe_df.copy()

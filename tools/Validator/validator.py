@@ -49,8 +49,6 @@ lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
 sys.path.append(lib_path)
 from printbuffer import printbuffer
 
-#TODO: use string buffer a'la mask scorer
-
 print_lock = multiprocessing.Lock() #for printout
 
 @contextlib.contextmanager
@@ -64,6 +62,13 @@ def stdout_redirect(where):
 def printq(mystring,iserr=False):
     if iserr:
         print(mystring)
+
+def is_finite_number(s):
+    try:
+        s = float(s)
+        return np.isfinite(s)
+    except ValueError:
+        return False
 
 def checkProbe(args):
     return SSD_Validator.checkMoreProbes(*args)
@@ -203,6 +208,7 @@ class SSD_Validator(validator):
     
         dupFlag = 0
         xrowFlag = 0
+        scoreFlag = 0
         maskFlag = 0
         matchFlag = 0
         
@@ -213,16 +219,37 @@ class SSD_Validator(validator):
         sysHeads = list(sysfile.columns)
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore","IsOptOut"]
+        truelist = ["ProbeFileID","ConfidenceScore"]
         testMask = False
         if self.condition in ["ImgOnly","ImgMeta"]:
             truelist.append("OutputProbeMaskFileName")
             testMask = True 
         self.testMask = testMask
 
+        #either IsOptOut or ProbeStatus must be in the file header
+        optOut = 0
+        if not (("IsOptOut" in sysHeads) or ("ProbeStatus" in sysHeads)):
+            self.printbuffer.append("ERROR: Either 'IsOptOut' or 'ProbeStatus' must be in the column headers.")
+            allClear = False
+        else:
+            if ("IsOptOut" in sysHeads) and ("ProbeStatus" in sysHeads):
+                self.printbuffer.append("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
+
+            if "IsOptOut" in sysHeads:
+                optOut = 1
+            elif "ProbeStatus" in sysHeads:
+                optOut = 2
+        self.optOut = optOut
+
+        #check for ProbeOptOutPixelValue
+        self.pixOptOut = False
+        if 'ProbeOptOutPixelValue' in sysHeads:
+            self.pixOptOut = True
+
         for i in xrange(len(truelist)):
-            allClear = allClear and (truelist[i] in sysHeads)
-            if not (truelist[i] in sysHeads):
+            headcheck = truelist[i] in sysHeads
+            allClear = allClear and headcheck
+            if not headcheck:
 #                headlist = []
 #                properhl = []
 #                for i in range(0,len(truelist)):
@@ -235,10 +262,9 @@ class SSD_Validator(validator):
         if not allClear:
             return 1
 
-        optOut=False
-        if "IsOptOut" in sysHeads:
-            optOut=True
-        self.optOut = optOut
+#        if "IsOptOut" in sysHeads:
+#            optOut=True
+#        self.optOut = optOut
 
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
@@ -246,9 +272,9 @@ class SSD_Validator(validator):
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
             rowlist = xrange(sysfile.shape[0])
-            self.printbuffer.append("ERROR: Your system output contains duplicate rows for ProbeFileID's: "
-                    + ' ,'.join(list(map(str,sysfile['ProbeFileID'][sysfile.duplicated()])))    + " at row(s): "
-                    + ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))) + " after the header. I recommended you delete these row(s).")
+            self.printbuffer.append(" ".join(["ERROR: Your system output contains duplicate rows for ProbeFileID's:",
+                    ' ,'.join(list(map(str,sysfile['ProbeFileID'][sysfile.duplicated()]))),"at row(s):",
+                    ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))),"after the header. I recommended you delete these row(s)."]))
             dupFlag = 1
         
         if sysfile.shape[0] != idxfile.shape[0]:
@@ -260,7 +286,14 @@ class SSD_Validator(validator):
             return 1
         
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str)
-        sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
+
+        try:
+            sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
+        except ValueError:
+            confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)]['ProbeFileID']
+            self.printbuffer.append("ERROR: Your Confidence Scores for probes {} are not numeric.".format(confprobes))
+            scoreFlag = 1
+
         if testMask:
             sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
 
@@ -300,7 +333,8 @@ class SSD_Validator(validator):
         matchFlag = np.sum(sysfile['matchFlag'])
         
         #final validation
-        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
+        flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + matchFlag
+        if flagSum == 0:
             self.printbuffer.append("The contents of your file are valid!")
             return 0
         else:
@@ -347,15 +381,28 @@ class SSD_Validator(validator):
 
 #                printq("The contents of your file are not valid!",True)
 #                return 1
+
+        if self.pixOptOut:
+            oopixval = str(sysrow['ProbeOptOutPixelValue'])
+            #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
+            if not ((oopixval == '') or (oopixval.isdigit())):
+                sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is not blank ('') or an integer.".format(probeFileID)
+                sysrow['matchFlag'] = 1
+
         #check mask validation
         if self.testMask and not self.neglectMask:
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 sysrow['Message']="The mask for file {} appears to be absent. Skipping it.".format(probeFileID)
                 return sysrow
-            #if IsOptOut is present
-            if self.optOut:
-                if sysrow['IsOptOut'] == 'Y':
+            #if IsOptOut or ProbeStatus is present
+            #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
+            if self.optOut == 1:
+                if sysrow['IsOptOut'] in ['Y','Localization']:
+                    #no need for localization checking
+                    return sysrow
+            elif self.optOut == 2:
+                if sysrow['ProbeStatus'] in ['NonProcessed','OptOutAll','OptOutLocalization']:
                     return sysrow
 
             mskflag,msg = self.maskCheck(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify)
@@ -407,7 +454,6 @@ class SSD_Validator(validator):
             msg.append(maskname + " is valid.")
     
         return flag,"\n".join(msg)
-
 
 class DSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -469,12 +515,12 @@ class DSD_Validator(validator):
             return 1 
 
     #redesigned pipeline
-    #TODO: pandas apply and parallelize    
     def contentCheck(self,identify,neglectMask,reffname):
         self.printbuffer.append('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
         xrowFlag = 0
+        scoreFlag = 0
         maskFlag = 0
         keyFlag = 0
 
@@ -498,7 +544,7 @@ class DSD_Validator(validator):
 
         r_files = {}
         if reffname is not 0:
-            #TODO: filter idxfile based on ProbeFileID's in reffile
+            #filter rows based on ProbeFileID's in reffile
             with open(reffname) as reffile:
                 r_heads = {}
                 for idx,l in enumerate(reffile):
@@ -509,7 +555,7 @@ class DSD_Validator(validator):
                             r_heads[h] = i
                     else:
                         r_data = l.rstrip().replace("\"","").split('|')
-                        r_files[r_data[r_heads['ProbeFileID']] + ":" + r_data[r_heads['DonorFileID']]] = r_data[r_heads['IsTarget']]
+                        r_files[":".join([r_data[r_heads['ProbeFileID']],r_data[r_heads['DonorFileID']]])] = r_data[r_heads['IsTarget']]
             
 
 #        with open(self.idxname) as idxfile:
@@ -532,13 +578,13 @@ class DSD_Validator(validator):
                 else:
                     i_data = l.rstrip().replace("\"","").split('|')
                     #print i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]
-                    ind[i_data[i_heads['ProbeFileID']] + ":" + i_data[i_heads['DonorFileID']]] = i_data
+                    ind[":".join([i_data[i_heads['ProbeFileID']],i_data[i_heads['DonorFileID']]])] = i_data
 
         self.printbuffer.append("Index read")
 
         sysPath = os.path.dirname(self.sysname)
         testMask = False
-        optOut = False
+        optOut = 0
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 self.printbuffer.append("Process {} ".format(idx) + l)
@@ -552,18 +598,33 @@ class DSD_Validator(validator):
                         self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 6. Are you using '|' to separate your columns?")
                         return 1
                     allClear = True
-                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName","IsOptOut"]
+                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore"]
+                    if self.condition in ["ImgOnly","ImgMeta"]:
+                        truelist.extend(["OutputProbeMaskFileName","OutputDonorMaskFileName"])
+                        testMask = True
+
+                    
+                    if not (("IsOptOut" in s_headnames) or (("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames))):
+                        self.printbuffer.append("ERROR: The column 'IsOptOut', or 'ProbeStatus' and 'DonorStatus', must be in the column headers.")
+                    else:
+                        if ("IsOptOut" in s_headnames) and ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
+                            self.printbuffer.append("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
+
+                        if "IsOptOut" in s_headnames:
+                            optOut = 1
+                        elif ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
+                            optOut = 2
+                             
                     for th in truelist:
-                        allClear = allClear and (th in s_headnames)
-                        if not (th in s_headnames):
+                        headcheck = th in s_headnames
+                        allClear = allClear and headcheck
+                        if not headcheck:
                             self.printbuffer.append("ERROR: The required column {} is absent.".format(th))
                     if not allClear:
                         return 1
             
-                    if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
-                        testMask = True
-                    if "IsOptOut" in s_headnames:
-                        optOut = True
+#                    if ("OutputProbeMaskFileName" in s_headnames) and ("OutputDonorMaskFileName" in s_headnames):
+#                        testMask = True
 
                     for i,h in enumerate(s_headnames):
                         #drop into dictionary for indexing
@@ -574,7 +635,7 @@ class DSD_Validator(validator):
                 l_content = l.rstrip().replace("\"","").split('|')
                 probeID = l_content[s_heads['ProbeFileID']]
                 donorID = l_content[s_heads['DonorFileID']]
-                key = probeID + ":" + donorID
+                key = ":".join([probeID,donorID])
 
                 #try catch the key lookup
                 try:
@@ -589,6 +650,11 @@ class DSD_Validator(validator):
                         self.printbuffer.append("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
                         continue
 
+                #confidence score checking
+                if not is_finite_number(l_content[s_heads['ConfidenceScore']]):
+                    self.printbuffer.append("ERROR: Your Confidence Score for probe-donor pair ({}) is not a real numeric number.".format(key.replace(":",",")))
+                    scoreFlag = 1
+
                 if testMask and not neglectMask:
                     probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
                     donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
@@ -597,16 +663,24 @@ class DSD_Validator(validator):
                         self.printbuffer.append("At least one mask for the pair ({},{}) appears to be absent. Skipping this pair.".format(probeID,donorID))
                         continue
 
-                    if optOut:
-                        if l_content[s_heads['IsOptOut']] == 'Y':
+                    optOutOption = 0
+                    if optOut == 1:
+                        if l_content[s_heads['IsOptOut']] in ['Y','Localization']:
                             continue
+                    elif optOut == 2:
+                        #if ProbeStatus is opting out, opt out of Probe; likewise for Donor.
+                        #split into donor and probe checking with optOutOption
+                        if l_content[s_heads['ProbeStatus']] in ["NonProcessed","OptOutAll","OptOutLocalization"]:
+                            optOutOption = optOutOption + 1
+                        if l_content[s_heads['DonorStatus']] in ["NonProcessed","OptOutAll","OptOutLocalization"]:
+                            optOutOption = optOutOption + 2
  
                     probeWidth = int(indRec[i_heads['ProbeWidth']])
                     probeHeight = int(indRec[i_heads['ProbeHeight']])
                     donorWidth = int(indRec[i_heads['DonorWidth']])
                     donorHeight = int(indRec[i_heads['DonorHeight']])
 
-                    maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify)
+                    maskFlag = maskFlag | self.maskCheck(os.path.join(sysPath,probeOutputMaskFileName),os.path.join(sysPath,donorOutputMaskFileName),probeID,donorID,probeWidth,probeHeight,donorWidth,donorHeight,idx,identify,optOutOption)
 
 #                     if l not in s_lines:
 #                         #check for duplicate rows. Append to empty list at every opportunity for now
@@ -653,7 +727,8 @@ class DSD_Validator(validator):
 #                             return 1
 
         #final validation
-        if (maskFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (keyFlag == 0):
+        flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + keyFlag
+        if flagSum == 0:
             self.printbuffer.append("The contents of your file are valid!")
         else:
             self.printbuffer.append("The contents of your file are not valid!")
@@ -674,6 +749,7 @@ class DSD_Validator(validator):
 
         dupFlag = 0
         xrowFlag = 0
+        scoreFlag = 0
         maskFlag = 0
         
         if sysfile.shape[1] < 5:
@@ -711,12 +787,13 @@ class DSD_Validator(validator):
             self.printbuffer.append("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0]+1,idxfile.shape[0]+1))
             xrowFlag = 1
         
-        if not ((dupFlag == 0) and (xrowFlag == 0)):
-            self.printbuffer.append("The contents of your file are not valid!")
-            return 1
-        
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str) 
-        sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64) 
+        try:
+            sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
+        except ValueError:
+            confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)][['ProbeFileID','DonorFileID']]
+            self.printbuffer.append("ERROR: Your Confidence Scores for probe-donor pairs {} are not numeric.".format(confprobes))
+            scoreFlag = 1
         sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
 
         idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
@@ -732,7 +809,11 @@ class DSD_Validator(validator):
         
         sysPath = os.path.dirname(self.sysname)
 
-        #TODO: parallelize this a'la SSD
+        if not ((dupFlag == 0) and (xrowFlag == 0) and (scoreFlag == 0)):
+            self.printbuffer.append("The contents of your file are not valid!")
+            return 1
+        
+        #NOTE: parallelize this a'la SSD has no point. Dictionary implementation would win even with several processors.
         for i in xrange(sysfile.shape[0]):
             if not (sysfile['ProbeFileID'][i] in idxfile['ProbeFileID'].unique()):
                 self.printbuffer.append("ERROR: {} does not exist in the index file.".format(sysfile['ProbeFileID'][i]))
@@ -771,75 +852,87 @@ class DSD_Validator(validator):
             self.printbuffer.append("The contents of your file are not valid!")
             return 1
 
-    def maskCheck(self,pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum,identify):
+    def maskCheck(self,pmaskname,dmaskname,probeid,donorid,pbaseWidth,pbaseHeight,dbaseWidth,dbaseHeight,rownum,identify,optOutOption=0):
         #check to see if index file input image files are consistent with system output
         flag = 0
         self.printbuffer.append("Validating probe and donor mask pair({},{}) for ({},{}) pair at row {}...".format(pmaskname,dmaskname,probeid,donorid,rownum))
-    
-        #check to see if index file input image files are consistent with system output
-        pmask_pieces,pmask_ext = os.path.splitext(pmaskname)
-        if pmask_ext != '.png':
-            self.printbuffer.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum))
-            return 1
-    
-        dmask_pieces,dmask_ext = os.path.splitext(dmaskname)
-        if dmask_ext != '.png':
-            self.printbuffer.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum))
-            return 1
-    
-        #check to see if png files exist before doing anything with them.
+        checkThisProbe = True
+        checkThisDonor = True
+        if optOutOption % 2 == 1:
+            checkThisProbe = False
+        if optOutOption // 2 == 1:
+            checkThisDonor = False
+   
+        pngflag = False 
         eflag = False
-        if not os.path.isfile(pmaskname):
-            self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname))
-            eflag = True
-        if not os.path.isfile(dmaskname):
-            self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname))
-            eflag = True
-        if eflag:
+        #check to see if index file input image files are consistent with system output
+        if checkThisProbe:
+            pmask_pieces,pmask_ext = os.path.splitext(pmaskname)
+            if pmask_ext != '.png':
+                self.printbuffer.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum))
+                pngflag = True
+        
+            #check to see if png files exist before doing anything with them.
+            if not os.path.isfile(pmaskname):
+                self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname))
+                eflag = True
+
+        if checkThisDonor:
+            dmask_pieces,dmask_ext = os.path.splitext(dmaskname)
+            if dmask_ext != '.png':
+                self.printbuffer.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum))
+                pngflag = True
+        
+            if not os.path.isfile(dmaskname):
+                self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname))
+                eflag = True
+        if eflag or pngflag:
             return 1
     
         #subprocess with imagemagick identify for speed
-        if identify:
-            dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",pmaskname]).rstrip().replace("'","").split('|')
-            pdims = (int(dimoutput[2]),int(dimoutput[1]))
-        else:
-            pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
-    
-        if identify:
-            channel = subprocess.check_output(["identify","-format","%[channels]",pmaskname]).rstrip()
-            if channel != "gray":
-                self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(pmaskname,channel))
+        if checkThisProbe:
+            if identify:
+                dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",pmaskname]).rstrip().replace("'","").split('|')
+                pdims = (int(dimoutput[2]),int(dimoutput[1]))
+            else:
+                pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
+        
+            if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
+                self.printbuffer.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
+                self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
+                self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
                 flag = 1
-        elif len(pdims)>2:
-            self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]))
-            flag = 1
-    
-        if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
-            self.printbuffer.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
-            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
-            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
-            flag = 1
-    
-        if identify:
-            dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",dmaskname]).rstrip().replace("'","").split('|')
-            ddims = (int(dimoutput[2]),int(dimoutput[1]))
-        else: 
-            ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
-    
-        if identify:
-            channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname]).rstrip()
-            if channel != "gray":
-                self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(dmaskname,channel))
+        
+            if identify:
+                channel = subprocess.check_output(["identify","-format","%[channels]",pmaskname]).rstrip()
+                if channel != "gray":
+                    self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(pmaskname,channel))
+                    flag = 1
+            elif len(pdims)>2:
+                self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(pmaskname,pdims[2]))
                 flag = 1
-        elif len(ddims)>2:
-            self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]))
-            flag = 1
-    
-        if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
-            self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
-            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
-            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
-            flag = 1
+
+        if checkThisDonor:
+            if identify:
+                dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",dmaskname]).rstrip().replace("'","").split('|')
+                ddims = (int(dimoutput[2]),int(dimoutput[1]))
+            else: 
+                ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
+        
+            if identify:
+                channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname]).rstrip()
+                if channel != "gray":
+                    self.printbuffer.append("ERROR: {} is not single-channel. It is {}. Make it single-channel.".format(dmaskname,channel))
+                    flag = 1
+            elif len(ddims)>2:
+                self.printbuffer.append("ERROR: {} is not single-channel. It has {} channels. Make it single-channel.".format(dmaskname,ddims[2]))
+                flag = 1
+        
+            if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
+                self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
+                self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
+                self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+                flag = 1
      
         if flag == 0:
             self.printbuffer.append("Your masks {} and {} are valid.".format(pmaskname,dmaskname))

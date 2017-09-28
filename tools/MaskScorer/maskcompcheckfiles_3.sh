@@ -128,7 +128,67 @@ fi
 
 btp_total=$(($flag_btp + $flag_btppi + $flag_btpjr))
 
-flag_total=$(($bt1_total + $btp_total))
+#produce the output files
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Manipulation_ImgOnly_p-me_1/B_MFC18_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1 --speedup -qm -p $procs -pppns -html
+
+#compare them to ground truth files
+diff ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_pixns.csv > comp_maskreport_bittest_pixns.txt
+diff ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_pixns-perimage.csv > comp_maskreport_bittest_pixns-perimage.txt
+diff ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_pixns-journalResults.csv > comp_maskreport_bittest_pixns-journalResults.txt
+
+flag_btns=1
+flag_btnspi=1
+flag_btnsjr=1
+
+filter_btns="cat comp_maskreport_bittest_pixns.txt | grep -v CVS"
+filter_btnspi="cat comp_maskreport_bittest_pixns-perimage.txt | grep -v CVS"
+filter_btnsjr="cat comp_maskreport_bittest_pixns-journalResults.txt | grep -v CVS"
+
+if ([ ! -f comp_maskreport_bittest_pixns.txt -o ! -f comp_maskreport_bittest_pixns-journalResults.txt -o ! -f comp_maskreport_bittest_pixns-perimage.txt \
+]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 3 !!!!!    "
+  echo "     MISSING FILES ABSENT FOR PARTIAL BITTEST     "
+  echo
+  exit
+fi
+
+if test "`eval $filter_btns`" = "" ; then
+  flag_btns=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_mask_score.csv
+	fi
+	rm comp_maskreport_bittest_pixns.txt
+else
+	echo comp_maskreport_bittest_pixns.txt
+	cat comp_maskreport_bittest_pixns.txt
+fi
+
+if test "`eval $filter_btnspi`" = "" ; then
+  flag_btnspi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_bittest_pixns-perimage.txt
+else
+	echo comp_maskreport_bittest_pixns-perimage.txt
+	cat comp_maskreport_bittest_pixns-perimage.txt
+fi
+
+if test "`eval $filter_btnsjr`" = "" ; then
+  flag_btnsjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Manipulation_ImgOnly_p-me_1_journalResults.csv
+	fi
+	rm comp_maskreport_bittest_pixns-journalResults.txt
+else
+	echo comp_maskreport_bittest_pixns-journalResults.txt
+	cat comp_maskreport_bittest_pixns-journalResults.txt
+fi
+
+btns_total=$(($flag_btns + $flag_btnspi + $flag_btnsjr))
+
+flag_total=$(($bt1_total + $btp_total + $btns_total))
 
 if ([ $flag_total -eq 0 ]); then
   echo
@@ -137,6 +197,7 @@ if ([ $flag_total -eq 0 ]); then
 	if [ $clean = "TRUE" ] ; then
 		rm -rf ../../data/test_suite/maskScorerTests/bittest_1
 		rm -rf ../../data/test_suite/maskScorerTests/bittest_partial
+		rm -rf ../../data/test_suite/maskScorerTests/bittest_pixns
 	fi
 else
   echo

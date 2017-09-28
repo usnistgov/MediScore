@@ -324,10 +324,13 @@ HISTORY
       - Added reading functionality for empty reference masks.
       - Output reformatting.
       - File prefix added to --outRoot option as a requirement.
+      - Added per-probe pixel no-score
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:
       - Reverting splice validator to serial dictionary implementation for stability.
+      - Added confidence score checking to make sure the confidence score is a real number.
+      - Added additional optOut functionality (the code is still backwards compatible)
     * Provenance Validator:
       - Reworded the -task option in the ReadMe for clarity.
 

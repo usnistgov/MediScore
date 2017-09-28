@@ -123,7 +123,6 @@ class maskMetricRunner:
                  journaldf,
                  joindf,
                  index,
-                 mode=0,
                  speedup=False,
                  color=False,
                  colordict={'red':[0,0,255],'blue':[255,51,51],'yellow':[0,255,255],'green':[0,207,0],'pink':[193,182,255],'purple':[211,0,148],'white':[255,255,255],'gray':[127,127,127]}):
@@ -145,8 +144,6 @@ class maskMetricRunner:
                      the color of the manipulated region to the task in question
         - joindf: the dataframe joining information between the reference file and journal
         - index: the index file dataframe to be saved. Used solely for dimensionality validation of reference mask.
-        - mode: determines the data to access. 0 denotes the default 'manipulation' task. 1 denotes the 'splice' task
-                with the probe image, 2 denotes the 'splice' task with the donor image.
         - colordict: the dictionary of colors to use for the HTML output, in BGR array format,
                      to be used as reference
         - speedup: determines the mask metric computation method to be used
@@ -160,7 +157,6 @@ class maskMetricRunner:
         self.journalData = journaldf
         self.joinData = joindf
         self.index = index
-        self.mode=mode
         self.speedup=speedup
         self.usecolor=color
         self.colordict=colordict
@@ -405,6 +401,11 @@ class maskMetricRunner:
                 pns=sImg.pixelNoScore(noScorePixel)
                 rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
                 wts = cv2.bitwise_and(wts,pns)
+            if self.perProbePixelNoScore:
+                pppnspx = maskRow[''.join([mymode,'OptOutPixelValue'])]
+                pns=sImg.pixelNoScore(pppnspx)
+                rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
+                wts = cv2.bitwise_and(wts,pns)
 
             myprintbuffer.append("Saving binarized reference mask...")
             rImgbin.save(rbin_name)
@@ -635,33 +636,43 @@ class maskMetricRunner:
         return maskData
 
     def getMetricList(self,
-                      erodeKernSize,
-                      dilateKernSize,
-                      distractionKernSize,
-                      noScorePixel,
-                      kern,
                       outputRoot,
-                      verbose,
-                      html,
-                      precision=16,
-                      processors=1):
+                      params):
         """
         * Description: gets metrics for each pair of reference and system masks
         * Inputs:
-        *     erodeKernSize: length of the erosion kernel matrix
-        *     dilateKernSize: length of the dilation kernel matrix
-        *     distractionKernSize: length of the dilation kernel matrix for the unselected no-score zones.
-                                   0 means nothing will be scored
-        *     noScorePixel: pixel value in the mask to treat as custom no-score region.
-        *     kern: kernel shape to be used
         *     outputRoot: the directory for outputs to be written
-        *     verbose: permit printout from metrics
-        *     html: whether or not to generate an HTML report
-        *     precision: the number of digits to round the computed metrics to.
-        *     processors: the number of processors to use to score the maskss.
+        *     params: an object containing additional parameters for scoring, with the following variables:
+        *         mode: determines the data to access. 0 denotes the default 'manipulation' task. 1 denotes the 'splice' task
+                         with the probe image, 2 denotes the 'splice' task with the donor image.
+        *         eks: length of the erosion kernel matrix
+        *         dks: length of the dilation kernel matrix
+        *         ntdks: length of the dilation kernel matrix for the unselected no-score zones.
+                                       0 means nothing will be scored
+        *         nspx: pixel value in the mask to treat as custom no-score region.
+        *         pppns: whether or not to use the pixel value in the ProbeOptOutPixelValue column as a no-score zone for the mask
+                         (DonorOptOutPixelValue for splice)
+        *         kernel: kernel shape to be used
+        *         verbose: permit printout from metrics
+        *         html: whether or not to generate an HTML report
+        *         precision: the number of digits to round the computed metrics to.
+        *         processors: the number of processors to use to score the maskss.
         * Output:
         *     df: a dataframe of the computed metrics
         """
+        #saving parameters from param object
+        self.mode = params.mode
+        erodeKernSize = params.eks
+        dilateKernSize = params.dks
+        distractionKernSize = params.ntdks
+        noScorePixel = params.nspx
+        self.perProbePixelNoScore = params.pppns
+        kern = params.kernel
+        verbose = params.verbose
+        html = params.html
+        precision = params.precision
+        processors = params.processors
+
         #reflist and syslist should come from the same dataframe, so length checking is not required
         mymode='Probe'
         if self.mode==2:
@@ -1021,6 +1032,7 @@ class maskMetricRunner:
                'ColMaskFileName','AggMaskFileName']]
         return df.drop(mymode+'FileName',1)
 
+    #TODO: drop this into a maskMetricsRender.py object later with renderParams object. Ideally would like to generate reports in a separate loop at the end of computations.
     def num2hex(self,color):
         """
         * Description: this function converts one BGR color to a hex string at a time
@@ -1152,6 +1164,16 @@ class maskMetricRunner:
         
         #generate the HTML for the metrics table here. Instead of reading in a template. Use a prebuilt variable of strings instead in a separate package.
         met_table = self.gen_metrics_table(metrics)
+                
+        optidx = thresMets['MCC'].idxmax()
+
+        if not np.isnan(optidx):
+            optT = int(thresMets.loc[optidx]['Threshold'])
+    
+            met_table_prefix = 'Optimum Threshold: {}<br>'.format(optT)
+            if self.sbin >= 0:
+                met_table_prefix = "<ul><li><b>Optimum Threshold</b>: {}</li><li><b>Actual Threshold</b>: {}</li></ul><br>".format(optT,self.sbin)
+            met_table = ''.join([met_table_prefix,met_table])
 
         myprintbuffer.append("Computing pixel count...") 
         totalpx = np.sum(mywts==1)
@@ -1194,14 +1216,14 @@ class maskMetricRunner:
         
         #recolor the conf_table measures
         conf_table = (conf_table.replace("TP: green",'<font style="color:#{}">TP: green</font>'.format(hexs[cols['tpcol']]))
-                               .replace("FP: red",'<font style="color:#{}">FP: red</font>'.format(hexs[cols['fpcol']]))
-                               .replace("TN: white",'<font style="color:#{}">TN: white</font>'.format(hexs[cols['tncol']]))
-                               .replace("FN: blue",'<font style="color:#{}">FN: blue</font>'.format(hexs[cols['fncol']])))
+                                .replace("FP: red",'<font style="color:#{}">FP: red</font>'.format(hexs[cols['fpcol']]))
+                                .replace("TN: white",'<font style="color:#{}">TN: white</font>'.format(hexs[cols['tncol']]))
+                                .replace("FN: blue",'<font style="color:#{}">FN: blue</font>'.format(hexs[cols['fncol']])))
 
         thresString = ''
         plt_width = 540 #NOTE: custom value for plot sizes
 
-        if len(thresMets) > 1:
+        if len(thresMets.dropna()) > 1:
             myprintbuffer.append("Generating MCC per threshold graph...")
             #plot MCC
             try:
@@ -1209,6 +1231,26 @@ class maskMetricRunner:
                 matplotlib.use('Agg')
                 import matplotlib.pyplot as plt
                 plt.plot(thresMets['Threshold'],thresMets['MCC'],'bo',thresMets['Threshold'],thresMets['MCC'],'k')
+                #plot cyan point for supremum, red point for actual if sbin >= 0, and legend with two or three as appropriate
+                optidx = thresMets['MCC'].idxmax()
+                optT = thresMets.loc[optidx]['Threshold']
+                optMCC = thresMets.loc[optidx]['MCC']
+                optpt, = plt.plot([optT],[optMCC],'co',markersize=12)
+                handles = [optpt]
+                labels = ['Optimal MCC']
+                if self.sbin >= 0:
+                    tlist = thresMets['Threshold'].tolist()
+                    actT = sys_threshold
+                    if sys_threshold in tlist:
+                        actMCC = thresMets.query("Threshold=={}".format(sys_threshold)).iloc[0]['MCC']
+                    else:
+                        #get max threshold less than or equal to threshold
+                        actT = max([t for t in tlist if t <= sys_threshold])
+                        actMCC = thresMets.query("Threshold=={}".format(actT)).iloc[0]['MCC']
+                    actpt, = plt.plot([actT],[actMCC],'ro',markersize=8)
+                    handles.append(actpt)
+                    labels.append('Actual MCC')
+                plt.legend(handles,labels,loc='upper right', borderaxespad=0, prop={'size':8}, shadow=True, fontsize='small',numpoints=1)
                 plt.suptitle('MCC per Threshold',fontsize=14)
                 plt.xlabel("Binarization threshold value")
                 plt.ylabel("Matthews Correlation Coefficient (MCC)")
@@ -1217,11 +1259,14 @@ class maskMetricRunner:
                 plt.close()
                 thresString = "<img src=\"{}\" alt=\"thresholds graph\" style=\"width:{}px;\">".format('thresMets.png',plt_width)
             except:
+                raise
                 e = sys.exc_info()[0]
 #                print("The plotter encountered error {}. Defaulting to table display for the HTML report.".format(e))
                 print("Warning: The plotter encountered an issue. Defaulting to table display for the HTML report.")
                 thresMets = thresMets.round({'NMM':3,'MCC':3,'BWL1':3,'GWL1':3})
                 thresString = '<h4>Measures for Each Threshold</h4><br/>' + thresMets.to_html(index=False).replace("text-align: right;","text-align: center;")
+        else:
+            thresString = 'Threshold graph not applicable<br>'
 
         #build soft links for mPath, rImg_name, sImg_name, use compact relative links for all
         mBase = os.path.basename(mPath)
@@ -1348,6 +1393,7 @@ class maskMetricRunner:
         *    tablestring: the html string for the generated table
         """
         met_table = pd.DataFrame(index=mets_for_some,columns=['Optimum'])
+        
         for met in mets_for_some:
             metstr = "nan"
             #round if numeric
@@ -1369,14 +1415,22 @@ class maskMetricRunner:
 
         tablestring = met_table.to_html(index=True).replace("text-align: right;","text-align: center;")
         otherrows = ''
+        colspan = 1
+        #make column span the row
+        if self.sbin >= 0:
+            colspan = 2
         for met in mets_for_all:
             #add into each row
             if not isinstance(metrics[met],str) and not np.isnan(metrics[met]):
                 metstr = "{0:.3f}".format(metrics[met])
-            otherrows = '\n'.join([otherrows,"<tr><th>{}</th><td>{}</td></tr>".format(rename_dict[met],metstr)])
+            otherrows = '\n'.join([otherrows,"<tr><th>{}</th><td colspan={}>{}</td></tr>".format(rename_dict[met],colspan,metstr)])
         #tack onto end of met_table.rename
-        tablestring = tablestring.replace("</tbody>","".join([otherrows,"</tbody>"])).replace("<th>","<th align='left'>").replace("<tr>","<tr align='right'>")
-
+        tablestring = (tablestring.replace("</tbody>","".join([otherrows,"</tbody>"]))
+                                  .replace("<th></th>","<th>Localization Metrics</th>")
+                                  .replace("<th>","<th align='left'>")
+                                  .replace("<tr>","<tr align='right'>"))
+        
+        
         return tablestring
 
     def gen_confusion_table(self,conf_metrics,mets_for_some=['TP','FP','TN','FN'],mets_for_all=[],
@@ -1432,6 +1486,7 @@ class maskMetricRunner:
             otherrows = '\n'.join([otherrows,"<tr><th>{}</th><td>{}</td></tr>".format(rename_dict[met],metstr)])
         #tack onto end of met_table.rename
         tablestring = (tablestring.replace("</tbody>","".join([otherrows,"</tbody>"]))
+                                  .replace("<th></th>","<th>Confuson Measures</th>")
                                   .replace("<th>","<th align='left'>")
                                   .replace("<tr>","<tr align='right'>")
                                   .replace('<table border="1" class="dataframe">','<table border="1" class="dataframe" bgcolor="#C8C8C8">'))

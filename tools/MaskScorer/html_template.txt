@@ -60,7 +60,7 @@ $conftable
   <tbody>
     <tr>
       <th>
-      No-Score Confusion Measures
+      No-Score Measures
       </th>
       <th>
       Pixels
