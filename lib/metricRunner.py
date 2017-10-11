@@ -177,20 +177,20 @@ class maskMetricRunner:
         #depending on whether manipulation or splice (see taskID), make the relevant subdir_name
         subdir_name = ''
         if task == 'manipulation':
-            subdir_name = row[mymode+'FileID']
+            subdir_name = row[''.join([mymode,'FileID'])]
         elif task == 'splice':
-            subdir_name = "{}_{}".format(row['ProbeFileID'],row['DonorFileID'])
+            subdir_name = "_".join([row['ProbeFileID'],row['DonorFileID']])
         #save in subdirectory
         subOutRoot = os.path.join(outputRoot,subdir_name)
         if not os.path.isdir(subOutRoot):
-            os.system('mkdir ' + subOutRoot)
+            os.system(' '.join(['mkdir',subOutRoot]))
         #further subdirectories for the splice task
         if self.mode == 1:
             subOutRoot = os.path.join(subOutRoot,'probe')
         elif self.mode == 2:
             subOutRoot = os.path.join(subOutRoot,'donor')
         if not os.path.isdir(subOutRoot):
-            os.system('mkdir ' + subOutRoot)
+            os.system(' '.join(['mkdir',subOutRoot]))
         return subOutRoot
 
     def readMasks(self,refMaskFName,sysMaskFName,probeID,outRoot,myprintbuffer):
@@ -783,7 +783,7 @@ class maskMetricRunner:
         #compute maximum metrics here
         maxmets = {}
         maxavgMCC = -1
-        maxThreshold = 0
+        maxThreshold = -1
 
         roc_values = pd.DataFrame({'PixelTPR':0.,
                                    'PixelFPR':0.,
@@ -910,10 +910,10 @@ class maskMetricRunner:
             elif task == 'splice':
                 if self.mode == 1:
                     plot_name = 'pixel_average_roc_probe'
-                    plot_title = 'Pixel Average ROC - Probe'
+                    plot_title = 'Probe Pixel Average ROC'
                 if self.mode == 2:
                     plot_name = 'pixel_average_roc_donor'
-                    plot_title = 'Pixel Average ROC - Donor'
+                    plot_title = 'Donor Pixel Average ROC'
             myroc = plotROC(mydets,plot_name,plot_title,outputRoot)
 
         if (roc_values['ProbeTPR'].count() > 0) and (roc_values['ProbeFPR'].count() > 0):
@@ -936,20 +936,20 @@ class maskMetricRunner:
             
             if task == 'manipulation':
                 plot_name = 'mask_average_roc'
-                plot_title = 'Pixel Average ROC'
+                plot_title = 'Mask Average ROC'
             elif task == 'splice':
                 if self.mode == 1:
                     plot_name = 'mask_average_roc_probe'
-                    plot_title = 'Pixel Average ROC - Probe'
+                    plot_title = 'Probe Mask Average ROC'
                 if self.mode == 2:
                     plot_name = 'mask_average_roc_donor'
-                    plot_title = 'Pixel Average ROC - Donor'
+                    plot_title = 'Donor Mask Average ROC'
             myroc = plotROC(mydets,plot_name,plot_title,outputRoot)
 
-        if self.sbin >= 0:
+        if (self.sbin >= 0) and (maxThreshold > -1):
             #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
             df['MaximumThreshold'] = maxThreshold
-            maxMCCdf = maxmets[t]
+            maxMCCdf = maxmets[maxThreshold]
             maxMCCdf.rename(columns={'NMM':'MaximumNMM',
                                      'MCC':'MaximumMCC',
                                      'BWL1':'MaximumBWL1',
@@ -995,7 +995,7 @@ class maskMetricRunner:
 #            df.MaximumPixelFP = df.MaximumPixelFP.astype(int)
 #            df.MaximumPixelFN = df.MaximumPixelFN.astype(int)
 
-        df=df[[mymode+'FileID',mymode+'FileName','Scored',
+        df=df[[''.join([mymode,'FileID']),''.join([mymode,'FileName']),'Scored',
                'OptimumNMM',
                'OptimumMCC',
                'OptimumBWL1',
@@ -1030,7 +1030,7 @@ class maskMetricRunner:
                'PixelSNS',
                'PixelPNS',
                'ColMaskFileName','AggMaskFileName']]
-        return df.drop(mymode+'FileName',1)
+        return df.drop(''.join([mymode,'FileName']),1)
 
     #TODO: drop this into a maskMetricsRender.py object later with renderParams object. Ideally would like to generate reports in a separate loop at the end of computations.
     def num2hex(self,color):
@@ -1051,7 +1051,7 @@ class maskMetricRunner:
             myg = '0' + myg 
         if len(myr)==1:
             myr = '0' + myr
-        hexcolor = (myr + myg + myb).upper()
+        hexcolor = (''.join([myr,myg,myb])).upper()
         return hexcolor
 
     def nums2hex(self,colors):
@@ -1150,7 +1150,12 @@ class maskMetricRunner:
 
             myprintbuffer.append("Composing journal table...")
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
-            jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[['Operation','Purpose','Color',evalcol]] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]] #NOTE: as long as Purpose is in there. It is otherwise dispensible.
+            journalkeys = ['Operation','Purpose','Color',evalcol]
+            if not self.usecolor:
+                journalkeys = ['Sequence'] + journalkeys
+            jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[journalkeys] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]] #NOTE: as long as Purpose is in there. It is otherwise dispensible.
+            if not self.usecolor:
+                jdata = jdata.sort_values("Sequence",ascending=False)
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
             #make those color cells empty with only the color as demonstration
@@ -1291,7 +1296,7 @@ class maskMetricRunner:
             basehtml="<img src={} alt='base image' style='width:{}px;'>".format(''.join(['baseFile',baseImageFName[-4:]]),allshapes)
 
         rPathNew = os.path.join(outputRoot,'refMask.png') #os.path.join(outputRoot,rBase)
-        mPathNew = os.path.join(outputRoot,mpfx+'File' + maniImageFName[-4:]) #os.path.join(outputRoot,mBase)
+        mPathNew = os.path.join(outputRoot,''.join([mpfx,'File',maniImageFName[-4:]])) #os.path.join(outputRoot,mBase)
         sPathNew = os.path.join(outputRoot,'sysMask.png') #os.path.join(outputRoot,sBase)
 
         try:
@@ -1558,7 +1563,7 @@ class maskMetricRunner:
         #return path to mask
         outputMaskName = sys.name.split('/')[-1]
         outputMaskBase = outputMaskName.split('.')[0]
-        finalMaskName=outputMaskBase + "_colored.jpg"
+        finalMaskName = "_".join([outputMaskBase,"colored.jpg"])
         path=os.path.join(outputMaskPath,finalMaskName)
         #write the aggregate mask to file
         cv2.imwrite(path,mycolor)
@@ -1592,9 +1597,10 @@ class maskMetricRunner:
             for frame in aseq:
                 #join the frame with the grayscale manipulated image
                 modified = cv2.addWeighted(frame,alpha,m3chan,1-alpha,0)
+                layermask = (frame[:,:,0] != 255) | (frame[:,:,1] != 255) | (frame[:,:,2] != 255)
                 aggfr = np.copy(m3chan)
-                #overlay colors with manipulated regions
-                aggfr[ref.matrix > 0] = modified[ref.matrix > 0]
+                #overlay colors with particular manipulated regions
+                aggfr[layermask != 0] = modified[layermask != 0]
                 seq.append(aggfr)
             compositeMaskName = "_".join([outputMaskBase,"composite.png"])
             compositePath = os.path.join(outputMaskPath,compositeMaskName)

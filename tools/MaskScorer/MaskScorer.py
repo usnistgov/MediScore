@@ -251,6 +251,8 @@ if args.indexFilter:
     printq("Filtering the reference and system output by index file...")
     m_df = pd.merge(myIndex[param_ids + ['ProbeWidth']],m_df,how='left',on=param_ids).drop('ProbeWidth',1)
 
+pd.options.mode.chained_assignment = None #NOTE: disable this when debugging
+
 if len(m_df) == 0:
     print("ERROR: the system output data does not match with the index. Either one may be empty. Please validate again.")
     exit(1)
@@ -388,7 +390,7 @@ if args.task == 'manipulation':
         return 0
 
     #averaging procedure starts here.
-    def averageByFactors(r_df,metrics,factor_mode,query): #TODO: next time pass in object of parameters instead of tacking on new ones every time
+    def averageByFactors(r_df,metrics,constant_mets,factor_mode,query): #TODO: next time pass in object of parameters instead of tacking on new ones every time
         if 'OptimumMCC' not in metrics:
             print("ERROR: OptimumMCC is not in the metrics provided.")
             return 1
@@ -412,6 +414,10 @@ if args.task == 'manipulation':
         if len(df_list) == 0:
             return 0
         
+        constant_metrics = {}
+        for m in constant_mets:
+            constant_metrics[m] = r_df[m].iloc[0]
+
 #        totalTrials = len(r_df)
 #        totalOptOut = len(r_df.query("IsOptOut=='Y'"))
 #        totalOptIn = totalTrials - totalOptOut
@@ -433,19 +439,24 @@ if args.task == 'manipulation':
                 if args.optOut:
                     temp_df['optOutScoring'] = 'Y'
 
-                temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
                 if args.sbin >= 0:
-                    temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                    temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
+                    temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
 
+                for m in constant_mets:
+                    temp_df[m] = constant_metrics[m]
+
+                heads.extend(constant_mets)
                 heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
-                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 if temp_df is not 0:
-                    temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                    temp_df.loc[:,'OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
                     if args.sbin >= 0:
-                        temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                        temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                        temp_df.loc[:,'MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
+                        temp_df.loc[:,'ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
+
+                temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
                 
             #at the same time do an optOut filter where relevant and save that
@@ -485,12 +496,17 @@ if args.task == 'manipulation':
             a_df['optOutScoring'] = 'N'
             if args.optOut:
                 a_df['optOutScoring'] = 'Y'
-            a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+            a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().astype(int).astype(str)
             if args.sbin >= 0:
-                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().astype(int).astype(str)
+                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().astype(int).astype(str)
+            for m in constant_mets:
+                a_df[m] = constant_metrics[m]
+            heads.extend(constant_mets)
+
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
+
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
@@ -513,7 +529,7 @@ if args.task == 'manipulation':
 
             #final filtering
             html_out.loc[html_out.query("OptimumMCC == -2").index,'OptimumMCC'] = ''
-            html_out.loc[html_out.query("OptimumMCC == 0 & Scored == 'N'").index,'Scored'] = 'Y'
+            html_out.loc[html_out.query("(OptimumMCC == 0) & (Scored == 'N')").index,'Scored'] = 'Y'
 
             #write to index.html
             fname = os.path.join(outputRoot,'index.html')
@@ -534,6 +550,9 @@ if args.task == 'manipulation':
                 a_df_copy = average_df.copy().round(metriclist)
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
+
+            #insert graphs here
+            myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc.pdf\" alt=\"mask_average_roc\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc.pdf\" alt=\"pixel_average_roc\" width=\"540\" height=\"540\"></td></tr><tr><th>Mask Average ROC</th><th>Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
             myf.write('<h3>Per Scored Trial Scores</h3>\n')
             myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;").encode('utf-8'))
@@ -701,10 +720,10 @@ elif args.task == 'splice':
                           'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
                           'PixelN','PixelBNS','PixelSNS','PixelPNS']
             if args.sbin >= 0:
-                metriclist = metriclist + ['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                metriclist.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                                            'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
                                            'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
-                                           'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']
+                                           'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
             
             for met in metriclist:
                 merged_df.loc[p_idx,''.join(['p',met])] = np.nan
@@ -741,14 +760,15 @@ elif args.task == 'splice':
         journalData.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'journalResults.csv'])),sep="|",index=False)
         return 0
 
-    def averageByFactors(r_df,metrics,factor_mode,query):
+    def averageByFactors(r_df,metrics,constant_mets,factor_mode,query):
         if ('pOptimumMCC' not in metrics) or ('dOptimumMCC' not in metrics):
             print("ERROR: pOptimumMCC or dOptimumMCC are not in the metrics.")
             return 1
         #filter nan out of the below
         metrics_to_be_scored = []
         for pfx in ['p','d']:
-            for met in ['Threshold','MCC','NMM','BWL1']:
+            metrics_to_be_scored.append(''.join([pfx,'OptimumThreshold']))
+            for met in ['MCC','NMM','BWL1']:
                 metrics_to_be_scored.append(''.join([pfx,'Optimum',met]))
                 if args.sbin >= 0:
                     metrics_to_be_scored.append(''.join([pfx,'Maximum',met]))
@@ -765,6 +785,10 @@ elif args.task == 'splice':
         r_dfc = r_df.copy()
         r_dfc.loc[p_idx,'ProbeScored'] = 'N'
         r_dfc.loc[d_idx,'DonorScored'] = 'N'
+
+        constant_metrics = {}
+        for m in constant_mets:
+            constant_metrics[m] = r_df[m].iloc[0]
 
         #substitute for other values that won't get counted in the average
         r_dfc.loc[p_idx,'pOptimumMCC'] = np.nan
@@ -797,14 +821,18 @@ elif args.task == 'splice':
                 if args.optOut:
                     temp_df['optOutScoring'] = 'Y'
 
-                temp_df['pOptimumThreshold'] = temp_df['pOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
-                temp_df['dOptimumThreshold'] = temp_df['dOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
+                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = temp_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
+                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
                 if args.sbin >= 0:
-                    temp_df['pMaximumThreshold'] = temp_df['pMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                    temp_df['pActualThreshold'] = temp_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
-                    temp_df['dMaximumThreshold'] = temp_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                    temp_df['dActualThreshold'] = temp_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                    bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
+                    temp_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
+                    temp_df.loc[:,bincols] = temp_df[bincols].astype(int).astype(str)
+                    temp_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
 
+                for m in constant_mets:
+                    temp_df[m] = constant_metrics[m]
+                heads.extend(constant_mets)
                 heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
@@ -848,16 +876,32 @@ elif args.task == 'splice':
             a_df['optOutScoring'] = 'N'
             if args.optOut:
                 a_df['optOutScoring'] = 'Y'
+
+            for m in constant_mets:
+                a_df[m] = constant_metrics[m]
+            heads.extend(constant_mets)
             heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
+            #fillna with '' and then turn everything into a string
             if a_df is not 0:
-                a_df['pOptimumThreshold'] = a_df['pOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
-                a_df['dOptimumThreshold'] = a_df['dOptimumThreshold'].dropna().apply(lambda x: str(int(x)))
+#                def vals2intstr(row):
+#                    keys = row.keys()
+#                    for k in keys:
+#                        n = row[k]
+#                        if n in [np.nan,None]:
+#                            row.set_value(k,'')
+#                        else:
+#                            row.set_value(k,str(int(n)))#"{:.0f}".format(n)
+#                    return row
+#
+                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
+                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = a_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
+                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
                 if args.sbin >= 0:
-                    a_df['pMaximumThreshold'] = a_df['pMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                    a_df['pActualThreshold'] = a_df['pActualThreshold'].dropna().apply(lambda x: str(int(x)))
-                    a_df['dMaximumThreshold'] = a_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
-                    a_df['dActualThreshold'] = a_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
+                    bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
+                    a_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
+                    a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
+                    a_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
@@ -905,6 +949,9 @@ elif args.task == 'splice':
                 a_df_copy = average_df.copy().round(metriclist)
                 myf.write('<h3>Average Scores</h3>\n')
                 myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
+
+            #insert graphs here
+            myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc_probe.pdf\" alt=\"mask_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc_probe.pdf\" alt=\"pixel_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Probe Average ROC</th><th>Probe Pixel Average ROC</th></tr><tr><td><embed src=\"mask_average_roc_donor.pdf\" alt=\"mask_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'</td><td><embed src=\"pixel_average_roc_donor.pdf\" alt=\"pixel_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Donor Average ROC</th><th>Donor Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
             myf.write('<h3>Per Scored Trial Scores</h3>\n')
             myf.write(html_out.to_html(escape=False).encode('utf-8'))
@@ -969,8 +1016,11 @@ if args.task == 'manipulation':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-#    journalData0 = pd.merge(probeJournalJoin[['ProbeFileID','JournalName']].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
     journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+    if args.indexFilter:
+        printq("Filtering the journal data by index file...")
+        myIndex = myIndex.query("ProbeFileID == {}".format(probeJournalJoin['ProbeFileID'].unique().tolist())) #filter index first.
+        journalData0 = pd.merge(myIndex[['ProbeFileID','ProbeWidth']],journalData0,how='left',on='ProbeFileID').drop('ProbeWidth',1)
     n_journals = len(journalData0)
     journalData0.index = range(n_journals)
     #TODO: basic data cleanup ends here
@@ -1028,16 +1078,19 @@ if args.task == 'manipulation':
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
-        metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','PixelAverageAUC','MaskAverageAUC']
+        metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
         if args.sbin >= 0:
             metrics.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                             'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
+        constant_mets = ['PixelAverageAUC','MaskAverageAUC']
+        if args.sbin >= 0:
+            constant_mets.extend(['MaximumThreshold','ActualThreshold'])
 
         a_df = 0
         if factor_mode == 'qm':
-            a_df = averageByFactors(r_df,metrics,factor_mode,q)
+            a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,q)
         else:
-            a_df = averageByFactors(r_df,metrics,factor_mode,query)
+            a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,query)
 
         # tack on PixelAverageAUC and MaskAverageAUC to a_df and remove from r_df
         r_df = r_df.drop(['PixelAverageAUC','MaskAverageAUC'],1)
@@ -1093,6 +1146,13 @@ elif args.task == 'splice':
 
     joinfields = param_ids+['JournalName']
     journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
+    if args.indexFilter:
+        printq("Filtering the journal data by index file...")
+        myIndex['ProbeDonorID'] = myIndex['ProbeFileID'] + ":" + myIndex['DonorFileID']
+        journalData0['ProbeDonorID'] = journalData0['ProbeFileID'] + ":" + journalData0['DonorFileID']
+        myIndex = myIndex.query("ProbeDonorID=={}".format(journalData0.ProbeDonorID.unique().tolist())) #first filter by Probe-Donor pairs
+        journalData0 = pd.merge(myIndex[['ProbeDonorID']],journalData0,how='left',on=['ProbeDonorID']).drop('ProbeDonorID',1)
+    
     n_journals = len(journalData0)
     journalData0.index = range(n_journals)
     #TODO: basic data cleanup ends here
@@ -1154,18 +1214,22 @@ elif args.task == 'splice':
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
-        metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','pPixelAverageAUC','pMaskAverageAUC',
-                   'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER','dPixelAverageAUC','dMaskAverageAUC']
+        metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER',
+                   'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
         if args.sbin >= 0:
             metrics.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
                             'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
                             'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
                             'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1'])
+        constant_mets = ['pPixelAverageAUC','dPixelAverageAUC','pMaskAverageAUC','dMaskAverageAUC']
+        if args.sbin >= 0:
+            constant_mets.extend(['pMaximumThreshold','dMaximumThreshold','pActualThreshold','dActualThreshold'])
+
         a_df = 0
         if factor_mode == 'qm':
-            a_df = averageByFactors(r_df,metrics,factor_mode,q)
+            a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,q)
         else:
-            a_df = averageByFactors(r_df,metrics,factor_mode,query)
+            a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,query)
 
         r_df = r_df.drop(['pPixelAverageAUC','pMaskAverageAUC','dPixelAverageAUC','dMaskAverageAUC'],1)
         if args.sbin >= 0:

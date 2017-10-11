@@ -370,8 +370,9 @@ class refmask(mask):
             elif mode==2:
                 evalcol='DonorEvaluated'
 
-            self.journalData = jData
-            desired_rows = jData.query("{}=='Y'".format(evalcol))
+            #sort in sequence first
+            self.journalData = jData.sort_values("Sequence",ascending=False)
+            desired_rows = self.journalData.query("{}=='Y'".format(evalcol))
 
             bitlist = desired_rows['BitPlane'].unique().tolist()
             if '' in bitlist:
@@ -385,6 +386,8 @@ class refmask(mask):
 #            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
 #            self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
 #            self.purposes = purposes
+        else:
+            self.journalData = 0
 
     def regionIsPresent(self):
         """
@@ -405,7 +408,7 @@ class refmask(mask):
 
         cID = int(math.log(b,2)) + 1
         color = self.journalData.query("BitPlane=='{}'".format(cID)).iloc[0]['Color'] #TODO: Sequence vs BitPlane?
-        color = [int(p) for p in color.split(' ')]#[::-1]
+        color = [int(p) for p in color.split(' ')]
         return color
 
     def getAnimatedMask(self,option='all'):
@@ -419,16 +422,26 @@ class refmask(mask):
         dims = self.get_dims()
         base_mask = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
         unique_px = np.unique(self.matrix)
-        top_bit = int(math.floor(math.log(max(unique_px),2)))
-        all_bits = [1 << b for b in range(top_bit + 1)]
 
+        if self.journalData is 0:
+            top_bit = int(math.floor(math.log(max(unique_px),2)))
+            all_bits = [1 << b for b in range(top_bit + 1)]
+            mybitlist = all_bits
         #get all the non-intersecting regions first
-        mybitlist = all_bits
-        if option=='partial':
-            mybitlist = self.bitlist
+        else:
+            if option=='all':
+                mybitlist = self.journalData['BitPlane'].unique().tolist()
+                if '' in mybitlist:
+                    mybitlist.remove('')
+                if 'None' in mybitlist:
+                    mybitlist.remove('None')
+                mybitlist = [1 << (int(b) - 1) for b in mybitlist]
+    
+            elif option=='partial':
+                mybitlist = self.bitlist
 
         for p in unique_px:
-            if count_bits(p) == 1 and (p in mybitlist):
+            if (count_bits(p) == 1) and (p in mybitlist):
                 base_mask[self.matrix == p] = self.getColor(p)
 
         seq = []
@@ -436,14 +449,21 @@ class refmask(mask):
         for b in mybitlist:
             pixel_catch = 0
             pixel_list = []
-            tempmask = np.copy(base_mask)
-            for p in unique_px:
+            tempmask = np.copy(base_mask) #NOTE: additive masks, so continuously overlay. But need a new copy each time
+
+            pixel_list = [p for p in unique_px if p & b != 0]
+#            for p in unique_px:
+            for p in pixel_list:
                 if count_bits(p) == 1:
                     continue
-                if b & p != 0:
-                    pixel_catch = pixel_catch + 1
-                    pixel_list.append(p)
-                    tempmask[self.matrix == p] = self.getColor(b)
+#                if b & p != 0:
+#                    pixel_catch = pixel_catch + 1
+#                    pixel_list.append(p)
+#                    tempmask[self.matrix == p] = self.getColor(b)
+                pixel_catch = pixel_catch + 1
+                base_mask[self.matrix == p] = self.getColor(b)
+                tempmask[self.matrix == p] = self.getColor(b)
+
             if pixel_catch > 0:
 #                print("The mask generator caught pixels at {}.".format(pixel_list))
                  seq.append(tempmask)

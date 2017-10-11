@@ -12142,6 +12142,10 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <ul>
 <li>Set a pixel value in the system output mask to be a no-score region. The pixel value must be in the interval [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. (default = -1)</li>
 </ul>
+<p>--pppns perProbePixelNoScore</p>
+<ul>
+<li>"Use the pixel values in the OptOutPixel column of the system output to designate no-score zones.</li>
+</ul>
 <p>-k kernel</p>
 <ul>
 <li>The shape of the kernel to be used, for both erosion and dilation. Choose from 'box','disc','diamond','gaussian', or 'line'. The default kernel is 'box'.</li>

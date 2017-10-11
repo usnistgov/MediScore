@@ -325,6 +325,7 @@ HISTORY
       - Output reformatting.
       - File prefix added to --outRoot option as a requirement.
       - Added per-probe pixel no-score
+      - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:
