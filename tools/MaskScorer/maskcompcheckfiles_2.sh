@@ -5,64 +5,64 @@ echo
 echo "CASE 2: VALIDATING FACTOR-BASED SCORING"
 echo
 
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1 -q "0.5 < ConfidenceScore" --speedup --color
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1 -html -q "ConfidenceScore < 0.5" "ManMade=='no'" --optOut --speedup --color
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Manipulation_ImgOnly_c-me2_1 -q "ConfidenceScore==0.5" --speedup --color
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1 -qp "0.5 < ConfidenceScore" --speedup --color
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1 -qp "ConfidenceScore > 0.3 & Clone==['yes','no']" --speedup --color
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1 -qp "ConfidenceScore==['foo']" --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -q "0.5 < ConfidenceScore" --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -html -q "ConfidenceScore < 0.5" "ManMade=='no'" --optOut --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -q "ConfidenceScore==0.5" --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -qp "0.5 < ConfidenceScore" --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -qp "ConfidenceScore > 0.3 & Clone==['yes','no']" --speedup --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -qp "ConfidenceScore==['foo']" --speedup --color
 
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1 -q "0.5 < ConfidenceScore" --speedup --color
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1 -q "0.3 <= ConfidenceScore" "Collection==['Nimble-WEB']" --speedup --color
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Splice_ImgOnly_p-me_1 -q "ConfidenceScore==['foo']" --speedup --displayScoredOnly --color
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore > 0.5" --speedup --color
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore > 0.3 & Collection==['Nimble-WEB','Nimble-SCI']" --speedup --color
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Splice_ImgOnly_p-me_1/B_NC2016_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore==['foo']" --speedup --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -q "0.5 < ConfidenceScore" --speedup --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -q "0.3 <= ConfidenceScore" "Collection==['Nimble-WEB']" --speedup --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -q "ConfidenceScore==['foo']" --speedup --displayScoredOnly --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore > 0.5" --speedup --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore > 0.3 & Collection==['Nimble-WEB','Nimble-SCI']" --speedup --color
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2016-splice-ref.csv -x indexes/NC2016-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Splice_ImgOnly_p-me_1/B_NC2016_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1 -qp "ConfidenceScore==['foo']" --speedup --color
 
 #manip confs
-diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf_0.csv > comp_maskreport_manipconf_0.txt
-diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf-perimage.csv > comp_maskreport_manipconf-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf-journalResults.csv > comp_maskreport_manipconf-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf_0.csv > comp_maskreport_manipconf_0.txt
+diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf-perimage.csv > comp_maskreport_manipconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconf-journalResults.csv > comp_maskreport_manipconf-journalResults.txt
 
-diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_0.csv > comp_maskreport_manipconfmanmade_0.txt
-diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_1.csv > comp_maskreport_manipconfmanmade_1.txt
-#diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_optout_0.csv > comp_maskreport_manipconfmanmade_optout_0.txt
-#diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_optout_1.csv > comp_maskreport_manipconfmanmade_optout_1.txt
-diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade-perimage.csv > comp_maskreport_manipconfmanmade-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade-journalResults.csv > comp_maskreport_manipconfmanmade-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_0.csv > comp_maskreport_manipconfmanmade_0.txt
+diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_1.csv > comp_maskreport_manipconfmanmade_1.txt
+#diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_optout_0.csv > comp_maskreport_manipconfmanmade_optout_0.txt
+#diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade_optout_1.csv > comp_maskreport_manipconfmanmade_optout_1.txt
+diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade-perimage.csv > comp_maskreport_manipconfmanmade-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfmanmade-journalResults.csv > comp_maskreport_manipconfmanmade-journalResults.txt
 
-diff ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconf-perimage.csv > comp_maskreport_manipfooconf-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconf-journalResults.csv > comp_maskreport_manipfooconf-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconf-perimage.csv > comp_maskreport_manipfooconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconf-journalResults.csv > comp_maskreport_manipfooconf-journalResults.txt
 
-diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart.csv > comp_maskreport_manipconfpart.txt
-diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart-perimage.csv > comp_maskreport_manipconfpart-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart-journalResults.csv > comp_maskreport_manipconfpart-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart.csv > comp_maskreport_manipconfpart.txt
+diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart-perimage.csv > comp_maskreport_manipconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfpart-journalResults.csv > comp_maskreport_manipconfpart-journalResults.txt
 
-diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart.csv > comp_maskreport_manipconfclonepart.txt
-diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart-perimage.csv > comp_maskreport_manipconfclonepart-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart-journalResults.csv > comp_maskreport_manipconfclonepart-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart.csv > comp_maskreport_manipconfclonepart.txt
+diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart-perimage.csv > comp_maskreport_manipconfclonepart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipconfclonepart-journalResults.csv > comp_maskreport_manipconfclonepart-journalResults.txt
 
-diff ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconfpart-perimage.csv > comp_maskreport_manipfooconfpart-perimage.txt
-diff ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconfpart-journalResults.csv > comp_maskreport_manipfooconfpart-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconfpart-perimage.csv > comp_maskreport_manipfooconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manipfooconfpart-journalResults.csv > comp_maskreport_manipfooconfpart-journalResults.txt
 
 
 #splice confs
-diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconf_0.csv > comp_maskreport_spliceconf_0.txt
-diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconf-perimage.csv > comp_maskreport_spliceconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconf_0.csv > comp_maskreport_spliceconf_0.txt
+diff ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconf-perimage.csv > comp_maskreport_spliceconf-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll_0.csv > comp_maskreport_spliceconfcoll_0.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll_1.csv > comp_maskreport_spliceconfcoll_1.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll-perimage.csv > comp_maskreport_spliceconfcoll-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_0.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll_0.csv > comp_maskreport_spliceconfcoll_0.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_1.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll_1.csv > comp_maskreport_spliceconfcoll_1.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcoll-perimage.csv > comp_maskreport_spliceconfcoll-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splicefooconf-perimage.csv > comp_maskreport_splicefooconf-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splicefooconf-perimage.csv > comp_maskreport_splicefooconf-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfpart.csv > comp_maskreport_spliceconfpart.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfpart-perimage.csv > comp_maskreport_spliceconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfpart.csv > comp_maskreport_spliceconfpart.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfpart-perimage.csv > comp_maskreport_spliceconfpart-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcollpart.csv > comp_maskreport_spliceconfcollpart.txt
-diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcollpart-perimage.csv > comp_maskreport_spliceconfcollpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcollpart.csv > comp_maskreport_spliceconfcollpart.txt
+diff ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_spliceconfcollpart-perimage.csv > comp_maskreport_spliceconfcollpart-perimage.txt
 
-diff ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splicefooconfpart-perimage.csv > comp_maskreport_splicefooconfpart-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splicefooconfpart-perimage.csv > comp_maskreport_splicefooconfpart-perimage.txt
 
 
 #flags
@@ -163,7 +163,7 @@ fi
 if test "`eval $filter_manipconf_0`" = "" ; then
   flag_manipconf_0=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv
+		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv
 	fi
 	rm comp_maskreport_manipconf_0.txt
 else
@@ -174,7 +174,7 @@ fi
 if test "`eval $filter_manipconfpi`" = "" ; then
   flag_manipconfpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipconf-perimage.txt
 else
@@ -185,7 +185,7 @@ fi
 if test "`eval $filter_manipconfjr`" = "" ; then
   flag_manipconfjr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipconf-journalResults.txt
 else
@@ -196,7 +196,7 @@ fi
 if test "`eval $filter_manipconfmanmade_0`" = "" ; then
   flag_manipconfmanmade_0=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_0.csv
 	fi
 	rm comp_maskreport_manipconfmanmade_0.txt
 else
@@ -207,7 +207,7 @@ fi
 if test "`eval $filter_manipconfmanmade_1`" = "" ; then
   flag_manipconfmanmade_1=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_1.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_1.csv
 	fi
 	rm comp_maskreport_manipconfmanmade_1.txt
 else
@@ -218,7 +218,7 @@ fi
 #if test "`eval $filter_manipconfmanmade_optout_0`" = "" ; then
 #  flag_manipconfmanmade_optout_0=0
 #	if [ $clean = "TRUE" ] ; then
-#		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_0.csv
+#		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_0.csv
 #	fi
 #	rm comp_maskreport_manipconfmanmade_optout_0.txt
 #else
@@ -229,7 +229,7 @@ fi
 #if test "`eval $filter_manipconfmanmade_optout_1`" = "" ; then
 #  flag_manipconfmanmade_optout_1=0
 #	if [ $clean = "TRUE" ] ; then
-#		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_1.csv
+#		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_optout_1.csv
 #	fi
 #	rm comp_maskreport_manipconfmanmade_optout_1.txt
 #else
@@ -240,7 +240,7 @@ fi
 if test "`eval $filter_manipconfmanmadepi`" = "" ; then
   flag_manipconfmanmadepi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipconfmanmade-perimage.txt
 else
@@ -251,7 +251,7 @@ fi
 if test "`eval $filter_manipconfmanmadejr`" = "" ; then
   flag_manipconfmanmadejr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipconfmanmade-journalResults.txt
 else
@@ -262,7 +262,7 @@ fi
 if test "`eval $filter_manipfooconfpi`" = "" ; then
   flag_manipfooconfpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipfooconf-perimage.txt
 else
@@ -273,7 +273,7 @@ fi
 if test "`eval $filter_manipfooconfjr`" = "" ; then
   flag_manipfooconfjr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipfooconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipfooconf-journalResults.txt
 else
@@ -284,7 +284,7 @@ fi
 if test "`eval $filter_manipconfpart`" = "" ; then
   flag_manipconfpart=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv
 	fi
 	rm comp_maskreport_manipconfpart.txt
 else
@@ -295,7 +295,7 @@ fi
 if test "`eval $filter_manipconfpartpi`" = "" ; then
   flag_manipconfpartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipconfpart-perimage.txt
 else
@@ -306,7 +306,7 @@ fi
 if test "`eval $filter_manipconfpartjr`" = "" ; then
   flag_manipconfpartjr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipconfpart-journalResults.txt
 else
@@ -317,7 +317,7 @@ fi
 if test "`eval $filter_manipconfclonepart`" = "" ; then
   flag_manipconfclonepart=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv
 	fi
 	rm comp_maskreport_manipconfclonepart.txt
 else
@@ -328,7 +328,7 @@ fi
 if test "`eval $filter_manipconfclonepartpi`" = "" ; then
   flag_manipconfclonepartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipconfclonepart-perimage.txt
 else
@@ -339,7 +339,7 @@ fi
 if test "`eval $filter_manipconfclonepartjr`" = "" ; then
   flag_manipconfclonepartjr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipconfclonepart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipconfclonepart-journalResults.txt
 else
@@ -350,7 +350,7 @@ fi
 if test "`eval $filter_manipfooconfpartpi`" = "" ; then
   flag_manipfooconfpartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manipfooconfpart-perimage.txt
 else
@@ -361,7 +361,7 @@ fi
 if test "`eval $filter_manipfooconfpartjr`" = "" ; then
   flag_manipfooconfpartjr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manipfooconfpart/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manipfooconfpart-journalResults.txt
 else
@@ -372,7 +372,7 @@ fi
 if test "`eval $filter_spliceconf_0`" = "" ; then
   flag_spliceconf_0=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_0.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_0.csv
 	fi
 	rm comp_maskreport_spliceconf_0.txt
 else
@@ -383,7 +383,7 @@ fi
 if test "`eval $filter_spliceconfpi`" = "" ; then
   flag_spliceconfpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_spliceconf-perimage.txt
 else
@@ -394,7 +394,7 @@ fi
 if test "`eval $filter_spliceconfcoll_0`" = "" ; then
   flag_spliceconfcoll_0=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_0.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_0.csv
 	fi
 	rm comp_maskreport_spliceconfcoll_0.txt
 else
@@ -405,7 +405,7 @@ fi
 if test "`eval $filter_spliceconfcoll_1`" = "" ; then
   flag_spliceconfcoll_1=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_1.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_1.csv
 	fi
 	rm comp_maskreport_spliceconfcoll_1.txt
 else
@@ -416,7 +416,7 @@ fi
 if test "`eval $filter_spliceconfcollpi`" = "" ; then
   flag_spliceconfcollpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfcoll/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_spliceconfcoll-perimage.txt
 else
@@ -427,7 +427,7 @@ fi
 if test "`eval $filter_splicefooconfpi`" = "" ; then
   flag_splicefooconfpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/splicefooconf/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_splicefooconf-perimage.txt
 else
@@ -438,7 +438,7 @@ fi
 if test "`eval $filter_spliceconfpart`" = "" ; then
   flag_spliceconfpart=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv
 	fi
 	rm comp_maskreport_spliceconfpart.txt
 else
@@ -449,7 +449,7 @@ fi
 if test "`eval $filter_spliceconfpartpi`" = "" ; then
   flag_spliceconfpartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_spliceconfpart-perimage.txt
 else
@@ -460,7 +460,7 @@ fi
 if test "`eval $filter_spliceconfcollpart`" = "" ; then
   flag_spliceconfcollpart=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv
 	fi
 	rm comp_maskreport_spliceconfcollpart.txt
 else
@@ -471,7 +471,7 @@ fi
 if test "`eval $filter_spliceconfcollpartpi`" = "" ; then
   flag_spliceconfcollpartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/spliceconfcollpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_spliceconfcollpart-perimage.txt
 else
@@ -482,7 +482,7 @@ fi
 if test "`eval $filter_splicefooconfpartpi`" = "" ; then
   flag_splicefooconfpartpi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/splicefooconfpart/B_NC2016_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_splicefooconfpart-perimage.txt
 else

@@ -326,6 +326,7 @@ HISTORY
       - File prefix added to --outRoot option as a requirement.
       - Added per-probe pixel no-score
       - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
+      - Renamed Mask Scorer test cases to conform to new format
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:
