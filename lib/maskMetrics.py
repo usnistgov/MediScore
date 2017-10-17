@@ -501,9 +501,6 @@ class maskMetrics:
         thresMets['FPR'] = 0
 
         #no need for roc curve if any of the denominator is zero
-        #TODO: debug this. GWL1 not going through.
-        #TODO: just compute scores here. Don't do the threshold stuff here.
-        #TODO: only get rid of the rows with nothing at all
         nullRows = thresMets.query("(TP + FN == 0) and (FP + TN == 0)")
         nonNullRows = thresMets.query("(TP + FN != 0) or (FP + TN != 0)")
 
