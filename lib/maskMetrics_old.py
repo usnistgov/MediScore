@@ -468,20 +468,13 @@ class maskMetrics:
         thresMets['FPR'] = 0
 
         #no need for roc curve if any of the denominator is zero
-        nullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)")
-        nonNullRows = thresMets.query("(TP + FN != 0) and (FP + TN != 0)")
-        numNullRows = thresMets.query("(TP + FN == 0) or (FP + TN == 0)").shape[0]
-        if numNullRows < thresMets.shape[0]:
-            #set rows for ROC curve
-            thresMets.set_value(nonNullRows.index,'TPR',nonNullRows['TP']/(nonNullRows['TP'] + nonNullRows['FN']))
-            thresMets.set_value(nonNullRows.index,'FPR',nonNullRows['FP']/(nonNullRows['FP'] + nonNullRows['TN']))
-#            thresMets['FPR'] = thresMets['FP']/(thresMets['FP'] + thresMets['TN'])
+        nonNullRows = thresMets.query("(TP + FN != 0) or (FP + TN != 0)")
 
         #pick max threshold for max MCC
         columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N','TPR','FPR']
         #pick max threshold for max MCC
 
-        if len(nonNullRows) > 0:
+        if nonNullRows.shape[0] > 0:
             tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
             maxMets = thresMets.query("Threshold=={}".format(tmax))
             maxNMM = maxMets.iloc[0]['NMM']

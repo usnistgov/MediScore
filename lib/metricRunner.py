@@ -435,6 +435,21 @@ class maskMetricRunner:
             #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
             maskRow['OptimumThreshold'] = threshold
 
+            genROC = True
+            nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
+            nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
+            nullRocRows = thresMets.query(nullRocQuery)
+            nonNullRocRows = thresMets.query(nonNullRocQuery)
+
+            #compute TPR and FPR here for rows that have it.
+            if nullRocRows.shape[0] < thresMets.shape[0]:
+                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
+                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
+
+            #if no rows have it, don't gen the ROC.
+            if nullRocRows.shape[0] == 0:
+                genRoc = False
+
             #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
             #and pass to HTML accordingly
             amets = 0
@@ -486,29 +501,31 @@ class maskMetricRunner:
     #            rocvalues['fpr'] = rocvalues.pop('FPR')
     
                 #append 0 and 1 to beginning and end of tpr and fpr respectively
-                rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
-                #reindex rocvalues
-                rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
-    
-                #generate a plot and get detection metrics
-                fpr = rocvalues['FPR']
-                tpr = rocvalues['TPR']
-    
-                myauc = dmets.compute_auc(fpr,tpr)
-                myeer = dmets.compute_eer(fpr,1-tpr)
-    
-                maskRow['AUC'] = myauc
-                maskRow['EER'] = myeer
-    
-                mydets = detPackage(tpr,
-                                    fpr,
-                                    1,
-                                    0,
-                                    myauc,
-                                    mymeas['TP'] + mymeas['FN'],
-                                    mymeas['FP'] + mymeas['TN'])
-            
-                myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
+                
+                if genROC:
+                    rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
+                    #reindex rocvalues
+                    rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
+        
+                    #generate a plot and get detection metrics
+                    fpr = rocvalues['FPR']
+                    tpr = rocvalues['TPR']
+        
+                    myauc = dmets.compute_auc(fpr,tpr)
+                    myeer = dmets.compute_eer(fpr,1-tpr)
+        
+                    maskRow['AUC'] = myauc
+                    maskRow['EER'] = myeer
+        
+                    mydets = detPackage(tpr,
+                                        fpr,
+                                        1,
+                                        0,
+                                        myauc,
+                                        mymeas['TP'] + mymeas['FN'],
+                                        mymeas['FP'] + mymeas['TN'])
+                
+                    myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
     
     #            if len(thresMets) == 1:
     #                thresMets='' #to minimize redundancy

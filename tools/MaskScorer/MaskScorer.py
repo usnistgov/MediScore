@@ -555,7 +555,7 @@ if args.task == 'manipulation':
             myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc.pdf\" alt=\"mask_average_roc\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc.pdf\" alt=\"pixel_average_roc\" width=\"540\" height=\"540\"></td></tr><tr><th>Mask Average ROC</th><th>Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
             myf.write('<h3>Per Scored Trial Scores</h3>\n')
-            myf.write(html_out.to_html(escape=False).replace("text-align: right;","text-align: center;").encode('utf-8'))
+            myf.write(html_out.to_html(escape=False,na_rep='').replace("text-align: right;","text-align: center;").encode('utf-8'))
             myf.write('\n')
             #write the query if manipulated
             if queryManipulation:
@@ -954,7 +954,7 @@ elif args.task == 'splice':
             myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc_probe.pdf\" alt=\"mask_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc_probe.pdf\" alt=\"pixel_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Probe Average ROC</th><th>Probe Pixel Average ROC</th></tr><tr><td><embed src=\"mask_average_roc_donor.pdf\" alt=\"mask_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'</td><td><embed src=\"pixel_average_roc_donor.pdf\" alt=\"pixel_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Donor Average ROC</th><th>Donor Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
             myf.write('<h3>Per Scored Trial Scores</h3>\n')
-            myf.write(html_out.to_html(escape=False).encode('utf-8'))
+            myf.write(html_out.to_html(escape=False,na_rep='').encode('utf-8'))
             myf.write('\n')
             #write the query if manipulated
             if queryManipulation:
@@ -1110,21 +1110,22 @@ if args.task == 'manipulation':
             r_df.loc[r_idx,'OptimumBWL1'] = ''
             r_df.loc[r_idx,'GWL1'] = ''
 
-        #generate HTML table report
-        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
-
-        r_df.loc[r_idx,'OptimumMCC'] = ''
-        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
-
         #convert all pixel values to decimal-less strings
         pix2ints = ['OptimumThreshold','OptimumPixelTP','OptimumPixelFP','OptimumPixelTN','OptimumPixelFN',
                     'PixelN','PixelBNS','PixelSNS','PixelPNS']
+
         if args.sbin >= 0:
             pix2ints.extend(['MaximumPixelTP','MaximumPixelFP','MaximumPixelTN','MaximumPixelFN',
                              'ActualPixelTP','ActualPixelFP','ActualPixelTN','ActualPixelFN'])
 
         for pix in pix2ints:
             r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
+
+        #generate HTML table report
+        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
+
+        r_df.loc[r_idx,'OptimumMCC'] = ''
+        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
 
         if args.outMeta:
             roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
@@ -1254,19 +1255,12 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumBWL1'] = ''
         r_df.loc[r_df.query('dOptimumMCC == -2').index,'dGWL1'] = ''
 
-        #generate HTML table report
-        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
-    
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
-
-        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
-
         #convert all pixel values to decimal-less strings
         pix2ints = ['pOptimumThreshold','pOptimumPixelTP','pOptimumPixelFP','pOptimumPixelTN','pOptimumPixelFN',
                     'pPixelN','pPixelBNS','pPixelSNS','pPixelPNS',
                     'dOptimumThreshold','dOptimumPixelTP','dOptimumPixelFP','dOptimumPixelTN','dOptimumPixelFN',
                     'dPixelN','dPixelBNS','dPixelSNS','dPixelPNS']
+
         if args.sbin >= 0:
             pix2ints.extend(['pMaximumPixelTP','pMaximumPixelFP','pMaximumPixelTN','pMaximumPixelFN',
                              'pActualPixelTP','pActualPixelFP','pActualPixelTN','pActualPixelFN',
@@ -1275,6 +1269,14 @@ elif args.task == 'splice':
 
         for pix in pix2ints:
             r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
+
+        #generate HTML table report
+        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
+    
+        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
+        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
+
+        prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
 
         #other reports of varying
         if args.outMeta:

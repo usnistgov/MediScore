@@ -507,8 +507,6 @@ if ([ $flag_total -eq 0 ]); then
   echo
   echo "CASE 2 SUCCESSFULLY PASSED"
   echo
-  echo "MASK SCORER TESTS SUCCESSFULLY PASSED"
-  echo
 	if [ $clean = "TRUE" ] ; then
 		rm -rf ../../data/test_suite/maskScorerTests/manipconf
 		rm -rf ../../data/test_suite/maskScorerTests/manipconfmanmade
