@@ -1167,11 +1167,17 @@ class maskMetricRunner:
 
             myprintbuffer.append("Composing journal table...")
 #            journalID = self.joinData.query("{}FileID=='{}'".format(mymode,probeFileID))['JournalName'].iloc[0]
+            journalHeaders = list(self.journalData)
+            toSequence = 'Sequence' in journalHeaders
+
             journalkeys = ['Operation','Purpose','Color',evalcol]
             if not self.usecolor:
+                journalkeys = ['BitPlane'] + journalkeys
+            if toSequence:
                 journalkeys = ['Sequence'] + journalkeys
+
             jdata = self.journalData.query("ProbeFileID=='{}' & Color!=''".format(probeFileID))[journalkeys] #("JournalName=='{}'".format(journalID))[['Operation','Purpose','Color',evalcol]] #NOTE: as long as Purpose is in there. It is otherwise dispensible.
-            if not self.usecolor:
+            if toSequence:
                 jdata = jdata.sort_values("Sequence",ascending=False)
             #jdata.loc[pd.isnull(jdata['Purpose']),'Purpose'] = '' #make NaN Purposes empty string
 
