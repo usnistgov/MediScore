@@ -441,7 +441,7 @@ class refmask(mask):
 
         #get unique pixel values
         if is_multi_layer:
-            singlematrix = np.zeros(dims)
+            singlematrix = np.zeros(dims,dtype=np.uint8)
             const_factor = 1
             for i in range(self.matrix.shape[2]):
                 const_factor = 1 << 8*i
@@ -608,7 +608,7 @@ class refmask(mask):
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
 #        notcolors = mask.getColors(mymat)
         if is_multi_layer:
-            singlematrix = np.zeros(dims)
+            singlematrix = np.zeros(dims,dtype=np.uint8)
             const_factor = 1
             for i in range(self.matrix.shape[2]):
                 const_factor = 1 << 8*i
