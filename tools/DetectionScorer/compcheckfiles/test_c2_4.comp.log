@@ -1,5 +1,5 @@
   * Testing with no non-target value *  
-/Users/yunglee/anaconda/envs/python=2.7/lib/python2.7/site-packages/sklearn/metrics/ranking.py:534: UndefinedMetricWarning: No negative samples in y_true, false positive value should be meaningless
+/Users/yunglee/anaconda2/lib/python2.7/site-packages/sklearn/metrics/ranking.py:534: UndefinedMetricWarning: No negative samples in y_true, false positive value should be meaningless
   UndefinedMetricWarning)
 Total# (2),  Target# (2),  NonTarget# (0) 
 
