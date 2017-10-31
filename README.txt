@@ -273,6 +273,11 @@ HISTORY
     * DetectionScorer:
       - Applied the "noNum" option for both partition and EER
 
+  Sep 25, 2017 - MediScore Version 1.1.13
+    * DetectionScorer:
+      - cleaned up the test cases and added exclusions for “.DS_Store”
+      - Optout options?
+
 
 CONTACT
 -------
