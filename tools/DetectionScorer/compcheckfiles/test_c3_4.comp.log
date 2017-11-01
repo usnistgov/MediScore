@@ -1,6 +1,0 @@
-  * Testing with the splice case with sub index (2 less) *  
-Total# (5),  Target# (3),  NonTarget# (2) 
-
-Report table:
-        AUC  FAR_STOP       EER  AUC_CI_LOWER  AUC_CI_UPPER  TRR SYS_RESPONSE
-0  0.416667         1  0.583333             0             0  1.0          all

@@ -1,6 +1,6 @@
 "ProbeFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"IsOptOut"
 "F18"|0.034|"mask/F18-mask.png"|"N"
-"F166"|0.021|"mask/F166-mask.png"|"Y"
+"F166"|0.021|"mask/F166-mask.png"|"N"
 "F165"|0.021|"mask/F165-mask.png"|"N"
 "F86"|0.016|"mask/F86-mask.png"|"Y"
 "F87"|0.016|"mask/F87-mask.png"|"N"

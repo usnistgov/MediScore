@@ -10,14 +10,19 @@ run_test test_c1_2 "$testsuite_directory/checkfiles/test_c1_2"
 run_test test_c1_3 "$testsuite_directory/checkfiles/test_c1_3"
 
 echo
-echo "CASE 2: VALIDATING SYSTEM OUTPUT TESTCASEs"
+echo "CASE 2.1: VALIDATING SYSTEM OUTPUT TESTCASEs"
 echo
 run_test test_c2_1 "$testsuite_directory/checkfiles/test_c2_1"
 run_test test_c2_2 "$testsuite_directory/checkfiles/test_c2_2"
 run_test test_c2_3 "$testsuite_directory/checkfiles/test_c2_3"
 run_test test_c2_4 "$testsuite_directory/checkfiles/test_c2_4"
 run_test test_c2_5 "$testsuite_directory/checkfiles/test_c2_5"
+
+echo
+echo "CASE 2.2: VALIDATING SYSTEM OUTPUT TESTCASEs with the OptOut option"
+echo
 run_test test_c2_6 "$testsuite_directory/checkfiles/test_c2_6"
+run_test test_c2_7 "$testsuite_directory/checkfiles/test_c2_7"
 
 
 echo

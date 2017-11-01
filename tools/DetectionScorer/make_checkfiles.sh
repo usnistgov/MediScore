@@ -12,6 +12,7 @@ test_c2_3 "$testsuite_directory/checkfiles/test_c2_3"
 test_c2_4 "$testsuite_directory/checkfiles/test_c2_4"
 test_c2_5 "$testsuite_directory/checkfiles/test_c2_5"
 test_c2_6 "$testsuite_directory/checkfiles/test_c2_6"
+test_c2_7 "$testsuite_directory/checkfiles/test_c2_7"
 
 test_c3_1 "$testsuite_directory/checkfiles/test_c3_1"
 test_c3_2 "$testsuite_directory/checkfiles/test_c3_2"
