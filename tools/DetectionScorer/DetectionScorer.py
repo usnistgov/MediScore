@@ -276,41 +276,64 @@ if __name__ == '__main__':
         if root_path != '.' and not os.path.exists(root_path):
             os.makedirs(root_path)
 
+        # grep system column names
+        sys_cols_no_overlap = [c for c in mySys.columns if c not in myRef.columns]
+        sys_cols_overlap = [c for c in mySys.columns if c in myRef.columns]
+        # print(sys_cols_no_overlap)
+        # print(sys_cols_overlap)
+        index_cols_no_overlap = [c for c in myIndex.columns if c not in myRef.columns]
+        index_cols_overlap = [c for c in myIndex.columns if c in myRef.columns]
+        # print(index_cols_no_overlap)
+        # print(index_cols_overlap)
+
         # merge the reference and index csv only
+        index_m_df = pd.merge(m_df, myIndex, how='inner', on= index_cols_overlap)
+        # print(index_m_df.columns)
+        sub_pm_df = index_m_df[index_cols_overlap + index_cols_no_overlap + ["IsTarget"] + sys_cols_no_overlap]
+        #print(sub_pm_df.columns)
+
+        if args.outAllmeta: #save all metadata for analysis purpose
+            index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+        if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save subset of metadata for analysis purpose
+            sub_pm_df = index_m_df[index_cols_overlap + index_cols_no_overlap + ["IsTarget"] + sys_cols_no_overlap]
+            #print(sub_pm_df.columns)
+
+
+        # merge the reference and index csv only <- reimplmented ##################
         #SSD
-        if args.task in ['manipulation']:
-             # merge the reference and index csv only
-            subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
-            index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
-#            print("sys data size {}".format(mySys.shape))
-#            print("ref_index_m data size {}".format(index_m_df.shape))
-
-            if args.outAllmeta: #save all metadata for analysis purpose
-                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
-
-            mani_meta_list = ["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]
-            if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
-                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]]
-                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
-            elif args.outMeta and not set(mani_meta_list).issubset(index_m_df.columns):
-                print("Warning: The meta information is not saved because the required columns are not exist.")
-        #DSD
-        elif args.task in ['splice']:
-            subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
-            index_m_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
-#            print("sys data size {}".format(mySys.shape))
-#            print("ref_index_m data size {}".format(index_m_df.shape))
-
-            if args.outAllmeta: #save all metadata for analysis purpose
-                index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
-
-            splice_meta_list = ["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]
-            if args.outMeta and set(splice_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
-                sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]]
-                sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
-            elif args.outMeta and not set(splice_meta_list).issubset(index_m_df.columns):
-                print("Warning: The meta information is not saved because the required columns are not exist.")
-
+#         if args.task in ['manipulation']:
+#              # merge the reference and index csv only
+#             subIndex = myIndex[['ProbeFileID', 'ProbeWidth', 'ProbeHeight']]
+#             index_m_df = pd.merge(m_df, subIndex, how='inner', on= 'ProbeFileID')
+# #            print("sys data size {}".format(mySys.shape))
+# #            print("ref_index_m data size {}".format(index_m_df.shape))
+#
+#             if args.outAllmeta: #save all metadata for analysis purpose
+#                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+#
+#             mani_meta_list = ["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]
+#             if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+#                 sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "ProbeFileName", "ProbeWidth", "ProbeHeight", "IsTarget", "ConfidenceScore", "IsOptOut"]]
+#                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+#             elif args.outMeta and not set(mani_meta_list).issubset(index_m_df.columns):
+#                 print("Warning: The meta information is not saved because the required columns are not exist.")
+#         #DSD
+#         elif args.task in ['splice']:
+#             subIndex = myIndex[['ProbeFileID', 'DonorFileID', 'ProbeWidth', 'ProbeHeight', 'DonorWidth', 'DonorHeight']] # subset the columns due to duplications
+#             index_m_df = pd.merge(m_df, subIndex, how='inner', on= ['ProbeFileID','DonorFileID'])
+# #            print("sys data size {}".format(mySys.shape))
+# #            print("ref_index_m data size {}".format(index_m_df.shape))
+#
+#             if args.outAllmeta: #save all metadata for analysis purpose
+#                 index_m_df.to_csv(args.outRoot + '_allmeta.csv', index = False, sep='|')
+#
+#             splice_meta_list = ["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]
+#             if args.outMeta and set(splice_meta_list).issubset(index_m_df.columns): #save all metadata for analysis purpose
+#                 sub_pm_df = index_m_df[["TaskID", "ProbeFileID", "DonorFileID", "ProbeFileName", "DonorFileName", "ProbeWidth", "ProbeHeight", 'DonorWidth', 'DonorHeight', "IsTarget", "ConfidenceScore", "IsOptOut"]]
+#                 sub_pm_df.to_csv(args.outRoot + '_meta.csv', index = False, sep='|')
+#             elif args.outMeta and not set(splice_meta_list).issubset(index_m_df.columns):
+#                 print("Warning: The meta information is not saved because the required columns are not exist.")
+######################################
 #        if(myIndex.shape[0] != index_m_df.shape[0]):
 #            print("Index row num: {}".format(myIndex.shape[0]))
 #            print("Merged data row num: {}".format(index_m_df.shape[0]))
@@ -349,8 +372,12 @@ if __name__ == '__main__':
                 query = args.queryManipulation
 
             if args.optOut:
-                index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 sys_response = 'tr'
+                if "IsOptOut" in index_m_df.columns:
+                    index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
+                elif "ProbeStatus" in index_m_df.columns:
+                    index_m_df = index_m_df.query(" ProbeStatus==['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] ")
+
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
@@ -375,8 +402,11 @@ if __name__ == '__main__':
         else:
 
             if args.optOut:
-                index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 sys_response = 'tr'
+                if "IsOptOut" in index_m_df.columns:
+                    index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
+                elif "ProbeStatus" in index_m_df.columns:
+                    index_m_df = index_m_df.query(" ProbeStatus==['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] ")
 
             DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop = args.farStop, isCI = args.ci, ciLevel = args.ciLevel, dLevel= args.dLevel, total_num = total_num, sys_res = sys_response)
 

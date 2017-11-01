@@ -275,8 +275,17 @@ HISTORY
 
   Sep 25, 2017 - MediScore Version 1.1.13
     * DetectionScorer:
-      - cleaned up the test cases and added exclusions for “.DS_Store”
-      - Optout options?
+      - cleaned up the test cases and added exclusions for “.DS_Store” and PDF files
+
+  Nov 1, 2017 - MediScore Version 1.1.14
+    * DetectionScorer:
+      - reimplemented the merging process
+      - added ProbeStatus with ['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] for Optout options and kept the old version of the IsOptOut column process
+      - added test cases:
+        1) Testing with the manipulation OptOut case -- IsOptOut
+        2) Testing a query with the manipulation OptOut case -- IsOptOut
+        3) Testing with the manipulation OptOut case -- ProbeStatus
+      - added all the examples (16 test cases) from the DetectionScorer ReadMe document to make check
 
 
 CONTACT

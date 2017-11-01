@@ -13,6 +13,7 @@ test_c2_4 "$testsuite_directory/checkfiles/test_c2_4"
 test_c2_5 "$testsuite_directory/checkfiles/test_c2_5"
 test_c2_6 "$testsuite_directory/checkfiles/test_c2_6"
 test_c2_7 "$testsuite_directory/checkfiles/test_c2_7"
+test_c2_8 "$testsuite_directory/checkfiles/test_c2_8"
 
 test_c3_1 "$testsuite_directory/checkfiles/test_c3_1"
 test_c3_2 "$testsuite_directory/checkfiles/test_c3_2"
@@ -22,3 +23,5 @@ test_c3_4 "$testsuite_directory/checkfiles/test_c3_4"
 test_c4_1 "$testsuite_directory/checkfiles/test_c4_1"
 test_c4_2 "$testsuite_directory/checkfiles/test_c4_2"
 test_c4_3 "$testsuite_directory/checkfiles/test_c4_3"
+
+test_c5_1 "$testsuite_directory/checkfiles/test_c5_1"

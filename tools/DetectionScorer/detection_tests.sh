@@ -128,7 +128,7 @@ test_c2_5() {
 }
 
 test_c2_6() {
-    echo "  * Testing with the manipulation OptOut case *  "
+    echo "  * Testing with the manipulation OptOut case -- IsOptOut*  "
     echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
                        -t manipulation \
                        --refDir "$testsuite_directory/sample/reference" \
@@ -140,7 +140,7 @@ test_c2_6() {
 
 
 test_c2_7() {
-    echo "  * Testing a query with the manipulation OptOut case *  "
+    echo "  * Testing a query with the manipulation OptOut case -- IsOptOut *  "
     echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
                        -t manipulation \
                        --refDir "$testsuite_directory/sample/reference" \
@@ -149,6 +149,17 @@ test_c2_7() {
                        --sysDir "$testsuite_directory/sample/" \
 				       -s "D_NC2016_Manipulation_ImgOnly_p-me_3/D_NC2016_Manipulation_ImgOnly_p-me_3.csv" \
                -qm "Operation==['PasteSplice']" --optOut
+}
+
+test_c2_8() {
+    echo "  * Testing with the manipulation OptOut case -- ProbeStatus*  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2016-manipulation-index.csv" \
+        				       -r "NC2016-manipulation-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_4/D_NC2016_Manipulation_ImgOnly_p-me_4.csv" --optOut
 }
 
 
@@ -231,4 +242,169 @@ test_c4_3() {
                -qm "Operation==['FillContentAwareFill']"
 }
 
-# Validating all the examples from the detection document
+
+test_c5_1() {
+    echo "  * Testing all the examples from the DetectionScorer ReadMe document *  "
+
+    echo "  * Full scoring: rendering the ROC curve and the report table *  "
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-1 \
+                        -t manipulation \
+                        --refDir $testsuite_directory/reference \
+                        -r NC2016-manipulation-ref.csv \
+                        -x NC2016-manipulation-index.csv \
+                        --sysDir $testsuite_directory/baseline \
+                        -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+                        --ci
+
+    echo "  * Full scoring: rendering DET curve *  "
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-2 \
+                          -t manipulation \
+                          --refDir $testsuite_directory/reference \
+                          -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+                          --sysDir $testsuite_directory/baseline \
+                          -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+                          --plotType det
+
+    echo "  * OptOut (IsOptOut =='N') scoring *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-3 \
+                          -t manipulation \
+                          --refDir $testsuite_directory/reference \
+                          -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+                          --sysDir $testsuite_directory/baseline \
+                          -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv  \
+                          --optOut --dLevel 0.1 --ci --plotType roc
+
+    echo "  * Reduced (--noNum): legend without the number of target and non-target trials *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-4 \
+                    -t manipulation \
+                    --refDir $testsuite_directory/reference \
+                    -r NC2016-manipulation-ref.csv \
+                    -x NC2016-manipulation-index.csv \
+                    --sysDir $testsuite_directory/baseline \
+                    -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+                    --ci --noNum
+
+    echo "  * Query (-q) with one query *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-5 \
+                      -t manipulation \
+                      --refDir $testsuite_directory/reference \
+                      -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+                      --sysDir $testsuite_directory/baseline \
+                      -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+                      -q "Collection==['Nimble-SCI','Nimble-WEB']" --ci
+
+    echo "  * Query (-q) with two queries *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-6 \
+                 -t manipulation \
+                 --refDir $testsuite_directory/reference \
+                 -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+                 --sysDir $testsuite_directory/baseline \
+                 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+                 -q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth" "Collection==['Nimble-WEB'] & 300 <= ProbeWidth" \
+                 --ci
+
+    echo "  * Query for partition (-qp) with one partition *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-7 \
+                 -t manipulation \
+                 --refDir $testsuite_directory/reference \
+                 -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+                 --sysDir $testsuite_directory/baseline \
+                 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+                 -qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth" \
+                 --ci
+
+    echo "  * Query for partition (-qp) with two partitions  *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-8 \
+                -t manipulation \
+                --refDir $testsuite_directory/reference \
+                -r NC2016-manipulation-ref.csv \
+                -x NC2016-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+                -qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" \
+                --ci
+
+    echo "  * Query for selective manipulation (-qm) with two queries   *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-9 \
+                -t manipulation \
+                --refDir $testsuite_directory/reference \
+                -r NC2016-manipulation-ref.csv \
+                -x NC2016-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+                -qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']" \
+
+
+    echo "  * --multiFigs with the query option    *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-10 \
+                -t manipulation \
+                --refDir $testsuite_directory/reference \
+                -r NC2016-manipulation-ref.csv \
+                -x NC2016-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+                -qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs \
+                --ci
+
+    echo "  * Splice Task    *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-11 \
+                -t splice \
+                --refDir $testsuite_directory/reference \
+                -r NC2016-splice-ref.csv -x NC2016-splice-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv \
+                --ci
+
+    echo "  * NC2017 Full scoring: rendering ROC curve   *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-12 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                --ci
+
+    echo "  * NC2017 Query (-q) with two queries    *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-13 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                -q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"
+
+
+    echo "  * NC2017 Query for selective manipulation (-qm) with the factor Purpose    *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-14 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                -qm "Purpose==['remove']" "Purpose==['clone']"
+
+
+    echo "  * NC2017 Query for selective manipulation (-qm) with the factor OperationArgument     *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-15 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                -qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"
+
+
+    echo "  * NC2017 Query for selective manipulation (-qm) with the mixed of factors  *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-16 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                -qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"
+}

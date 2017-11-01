@@ -1,0 +1,2 @@
+QUERY|AUC|FAR_STOP|EER|AUC_CI_LOWER|AUC_CI_UPPER|TRR|SYS_RESPONSE
+Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']|0.4525|1|0.594643|0|0|0.57|all
