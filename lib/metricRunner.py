@@ -376,7 +376,7 @@ class maskMetricRunner:
 
             #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
             sbin_name = ''
-            if self.sbin >= 0:
+            if self.sbin >= -1:
                 sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-actual_bin.png')
                 sImg.save(sbin_name,th=self.sbin)
 
@@ -534,7 +534,7 @@ class maskMetricRunner:
                     myprintbuffer.append("Setting value for {}...".format(mes))
                     maskRow[''.join(['Pixel',mes])] = mymeas[mes]
     
-                if self.sbin >= 0:
+                if self.sbin >= -1:
                     #just get scores in one run if threshold is chosen
                     sImg.binarize(self.sbin)
                     amets = metricRunner.getMetrics(myprintbuffer)
@@ -562,7 +562,7 @@ class maskMetricRunner:
                 for met in ['NMM','MCC','BWL1']:
                     myprintbuffer.append("Setting value for {}...".format(met))
                     maskRow[''.join(['Optimum',met])] = round(mets[met],precision)
-                    if self.sbin >= 0:
+                    if self.sbin >= -1:
                         #record Actual metrics
                         maskRow[''.join(['Actual',met])] = round(amets[met],precision)
                         mets[''.join(['Actual',met])] = round(amets[met],precision)
@@ -570,7 +570,7 @@ class maskMetricRunner:
                 for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                     myprintbuffer.append("Setting value for {}...".format(mes))
                     maskRow[''.join(['OptimumPixel',mes])] = mymeas[mes]
-                    if self.sbin >= 0:
+                    if self.sbin >= -1:
                         maskRow[''.join(['ActualPixel',mes])] = myameas[mes]
 
             myprintbuffer.append("Metrics computed.")
@@ -590,13 +590,13 @@ class maskMetricRunner:
                 #display Actual mask if it shows up. Else display Optimum
                 sbinmaskname = optbin_name
                 smask_threshold = threshold
-                if self.sbin >= 0:
+                if self.sbin >= -1:
                     sbinmaskname = sbin_name
                     smask_threshold = self.sbin
 
                 for met in ['TP','TN','FP','FN']:
                     mymeas[''.join(['OptimumPixel',met])] = mymeas.pop(met)
-                    if self.sbin >= 0:
+                    if self.sbin >= -1:
                         mymeas[''.join(['ActualPixel',met])] = myameas[met]
                 mymeas['PixelBNS'] = mymeas.pop('BNS')
                 mymeas['PixelSNS'] = mymeas.pop('SNS')
@@ -963,7 +963,7 @@ class maskMetricRunner:
                     plot_title = 'Donor Mask Average ROC'
             myroc = plotROC(mydets,plot_name,plot_title,outputRoot)
 
-        if (self.sbin >= 0) and (maxThreshold > -1):
+        if (self.sbin >= -1) and (maxThreshold > -1):
             #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
             df['MaximumThreshold'] = maxThreshold
             maxMCCdf = maxmets[maxThreshold]
@@ -1199,7 +1199,7 @@ class maskMetricRunner:
             optT = int(thresMets.loc[optidx]['Threshold'])
     
             met_table_prefix = 'Optimum Threshold: {}<br>'.format(optT)
-            if self.sbin >= 0:
+            if self.sbin >= -1:
                 met_table_prefix = "<ul><li><b>Optimum Threshold</b>: {}</li><li><b>Actual Threshold</b>: {}</li></ul><br>".format(optT,self.sbin)
             met_table = ''.join([met_table_prefix,met_table])
 
@@ -1235,7 +1235,7 @@ class maskMetricRunner:
         for m in ['TP','FP','TN','FN']:
             m_name = ''.join(['OptimumPixel',m]) 
             conf_measures[m_name] = int(confmeasures[m_name])
-            if self.sbin >= 0:
+            if self.sbin >= -1:
                 am_name = ''.join(['ActualPixel',m])
                 conf_measures[am_name] = int(confmeasures[am_name])
         conf_measures['TotalPixels'] = totalpx
@@ -1266,7 +1266,7 @@ class maskMetricRunner:
                 optpt, = plt.plot([optT],[optMCC],'co',markersize=12)
                 handles = [optpt]
                 labels = ['Optimal MCC']
-                if self.sbin >= 0:
+                if self.sbin >= -1:
                     tlist = thresMets['Threshold'].tolist()
                     actT = sys_threshold
                     if sys_threshold in tlist:
@@ -1350,7 +1350,7 @@ class maskMetricRunner:
         os.symlink(os.path.abspath(sImg_name),sPathNew)
 
         syspfx = ''
-        if self.sbin >= 0:
+        if self.sbin >= -1:
             syspfx = 'Actual '
 
         myprintbuffer.append("Writing HTML...")
@@ -1429,7 +1429,7 @@ class maskMetricRunner:
                 metstr = "{0:.3f}".format(metrics[met])
 
             met_table.set_value(met,'Optimum',metstr)
-            if self.sbin >= 0:
+            if self.sbin >= -1:
                 ametstr = "nan"
                 amet = ''.join(['Actual',met])
                 if not isinstance(metrics[amet],str):
@@ -1445,7 +1445,7 @@ class maskMetricRunner:
         otherrows = ''
         colspan = 1
         #make column span the row
-        if self.sbin >= 0:
+        if self.sbin >= -1:
             colspan = 2
         for met in mets_for_all:
             #add into each row
@@ -1484,7 +1484,7 @@ class maskMetricRunner:
             met_table.set_value(met,'OptimumProportion',metstr)
 
             #do the same for Actual metrics
-            if self.sbin >= 0:
+            if self.sbin >= -1:
                 ametstr = "nan"
                 optcol = ''.join(['ActualPixel',met])
                 met_table.set_value(met,'ActualPixelCount',conf_metrics[optcol])
@@ -1499,7 +1499,7 @@ class maskMetricRunner:
         met_table.rename(index=sub_rename_dict,inplace=True)
         cols = ['OptimumPixelCount','OptimumProportion']
         met_table.OptimumPixelCount = met_table.OptimumPixelCount.astype(int)
-        if self.sbin >= 0:
+        if self.sbin >= -1:
             cols.extend(['ActualPixelCount','ActualProportion'])
             met_table.ActualPixelCount = met_table.ActualPixelCount.astype(int)
 

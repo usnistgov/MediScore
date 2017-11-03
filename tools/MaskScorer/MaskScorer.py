@@ -102,7 +102,7 @@ parser.add_argument('-k','--kernel',type=str,default='box',
 help="Convolution kernel type for erosion and dilation. Choose from [box],[disc],[diamond],[gaussian], or [line]. The default is 'box'.",metavar='character')
 parser.add_argument('--rbin',type=int,default=-1,
 help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to evaluate the relevant regions based on the other arguments. [default=-1]",metavar='integer')
-parser.add_argument('--sbin',type=int,default=-1,
+parser.add_argument('--sbin',type=int,default=-10,
 help="Binarize the system output mask to black and white with a numeric threshold in the interval [0,255]. -1 indicates that the threshold for the mask will be chosen at the maximal absolute MCC value. [default=-1]",metavar='integer')
 parser.add_argument('--color',action='store_true',help="Evaluate colorized referenced masks. Individual regions in the colorized masks are identifiable by region and do not intersect.")
 parser.add_argument('--nspx',type=int,default=-1,
@@ -357,7 +357,7 @@ if args.task == 'manipulation':
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','Scored','PixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                               'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
                               'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
@@ -396,7 +396,7 @@ if args.task == 'manipulation':
             return 1
         #filter nan out of the below
         metrics_to_be_scored = ['OptimumThreshold','OptimumMCC','OptimumNMM','OptimumBWL1','GWL1','AUC','EER']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             metrics_to_be_scored.extend(['MaximumThreshold','MaximumMCC','MaximumNMM','MaximumBWL1',
                                          'ActualThreshold','ActualMCC','ActualNMM','ActualBWL1'])
         if r_df.query("Scored=='Y'")[metrics_to_be_scored].dropna().shape[0] == 0:
@@ -440,7 +440,7 @@ if args.task == 'manipulation':
                     temp_df['optOutScoring'] = 'Y'
 
                 temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
-                if args.sbin >= 0:
+                if args.sbin >= -1:
                     temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
                     temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
 
@@ -452,7 +452,7 @@ if args.task == 'manipulation':
                 temp_df = temp_df[heads]
                 if temp_df is not 0:
                     temp_df.loc[:,'OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
-                    if args.sbin >= 0:
+                    if args.sbin >= -1:
                         temp_df.loc[:,'MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
                         temp_df.loc[:,'ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
 
@@ -497,7 +497,7 @@ if args.task == 'manipulation':
             if args.optOut:
                 a_df['optOutScoring'] = 'Y'
             a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().astype(int).astype(str)
-            if args.sbin >= 0:
+            if args.sbin >= -1:
                 a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().astype(int).astype(str)
                 a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().astype(int).astype(str)
             for m in constant_mets:
@@ -541,7 +541,7 @@ if args.task == 'manipulation':
                 metriclist = {}
                 for met in ['NMM','MCC','BWL1']:
                     metriclist[''.join(['Optimum',met])] = 3
-                    if args.sbin >= 0:
+                    if args.sbin >= -1:
                         metriclist[''.join(['Maximum',met])] = 3
                         metriclist[''.join(['Actual',met])] = 3
                 for met in ['GWL1','AUC','EER']:
@@ -599,7 +599,7 @@ elif args.task == 'splice':
         stackdf = pd.concat([stackp,stackd],axis=0)
         stackmerge = pd.merge(stackdf,m_df.drop('Scored',1),how='left',on=['ProbeFileID','DonorFileID'])
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                               'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
         rcols = stackmerge.columns.tolist()
@@ -701,7 +701,7 @@ elif args.task == 'splice':
         d_idx = merged_df.query('dOptimumMCC == -2').index
         rcols = merged_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             firstcols.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
                               'pMaximumPixelTP','pMaximumPixelTN','pMaximumPixelFP','pMaximumPixelFN',
                               'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
@@ -719,7 +719,7 @@ elif args.task == 'splice':
             metriclist = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1',
                           'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
                           'PixelN','PixelBNS','PixelSNS','PixelPNS']
-            if args.sbin >= 0:
+            if args.sbin >= -1:
                 metriclist.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                                            'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
                                            'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
@@ -770,7 +770,7 @@ elif args.task == 'splice':
             metrics_to_be_scored.append(''.join([pfx,'OptimumThreshold']))
             for met in ['MCC','NMM','BWL1']:
                 metrics_to_be_scored.append(''.join([pfx,'Optimum',met]))
-                if args.sbin >= 0:
+                if args.sbin >= -1:
                     metrics_to_be_scored.append(''.join([pfx,'Maximum',met]))
                     metrics_to_be_scored.append(''.join([pfx,'Actual',met]))
             for met in ['GWL1','AUC','EER']:
@@ -824,7 +824,7 @@ elif args.task == 'splice':
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = temp_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
-                if args.sbin >= 0:
+                if args.sbin >= -1:
                     bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                     temp_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
                     temp_df.loc[:,bincols] = temp_df[bincols].astype(int).astype(str)
@@ -897,7 +897,7 @@ elif args.task == 'splice':
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = a_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
-                if args.sbin >= 0:
+                if args.sbin >= -1:
                     bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                     a_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
                     a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
@@ -940,7 +940,7 @@ elif args.task == 'splice':
                 for pfx in ['p','d']:
                     for met in ['NMM','MCC','BWL1']:
                         metriclist[''.join([pfx,'Optimum',met])] = 3
-                        if args.sbin >= 0:
+                        if args.sbin >= -1:
                             metriclist[''.join([pfx,'Maximum',met])] = 3
                             metriclist[''.join([pfx,'Actual',met])] = 3
                     for met in ['GWL1','AUC','EER']:
@@ -1079,11 +1079,11 @@ if args.task == 'manipulation':
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
         metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             metrics.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
                             'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
         constant_mets = ['PixelAverageAUC','MaskAverageAUC']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             constant_mets.extend(['MaximumThreshold','ActualThreshold'])
 
         a_df = 0
@@ -1094,7 +1094,7 @@ if args.task == 'manipulation':
 
         # tack on PixelAverageAUC and MaskAverageAUC to a_df and remove from r_df
         r_df = r_df.drop(['PixelAverageAUC','MaskAverageAUC'],1)
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             r_df = r_df.drop(['MaximumThreshold','ActualThreshold'],1)
 
 #        if a_df is not 0:
@@ -1114,7 +1114,7 @@ if args.task == 'manipulation':
         pix2ints = ['OptimumThreshold','OptimumPixelTP','OptimumPixelFP','OptimumPixelTN','OptimumPixelFN',
                     'PixelN','PixelBNS','PixelSNS','PixelPNS']
 
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             pix2ints.extend(['MaximumPixelTP','MaximumPixelFP','MaximumPixelTN','MaximumPixelFN',
                              'ActualPixelTP','ActualPixelFP','ActualPixelTN','ActualPixelFN'])
 
@@ -1217,13 +1217,13 @@ elif args.task == 'splice':
         #filter here
         metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER',
                    'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             metrics.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
                             'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
                             'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
                             'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1'])
         constant_mets = ['pPixelAverageAUC','dPixelAverageAUC','pMaskAverageAUC','dMaskAverageAUC']
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             constant_mets.extend(['pMaximumThreshold','dMaximumThreshold','pActualThreshold','dActualThreshold'])
 
         a_df = 0
@@ -1233,7 +1233,7 @@ elif args.task == 'splice':
             a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,query)
 
         r_df = r_df.drop(['pPixelAverageAUC','pMaskAverageAUC','dPixelAverageAUC','dMaskAverageAUC'],1)
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             r_df = r_df.drop(['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold'],1)
 
         #convert all to ints.
@@ -1261,7 +1261,7 @@ elif args.task == 'splice':
                     'dOptimumThreshold','dOptimumPixelTP','dOptimumPixelFP','dOptimumPixelTN','dOptimumPixelFN',
                     'dPixelN','dPixelBNS','dPixelSNS','dPixelPNS']
 
-        if args.sbin >= 0:
+        if args.sbin >= -1:
             pix2ints.extend(['pMaximumPixelTP','pMaximumPixelFP','pMaximumPixelTN','pMaximumPixelFN',
                              'pActualPixelTP','pActualPixelFP','pActualPixelTN','pActualPixelFN',
                              'dMaximumPixelTP','dMaximumPixelFP','dMaximumPixelTN','dMaximumPixelFN',

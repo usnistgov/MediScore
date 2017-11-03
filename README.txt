@@ -310,6 +310,7 @@ HISTORY
       - Updated test cases to reflect above changes.
       - Moved the print buffer class to a separate file for use by other modules that may need parallelization.
       - Added displayScoredOnly to display scored images only.
+      - Added -1 to a list of thresholds to binarize everything to white.
     * Validator:
       - Sped up validator with pandas apply implementation.
       - Parallelization options and features added.
@@ -327,6 +328,7 @@ HISTORY
       - Added per-probe pixel no-score
       - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
       - Renamed Mask Scorer test cases to conform to new format
+      - Added -1 as a threshold to binarize masks to all white where relevant.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:

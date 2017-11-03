@@ -12272,32 +12272,17 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
 python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
--oR outputs/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span> --color
+-oR outputs/maniptest/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span> --color
 </pre></div>
 
 </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Current query: ConfidenceScore &lt; 0.5
-Current query: ManMade==[&#39;no&#39;]
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -12308,7 +12293,7 @@ Current query: ManMade==[&#39;no&#39;]
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Running this code in the tools/MaskScorer directory will generate an aggregate report of the computed mask scores titled B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores.csv and a per-image score report titled B_NC2017_Manipulation_ImgOnly_c-me2_1-mask_scores_perimage.csv for the manipulation task.</p>
-<p>The -html flag is also set, allowing the code to generate an HTML per-image <a href="outputs/maniptest/index.html">index file</a> with the scores and metadata containing links to individual detailed reports of each image.</p>
+<p>The -html flag is also set, allowing the code to generate an HTML per-image <a href="outputs/maniptest/index.html">index file</a> with the scores and metadata containing links to individual detailed reports of each image. (Note that the link will not work until the script is run.)</p>
 
 </div>
 </div>
@@ -12323,19 +12308,45 @@ Current query: ManMade==[&#39;no&#39;]
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The localization scorer can also score based on overlapping regions stored in the JPEG2000 file format. Overlapping regions are displayed in animated masks where relevant. The following code will generate an aggregate report.</p>
+
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
-python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
--r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
--s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
--oR outputs/maniptargets -html -qm <span class="s2">&quot;Purpose==[&#39;remove&#39;]&quot;</span> <span class="s2">&quot;Purpose==[&#39;clone&#39;,&#39;add&#39;]&quot;</span> --color
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ <span class="se">\</span>
+-r reference/manipulation-image/MFC18-manipulation-image-ref.csv <span class="se">\</span>
+-x indexes/MFC18-manipulation-image-index.csv <span class="se">\</span>
+-s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv <span class="se">\</span>
+-oR outputs/bitmask/bitmask <span class="se">\</span>
+--speedup -p <span class="m">4</span> -html
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -12345,7 +12356,7 @@ python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTe
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The sample HTML index files for the 'remove' and 'clone','add' operations can be found <a href="outputs/maniptargets/index_0/index.html">here</a> and <a href="outputs/maniptargets/index_1/index.html">here</a> respectively.</p>
+<p>This sample HTML index files for the query can be found <a href="outputs/bitmask/index.html">here</a>.</p>
 
 </div>
 </div>

@@ -129,7 +129,7 @@ fi
 btp_total=$(($flag_btp + $flag_btppi + $flag_btpjr))
 
 #produce the output files
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -qm -p $procs -pppns -html
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -p $procs -pppns -html
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_pixns.csv > comp_maskreport_bittest_pixns.txt
