@@ -9,19 +9,19 @@ echo "CASE 0: VALIDATING FULL SCORING"
 echo
 
 #produce the output files
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Splice_ImgOnly_p-me_1/B_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1 -html -p $procs --color --speedup --optOut
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2016-manipulation-ref.csv -x indexes/NC2016-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1 -p $procs --color --speedup
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Splice_ImgOnly_p-me_1/B_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1 -html -p $procs --color --speedup
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -html --sbin 128 -p $procs --color --speedup
 #python2 MaskScorer.py -t removal --refDir ../../data/test_suite/maskScorerTests -r reference/removal/NC2016-removal-ref.csv -x indexes/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -oR ../../data/test_suite/maskScorerTests/temp_maskreport_3 --sbin 127
-python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv --sysDir ../../data/test_suite/maskScorerTests -s C_NC2017_Unittest_Splice_ImgOnly_p-me_1/C_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicebin/C_NC2017_Unittest_Splice_ImgOnly_p-me_1 -xF --optOut -p 6 -html --outMeta --outAllmeta --color --sbin 200 --speedup
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv --sysDir ../../data/test_suite/maskScorerTests -s C_NC2017_Unittest_Splice_ImgOnly_p-me_1/C_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splicebin/C_NC2017_Unittest_Splice_ImgOnly_p-me_1 -xF -p 6 -html --outMeta --outAllmeta --color --sbin 200 --speedup
 
 #compare them to ground truth files
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice.csv > comp_maskreport_splice.txt
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-perimage.csv > comp_maskreport_splice-perimage.txt
-diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-journalResults.csv > comp_maskreport_splice-journalResults.txt
 diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip.csv > comp_maskreport_manip.txt
 diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip-perimage.csv > comp_maskreport_manip-perimage.txt
 diff ../../data/test_suite/maskScorerTests/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip-journalResults.csv > comp_maskreport_manip-journalResults.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice.csv > comp_maskreport_splice.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-perimage.csv > comp_maskreport_splice-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splicetest/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice-journalResults.csv > comp_maskreport_splice-journalResults.txt
 diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres.csv > comp_maskreport_thres.txt
 diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres-perimage.csv > comp_maskreport_thres-perimage.txt
 diff ../../data/test_suite/maskScorerTests/threstest/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_thres-journalResults.csv > comp_maskreport_thres-journalResults.txt
@@ -202,17 +202,138 @@ else
 	cat comp_maskreport_splicebin-journalResults.txt
 fi
 
-flag_total=$(($flag_s + $flag_spi + $flag_sjr + $flag_m + $flag_mpi + $flag_mjr + $flag_t + $flag_tpi + $flag_tjr + $flag_sb + $flag_sbpi + $flag_sbjr))
+#manipulation and splice optOut case
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -html -p $procs --color --speedup --optOut
+
+diff ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip_optOut.csv > comp_maskreport_manip_optOut.txt
+diff ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip_optOut-perimage.csv > comp_maskreport_manip_optOut-perimage.txt
+diff ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_manip_optOut-journalResults.csv > comp_maskreport_manip_optOut-journalResults.txt
+
+flag_moo=1
+flag_moopi=1
+flag_moojr=1
+
+filter_moo="cat comp_maskreport_manip_optOut.txt | grep -v CVS"
+filter_moopi="cat comp_maskreport_manip_optOut-perimage.txt | grep -v CVS"
+filter_moojr="cat comp_maskreport_manip_optOut-journalResults.txt | grep -v CVS"
+
+if ([ ! -f comp_maskreport_manip_optOut.txt -o ! -f comp_maskreport_manip_optOut-perimage.txt -o ! -f comp_maskreport_manip_optOut-journalResults.txt ]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 0 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
+  echo
+  exit
+fi
+
+if test "`eval $filter_moo`" = "" ; then
+  flag_moo=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv
+	fi
+	rm comp_maskreport_manip_optOut.txt
+else
+	echo comp_maskreport_manip_optOut.txt
+	cat comp_maskreport_manip_optOut.txt
+fi
+
+if test "`eval $filter_moopi`" = "" ; then
+  flag_moopi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_manip_optOut-perimage.txt
+else
+	echo comp_maskreport_manip_optOut-perimage.txt
+	cat comp_maskreport_manip_optOut-perimage.txt
+fi
+
+if test "`eval $filter_moojr`" = "" ; then
+  flag_moojr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_journalResults.csv
+	fi
+	rm comp_maskreport_manip_optOut-journalResults.txt
+else
+	echo comp_maskreport_manip_optOut-journalResults.txt
+	cat comp_maskreport_manip_optOut-journalResults.txt
+fi
+
+manip_optOut_total=$(($flag_moo + $flag_moopi + $flag_moojr))
+
+
+python2 MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Splice_ImgOnly_p-me_1/B_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1 -html -p $procs --color --speedup --optOut
+
+diff ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_optOut.csv > comp_maskreport_splice_optOut.txt
+diff ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_optOut-perimage.csv > comp_maskreport_splice_optOut-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_optOut-journalResults.csv > comp_maskreport_splice_optOut-journalResults.txt
+
+flag_soo=1
+flag_soopi=1
+flag_soojr=1
+
+filter_soo="cat comp_maskreport_splice_optOut.txt | grep -v CVS"
+filter_soopi="cat comp_maskreport_splice_optOut-perimage.txt | grep -v CVS"
+filter_soojr="cat comp_maskreport_splice_optOut-journalResults.txt | grep -v CVS"
+
+if ([ ! -f comp_maskreport_splice_optOut.txt -o ! -f comp_maskreport_splice_optOut-perimage.txt -o ! -f comp_maskreport_splice_optOut-journalResults.txt ]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 0 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
+  echo
+  exit
+fi
+
+if test "`eval $filter_soo`" = "" ; then
+  flag_soo=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv
+	fi
+	rm comp_maskreport_splice_optOut.txt
+else
+	echo comp_maskreport_splice_optOut.txt
+	cat comp_maskreport_splice_optOut.txt
+fi
+
+if test "`eval $filter_soopi`" = "" ; then
+  flag_soopi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_splice_optOut-perimage.txt
+else
+	echo comp_maskreport_splice_optOut-perimage.txt
+	cat comp_maskreport_splice_optOut-perimage.txt
+fi
+
+if test "`eval $filter_soojr`" = "" ; then
+  flag_soojr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_optOut/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv
+	fi
+	rm comp_maskreport_splice_optOut-journalResults.txt
+else
+	echo comp_maskreport_splice_optOut-journalResults.txt
+	cat comp_maskreport_splice_optOut-journalResults.txt
+fi
+
+splice_optOut_total=$(($flag_soo + $flag_soopi + $flag_soojr))
+
+
+flag_total=$(($flag_s + $flag_spi + $flag_sjr + $flag_m + $flag_mpi + $flag_mjr + $flag_t + $flag_tpi + $flag_tjr + $flag_sb + $flag_sbpi + $flag_sbjr\
+ + $manip_optOut_total\
+ + $splice_optOut_total))
 
 if ([ $flag_total -eq 0 ]); then
   echo
   echo "CASE 0 SUCCESSFULLY PASSED"
   echo
 	if [ $clean = "TRUE" ] ; then
-		rm -rf ../../data/test_suite/maskScorerTests/splicetest
 		rm -rf ../../data/test_suite/maskScorerTests/maniptest
+		rm -rf ../../data/test_suite/maskScorerTests/splicetest
 		rm -rf ../../data/test_suite/maskScorerTests/threstest
 		rm -rf ../../data/test_suite/maskScorerTests/splicebin
+		rm -rf ../../data/test_suite/maskScorerTests/manip_optOut
+		rm -rf ../../data/test_suite/maskScorerTests/splice_optOut
 	fi
 else
   echo

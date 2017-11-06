@@ -329,6 +329,7 @@ HISTORY
       - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
       - Renamed Mask Scorer test cases to conform to new format
       - Added -1 as a threshold to binarize masks to all white where relevant.
+      - Expanded test cases to cover optOut criteria for code.
     * Detection Scorer:
       - Fixed plot leakage issue for rendering.
     * Validator:

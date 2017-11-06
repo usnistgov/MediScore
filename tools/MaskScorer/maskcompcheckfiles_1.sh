@@ -317,6 +317,65 @@ else
 	cat comp_maskreport_display-journalResults.txt
 fi
 
+#optOut case
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -qm "Purpose==['clone','add']" -p $procs --color -html --speedup --optOut
+
+diff ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_target_optOut.csv > comp_maskreport_target_optOut.txt
+diff ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_target_optOut-perimage.csv > comp_maskreport_target_optOut-perimage.txt
+diff ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_target_optOut-journalResults.csv > comp_maskreport_target_optOut-journalResults.txt
+
+flag_target_optOut=1
+flag_target_optOutpi=1
+flag_target_optOutjr=1
+
+filter_target_optOut="cat comp_maskreport_target_optOut.txt | grep -v CVS"
+filter_target_optOutpi="cat comp_maskreport_target_optOut-perimage.txt | grep -v CVS"
+filter_target_optOutjr="cat comp_maskreport_target_optOut-journalResults.txt | grep -v CVS"
+
+if ([ ! -f comp_maskreport_target_optOut.txt -o ! -f comp_maskreport_target_optOut-perimage.txt -o ! -f comp_maskreport_target_optOut-journalResults.txt \
+]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
+  echo
+  exit
+fi
+
+if test "`eval $filter_target_optOut`" = "" ; then
+  flag_target_optOut=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv
+	fi
+	rm comp_maskreport_target_optOut.txt
+else
+	echo comp_maskreport_target_optOut.txt
+	cat comp_maskreport_target_optOut.txt
+fi
+
+if test "`eval $filter_target_optOutpi`" = "" ; then
+  flag_target_optOutpi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_target_optOut-perimage.txt
+else
+	echo comp_maskreport_target_optOut-perimage.txt
+	cat comp_maskreport_target_optOut-perimage.txt
+fi
+
+if test "`eval $filter_target_optOutjr`" = "" ; then
+  flag_target_optOutjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/target_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
+	fi
+	rm comp_maskreport_target_optOut-journalResults.txt
+else
+	echo comp_maskreport_target_optOut-journalResults.txt
+	cat comp_maskreport_target_optOut-journalResults.txt
+fi
+
+target_optOut_total=$(($flag_target_optOut + $flag_target_optOutpi + $flag_target_optOutjr))
+
 flag_total=$(($flag_all + $flag_allpi + $flag_alljr\
  + $flag_clone + $flag_clonepi + $flag_clonejr\
  + $flag_add + $flag_addpi + $flag_addjr\
@@ -324,13 +383,14 @@ flag_total=$(($flag_all + $flag_allpi + $flag_alljr\
  + $flag_healpi + $flag_healjr\
  + $flag_remove + $flag_removepi + $flag_removejr\
  + $flag_displaypi + $flag_displayjr\
-))
+ + $target_optOut_total))
 if ([ $flag_total == 0 ]); then
   echo
   echo "CASE 1 SUCCESSFULLY PASSED"
   echo
 	if [ $clean = "TRUE" ] ; then
 		rm -rf ../../data/test_suite/maskScorerTests/target_all
+		rm -rf ../../data/test_suite/maskScorerTests/target_optOut
 		rm -rf ../../data/test_suite/maskScorerTests/target_purpose
 		rm -rf ../../data/test_suite/maskScorerTests/target_display
 #		rm -rf ../../data/test_suite/maskScorerTests/target_clone

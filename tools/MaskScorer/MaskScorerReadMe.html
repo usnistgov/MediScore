@@ -11845,7 +11845,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="3.-Binarizing-the-Reference-Mask">3. Binarizing the Reference Mask<a name="Binmasks" /><a class="anchor-link" href="#3.-Binarizing-the-Reference-Mask">&#182;</a></h2><p>In order to score the system output mask against the reference mask, the reference mask also needs to be converted to a single-channel mask. The default way to do this would be to treat each of the regions with bit values (color regions for the color masks) as manipulated regions and to score accordingly.</p>
+<h2 id="3.-Binarizing-the-Reference-Mask">3. Binarizing the Reference Mask<a name="Binmasks" /><a class="anchor-link" href="#3.-Binarizing-the-Reference-Mask">&#182;</a></h2><p>In order to score the system output mask against the reference mask, the reference mask needs to be converted to a single-channel mask. The default way to do this would be to treat each of the regions with bit values (color regions for the color masks) as manipulated regions and to score accordingly.</p>
 <p>If selective scoring is utilized (via the -qm option), only regions that match the query will be scored against. The rest will be treated as no-score regions, to be discussed below.</p>
 
 </div>
@@ -11905,7 +11905,7 @@ MCC(gt,sys_{\theta}) = \frac{TP*TN - FP*FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
 \end{equation*}<p>An MCC of 1 denotes perfect correlation, an MCC of 0 denotes no correlation at all, and an MCC of -1 denotes perfect anti-correlation. If any of the sums in the denominator equals 0, the MCC is taken to be 0 by convention.</p>
 <h3 id="5.4-Nimble-Mask-Metric-(NMM)">5.4 Nimble Mask Metric (NMM)<a name="metricsnmm" /><a class="anchor-link" href="#5.4-Nimble-Mask-Metric-(NMM)">&#182;</a></h3>\begin{equation*}
 NMM(gt,sys_{\theta},wts,c)=\max{\left(\frac{TP - FN - FP}{\sum\limits_{px\in gt}wts(px)},c\right)}
-\end{equation*}<p>$\Sigma_{px \in GT}$ refers to the sum over the pixels in the ground truth that are marked black. $c$ denotes a minimum cutoff value for the scoring to have any meaning; by default, $c=-1$.</p>
+\end{equation*}<p>$\Sigma_{px \in GT} wts(px)$ refers to the sum over the pixels in the ground truth that are marked black. $c$ denotes a minimum cutoff value for the scoring to have any meaning; by default, $c=-1$.</p>
 <h3 id="5.5-Weighted-L1-Loss-(BWL1-and-GWL1)">5.5 Weighted L1 Loss (BWL1 and GWL1)<a name="metricswl1" /><a class="anchor-link" href="#5.5-Weighted-L1-Loss-(BWL1-and-GWL1)">&#182;</a></h3><p>A Weighted L1 of 0 denotes perfect or near perfect match up to variation within the weights that are 0; 1 denotes perfect mismatch. $(FP+FN)_{weights > 0}$ refers to the total number of $FP$ and $FN$ pixels where weights are greater than 0.</p>
 <p>The Weighted L1 is applied separately to the original grayscale system output and the binarized mask, producing the grayscale Weighted L1 (GWL1) and binarized Weighted L1 (BWL1) metrics respectively. In the case of the original grayscale, the value is summed over the weighted difference in pixel intensity.</p>
 \begin{equation*}
@@ -11919,7 +11919,7 @@ TPR = \frac{TP}{TP + FN}
 FPR = \frac{FP}{FP + TN}
 \end{equation*}<p>The area under the ROC curve (AUC) is a measure for the accuracy of the system.</p>
 \begin{equation*}
-AUC(gt,sys_{*},wts) = \sum\limits_{\theta_{n} \in \{\theta_{0},\ldots,\theta_{N-1}\}} \left(TPR(gt,sys_{\theta_{n+1}},wts) + TPR(gt,sys_{\theta_{n}},wts)\right)\left(FPR(gt,sys_{\theta_{n+1}},wts) - FPR(gt,sys_{\theta_{n}},wts)\right)
+AUC(gt,sys_{*},wts) = \frac{1}{2}\sum\limits_{\theta_{n} \in \{\theta_{0},\ldots,\theta_{N-1}\}} \left(TPR(gt,sys_{\theta_{n+1}},wts) + TPR(gt,sys_{\theta_{n}},wts)\right)\left(FPR(gt,sys_{\theta_{n+1}},wts) - FPR(gt,sys_{\theta_{n}},wts)\right)
 \end{equation*}<h3 id="5.7-Equal-Error-Rate-(EER)">5.7 Equal Error Rate (EER)<a name="metricseer" /><a class="anchor-link" href="#5.7-Equal-Error-Rate-(EER)">&#182;</a></h3><p>The value of the $FPR$ at the threshold where it is equal to the $FNR$ (or vice versa). $FPR$ is given by the formula in 5.6. $FNR$ is simply $1 - TPR$.</p>
 
 </div>
@@ -12150,6 +12150,10 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <ul>
 <li>The shape of the kernel to be used, for both erosion and dilation. Choose from 'box','disc','diamond','gaussian', or 'line'. The default kernel is 'box'.</li>
 </ul>
+<p>--optOut</p>
+<ul>
+<li>Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column. The values in the column that are opted out of the evaluation are "NonProcessed" (denoting some kind of system failure on that probe), "OptOutLocalization" (denoting opting out of the localization task only), and "OptOutAll" (denoting opting out of both the detection and localization tasks).</li>
+</ul>
 <p>-xF indexFilter</p>
 <ul>
 <li>Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.</li>
@@ -12249,10 +12253,6 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <ul>
 <li>Output the report to HTML files to visualize scoring.</li>
 </ul>
-<p>--optOut</p>
-<ul>
-<li>Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column. The values in the column that are opted out of the evaluation are "NonProcessed" (denoting some kind of system failure on that probe), "OptOutLocalization" (denoting opting out of the localization task only), and "OptOutAll" (denoting opting out of both the detection and localization tasks),.</li>
-</ul>
 <p>--displayScoredOnly</p>
 <ul>
 <li>Display only the data for which a localized score could be generated. This will exclude images for which there are no score-able regions.</li>
@@ -12272,11 +12272,11 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
-python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
+python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
 -oR outputs/maniptest/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span> --color
@@ -12320,7 +12320,7 @@ python MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
@@ -12356,7 +12356,7 @@ python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerT
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This sample HTML index files for the query can be found <a href="outputs/bitmask/index.html">here</a>.</p>
+<p>This sample HTML index files for the query can be found <a href="outputs/bitmask/index.html">here</a>. (The link will not work until the script is run.)</p>
 
 </div>
 </div>
