@@ -239,7 +239,7 @@ sysCols = list(mySys)
 refCols = list(sub_ref)
 
 if args.optOut and (not (localOptOutColName in sysCols) and not (pastOptOutColName in sysCols)):
-    print("ERROR: No {} column detected. Filtration is meaningless.".format(localOptOutColName))
+    print("ERROR: No {} or {} column detected. Filtration is meaningless.".format(localOptOutColName,pastOptOutColName))
     exit(1)
 
 sysCols = [c for c in sysCols if c not in refCols]
