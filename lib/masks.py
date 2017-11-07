@@ -35,6 +35,12 @@ import glymur
 from scipy import misc
 from decimal import Decimal
 
+debug_mode=False
+printq = lambda *a:None
+if debug_mode:
+    def printq(string):
+        print(string)
+
 #returns a kernel matrix
 def getKern(kernopt,size):
     """
@@ -466,6 +472,7 @@ class refmask(mask):
     
             elif option=='partial':
                 mybitlist = self.bitlist
+            printq((option,mybitlist))
 
         for p in unique_px:
             if (count_bits(p) == 1) and (p in mybitlist):
@@ -557,7 +564,8 @@ class refmask(mask):
         if self.bitlist is not 0:
             #thorough computation for individual bits 
             mymat = np.zeros(self.get_dims(),dtype=np.uint8)
-            for b in self.bitlist: #                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
+            for b in self.bitlist:
+#                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
                 if is_multi_layer:
                     layer = int(math.log(b,2)//8)
                     pixels = (self.matrix[:,:,layer] & (b >> layer*8)) > 0
@@ -606,7 +614,7 @@ class refmask(mask):
         
         is_multi_layer = len(self.matrix.shape) == 3
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-#        notcolors = mask.getColors(mymat)
+        notcolors = mask.getColors(mymat)
         if is_multi_layer:
             singlematrix = np.zeros(dims,dtype=np.uint8)
             const_factor = 1
@@ -616,17 +624,21 @@ class refmask(mask):
             notcolors = np.unique(singlematrix)
         else:
             notcolors = np.unique(mymat)
-
+        printq("Colors to consider: {}".format(notcolors))
         top_px = max(notcolors)
-        if (top_px == 0) or (self.bitlist is 0):
+
+        printq(self.journalData)
+        if (np.array_equal(mymat,np.zeros(dims))) or (self.bitlist is 0):
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
         #decompose into individual bit channels.
         #but this won't represent all colors, so max with the max bit in self.bitlist
         top_bit = max([int(math.floor(math.log(top_px,2))),int(math.floor(math.log(max(self.bitlist),2)))]) + 1
+#        top_bit = int(math.floor(math.log(max(self.bitlist),2))) + 1
         notcolors = range(0,top_bit)
         notcolors = [ 1 << b for b in notcolors ]
+        printq("Colors to consider: {}".format(notcolors))
 
 #        for c in self.colors:
         scored = np.zeros((dims[0],dims[1]),dtype=np.uint8)
@@ -635,14 +647,18 @@ class refmask(mask):
 #            if tuple(c) in notcolors:
             if is_multi_layer:
                 layer = int(math.log(b,2)//8)
+                printq("Multi-layered. Accessing layer {} to get bit {}".format(layer,c))
                 pixels = (mymat[:,:,layer] & (c >> layer*8)) > 0
             else:
+                printq("Single-layered. Accessing bit {}".format(c))
                 pixels = (mymat & c) > 0
 
             scored = scored | pixels
             if c in notcolors:
                 notcolors.remove(c)
             #skip the colors that aren't present, in case they haven't made it to the mask in question
+
+        printq("Excluded colors: {}".format(notcolors))
         if len(notcolors)==0:
             weights = np.ones(dims,dtype=np.uint8)
             return weights
