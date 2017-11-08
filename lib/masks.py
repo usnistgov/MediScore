@@ -401,6 +401,7 @@ class refmask(mask):
             bitmask = 0
             for b in all_bitlist:
                 bitmask = bitmask + (1 << (int(b) - 1))
+            printq(bitmask)
             if self.is_multi_layer:
                 n_layers = self.matrix.shape[2]
                 for l in range(n_layers):
