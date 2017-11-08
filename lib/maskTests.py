@@ -238,14 +238,28 @@ class TestImageMethods(ut.TestCase):
         rImg.binarize(0)
         aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
 
-        selmask = np.ones(mask1.shape)
-        selmask[38:62,38:62] = 0
-        selmask[41:59,41:59] = 1
         self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
         os.system('rm testrefmask_2a.jp2')
 
+        #add multi-layer test case
+        maskML = np.zeros((100,100,2),dtype=np.uint8)
+        maskML[40:60,50:60,0] = 2
+        maskML[40:60,40:50,1] = 1
+        journal_df = pd.DataFrame({'JournalName':['Foo','Foo','Foo'],'Color':['255 0 0','0 255 0','0 0 255'],'Operation':['PasteSplice','LocalBlur','ContentAwareFill'],'BitPlane':[3,2,1],'Sequence':[3,2,1],'Evaluated':['Y','Y','N']})
+        ML_journal_df = pd.DataFrame({'JournalName':'Foo','Color':['255 0 0','0 255 0'],'Operation':['PasteSplice','Blur'],'BitPlane':[2,9],'Sequence':[2,1],'Evaluated':['Y','Y']})
+
+        glymur.Jp2k('testrefmask_2ML.jp2',maskML)
+        rImg = masks.refmask('testrefmask_2ML.jp2',jData=ML_journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,selmask))
+        self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        os.system('rm testrefmask_2ML.jp2')
+        
         #2 contained in 1
         mask2in1 = np.zeros((100,100),dtype=np.uint8)
         mask2in1[10:90,10:70] = 1
