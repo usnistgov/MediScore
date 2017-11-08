@@ -182,7 +182,7 @@ class TestImageMethods(ut.TestCase):
 #        sImg = masks.mask('testsysmask.png')
 #        os.system('rm testsysmask.png')
 
-        journal_df = pd.DataFrame({'JournalName':['Foo','Foo'],'Color':['255 0 0','0 255 0'],'Operation':['PasteSplice','LocalBlur'],'BitPlane':[3,2],'Sequence':[3,2],'Evaluated':['Y','Y']})
+        journal_df = pd.DataFrame({'JournalName':['Foo','Foo','Foo'],'Color':['255 0 0','0 255 0','0 0 255'],'Operation':['PasteSplice','LocalBlur','ContentAwareFill'],'BitPlane':[3,2,1],'Sequence':[3,2,1],'Evaluated':['Y','Y','N']})
 
         #blank mask, erosion and dilation should yield total weighted matrix
         blank_mask = np.zeros((100,150),dtype=np.uint8)
@@ -229,6 +229,22 @@ class TestImageMethods(ut.TestCase):
         self.assertTrue(np.array_equal(bns,selmask))
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
         os.system('rm testrefmask_2.jp2')
+
+        #add case with bitplane 4 set, make sure it's equal to above
+        mask3 = np.copy(mask2)
+        mask3[80:100,80:100] = 8
+        glymur.Jp2k('testrefmask_2a.jp2',mask2)
+        rImg = masks.refmask('testrefmask_2a.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+
+        selmask = np.ones(mask1.shape)
+        selmask[38:62,38:62] = 0
+        selmask[41:59,41:59] = 1
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        self.assertTrue(np.array_equal(bns,selmask))
+        self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        os.system('rm testrefmask_2a.jp2')
 
         #2 contained in 1
         mask2in1 = np.zeros((100,100),dtype=np.uint8)

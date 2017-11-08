@@ -370,6 +370,7 @@ class refmask(mask):
         #rework the init and other functions to support bit masking
         #default to all regions if it is 0
         self.bitlist=0
+        self.is_multi_layer = len(self.matrix.shape) == 3
 
         if jData is not 0:
 #            self.colors = [[0,0,0]]
@@ -390,6 +391,23 @@ class refmask(mask):
             self.journalData = jData.sort_values("Sequence",ascending=False)
             desired_rows = self.journalData.query("{}=='Y'".format(evalcol))
 
+            all_bitlist = self.journalData['BitPlane'].unique().tolist()
+            if '' in all_bitlist:
+                all_bitlist.remove('')
+            if 'None' in all_bitlist:
+                all_bitlist.remove('None')
+            
+            #filter out bits that aren't present for that probe.
+            bitmask = 0
+            for b in all_bitlist:
+                bitmask = bitmask + (1 << (int(b) - 1))
+            if self.is_multi_layer:
+                n_layers = self.matrix.shape[2]
+                for l in range(n_layers):
+                    self.matrix[:,:,l] = self.matrix[:,:,l] & (bitmask >> 8*l)
+            else:
+                self.matrix = self.matrix & bitmask
+
             bitlist = desired_rows['BitPlane'].unique().tolist()
             if '' in bitlist:
                 bitlist.remove('')
@@ -404,6 +422,21 @@ class refmask(mask):
 #            self.purposes = purposes
         else:
             self.journalData = 0
+
+    def getUniqueValues(self):
+        """
+        * Description: return unique values in the matrix
+        """
+        if self.is_multi_layer:
+            singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
+            const_factor = 1
+            for i in range(self.matrix.shape[2]):
+                const_factor = 1 << 8*i
+                singlematrix = singlematrix + const_factor*self.matrix[:,:,i]
+            unique_px = np.unique(singlematrix)
+        else:
+            unique_px = np.unique(self.matrix)
+        return unique_px
 
     def regionIsPresent(self):
         """
@@ -446,15 +479,7 @@ class refmask(mask):
         is_multi_layer = len(self.matrix.shape) == 3
 
         #get unique pixel values
-        if is_multi_layer:
-            singlematrix = np.zeros(dims,dtype=np.uint8)
-            const_factor = 1
-            for i in range(self.matrix.shape[2]):
-                const_factor = 1 << 8*i
-                singlematrix = singlematrix + const_factor*self.matrix[:,:,i]
-            unique_px = np.unique(singlematrix)
-        else:
-            unique_px = np.unique(self.matrix)
+        unique_px = self.getUniqueValues()
 
         if self.journalData is 0:
             top_bit = int(math.floor(math.log(max(unique_px),2))) + 1
@@ -614,16 +639,18 @@ class refmask(mask):
         
         is_multi_layer = len(self.matrix.shape) == 3
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-        notcolors = mask.getColors(mymat)
-        if is_multi_layer:
-            singlematrix = np.zeros(dims,dtype=np.uint8)
-            const_factor = 1
-            for i in range(self.matrix.shape[2]):
-                const_factor = 1 << 8*i
-                singlematrix = singlematrix + const_factor*mymat[:,:,i]
-            notcolors = np.unique(singlematrix)
-        else:
-            notcolors = np.unique(mymat)
+#        notcolors = mask.getColors(mymat)
+#        if is_multi_layer:
+#            singlematrix = np.zeros(dims,dtype=np.uint8)
+#            const_factor = 1
+#            for i in range(self.matrix.shape[2]):
+#                const_factor = 1 << 8*i
+#                singlematrix = singlematrix + const_factor*mymat[:,:,i]
+#            notcolors = np.unique(singlematrix)
+#        else:
+#            notcolors = np.unique(mymat)
+
+        notcolors = self.getUniqueValues()
         printq("Colors to consider: {}".format(notcolors))
         top_px = max(notcolors)
 

@@ -65,7 +65,7 @@ class ProvenanceValidator(validator):
         task = task.lower()
         self.task = task
         if (task != 'provenance') and (task != 'provenancefiltering'):
-            printq("ERROR: " + task + " unrecognized. Only provenance or provenancefiltering are recognized. Make sure your team name does not include underscores '_'.",True)
+            printq("ERROR: {} unrecognized. Only provenance or provenancefiltering are recognized. Make sure your team name does not include underscores '_'.".format(task),True)
             taskFlag = 1
     
         if (taskFlag == 0) and (teamFlag == 0):
@@ -95,7 +95,23 @@ class ProvenanceValidator(validator):
 
         sysHeads = list(sysfile.columns)
         allClear = True
-        truelist = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName","IsOptOut"]
+        truelist = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName"]
+
+        optOut=0
+        optOutColName = "IsOptOut"
+        if not (("IsOptOut" in sysHeads) or ("ProvenanceProbeStatus" in sysHeads)):
+            printq("ERROR: Either 'IsOptOut' or 'ProvenanceProbeStatus' must be in the column headers.")
+            allClear = False
+        else:
+            if ("IsOptOut" in sysHeads) and ("ProvenanceProbeStatus" in sysHeads):
+                printq("The system output has both 'IsOptOut' and 'ProvenanceProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
+
+            if "IsOptOut" in sysHeads:
+                optOut=1
+            elif "ProvenanceProbeStatus" in sysHeads:
+                optOut=2
+                optOutColName = "ProvenanceProbeStatus"
+        self.optOut=optOut
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -159,7 +175,7 @@ class ProvenanceValidator(validator):
                 if outputJsonName in [None,'',np.nan,'nan']:
                     printq("The json for file " + sysfile['ProvenanceProbeFileID'][i] + " appears to be absent. Skipping it.")
                     continue
-                jsonFlag = jsonFlag | jsonCheck(os.path.join(sysPath,sysfile['ProvenanceOutputFileName'][i]),sysfile['ProvenanceProbeFileID'][i],self.task)
+                jsonFlag = jsonFlag | jsonCheck(os.path.join(sysPath,sysfile['ProvenanceOutputFileName'][i]),sysfile['ProvenanceProbeFileID'][i],self.task,sysfile[optOutColName][i],self.optOut)
         
         #final validation
         if (jsonFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
@@ -168,17 +184,25 @@ class ProvenanceValidator(validator):
             printq("The contents of your file are not valid!",True)
             return 1
 
-def jsonCheck(provfile,provID,task):
+#TODO: do this by row?
+def jsonCheck(provfile,provID,task,optOutColName,optOutVersion):
     #toggle with task
     refschema = os.path.join(os.path.dirname(os.path.abspath(__file__)),'ProvenanceFilteringSchema-1.2.json')
     if task == 'provenance':
         refschema = os.path.join(os.path.dirname(os.path.abspath(__file__)),'ProvenanceGraphBuildingSchema-1.2.json')
 
+    #TODO: duplicated in case names need changing.
+    if optOutVersion == 1:
+        if optOutColName in ['NonProcessed','OptOut']:
+            return 0
+    elif optOutVersion == 2:
+        if optOutColName in ['NonProcessed','OptOut']:
+            return 0
+
     #read the schema
     schema = 0
     with open(refschema) as schema_data:
         schema = json.load(schema_data)
-    
     #read the submission json
     prov = 0
     with open(provfile) as prov_data:
