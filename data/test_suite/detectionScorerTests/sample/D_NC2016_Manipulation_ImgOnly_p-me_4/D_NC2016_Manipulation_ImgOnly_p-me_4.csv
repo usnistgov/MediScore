@@ -1,0 +1,8 @@
+"ProbeFileID"|"ConfidenceScore"|"OutputProbeMaskFileName"|"ProbeStatus"
+"F18"|0.034|"mask/F18-mask.png"|"Processed"
+"F166"|0.021|"mask/F166-mask.png"|"NonProcessed"
+"F165"|0.021|"mask/F165-mask.png"|"OptOutAll"
+"F86"|0.016|"mask/F86-mask.png"|"OptOutDetection"
+"F87"|0.016|"mask/F87-mask.png"|""
+"F88"|0.016|"mask/F88-mask.png"|"Processed"
+"F172"|0.015|"mask/F172-mask.png"|"OptOutLocalization"

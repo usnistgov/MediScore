@@ -12194,7 +12194,7 @@ Plot output: NIST_001_f_roc_0.pdf, NIST_001_f_roc_1.pdf, ...
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--optOut</p>
 <ul>
-<li>Evaluate algorithm performance on trials where IsOptOut values are 'N'.</li>
+<li>Evaluate algorithm performance on trials where IsOptOut values are ['N', 'Localization'] or ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'].</li>
 </ul>
 
 </div>
@@ -12341,7 +12341,14 @@ Examples:
 <ul>
 <li>Full scoring: rendering the ROC curve and the report table,
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_001 --ci --display
+python DetectionScorer.py -o ./testcases/NC16_001 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_001_roc_all1.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
@@ -12421,7 +12428,13 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Full scoring: rendering DET curve:
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_002 --plotType det --display
+python DetectionScorer.py -o ./testcases/NC16_002 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+--plotType det --display
 </code>
 <img src="./notebookImgs/NC16_002_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
 </ul>
@@ -12437,7 +12450,13 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>OptOut (IsOptOut =='N') scoring
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv --outRoot ./testcases/NC16_101 --optOut --dLevel 0.1 --ci --display
+python DetectionScorer.py -o ./testcases/NC16_101 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv  \
+--optOut --dLevel 0.1 --ci --plotType roc --display
 </code>
 <img src="./notebookImgs/NC16_101_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
@@ -12451,9 +12470,40 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
+<li>Reduced (--noNum): legend without the number of target and non-target trials,
+<code>
+python DetectionScorer.py -o ./testcases/NC16_102 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+--ci --display --noNum
+</code>
+<img src="./notebookImgs/NC16_102_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
 <li>Query (-q) with one query
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_003 <b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> --ci --display
+python DetectionScorer.py -o ./testcases/NC16_003 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+<b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_003_roc_all.png" alt="ROC3" width="700" height="600" align="left"></li>
 </ul>
@@ -12523,7 +12573,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_004 <b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"  "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
+python DetectionScorer.py -o ./testcases/NC16_004 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+<b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth" "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_004_roc_all.png" alt="ROC4" width="700" height="600"  align="left"></li>
 </ul>
@@ -12647,10 +12705,18 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for partition (-qp) with one partition
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_005 <b>-qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"</b> --ci --display
-</code>
-<img src="./notebookImgs/NC16_005_roc_all.png" alt="ROC4" width="700" height="600" align="left"></li>
+python DetectionScorer.py -o ./testcases/NC16_005 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
+<b>-qp "Collection==['Nimble-SCI'] & 300 <= ProbeWidth"</b> \
+--ci --display</li>
 </ul>
+<p>&lt;/code&gt;
+<img src="./notebookImgs/NC16_005_roc_all.png" alt="ROC4" width="700" height="600" align="left"></p>
 
 </div>
 </div>
@@ -12721,7 +12787,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for partition (-qp) with two partitions
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_006 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> --ci --display
+python DetectionScorer.py -o ./testcases/NC16_006 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+<b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_006_roc_all.png" alt="ROC6" width="700" height="600" align="left"></li>
 </ul>
@@ -12806,7 +12880,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_010 <b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> --display
+python DetectionScorer.py -o ./testcases/NC16_010 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+<b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> \
+--display
 </code>
 <img src="./notebookImgs/NC16_010_roc_all.png" alt="ROC111" width="700" height="600" align="left"></li>
 </ul>
@@ -12930,7 +13012,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>--multiFigs with the query option
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv --outRoot ./testcases/NC16_007 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs</b> --ci --display
+python DetectionScorer.py -o ./testcases/NC16_007 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-manipulation-ref.csv \
+-x NC2016-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
+<b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth" --multiFigs</b> \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_007_roc_combine.png" alt="ROC7" width="1000" height="700" align="left"></li>
 </ul>
@@ -12954,7 +13044,13 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Note that the following result may not be consistent with your result due to the number inconsistency of NC2016 data.
 <code>
-python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detectionScorerTests/reference -r NC2016-splice-ref.csv -x NC2016-splice-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv --outRoot ./testcases/NC16_100 --ci --display
+python DetectionScorer.py -o ./testcases/NC16_100 \
+<b>-t splice</b> \
+--refDir ../../data/test_suite/detectionScorerTests/reference \
+-r NC2016-splice-ref.csv -x NC2016-splice-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2016_Splice_ImgOnly_p-splice_01.csv \
+--ci --display
 </code>
 <img src="./notebookImgs/NC16_100_roc_all.png" alt="ROC8" width="500" height="400" align="left"></p>
 
@@ -12986,21 +13082,13 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>AUC</th>
-      <th>FAR_STOP</th>
-      <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>AUC|FAR_STOP|EER|AUC_CI_LOWER|AUC_CI_UPPER</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>0.872003</td>
-      <td>1</td>
-      <td>0.2148</td>
-      <td>0.853012</td>
-      <td>0.88796</td>
+      <td>0.86436|1|0.23348|0.845468|0.881527</td>
     </tr>
   </tbody>
 </table>
@@ -13039,7 +13127,14 @@ python DetectionScorer.py <b>-t splice</b> --refDir ../../data/test_suite/detect
 <ul>
 <li>Full scoring: rendering ROC curve
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_001 --ci --display
+python DetectionScorer.py -o ./testcases/NC17_001 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/ \
+-r reference/NC2017-manipulation-ref.csv \
+-x reference/NC2017-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+--ci --display
 </code>
 <img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
 </ul>
@@ -13117,7 +13212,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query (-q) with two queries
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_002 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> --display
+python DetectionScorer.py -o ./testcases/NC17_002 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/ \
+-r reference/NC2017-manipulation-ref.csv \
+-x reference/NC2017-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+<b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> \
+--display
 </code>
 <img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
 </ul>
@@ -13133,7 +13236,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "Purpose"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_003 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> --display
+python DetectionScorer.py -o ./testcases/NC17_003 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/ \
+-r reference/NC2017-manipulation-ref.csv \
+-x reference/NC2017-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+<b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> \
+--display
 </code>
 <img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
 </ul>
@@ -13149,7 +13260,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the factor "OperationArgument"
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_004 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> --display
+python DetectionScorer.py -o ./testcases/NC17_004 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/ \
+-r reference/NC2017-manipulation-ref.csv \
+-x reference/NC2017-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+<b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> \
+--display
 </code>
 <img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
 </ul>
@@ -13165,7 +13284,15 @@ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detecti
 <ul>
 <li>Query for selective manipulation (-qm) with the mixed of factors
 <code>
-python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/ -r reference/NC2017-manipulation-ref.csv -x reference/NC2017-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/baseline -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv --outRoot ./testcases/NC17_005 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> --display
+python DetectionScorer.py -o ./testcases/NC17_005 \
+-t manipulation \
+--refDir ../../data/test_suite/detectionScorerTests/ \
+-r reference/NC2017-manipulation-ref.csv \
+-x reference/NC2017-manipulation-index.csv \
+--sysDir ../../data/test_suite/detectionScorerTests/baseline \
+-s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+<b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> \
+--display
 </code>
 <img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
 </ul>

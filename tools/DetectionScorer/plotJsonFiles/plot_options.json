@@ -1,0 +1,11 @@
+{"title": "Performance",
+ "subtitle": "",
+ "plot_type": "ROC",
+ "title_fontsize": 13,
+ "subtitle_fontsize": 11,
+ "xticks_size": "medium",
+ "yticks_size": "medium",
+ "xlabel": "False Alarm Rate [%]",
+ "xlabel_fontsize": 11,
+ "ylabel": "Miss Detection Rate [%]",
+ "ylabel_fontsize": 11}

@@ -323,21 +323,37 @@ HISTORY
       - Added ROC curve averages.
       - Added standard deviation for metrics.
       - Added reading functionality for empty reference masks.
-      - Output reformatting.
-      - File prefix added to --outRoot option as a requirement.
-      - Added per-probe pixel no-score
-      - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
-      - Renamed Mask Scorer test cases to conform to new format
-      - Added -1 as a threshold to binarize masks to all white where relevant.
-      - Expanded test cases to cover optOut criteria for code.
     * Detection Scorer:
-      - Fixed plot leakage issue for rendering.
     * Validator:
       - Reverting splice validator to serial dictionary implementation for stability.
       - Added confidence score checking to make sure the confidence score is a real number.
       - Added additional optOut functionality (the code is still backwards compatible)
     * Provenance Validator:
       - Reworded the -task option in the ReadMe for clarity.
+  Sep 25, 2017 - MediScore Version 1.1.13
+    * DetectionScorer:
+      - cleaned up the test cases and added exclusions for “.DS_Store” and PDF files
+    * MaskScorer:
+      - Output reformatting.
+      - File prefix added to --outRoot option as a requirement.
+      - Added per-probe pixel no-score
+      - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
+
+  Nov 1, 2017 - MediScore Version 1.1.14
+    * DetectionScorer:
+      - reimplemented the merging process
+      - added ProbeStatus with ['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] for Optout options and kept the old version of the IsOptOut column process
+      - added test cases:
+        1) Testing with the manipulation OptOut case -- IsOptOut
+        2) Testing a query with the manipulation OptOut case -- IsOptOut
+        3) Testing with the manipulation OptOut case -- ProbeStatus
+      - added all the examples (16 test cases) from the DetectionScorer ReadMe document to make check
+      - Fixed plot leakage issue for rendering.
+    * Mask Scorer
+      - Renamed Mask Scorer test cases to conform to new format
+      - Added -1 as a threshold to binarize masks to all white where relevant.
+      - Expanded test cases to cover optOut criteria for code.
+
 
 CONTACT
 -------
