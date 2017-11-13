@@ -674,7 +674,7 @@ class refmask(mask):
         for c in self.bitlist:
 #            if tuple(c) in notcolors:
             if is_multi_layer:
-                layer = int(math.log(b,2)//8)
+                layer = int(math.log(c,2)//8)
                 printq("Multi-layered. Accessing layer {} to get bit {}".format(layer,c))
                 pixels = (mymat[:,:,layer] & (c >> layer*8)) > 0
             else:
@@ -697,7 +697,7 @@ class refmask(mask):
             #set equal to cs
 #            tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
             if is_multi_layer:
-                layer = int(math.log(b,2)//8)
+                layer = int(math.log(c,2)//8)
                 pixels = (mymat[:,:,layer] & (c >> layer*8)) > 0
             else:
                 pixels = (mymat & c) > 0
