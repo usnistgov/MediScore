@@ -802,6 +802,7 @@ class refmask_color(mask):
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
+
         if (distractionKernSize > 0) and (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
             distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
@@ -894,11 +895,13 @@ class refmask_color(mask):
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
+        printq(erodeKernSize)
         if erodeKernSize > 0:
             eKern=getKern(kern,erodeKernSize)
             eImg=cv2.erode(scoredregion,eKern,iterations=1)
         else:
             eImg = scoredregion
+        printq(dilateKernSize)
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
             dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)

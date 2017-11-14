@@ -1547,8 +1547,11 @@ class maskMetricRunner:
         mydims = ref.get_dims()
         mycolor = 255*np.ones((mydims[0],mydims[1],3),dtype=np.uint8)
 
-        eKern = masks.getKern(kern,erodeKernSize)
-        eData = 255 - cv2.erode(255 - ref.bwmat,eKern,iterations=1)
+        if erodeKernSize > 0:
+            eKern = masks.getKern(kern,erodeKernSize)
+            eData = 255 - cv2.erode(255 - ref.bwmat,eKern,iterations=1)
+        else:
+            eData = ref.bwmat
 
         #flip all because black is 0 by default. Use the regions to determine where to color.
         b_sImg = 1-sys.bwmat/255
