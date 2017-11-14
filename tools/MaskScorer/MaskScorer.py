@@ -1015,8 +1015,11 @@ if args.task == 'manipulation':
     m_df.loc[pd.isnull(m_df['ConfidenceScore']),'ConfidenceScore'] = mySys['ConfidenceScore'].min()
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
+    journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
+    if 'BitPlane' in list(probeJournalJoin):
+        journaljoinfields.append('BitPlane')
 
-    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+    journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=journaljoinfields)
     if args.indexFilter:
         printq("Filtering the journal data by index file...")
         myIndex = myIndex.query("ProbeFileID == {}".format(probeJournalJoin['ProbeFileID'].unique().tolist())) #filter index first.
@@ -1032,7 +1035,7 @@ if args.task == 'manipulation':
 
     for qnum,q in enumerate(queryM):
         #journalData0 = journalMask.copy() #pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
-        journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+        journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=journaljoinfields)
 
         m_dfc = m_df.copy()
         if factor_mode == 'qm':
@@ -1055,8 +1058,8 @@ if args.task == 'manipulation':
             #journalData = journalData.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
             journalData_df = journalData_df.query("ProbeFileID=={}".format(list(big_df.ProbeFileID)))
 #            journalData_df = journalData_df.merge(big_df[['ProbeFileID','JournalName','StartNodeID','EndNodeID']],how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID'])
-            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','ProbeMaskFileName']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'Evaluated'] = 'Y'
+            journalData0.loc[journalData0.reset_index().merge(big_df[['ProbeFileID','ProbeMaskFileName'] + journaljoinfields],\
+                             how='left',on=journaljoinfields).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'Evaluated'] = 'Y'
         m_dfc.index = range(len(m_dfc))
             #journalData.index = range(0,len(journalData))
 
@@ -1145,8 +1148,13 @@ elif args.task == 'splice':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    joinfields = param_ids+['JournalName']
-    journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=['JournalName']).drop_duplicates()
+#    journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
+    journaljoinfields = ['JournalName']
+    if 'BitPlane' in list(probeJournalJoin):
+        journaljoinfields.append('BitPlane')
+
+    joinfields = param_ids+journaljoinfields
+    journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=journaljoinfields).drop_duplicates()
     if args.indexFilter:
         printq("Filtering the journal data by index file...")
         myIndex['ProbeDonorID'] = myIndex['ProbeFileID'] + ":" + myIndex['DonorFileID']
@@ -1174,7 +1182,7 @@ elif args.task == 'splice':
                 journalData0[param+'Evaluated'] = pd.Series(['Y']*n_journals)
 
         #use big_df to filter from the list as a temporary thing
-        journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=['JournalName','StartNodeID','EndNodeID'])
+        journalData_df = pd.merge(probeJournalJoin,journalMask,how='left',on=journaljoinfields)
         #journalData = journalData0.copy()
 
         if q is not '':
@@ -1190,9 +1198,9 @@ elif args.task == 'splice':
             m_dfc = pd.merge(m_dfc,big_df[param_ids],how='left',on=joinfields).dropna().drop('JournalName',1)
             #journalData = pd.merge(journalData0,big_df[['ProbeFileID','DonorFileID','JournalName']],how='left',on=['ProbeFileID','DonorFileID','JournalName'])
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','ProbeMaskFileName']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'ProbeEvaluated'] = 'Y'
+                             how='left',on=journaljoinfields).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'ProbeEvaluated'] = 'Y'
             journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','DonorMaskFileName']],\
-                             how='left',on=['JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
+                             how='left',on=journaljoinfields).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
 
         m_dfc.index = range(m_dfc.shape[0])
             #journalData.index = range(0,len(journalData))
