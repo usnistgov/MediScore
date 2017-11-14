@@ -729,7 +729,7 @@ class refmask(mask):
             dKern=getKern(kern,dilateKernSize)
             dImg = 1 - cv2.dilate(mybin,dKern,iterations=1)
         else:
-            dImg = scored
+            dImg = 1-mybin
 
         dImg = dImg | eImg
         weights=dImg.astype(np.uint8)
@@ -803,7 +803,7 @@ class refmask_color(mask):
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
 
-        if (distractionKernSize > 0) and (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
+        if (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
             distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 
@@ -906,7 +906,7 @@ class refmask_color(mask):
             dKern=getKern(kern,dilateKernSize)
             dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
         else:
-            dImg = scoredregion
+            dImg = mybin
         dImg=dImg | eImg
         weights=dImg.astype(np.uint8)
 
