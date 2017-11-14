@@ -52,6 +52,9 @@ def getKern(kernopt,size):
     * Output:
     *     the kernel to perform erosion and/or dilation 
     """
+    if (size == 0):
+        printq("Kernel size 0 chosen. Returning 0.")
+        return 0
     if (size % 2 == 0):
         raise Exception('ERROR: One of your kernel sizes is not an odd integer.')
     kern = 0
@@ -600,16 +603,28 @@ class refmask(mask):
 
                 mymat = mymat | pixels
             mymat = 255*(1-mymat).astype(np.uint8)
-            self.bwmat = mymat
         else:
-            mymat = 255*(1-(selfmat > 0))
-        kern = kern.lower()
-        eKern=getKern(kern,erodeKernSize)
-        dKern=getKern(kern,dilateKernSize)
+            if is_multi_layer:
+                for l in range(self.matrix.shape[2]):
+                    mymat = mymat | (self.matrix[:,:,l] > 0)
+                mymat = 255*(1-(mymat > 0))
+            else:
+                mymat = 255*(1-(selfmat > 0))
+        self.bwmat = mymat
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
-        eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
-        dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+        kern = kern.lower()
+        if erodeKernSize > 0:
+            eKern=getKern(kern,erodeKernSize)
+            eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+        else:
+            eImg=255-mymat
+
+        if dilateKernSize > 0:
+            dKern=getKern(kern,dilateKernSize)
+            dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+        else:
+            dImg=255-mymat
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
@@ -634,9 +649,6 @@ class refmask(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        kern = kern.lower()
-        eKern=getKern(kern,erodeKernSize)
-        dKern=getKern(kern,dilateKernSize)
         
         is_multi_layer = len(self.matrix.shape) == 3
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
@@ -706,8 +718,19 @@ class refmask(mask):
         mybin = mybin.astype(np.uint8)
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         #eroded region must be set to 1 and must not be overrideen by the unselected NSR
-        eImg = cv2.erode(scored,eKern,iterations=1)
-        dImg = 1 - cv2.dilate(mybin,dKern,iterations=1)
+        kern = kern.lower()
+        if erodeKernSize > 0:
+            eKern=getKern(kern,erodeKernSize)
+            eImg = cv2.erode(scored,eKern,iterations=1)
+        else:
+            eImg = scored
+
+        if dilateKernSize > 0:
+            dKern=getKern(kern,dilateKernSize)
+            dImg = 1 - cv2.dilate(mybin,dKern,iterations=1)
+        else:
+            dImg = scored
+
         dImg = dImg | eImg
         weights=dImg.astype(np.uint8)
 
@@ -809,13 +832,19 @@ class refmask_color(mask):
             self.bwmat = mymat
         else:
             mymat = self.binarize(254)
-        kern = kern.lower()
-        eKern=getKern(kern,erodeKernSize)
-        dKern=getKern(kern,dilateKernSize)
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
-        eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
-        dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+        kern = kern.lower()
+        if erodeKernSize > 0:
+            eKern=getKern(kern,erodeKernSize)
+            eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+        else:
+            eImg = 255 - mymat
+        if dilateKernSize > 0:
+            dKern=getKern(kern,dilateKernSize)
+            dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+        else:
+            dImg = 255 - mymat
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
@@ -840,9 +869,6 @@ class refmask_color(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        kern = kern.lower()
-        dKern=getKern(kern,dilateKernSize)
-        eKern=getKern(kern,erodeKernSize)
         scoredregion = np.zeros(dims)
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
@@ -867,8 +893,17 @@ class refmask_color(mask):
             mybin = mybin & tbin
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
-        eImg=cv2.erode(scoredregion,eKern,iterations=1)
-        dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+        kern = kern.lower()
+        if erodeKernSize > 0:
+            eKern=getKern(kern,erodeKernSize)
+            eImg=cv2.erode(scoredregion,eKern,iterations=1)
+        else:
+            eImg = scoredregion
+        if dilateKernSize > 0:
+            dKern=getKern(kern,dilateKernSize)
+            dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+        else:
+            dImg = scoredregion
         dImg=dImg | eImg
         weights=dImg.astype(np.uint8)
 
