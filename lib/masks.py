@@ -618,13 +618,13 @@ class refmask(mask):
             eKern=getKern(kern,erodeKernSize)
             eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
         else:
-            eImg=255-mymat
+            eImg=mymat
 
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
             dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
         else:
-            dImg=255-mymat
+            dImg=mymat
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight
@@ -840,12 +840,12 @@ class refmask_color(mask):
             eKern=getKern(kern,erodeKernSize)
             eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
         else:
-            eImg = 255 - mymat
+            eImg = mymat
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
             dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
         else:
-            dImg = 255 - mymat
+            dImg = mymat
 
         weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         wFlip=1-weight

@@ -942,6 +942,7 @@ class maskMetricRunner:
             myauc = dmets.compute_auc(fpr,tpr)
             df['MaskAverageAUC'] = myauc #store in df to tack onto average dataframe later
     
+            confsum = df[['OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN']].sum(axis=0)
             #same total number of targets and non-targets as above
             mydets = detPackage(tpr,
                                 fpr,
