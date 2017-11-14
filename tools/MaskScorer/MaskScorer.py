@@ -1016,8 +1016,8 @@ if args.task == 'manipulation':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
-    if 'BitPlane' in list(probeJournalJoin):
-        journaljoinfields.append('BitPlane')
+#    if 'BitPlane' in list(probeJournalJoin):
+#        journaljoinfields.append('BitPlane')
 
     journalData0 = pd.merge(probeJournalJoin,journalMask,how='left',on=journaljoinfields)
     if args.indexFilter:
@@ -1150,8 +1150,8 @@ elif args.task == 'splice':
 
 #    journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
     journaljoinfields = ['JournalName']
-    if 'BitPlane' in list(probeJournalJoin):
-        journaljoinfields.append('BitPlane')
+#    if 'BitPlane' in list(probeJournalJoin):
+#        journaljoinfields.append('BitPlane')
 
     joinfields = param_ids+journaljoinfields
     journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=journaljoinfields).drop_duplicates()
