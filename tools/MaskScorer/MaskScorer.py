@@ -125,6 +125,11 @@ parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scori
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
 
 args = parser.parse_args()
+
+if len(sys.argv) < 2:
+    parser.print_help()
+    exit(0)
+
 verbose=args.verbose
 
 #wrapper print function for print message suppression
