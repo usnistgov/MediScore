@@ -1,2 +1,2 @@
-QUERY|AUC|FAR_STOP|EER|AUC_CI_LOWER|AUC_CI_UPPER|TRR|SYS_RESPONSE
-Purpose==['remove'] and Operation ==['FillContentAwareFill']|0.67787|1|0.330556|0|0|0.95|all
+QUERY|AUC|EER|FAR_STOP|AUC@FAR|CDR@FAR|AUC_CI_LOWER@FAR|AUC_CI_UPPER@FAR|TRR|SYS_RESPONSE
+Purpose==['remove'] and Operation ==['FillContentAwareFill']|0.67787|0.330556|0.1|0.02463|0.430723|0|0|0.95|all

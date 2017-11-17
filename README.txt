@@ -286,6 +286,10 @@ HISTORY
         2) Testing a query with the manipulation OptOut case -- IsOptOut
         3) Testing with the manipulation OptOut case -- ProbeStatus
       - added all the examples (16 test cases) from the DetectionScorer ReadMe document to make check
+  Nov 17, 2017 - MediScore Version 1.1.15
+        * DetectionScorer:
+          - Added the Correct Detection Rate at False Alarm Rate into the results
+          - Regenerated all the test cases
 
 
 CONTACT
