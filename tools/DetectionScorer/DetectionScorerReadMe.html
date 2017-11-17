@@ -11921,7 +11921,7 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--farStop</p>
 <ul>
-<li>Specify the stop point of FAR for calculating partial AUC. The default (1) provides the full AUC value.</li>
+<li>Specify the stop point of FAR for calculating partial AUC and Correction Detection Rate at False Alarm Rate (FAR) specified. The default (0.1) provides FAR=10%.</li>
 </ul>
 
 </div>
@@ -12350,7 +12350,7 @@ python DetectionScorer.py -o ./testcases/NC16_001 \
 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
 --ci --display
 </code>
-<img src="./notebookImgs/NC16_001_roc_all1.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/test_c5_1-1_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12358,14 +12358,14 @@ python DetectionScorer.py -o ./testcases/NC16_001 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">IPython.core.display</span> <span class="kn">as</span> <span class="nn">di</span>
 <span class="c1"># This line will hide code by default when the notebook is exported as HTML</span>
 <span class="n">di</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="s1">&#39;&lt;script&gt;jQuery(function() {if (jQuery(&quot;body.notebook_app&quot;).length == 0) { jQuery(&quot;.input_area&quot;).toggle(); jQuery(&quot;.prompt&quot;).toggle();}});&lt;/script&gt;&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
-<span class="n">df1</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_001_all.csv&quot;</span><span class="p">)</span>
+<span class="n">df1</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-1_all_report.csv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df1</span>
 </pre></div>
 
@@ -12385,7 +12385,7 @@ python DetectionScorer.py -o ./testcases/NC16_001 \
 
 </div>
 
-<div class="output_area"><div class="prompt output_prompt">Out[1]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[18]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12394,20 +12394,28 @@ python DetectionScorer.py -o ./testcases/NC16_001 \
     <tr style="text-align: right;">
       <th></th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
       <td>0.517917</td>
-      <td>1</td>
       <td>0.516901</td>
-      <td>0.492906</td>
-      <td>0.54328</td>
+      <td>0.1</td>
+      <td>0.019481</td>
+      <td>0.228723</td>
+      <td>0.016148</td>
+      <td>0.022018</td>
+      <td>1.0</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12436,7 +12444,7 @@ python DetectionScorer.py -o ./testcases/NC16_002 \
 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv  \
 --plotType det --display
 </code>
-<img src="./notebookImgs/NC16_002_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/test_c5_1-2_det_all.png" alt="ROC2" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12458,7 +12466,7 @@ python DetectionScorer.py -o ./testcases/NC16_101 \
 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02_optout.csv  \
 --optOut --dLevel 0.1 --ci --plotType roc --display
 </code>
-<img src="./notebookImgs/NC16_101_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/test_c5_1-3_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12481,7 +12489,7 @@ python DetectionScorer.py -o ./testcases/NC16_102 \
 -s Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv \
 --ci --display --noNum
 </code>
-<img src="./notebookImgs/NC16_102_roc_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/test_c5_1-4_ROC_all.png" alt="Default ROC curve" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -12505,7 +12513,7 @@ python DetectionScorer.py -o ./testcases/NC16_003 \
 <b>-q "Collection==['Nimble-SCI','Nimble-WEB']"</b> \
 --ci --display
 </code>
-<img src="./notebookImgs/NC16_003_roc_all.png" alt="ROC3" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-5_ROC_all.png" alt="ROC3" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -12513,10 +12521,10 @@ python DetectionScorer.py -o ./testcases/NC16_003 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_003_q_query_0_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df2</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-5_q_query_0_report.csv&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df2</span>
 </pre></div>
 
@@ -12528,7 +12536,7 @@ python DetectionScorer.py -o ./testcases/NC16_003 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[2]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[19]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12538,10 +12546,14 @@ python DetectionScorer.py -o ./testcases/NC16_003 \
       <th></th>
       <th>QUERY</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12549,10 +12561,14 @@ python DetectionScorer.py -o ./testcases/NC16_003 \
       <th>0</th>
       <td>Collection==['Nimble-SCI','Nimble-WEB']</td>
       <td>0.517917</td>
-      <td>1</td>
       <td>0.516901</td>
-      <td>0.492906</td>
-      <td>0.54328</td>
+      <td>0.1</td>
+      <td>0.019481</td>
+      <td>0.228723</td>
+      <td>0.016148</td>
+      <td>0.022018</td>
+      <td>1.0</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12583,7 +12599,7 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
 <b>-q "Collection==['Nimble-SCI'] & 300 <= ProbeWidth" "Collection==['Nimble-WEB'] & 300 <= ProbeWidth"</b> \
 --ci --display
 </code>
-<img src="./notebookImgs/NC16_004_roc_all.png" alt="ROC4" width="700" height="600"  align="left"></li>
+<img src="./notebookImgs/test_c5_1-6_ROC_all.png" alt="ROC4" width="700" height="600"  align="left"></li>
 </ul>
 
 </div>
@@ -12591,10 +12607,10 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_0_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-6_q_query_0_report.csv&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df3</span>
 </pre></div>
 
@@ -12606,7 +12622,7 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[3]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[20]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12616,10 +12632,14 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
       <th></th>
       <th>QUERY</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12627,10 +12647,14 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
       <th>0</th>
       <td>Collection==['Nimble-SCI'] &amp; 300 &lt;= ProbeWidth</td>
       <td>0.462995</td>
-      <td>1</td>
       <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
+      <td>0.1</td>
+      <td>0.007734</td>
+      <td>0.141667</td>
+      <td>0.007776</td>
+      <td>0.015399</td>
+      <td>0.36</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12645,10 +12669,10 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_004_q_query_1_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df4</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-6_q_query_1_report.csv&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df4</span>
 </pre></div>
 
@@ -12660,7 +12684,7 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[4]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[21]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12670,10 +12694,14 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
       <th></th>
       <th>QUERY</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12681,10 +12709,14 @@ python DetectionScorer.py -o ./testcases/NC16_004 \
       <th>0</th>
       <td>Collection==['Nimble-WEB'] &amp; 300 &lt;= ProbeWidth</td>
       <td>0.556042</td>
-      <td>1</td>
       <td>0.479198</td>
-      <td>0.523205</td>
-      <td>0.592781</td>
+      <td>0.1</td>
+      <td>0.022068</td>
+      <td>0.268519</td>
+      <td>0.018139</td>
+      <td>0.026435</td>
+      <td>0.64</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12716,17 +12748,17 @@ python DetectionScorer.py -o ./testcases/NC16_005 \
 --ci --display</li>
 </ul>
 <p>&lt;/code&gt;
-<img src="./notebookImgs/NC16_005_roc_all.png" alt="ROC4" width="700" height="600" align="left"></p>
+<img src="./notebookImgs/test_c5_1-6_ROC_all.png" alt="ROC4" width="700" height="600" align="left"></p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_005_qp_query_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df5</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-7_qp_query_report.csv&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df5</span>
 </pre></div>
 
@@ -12738,7 +12770,7 @@ python DetectionScorer.py -o ./testcases/NC16_005 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[5]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[22]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12750,10 +12782,14 @@ python DetectionScorer.py -o ./testcases/NC16_005 \
       <th>Collection</th>
       <th>ProbeWidth</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12763,10 +12799,14 @@ python DetectionScorer.py -o ./testcases/NC16_005 \
       <td>'Nimble-SCI'</td>
       <td>300&lt;=ProbeWidth</td>
       <td>0.462995</td>
-      <td>1</td>
       <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
+      <td>0.1</td>
+      <td>0.007734</td>
+      <td>0.141667</td>
+      <td>0.007776</td>
+      <td>0.015399</td>
+      <td>0.36</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12797,7 +12837,7 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
 <b>-qp "Collection==['Nimble-SCI','Nimble-WEB'] & 300 <= ProbeWidth"</b> \
 --ci --display
 </code>
-<img src="./notebookImgs/NC16_006_roc_all.png" alt="ROC6" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-8_ROC_all.png" alt="ROC6" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -12805,10 +12845,10 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_006_qp_query_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-8_qp_query_report.csv&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -12820,7 +12860,7 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[6]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[23]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12832,10 +12872,14 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
       <th>Collection</th>
       <th>ProbeWidth</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12845,10 +12889,14 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
       <td>'Nimble-SCI'</td>
       <td>300&lt;=ProbeWidth</td>
       <td>0.462995</td>
-      <td>1</td>
       <td>0.565625</td>
-      <td>0.411921</td>
-      <td>0.502428</td>
+      <td>0.1</td>
+      <td>0.007734</td>
+      <td>0.141667</td>
+      <td>0.007776</td>
+      <td>0.015399</td>
+      <td>0.36</td>
+      <td>all</td>
     </tr>
     <tr>
       <th>1</th>
@@ -12856,10 +12904,14 @@ python DetectionScorer.py -o ./testcases/NC16_006 \
       <td>'Nimble-WEB'</td>
       <td>300&lt;=ProbeWidth</td>
       <td>0.556042</td>
-      <td>1</td>
       <td>0.479198</td>
-      <td>0.523205</td>
-      <td>0.592781</td>
+      <td>0.1</td>
+      <td>0.022068</td>
+      <td>0.268519</td>
+      <td>0.018139</td>
+      <td>0.026435</td>
+      <td>0.64</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12890,7 +12942,7 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
 <b>-qm "Collection==['Nimble-SCI'] & IsManipulationTypeRemoval==['Y']" "Collection==['Nimble-WEB'] & IsManipulationTypeRemoval==['Y']"</b> \
 --display
 </code>
-<img src="./notebookImgs/NC16_010_roc_all.png" alt="ROC111" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-9_ROC_all.png" alt="ROC111" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -12898,10 +12950,10 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_0_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df10</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-9_qm_query_0_report.csv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df10</span>
 </pre></div>
 
@@ -12913,7 +12965,7 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[7]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[24]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12923,10 +12975,14 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
       <th></th>
       <th>QUERY</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12934,10 +12990,14 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
       <th>0</th>
       <td>Collection==['Nimble-SCI'] &amp; IsManipulationTyp...</td>
       <td>0.4525</td>
-      <td>1</td>
       <td>0.594643</td>
+      <td>0.1</td>
+      <td>0.009464</td>
+      <td>0.1875</td>
       <td>0</td>
       <td>0</td>
+      <td>0.57</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -12952,10 +13012,10 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_010_qm_query_1_report.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df11</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-9_qm_query_1_report.csv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df11</span>
 </pre></div>
 
@@ -12967,7 +13027,7 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[8]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[25]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -12977,10 +13037,14 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
       <th></th>
       <th>QUERY</th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
@@ -12988,10 +13052,14 @@ python DetectionScorer.py -o ./testcases/NC16_010 \
       <th>0</th>
       <td>Collection==['Nimble-WEB'] &amp; IsManipulationTyp...</td>
       <td>0.590206</td>
-      <td>1</td>
       <td>0.436607</td>
+      <td>0.1</td>
+      <td>0.024261</td>
+      <td>0.273438</td>
       <td>0</td>
       <td>0</td>
+      <td>0.61</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -13052,17 +13120,17 @@ python DetectionScorer.py -o ./testcases/NC16_100 \
 -s Base_NC2016_Splice_ImgOnly_p-splice_01.csv \
 --ci --display
 </code>
-<img src="./notebookImgs/NC16_100_roc_all.png" alt="ROC8" width="500" height="400" align="left"></p>
+<img src="./notebookImgs/test_c5_1-11_ROC_all.png" alt="ROC8" width="500" height="400" align="left"></p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC16_100_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df6</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-11_all_report.csv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df6</span>
 </pre></div>
 
@@ -13074,7 +13142,7 @@ python DetectionScorer.py -o ./testcases/NC16_100 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[9]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[26]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -13082,13 +13150,29 @@ python DetectionScorer.py -o ./testcases/NC16_100 \
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>AUC|FAR_STOP|EER|AUC_CI_LOWER|AUC_CI_UPPER</th>
+      <th>AUC</th>
+      <th>EER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>0.86436|1|0.23348|0.845468|0.881527</td>
+      <td>0.86436</td>
+      <td>0.23348</td>
+      <td>0.1</td>
+      <td>0.068703</td>
+      <td>0.716667</td>
+      <td>0.060427</td>
+      <td>0.070878</td>
+      <td>1.0</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -13136,7 +13220,7 @@ python DetectionScorer.py -o ./testcases/NC17_001 \
 -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
 --ci --display
 </code>
-<img src="./notebookImgs/NC17_001_copymove_roc_all.png" alt="ROC9" width="500" height="400" align="left"></li>
+<img src="./notebookImgs/test_c5_1-12_ROC_all.png" alt="ROC9" width="500" height="400" align="left"></li>
 </ul>
 
 </div>
@@ -13144,10 +13228,10 @@ python DetectionScorer.py -o ./testcases/NC17_001 \
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/NC17_001_copymove_all.csv&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">df7</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./notebookImgs/test_c5_1-12_all_report.csv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
 <span class="n">df7</span>
 </pre></div>
 
@@ -13159,7 +13243,7 @@ python DetectionScorer.py -o ./testcases/NC17_001 \
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[10]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[27]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -13168,20 +13252,28 @@ python DetectionScorer.py -o ./testcases/NC17_001 \
     <tr style="text-align: right;">
       <th></th>
       <th>AUC</th>
-      <th>FAR_STOP</th>
       <th>EER</th>
-      <th>AUC_CI_LOWER</th>
-      <th>AUC_CI_UPPER</th>
+      <th>FAR_STOP</th>
+      <th>AUC@FAR</th>
+      <th>CDR@FAR</th>
+      <th>AUC_CI_LOWER@FAR</th>
+      <th>AUC_CI_UPPER@FAR</th>
+      <th>TRR</th>
+      <th>SYS_RESPONSE</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
       <td>0.679533</td>
-      <td>1</td>
       <td>0.328889</td>
-      <td>0.620826</td>
-      <td>0.735491</td>
+      <td>0.1</td>
+      <td>0.024756</td>
+      <td>0.433976</td>
+      <td>0.015407</td>
+      <td>0.034555</td>
+      <td>1.0</td>
+      <td>all</td>
     </tr>
   </tbody>
 </table>
@@ -13222,7 +13314,7 @@ python DetectionScorer.py -o ./testcases/NC17_002 \
 <b>-q "(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N']" "(Purpose ==['clone'] and IsTarget == ['Y']) or IsTarget == ['N']"</b> \
 --display
 </code>
-<img src="./notebookImgs/NC17_002_roc_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-13_ROC_all.png" alt="ROC17_002" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -13246,7 +13338,7 @@ python DetectionScorer.py -o ./testcases/NC17_003 \
 <b>-qm "Purpose==['remove']" "Purpose==['clone']"</b> \
 --display
 </code>
-<img src="./notebookImgs/NC17_003_roc_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-14_ROC_all.png" alt="ROC17_003" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -13270,7 +13362,7 @@ python DetectionScorer.py -o ./testcases/NC17_004 \
 <b>-qm "OperationArgument==['people','face']" "OperationArgument==['man-made object','landscape']"</b> \
 --display
 </code>
-<img src="./notebookImgs/NC17_004_roc_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-15_ROC_all.png" alt="ROC17_004" width="700" height="600" align="left"></li>
 </ul>
 
 </div>
@@ -13294,7 +13386,7 @@ python DetectionScorer.py -o ./testcases/NC17_005 \
 <b>-qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"</b> \
 --display
 </code>
-<img src="./notebookImgs/NC17_005_roc_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
+<img src="./notebookImgs/test_c5_1-16_ROC_all.png" alt="ROC17_005" width="700" height="600" align="left"></li>
 </ul>
 
 </div>

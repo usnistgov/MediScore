@@ -1,2 +1,0 @@
-Query,auc,fpr_stop,eer,auc_ci_lower,auc_ci_upper
-(Purpose ==['remove'] and IsTarget == ['Y']) or IsTarget == ['N'],0.7354629629629629,1,0.275,0,0

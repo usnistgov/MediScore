@@ -353,6 +353,10 @@ HISTORY
       - Renamed Mask Scorer test cases to conform to new format
       - Added -1 as a threshold to binarize masks to all white where relevant.
       - Expanded test cases to cover optOut criteria for code.
+  Nov 17, 2017 - MediScore Version 1.1.15
+    * DetectionScorer:
+      - Added the Correct Detection Rate at False Alarm Rate into the results
+      - Regenerated all the test cases
 
 
 CONTACT
