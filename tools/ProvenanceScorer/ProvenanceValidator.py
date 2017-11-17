@@ -93,20 +93,31 @@ class ProvenanceValidator(validator):
             return 1
 
         sysHeads = list(sysfile.columns)
+        sysHeads_set = set(sysHeads)
         allClear = True
-        truelist = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName","IsOptOut"]
+        columns_name_required = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName"]
 
-        for i in range(0,len(truelist)):
-            allClear = allClear and (truelist[i] in sysHeads)
-            if not (truelist[i] in sysHeads):
-#                headlist = []
-#                properhl = []
-#                for i in range(0,len(truelist)):
-#                    if sysHeads[i] != truelist[i]:
-#                        headlist.append(sysHeads[i])
-#                        properhl.append(truelist[i]) 
-#                printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
-                printq("ERROR: The required column {} is absent.".format(truelist[i]),True)
+        for column in columns_name_required:
+            if column not in sysHeads_set:
+                printq("ERROR: The required column {} is absent.".format(column),True)
+                allClear = False
+
+        # check for the status column 
+        if ("ProvenanceProbeStatus" not in sysHeads_set) and ("IsOptOut" not in sysHeads_set):
+            printq("ERROR: The required column {} (= {}) is absent.".format("ProvenanceProbeStatus", "IsOptOut"),True)
+
+#        truelist = ["ProvenanceProbeFileID","ConfidenceScore","ProvenanceOutputFileName","IsOptOut"]
+#         for i in range(0,len(truelist)):
+#             allClear = allClear and (truelist[i] in sysHeads)
+#             if not (truelist[i] in sysHeads):
+# #                headlist = []
+# #                properhl = []
+# #                for i in range(0,len(truelist)):
+# #                    if sysHeads[i] != truelist[i]:
+# #                        headlist.append(sysHeads[i])
+# #                        properhl.append(truelist[i]) 
+# #                printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
+#                 printq("ERROR: The required column {} is absent.".format(truelist[i]),True)
 
         if not allClear:
             return 1
