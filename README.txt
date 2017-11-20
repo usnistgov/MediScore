@@ -1,6 +1,6 @@
 File: README.txt
-Date: June 7, 2017
-MediScore Version: 1.1.13
+Date: November 20, 2017
+MediScore Version: 1.2.0
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -40,6 +40,7 @@ INSTALLATION
   - scikit-learn (tested in version 0.17.1)
   - rawpy (tested in version 0.9.0)
   - numpngw (tested in version 0.0.6)
+  - Glymur (tested in version 0.8.12)
   Most of these packages can be installed by running basic_install.sh on your machine.
 
   Optional :
@@ -338,7 +339,6 @@ HISTORY
       - File prefix added to --outRoot option as a requirement.
       - Added per-probe pixel no-score
       - Averaging functionality now treats constant metrics (e.g. ActualThreshold) differently.
-
   Nov 1, 2017 - MediScore Version 1.1.14
     * DetectionScorer:
       - reimplemented the merging process
@@ -353,10 +353,12 @@ HISTORY
       - Renamed Mask Scorer test cases to conform to new format
       - Added -1 as a threshold to binarize masks to all white where relevant.
       - Expanded test cases to cover optOut criteria for code.
-  Nov 17, 2017 - MediScore Version 1.1.15
+  Nov 20, 2017 - MediScore Version 1.2.0
     * DetectionScorer:
       - Added the Correct Detection Rate at False Alarm Rate into the results
       - Regenerated all the test cases
+    * Provenance Scorers:
+      - Added support for opt out in ProvenanceProbeStatus
 
 
 CONTACT
