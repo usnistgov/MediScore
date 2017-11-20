@@ -1,7 +1,7 @@
 """
 * File: CrossTeamLocalizationReport.py
 * Date Started: 4/26/2017
-* Date Updated: 5/25/2017
+* Date Updated: 5/30/2017
 * Status: Complete
 
 * Description: This code contains functions for generating cross team localization reports
@@ -166,6 +166,7 @@ def addFromDir(scoresDir,  dbName, tableName, delimiter, fixFilePath, verbose):
 				 	addToDB(os.path.join(root, file), dbName, tableName, expName, delimiter, fixFilePath)
 
 	return 'Files from %s sucessfully added' % scoresDir
+
 
 def addToDB(CSVFilePath, db, tableName, expName, delimiter, fixFilePath):
 	# Adds CSV data to new or existing database (db) 
@@ -350,14 +351,13 @@ def queryDB(database, tableName, probes, exps, MCC, verbose):
 	conn.close()
 	return queryResults, perExpResults
 
+
 def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax, popup):
 	# Generates an HTML file with data from query to DB
 	
 	headers = ['Composite', 'Binarized']
 
 	with open (outputFile, 'w') as output:
-
-		#### Might be better to get maxMCC and avgMCC while querying the database instead of calculating here ####
 
 		# If sortProbes option is used, sorts probes in order of max MCC for each probe
 		if (sortProbes != 'None'):
@@ -440,9 +440,10 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax,
 					experimentResults = '<td>Experiment didn\'t meet query criteria</td>'
 
 				else:
+					indexFile = ('').join(experiment[3].rsplit('-', 1)[:-1]) + '.html'
 					experimentResults = """MCC: %s<br>
-						<a class="thumb" href="#"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
-						""" % (str(experiment[1]), experiment[3])
+						<a class="thumb" href="%s"><img src="%s" alt="Evaluation Results" height="228px" width="304px">
+						""" % (str(experiment[1]), indexFile, experiment[3])
 
 					# If highlightMax option is used, and the experiment has the max MCC for this probe
 					if experiment[1] == maxVal and highlightMax:
@@ -551,6 +552,7 @@ def htmlReport(general, perExp, outputFile, sortProbes, sortTeams, highlightMax,
 		output.write(htmlOut)
 
 	return "%s has been generated" % outputFile 
+
 
 if __name__ == '__main__':
 	main()
