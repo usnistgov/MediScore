@@ -303,9 +303,12 @@ if __name__ == '__main__':
         if args.outAllmeta:  # save all metadata for analysis purpose
             index_m_df.to_csv(args.outRoot + '_allmeta.csv', index=False, sep='|')
         # save subset of metadata for analysis purpose
-        if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns):
-            sub_pm_df = index_m_df[index_cols_overlap +
-                                   index_cols_no_overlap + ["IsTarget"] + sys_cols_no_overlap]
+        if args.outMeta:
+            sub_pm_df.to_csv(args.outRoot + '_subset_meta.csv', index=False, sep='|')
+
+        #if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns):
+        #    sub_pm_df = index_m_df[index_cols_overlap +
+        #                           index_cols_no_overlap + ["IsTarget"] + sys_cols_no_overlap]
             # print(sub_pm_df.columns)
 
         total_num = index_m_df.shape[0]
