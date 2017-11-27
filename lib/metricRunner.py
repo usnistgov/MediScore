@@ -626,8 +626,8 @@ class maskMetricRunner:
             print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
             processors = nrow
         if processors > maxprocs:
-            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
-            processors = maxprocs
+            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(max(maxprocs,1)))
+            processors = max(maxprocs,1)
 
         if processors == 1:
             #case for one processor for efficient debugging and to eliminate overhead when running

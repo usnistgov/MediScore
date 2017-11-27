@@ -348,8 +348,8 @@ class SSD_Validator(validator):
             print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
             processors = nrow
         if processors > maxprocs:
-            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
-            processors = maxprocs
+            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(max(maxprocs,1)))
+            processors = max(maxprocs,1)
 
         chunksize = nrow//processors
         maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
