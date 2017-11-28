@@ -104,7 +104,7 @@ parser.add_argument('--rbin',type=int,default=-1,
 help="Binarize the reference mask in the relevant mask file to black and white with a numeric threshold in the interval [0,255]. Pick -1 to evaluate the relevant regions based on the other arguments. [default=-1]",metavar='integer')
 parser.add_argument('--sbin',type=int,default=-10,
 help="Binarize the system output mask to black and white with a numeric threshold in the interval [-1,255]. -1 can be chosen to binarize the entire mask to white. -10 indicates that the threshold for the mask will be chosen at the maximal absolute MCC value. [default=-10]",metavar='integer')
-parser.add_argument('--color',action='store_true',help="Evaluate colorized referenced masks. Individual regions in the colorized masks are identifiable by region and do not intersect.")
+parser.add_argument('--jpeg2000',action='store_true',help="Evaluate JPEG2000 reference masks. Individual regions in the JPEG2000 masks may interserct; each pixel may contain multiple manipulations.")
 parser.add_argument('--nspx',type=int,default=-1,
 help="Set a pixel value for all system output masks to serve as a no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
 parser.add_argument('-pppns','--perProbePixelNoScore',action='store_true',
@@ -325,7 +325,7 @@ if args.task == 'manipulation':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.color)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
         #revise this to outputRoot and loc_scoring_params
         params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
         df = metricRunner.getMetricList(outputRoot,params)
@@ -579,7 +579,7 @@ elif args.task == 'splice':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.color)
+        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
         params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
@@ -1081,7 +1081,7 @@ if args.task == 'manipulation':
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         printq("Beginning mask scoring...")
-        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.color,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=args.precision)
 
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
@@ -1224,7 +1224,7 @@ elif args.task == 'splice':
         m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
         printq("Beginning mask scoring...")
-        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.color,verbose=reportq,precision=args.precision)
+        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=args.precision)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here

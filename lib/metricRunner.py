@@ -158,7 +158,7 @@ class maskMetricRunner:
         self.joinData = joindf
         self.index = index
         self.speedup=speedup
-        self.usecolor=color
+        self.usejpeg2000=color
         self.colordict=colordict
        
     def getSubOutRoot(self,outputRoot,task,mymode,row):
@@ -250,7 +250,7 @@ class maskMetricRunner:
                 
 
 #            rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
-            if self.usecolor:
+            if not self.usejpeg2000:
                 #TODO: temporary measure for splice task
                 if self.mode == 1:
                     color_purpose = 0
@@ -297,7 +297,7 @@ class maskMetricRunner:
         manipFileID = maskRow[''.join([mymode,'FileID'])]
         refMaskName = 0
         #how to read in the masks
-        if self.usecolor:
+        if not self.usejpeg2000:
             refMaskName = maskRow['{}{}MaskFileName'.format(binpfx,mymode)]
         else:
             refMaskName = maskRow['{}BitPlaneMaskFileName'.format(mymode)]
@@ -321,7 +321,7 @@ class maskMetricRunner:
             if refMaskName in [None,'',np.nan]:
                 myprintbuffer.append("Empty reference {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
-                if self.usecolor:
+                if not self.usejpeg2000:
                     refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.png'))
                     whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
                     cv2.imwrite(refMaskName,whitemask)
@@ -1172,7 +1172,7 @@ class maskMetricRunner:
             toSequence = 'Sequence' in journalHeaders
 
             journalkeys = ['Operation','Purpose','Color',evalcol]
-            if not self.usecolor:
+            if self.usejpeg2000:
                 journalkeys = ['BitPlane'] + journalkeys
             if toSequence:
                 journalkeys = ['Sequence'] + journalkeys
@@ -1337,7 +1337,7 @@ class maskMetricRunner:
             None
 
         #if color, create a symbolic link. Otherwise, create and save the refMask.png
-        if self.usecolor:
+        if not self.usejpeg2000:
             myprintbuffer.append(" ".join(["Creating link for reference mask", rImg_name]))
             os.symlink(os.path.abspath(rImg_name),rPathNew)
         else:
@@ -1611,7 +1611,7 @@ class maskMetricRunner:
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         #things change here for pixel overlay
-        if self.usecolor:
+        if not self.usejpeg2000:
             modified = cv2.addWeighted(ref.matrix,alpha,m3chan,1-alpha,0)
             myagg[refbw==0] = modified[refbw==0]
     

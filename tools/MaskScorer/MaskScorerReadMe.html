@@ -12074,9 +12074,9 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>--color</p>
+<p>--jpeg2000</p>
 <ul>
-<li>Evaluate the system output against colorized referenced masks. Individual regions in the colorized masks are identifiable by region and do not intersect.</li>
+<li>Evaluate JPEG2000 reference masks. Individual regions in the JPEG2000 masks may interserct; each pixel may contain multiple manipulations.</li>
 </ul>
 
 </div>
@@ -12279,7 +12279,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
--oR outputs/maniptest/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span> --color
+-oR outputs/maniptest/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span>
 </pre></div>
 
 </div>
@@ -12329,7 +12329,7 @@ python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerT
 -x indexes/MFC18-manipulation-image-index.csv <span class="se">\</span>
 -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv <span class="se">\</span>
 -oR outputs/bitmask/bitmask <span class="se">\</span>
---speedup -p <span class="m">4</span> -html
+--speedup -p <span class="m">4</span> -html --jpeg2000
 </pre></div>
 
 </div>
