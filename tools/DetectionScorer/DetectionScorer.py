@@ -332,6 +332,9 @@ if __name__ == '__main__':
                     # v_print("JT meta: {}".format(jt_meta.shape))
                     # merge the dataframes above
                     index_m_df = pd.merge(index_m_df, jt_meta, how='left', on='ProbeFileID')
+
+                    if args.outAllmeta:
+                        index_m_df.to_csv(args.outRoot + '_allmeta4query.csv', index=False, sep='|') #for testing
                     # Removing duplicates in case the data were merged by the JTmask metadata, not for splice
                     # index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
             # don't need JTJoin and JTMask for splice?
