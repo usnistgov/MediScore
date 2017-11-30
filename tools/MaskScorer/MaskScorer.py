@@ -108,7 +108,7 @@ parser.add_argument('--jpeg2000',action='store_true',help="Evaluate JPEG2000 ref
 parser.add_argument('--nspx',type=int,default=-1,
 help="Set a pixel value for all system output masks to serve as a no-score region [0,255]. -1 indicates that no particular pixel value will be chosen to be the no-score zone. [default=-1]",metavar='integer')
 parser.add_argument('-pppns','--perProbePixelNoScore',action='store_true',
-help="Use the pixel values in the OptOutPixel column of the system output to designate no-score zones.")
+help="Use the pixel values in the ProbeOptOutPixelValue column of the system output to designate no-score zones.")
 
 #parser.add_argument('--avgOver',type=str,default='',
 #help="A collection of features to average reports over, separated by commas.", metavar="character")

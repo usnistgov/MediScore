@@ -73,11 +73,6 @@ INSTALLATION
    - MASK SCORER TESTS SUCCESSFULLY PASSED
    - DETECTION SCORER TESTS SUCCESSFULLY PASSED
 
-   Due to the sheer volume of the mask scorer's test cases and the enormous amount of computation
-   involved for each test case, the make check passes through only two test cases. For a thorough
-   check of the mask scorer's capabilities, go into the tools/MaskScorer directory and type
-   'make checkplus'. Expect it to run for 3-4 hours.
-
 
 USAGE
 -----
