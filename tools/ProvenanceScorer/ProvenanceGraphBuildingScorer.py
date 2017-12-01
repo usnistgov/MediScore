@@ -140,9 +140,9 @@ if __name__ == '__main__':
 
     # Remove NonProcessed (or IsOptOut) trials
     if "IsOptOut" in system_output_index.columns:
-        system_output_index = system_output_index.query("IsOptOut == ['Processed']")
+        system_output_index = system_output_index.query("IsOptOut == ['Processed', 'N']")
     elif "ProvenanceProbeStatus" in system_output_index.columns:
-        system_output_index = system_output_index.query("ProvenanceProbeStatus == ['Processed']")
+        system_output_index = system_output_index.query("ProvenanceProbeStatus == ['Processed', 'N']")
 
     trial_index_ref = merge(trial_index, ref_file, on = "ProvenanceProbeFileID")
     trial_index_ref_sysout = merge(trial_index_ref, system_output_index, on = "ProvenanceProbeFileID")
