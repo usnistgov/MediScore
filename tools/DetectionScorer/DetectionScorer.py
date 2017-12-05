@@ -334,7 +334,7 @@ if __name__ == '__main__':
                     index_m_df = pd.merge(index_m_df, jt_meta, how='left', on='ProbeFileID')
 
                     if args.outAllmeta:
-                        index_m_df.to_csv(args.outRoot + '_allmeta4query.csv', index=False, sep='|') #for testing
+                        index_m_df.to_csv(args.outRoot + '_allmeta4query.csv', index=False, sep='') #for testing
                     # Removing duplicates in case the data were merged by the JTmask metadata, not for splice
                     # index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
             # don't need JTJoin and JTMask for splice?
@@ -355,7 +355,7 @@ if __name__ == '__main__':
                     index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 elif "ProbeStatus" in index_m_df.columns:
                     index_m_df = index_m_df.query(
-                        " ProbeStatus==['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] ")
+                        " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization'] ")
 
             v_print("Query : {}\n".format(query))
             v_print("Creating partitions...\n")
@@ -384,10 +384,16 @@ if __name__ == '__main__':
             if args.optOut:
                 sys_response = 'tr'
                 if "IsOptOut" in index_m_df.columns:
+                    # if index_m_df['IsOptOut'] not in ['Y','N', 'Localization']:
+                    #     print("ERROR: IsOptOut should include the values ['Y','N', 'Localization'] only")
+                    #     exit(1)
                     index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
                 elif "ProbeStatus" in index_m_df.columns:
+                    # if index_m_df['ProbeStatus'] not in ['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization']:
+                    #     print("ERROR: ProbeStatus should include the values ['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] only")
+                    #     exit(1)
                     index_m_df = index_m_df.query(
-                        " ProbeStatus==['Processed', 'NonProcessed', 'OptOutAll', 'OptOutDetection', 'OptOutLocalization'] ")
+                        " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']")
 
             DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop=args.farStop,
                                isCI=args.ci, ciLevel=args.ciLevel, dLevel=args.dLevel, total_num=total_num, sys_res=sys_response)
