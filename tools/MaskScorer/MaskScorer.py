@@ -174,7 +174,8 @@ if args.inIndex is None:
 #set.seed(1)
 
 #generate plotjson options
-detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../DetectionScorer/plotJsonFiles')
+#detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../DetectionScorer/plotJsonFiles')
+detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'plotJsonFiles')
 if not os.path.isdir(detpath):
     os.system(' '.join(['mkdir',detpath]))
 Render.gen_default_plot_options(path=os.path.join(detpath,'plot_options.json'))
@@ -268,10 +269,17 @@ totalTrials = len(m_df)
 #NOTE: ProbeStatus values can be any one of "Processed", "NonProcessed", "OptOutAll", "OptOutDetection", "OptOutLocalization"
 optOutCol = localOptOutColName
 if localOptOutColName in sysCols:
-    undesirables = str(['NonProcessed','OptOutAll','OptOutLocalization'])
+    undesirables = str(['OptOutAll','OptOutLocalization'])
+    all_statuses = {'Y','N','Detection','Localization'}
 elif pastOptOutColName in sysCols:
     optOutCol = pastOptOutColName
     undesirables = str(['Y','Localization'])
+    all_statuses = {'Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization'}
+#check to see if there are any values not one of these
+probeStatuses = set(list(m_df[optOutCol].unique()))
+if probeStatuses > all_statuses:
+    print("ERROR: Status {} is not recognized.".format(all_statuses - probeStatuses))
+    exit(1)
 
 optOutQuery = "==".join([optOutCol,undesirables])
 

@@ -1,4 +1,4 @@
 ProbeFileID|ConfidenceScore|OutputProbeMaskFileName|ProbeStatus|ProbeOptOutPixelValue
 14cffdc6394f9503661d40c9ac7328ca|0.0|mask/14cffdc6394f9503661d40c9ac7328ca-mask.png|Processed|127
-c3b7512b719df5670aa70fd0b152b86a|0.5|mask/c3b7512b719df5670aa70fd0b152b86a-mask.png|OptOutDetection|127
+c3b7512b719df5670aa70fd0b152b86a|0.5|mask/c3b7512b719df5670aa70fd0b152b86a-mask.png|NonProcessed|127
 smallmanip|1.0|mask/smallmanip-mask.png|OptOutLocalization|127

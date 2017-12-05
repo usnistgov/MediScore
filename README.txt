@@ -358,6 +358,10 @@ HISTORY
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
+    * Mask Scorer
+      - Added more thorough tests for ProbeStatus criteria.
+    * Validator
+      - Added more thorough tests for ProbeStatus criteria.
 
 
 CONTACT

@@ -11794,7 +11794,30 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Example:</p>
 
-<pre><code>python2 validator.py -x ../../data/test_suite/maskScorerTests/NC2016-removal-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2016_Removal_ImgOnly_c-me2_2/B_NC2016_Removal_ImgOnly_c-me2_2.csv -vt SSD</code></pre>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span>%%bash
+python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-manipulation-image-index.csv<span class="se">\</span>
+ -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv<span class="se">\</span>
+ -nc --ncid MFC18 -vt SSD
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>Running this code would validate the B_NC2016_Removal_ImgOnly_c-me2_2.csv with additional information provided by the NC2016-removal-index.csv, each under its appropriate directory, through the Single-Source Detection (SSD) validator. The sample inputs shown here should pass the validation.</p>
 
 </div>

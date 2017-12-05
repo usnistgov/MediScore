@@ -301,6 +301,7 @@ class SSD_Validator(validator):
 #        idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 
 #        idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.float64) 
 
+
         sysPath = os.path.dirname(self.sysname)
 
         sysProbes = sysfile['ProbeFileID'].unique()
@@ -393,20 +394,29 @@ class SSD_Validator(validator):
         if self.testMask and not self.neglectMask:
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
-                sysrow['Message']="The mask for file {} appears to be absent. Skipping it.".format(probeFileID)
+                sysrow['Message']=" ".join([sysrow['Message'],"The mask for file {} appears to be absent. Skipping it.".format(probeFileID)])
                 return sysrow
             #if IsOptOut or ProbeStatus is present
             #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
             if self.optOut == 1:
+                #throw error if not in set of allowed values
+                all_statuses = ['Y','Detection','Localization','N']
+                if not sysrow['IsOptOut'] in all_statuses:
+                    sysrow['Message'] = " ".join([sysrow['Message'],"Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
+                    sysrow['matchFlag'] = 1
                 if sysrow['IsOptOut'] in ['Y','Localization']:
                     #no need for localization checking
                     return sysrow
             elif self.optOut == 2:
-                if sysrow['ProbeStatus'] in ['NonProcessed','OptOutAll','OptOutLocalization']:
+                all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization']
+                if not sysrow['ProbeStatus'] in all_statuses:
+                    sysrow['Message'] = " ".join([sysrow['Message'],"Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
+                    sysrow['matchFlag'] = 1
+                if sysrow['ProbeStatus'] in ['OptOutAll','OptOutLocalization']:
                     return sysrow
 
             mskflag,msg = self.maskCheck(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify)
-            sysrow['Message'] = msg
+            sysrow['Message'] = "\n".join([sysrow['Message'],msg])
             sysrow['maskFlag'] = sysrow['maskFlag'] | mskflag 
         return sysrow
 
@@ -521,6 +531,7 @@ class DSD_Validator(validator):
         dupFlag = 0
         xrowFlag = 0
         scoreFlag = 0
+        colFlag = 0
         maskFlag = 0
         keyFlag = 0
 
@@ -665,16 +676,28 @@ class DSD_Validator(validator):
 
                     optOutOption = 0
                     if optOut == 1:
+                        all_statuses = ['Y','Detection','Localization','N']
+                        if not l_content[s_heads['IsOptOut']] in all_statuses:
+                            self.printbuffer.append("Probe status {} for probe {} is not recognized.".format(l_content[s_heads['IsOptOut']],probeID))
+                            colFlag = 1
                         if l_content[s_heads['IsOptOut']] in ['Y','Localization']:
                             continue
                     elif optOut == 2:
                         #if ProbeStatus is opting out, opt out of Probe; likewise for Donor.
                         #split into donor and probe checking with optOutOption
-                        if l_content[s_heads['ProbeStatus']] in ["NonProcessed","OptOutAll","OptOutLocalization"]:
+                        all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization']
+                        if not l_content[s_heads['ProbeStatus']] in all_statuses:
+                            self.printbuffer.append("Probe status {} for probe {} is not recognized.".format(l_content[s_heads['ProbeStatus']],probeID))
+                            colFlag = 1
+                        if not l_content[s_heads['DonorStatus']] in all_statuses:
+                            self.printbuffer.append("Donor status {} for donor {} is not recognized.".format(l_content[s_heads['DonorStatus']],donorID))
+                            colFlag = 1
+
+                        if l_content[s_heads['ProbeStatus']] in ["OptOutAll","OptOutLocalization"]:
                             optOutOption = optOutOption + 1
-                        if l_content[s_heads['DonorStatus']] in ["NonProcessed","OptOutAll","OptOutLocalization"]:
+                        if l_content[s_heads['DonorStatus']] in ["OptOutAll","OptOutLocalization"]:
                             optOutOption = optOutOption + 2
- 
+
                     probeWidth = int(indRec[i_heads['ProbeWidth']])
                     probeHeight = int(indRec[i_heads['ProbeHeight']])
                     donorWidth = int(indRec[i_heads['DonorWidth']])
@@ -727,7 +750,7 @@ class DSD_Validator(validator):
 #                             return 1
 
         #final validation
-        flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + keyFlag
+        flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + colFlag + keyFlag
         if flagSum == 0:
             self.printbuffer.append("The contents of your file are valid!")
         else:

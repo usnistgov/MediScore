@@ -78,7 +78,9 @@ class detPackage:
         
 def plotROC(mydets,plotname,plot_title,outdir):
     #initialize plot options for ROC
-    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
+    #TODO: since it's getting generated, make a unique json file for ProbeFileID that will avoid potential collisions
+    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/plotJsonFiles/plot_options.json")
+#    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
     p.gen_default_plot_options(dict_plot_options_path_name,plot_title=plot_title,plot_type='ROC')
     plot_opts = p.load_plot_options(dict_plot_options_path_name)
     
