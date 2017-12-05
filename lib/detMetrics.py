@@ -26,8 +26,10 @@ class detMetrics:
         self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = Metrics.compute_points_sk(
             score, gt)
         #print("count {}".format(score.shape))
+        # print("Total# ({}),  Target# ({}),  NonTarget# ({}) \n".format(
+        #     total_num, self.t_num, self.nt_num)) #total_num is the original total number
         print("Total# ({}),  Target# ({}),  NonTarget# ({}) \n".format(
-            total_num, self.t_num, self.nt_num))
+             self.t_num+self.nt_num, self.t_num, self.nt_num))
         self.trr = round(float((self.t_num + self.nt_num)) / total_num, 2)
         # print("T# {}, NT# {}, TRR: {}".format(self.t_num, self.nt_num, self.trr))
 #        print("({0:.1f}s)".format(time.time() - s))

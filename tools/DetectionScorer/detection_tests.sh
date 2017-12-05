@@ -162,6 +162,18 @@ test_c2_8() {
 				       -s "D_NC2016_Manipulation_ImgOnly_p-me_4/D_NC2016_Manipulation_ImgOnly_p-me_4.csv" --optOut
 }
 
+test_c2_9() {
+    echo "  * Testing a query with the manipulation OptOut case -- ProbeStatus*  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2016-manipulation-index.csv" \
+        				       -r "NC2016-manipulation-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_4/D_NC2016_Manipulation_ImgOnly_p-me_4.csv" \
+               -qm "Operation==['PasteSplice']" --optOut
+}
+
 
 test_c3_1() {
     echo "  * Testing with the manipulation case with full index *  "

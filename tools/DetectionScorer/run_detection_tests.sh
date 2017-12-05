@@ -24,6 +24,7 @@ echo
 run_test test_c2_6 "$testsuite_directory/checkfiles/test_c2_6"
 run_test test_c2_7 "$testsuite_directory/checkfiles/test_c2_7"
 run_test test_c2_8 "$testsuite_directory/checkfiles/test_c2_8"
+run_test test_c2_9 "$testsuite_directory/checkfiles/test_c2_9"
 
 
 echo
