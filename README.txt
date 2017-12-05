@@ -290,6 +290,10 @@ HISTORY
         * DetectionScorer:
           - Added the Correct Detection Rate at False Alarm Rate into the results
           - Regenerated all the test cases
+  Dec 5, 2017 - MediScore Version 1.1.16
+        * DetectionScorer:
+          - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization'] 
+	  - Modified test cases for OptOut
 
 
 CONTACT
