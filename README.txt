@@ -359,6 +359,10 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
+  Dec 5, 2017 - MediScore Version *.*.*
+    * DetectionScorer:
+      - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
+      - Modified test cases for OptOut
 
 
 CONTACT
