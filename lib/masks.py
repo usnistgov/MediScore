@@ -140,13 +140,13 @@ class mask(object):
         elif ext == 'jp2':
             jp2 = glymur.Jp2k(n)
             self.matrix = jp2[:]
-        else:
+        else: #covers png, jpeg, jpg, JPG, tif, tiff
             self.matrix=cv2.imread(n,readopt)  #output own error message when catching error
         if self.matrix is None:
             masktype = 'System'
             if isinstance(self,refmask) or isinstance(self,refmask_color):
                 masktype = 'Reference'
-            print("{} mask file {} is unreadable.".format(masktype,n))
+            print("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
         self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
 
     def get_dims(self):

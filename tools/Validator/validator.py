@@ -377,7 +377,7 @@ class SSD_Validator(validator):
             return sysrow
         elif self.iminiProbes is not 0:
             if not (probeFileID in self.iminiProbes):
-                sysrow['Message']="{} is not actually manipulated. Neglecting mask validation.".format(probeFileID)
+                sysrow['Message']="Neglecting mask validation for probe {}.".format(probeFileID)
                 return sysrow
 
 #                printq("The contents of your file are not valid!",True)
@@ -689,13 +689,13 @@ class DSD_Validator(validator):
                         if not l_content[s_heads['ProbeStatus']] in all_statuses:
                             self.printbuffer.append("Probe status {} for probe {} is not recognized.".format(l_content[s_heads['ProbeStatus']],probeID))
                             colFlag = 1
-                        if not l_content[s_heads['DonorStatus']] in all_statuses:
+                        if not l_content[s_heads['DonorStatus']] in ['Processed','NonProcessed','OptOutLocalization']:
                             self.printbuffer.append("Donor status {} for donor {} is not recognized.".format(l_content[s_heads['DonorStatus']],donorID))
                             colFlag = 1
 
                         if l_content[s_heads['ProbeStatus']] in ["OptOutAll","OptOutLocalization"]:
                             optOutOption = optOutOption + 1
-                        if l_content[s_heads['DonorStatus']] in ["OptOutAll","OptOutLocalization"]:
+                        if l_content[s_heads['DonorStatus']] == "OptOutLocalization":
                             optOutOption = optOutOption + 2
 
                     probeWidth = int(indRec[i_heads['ProbeWidth']])
