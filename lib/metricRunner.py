@@ -504,21 +504,21 @@ class maskMetricRunner:
     
                 #append 0 and 1 to beginning and end of tpr and fpr respectively
                 
+                rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
+                #reindex rocvalues
+                rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
+    
+                #generate a plot and get detection metrics
+                fpr = rocvalues['FPR']
+                tpr = rocvalues['TPR']
+    
+                myauc = dmets.compute_auc(fpr,tpr)
+                myeer = dmets.compute_eer(fpr,1-tpr)
+    
+                maskRow['AUC'] = myauc
+                maskRow['EER'] = myeer
+        
                 if genROC:
-                    rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
-                    #reindex rocvalues
-                    rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
-        
-                    #generate a plot and get detection metrics
-                    fpr = rocvalues['FPR']
-                    tpr = rocvalues['TPR']
-        
-                    myauc = dmets.compute_auc(fpr,tpr)
-                    myeer = dmets.compute_eer(fpr,1-tpr)
-        
-                    maskRow['AUC'] = myauc
-                    maskRow['EER'] = myeer
-        
                     mydets = detPackage(tpr,
                                         fpr,
                                         1,
