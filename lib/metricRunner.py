@@ -78,7 +78,7 @@ class detPackage:
         
 def plotROC(mydets,plotname,plot_title,outdir):
     #initialize plot options for ROC
-    #TODO: since it's getting generated, make a unique json file for ProbeFileID that will avoid potential collisions
+    #TODO: since it's getting generated, make a unique json file for ProbeFileID that will avoid potential collisions?
     dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/plotJsonFiles/plot_options.json")
 #    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
     p.gen_default_plot_options(dict_plot_options_path_name,plot_title=plot_title,plot_type='ROC')
@@ -437,7 +437,7 @@ class maskMetricRunner:
             #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
             maskRow['OptimumThreshold'] = threshold
 
-            genROC = True
+            genROC = False
             nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
             nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
             nullRocRows = thresMets.query(nullRocQuery)
@@ -450,7 +450,7 @@ class maskMetricRunner:
 
             #if no rows have it, don't gen the ROC.
             if nullRocRows.shape[0] == 0:
-                genRoc = False
+                genROC = False
 
             #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
             #and pass to HTML accordingly
