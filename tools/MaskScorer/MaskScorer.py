@@ -121,7 +121,7 @@ help="The number of digits to round computed scores, [e.g. a score of 0.33333333
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column.")
 parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
-parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select index files for the purpose of testing, and may accept system outputs that have not passed the validator.")
+parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select smaller index files for the purpose of testing.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
 
 args = parser.parse_args()

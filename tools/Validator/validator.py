@@ -84,28 +84,29 @@ class validator:
     @abstractmethod
     def nameCheck(self,NCID): pass
     @abstractmethod
-    def contentCheck(self,identify=False,neglectMask=False,reffname=0): pass
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0,indexFilter=False): pass
     def checkMoreProbes(self,maskData): pass
-    def fullCheck(self,nc,identify,NCID,neglectMask,reffname=0,processors=1):
+#    def fullCheck(self,nc,identify,NCID,neglectMask,reffname=0,processors=1):
+    def fullCheck(self,params):
         #check for existence of files
         eflag = False
-        self.procs = processors
+        self.procs = params.processors
         self.printbuffer = printbuffer(self.verbose)
         if not os.path.isfile(self.sysname):
 #            printq("ERROR: I can't find your system output " + self.sysname + "! Where is it?",True)
-            self.printbuffer.append("ERROR: I can't find your system output {}! Where is it?".format(self.sysname))
+            self.printbuffer.append("ERROR: Expected system output {}. Please check file path to make sure the system output file exists.".format(self.sysname))
             eflag = True
         if not os.path.isfile(self.idxname):
 #            printq("ERROR: I can't find your index file " + self.idxname + "! Where is it?",True)
-            self.printbuffer.append("ERROR: I can't find your index file {}! Where is it?".format(self.idxname))
+            self.printbuffer.append("ERROR: Expected index file {}. Please check file path to make sure the index file exists.".format(self.idxname))
             eflag = True
         if eflag:
             self.printbuffer.atomprint(print_lock)
             return 1
 
         #option to do a namecheck
-        if nc:
-            if self.nameCheck(NCID) == 1:
+        if params.doNameCheck:
+            if self.nameCheck(params.ncid) == 1:
                 self.printbuffer.atomprint(print_lock)
                 return 1
 
@@ -116,14 +117,14 @@ class validator:
 
         if idx_ext != 'csv':
 #            printq("ERROR: Your index file should have csv as an extension! (It is separated by '|', I know...)",True)
-            self.printbuffer.append("ERROR: Your index file should have csv as an extension! (It is separated by '|', I know...)")
+            self.printbuffer.append("ERROR: Index file should have csv as an extension.")
             self.printbuffer.atomprint(print_lock)
             return 1
 
 #        printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
-        self.printbuffer.append("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
+        self.printbuffer.append("Index file is a pipe-separated csv.")
 
-        if self.contentCheck(identify,neglectMask,reffname) == 1:
+        if self.contentCheck(params.identify,params.neglectMask,params.ref,params.indexFilter) == 1:
             self.printbuffer.atomprint(print_lock)
             return 1
         self.printbuffer.atomprint(print_lock)
@@ -138,7 +139,7 @@ class SSD_Validator(validator):
         sys_pieces = self.sysname.rsplit('.',1)
         sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
-            self.printbuffer.append('ERROR: Your system output is not a csv!')
+            self.printbuffer.append('ERROR: System output is not a csv.')
             return 1
     
         fileExpid = sys_pieces[0].split('/')
@@ -178,17 +179,17 @@ class SSD_Validator(validator):
             teamFlag = 1
         task = task.lower()
         if (task != 'manipulation'): # and (task != 'provenance') and (task != 'provenancefiltering'):
-            self.printbuffer.append('ERROR: What kind of task is {}? It should be manipulation!'.format(task)) #, provenance, or provenancefiltering!',True)
+            self.printbuffer.append('ERROR: Task {} is unrecognized. The task must be \'manipulation\'.'.format(task)) #, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
         if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
-            self.printbuffer.append('The name of this file is valid!')
+            self.printbuffer.append('The name of this file is valid.')
             return 0
         else:
             self.printbuffer.append('The name of the file is not valid. Please review the requirements.')
             return 1 
 
-    def contentCheck(self,identify,neglectMask,reffname):
+    def contentCheck(self,identify,neglectMask,reffname,indexFilter):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
@@ -199,6 +200,7 @@ class SSD_Validator(validator):
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
         idxmini = 0
         self.identify = identify
+        self.indexFilter = indexFilter
 
         if reffname is not 0:
             #filter idxfile based on ProbeFileID's in reffile
@@ -213,7 +215,7 @@ class SSD_Validator(validator):
         matchFlag = 0
         
         if sysfile.shape[1] < 3:
-            self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 3. Are you using '|' to separate your columns?")
+            self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 3. Please check to see if '|' is used to separate your columns.")
             return 1
 
         sysHeads = list(sysfile.columns)
@@ -282,7 +284,7 @@ class SSD_Validator(validator):
             xrowFlag = 1
         
         if not ((dupFlag == 0) and (xrowFlag == 0)):
-            self.printbuffer.append("The contents of your file are not valid!")
+            self.printbuffer.append("The contents of your file are not valid.")
             return 1
         
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str)
@@ -291,7 +293,7 @@ class SSD_Validator(validator):
             sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
         except ValueError:
             confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)]['ProbeFileID']
-            self.printbuffer.append("ERROR: Your Confidence Scores for probes {} are not numeric.".format(confprobes))
+            self.printbuffer.append("ERROR: The Confidence Scores for probes {} are not numeric.".format(confprobes))
             scoreFlag = 1
 
         if testMask:
@@ -336,10 +338,10 @@ class SSD_Validator(validator):
         #final validation
         flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + matchFlag
         if flagSum == 0:
-            self.printbuffer.append("The contents of your file are valid!")
+            self.printbuffer.append("The contents of your file are valid.")
             return 0
         else:
-            self.printbuffer.append("The contents of your file are not valid!")
+            self.printbuffer.append("The contents of your file are not valid.")
             return 1
 
     def checkProbes(self,maskData,processors):
@@ -371,7 +373,7 @@ class SSD_Validator(validator):
         probeFileID = sysrow['ProbeFileID']
         maskFlag = 0
         matchFlag = 0
-        if not (probeFileID in self.idxProbes):
+        if not ((probeFileID in self.idxProbes) or self.indexFilter):
             sysrow['Message']="ERROR: {} does not exist in the index file.".format(probeFileID)
             sysrow['matchFlag'] = 1
             return sysrow
@@ -427,10 +429,10 @@ class SSD_Validator(validator):
         mask_pieces = maskname.split('.')
         mask_ext = mask_pieces[-1]
         if mask_ext != 'png':
-            msg.append('ERROR: Mask image {} for FileID {} is not a png. Make it into a png!'.format(maskname,fileid))
+            msg.append('ERROR: Mask image {} for FileID {} is not a png.'.format(maskname,fileid))
             return 1,"\n".join(msg)
         if not os.path.isfile(maskname):
-            msg.append("ERROR: {} does not exist! Did you name it wrong?".format(maskname))
+            msg.append("ERROR: Expected mask image {}. Please check the name of the mask image.".format(maskname))
             return 1,"\n".join(msg)
         baseHeight = list(map(int,indexfile['ProbeHeight'][indexfile['ProbeFileID'] == fileid]))[0] 
         baseWidth = list(map(int,indexfile['ProbeWidth'][indexfile['ProbeFileID'] == fileid]))[0]
@@ -472,7 +474,7 @@ class DSD_Validator(validator):
         sys_pieces = self.sysname.rsplit('.',1)
         sys_ext = sys_pieces[1]
         if sys_ext != 'csv':
-            self.printbuffer.append('ERROR: Your system output is not a csv!')
+            self.printbuffer.append('ERROR: System output is not a csv.')
             return 1
     
         fileExpid = sys_pieces[0].split('/')
@@ -514,18 +516,18 @@ class DSD_Validator(validator):
 
         task = task.lower()
         if task != 'splice':
-            self.printbuffer.append('ERROR: What kind of task is ' + task + '? It should be splice!')
+            self.printbuffer.append('ERROR: Task {} is unrecognized. The task must be \'splice\'.'.format(task)) #, provenance, or provenancefiltering!',True)
             taskFlag = 1
     
         if (taskFlag == 0) and (ncidFlag == 0) and (teamFlag == 0):
-            self.printbuffer.append('The name of this file is valid!')
+            self.printbuffer.append('The name of this file is valid.')
             return 0
         else:
             self.printbuffer.append('The name of the file is not valid. Please review the requirements.')
             return 1 
 
     #redesigned pipeline
-    def contentCheck(self,identify,neglectMask,reffname):
+    def contentCheck(self,identify,neglectMask,reffname,indexFilter):
         self.printbuffer.append('Validating the syntactic content of the system output.')
         #read csv line by line
         dupFlag = 0
@@ -535,6 +537,7 @@ class DSD_Validator(validator):
         maskFlag = 0
         keyFlag = 0
 
+        self.indexFilter = indexFilter
         i_len = 0
         s_len = 0 #number of elements in iterator
         s_headnames = ''
@@ -606,7 +609,7 @@ class DSD_Validator(validator):
                     #header checking
                     if len(s_headnames) < 5:
                         #check number of headers
-                        self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 6. Are you using '|' to separate your columns?")
+                        self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 6. Please check to see if '|' is used to separate your columns.")
                         return 1
                     allClear = True
                     truelist = ["ProbeFileID","DonorFileID","ConfidenceScore"]
@@ -652,8 +655,9 @@ class DSD_Validator(validator):
                 try:
                     indRec = ind[key]
                 except KeyError:
-                    self.printbuffer.append("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID))
-                    keyFlag = 1
+                    if not indexFilter:
+                        self.printbuffer.append("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID))
+                        keyFlag = 1
                     continue
 
                 if reffname is not 0:
@@ -663,7 +667,7 @@ class DSD_Validator(validator):
 
                 #confidence score checking
                 if not is_finite_number(l_content[s_heads['ConfidenceScore']]):
-                    self.printbuffer.append("ERROR: Your Confidence Score for probe-donor pair ({}) is not a real numeric number.".format(key.replace(":",",")))
+                    self.printbuffer.append("ERROR: The Confidence Score for probe-donor pair ({}) is not a real number.".format(key.replace(":",",")))
                     scoreFlag = 1
 
                 if testMask and not neglectMask:
@@ -757,7 +761,7 @@ class DSD_Validator(validator):
             self.printbuffer.append("The contents of your file are not valid!")
             return 1
 
-    def contentCheck_0(self,identify,neglectMask,reffname):
+    def contentCheck_0(self,identify,neglectMask,reffname,indexFilter):
         index_dtype = {'TaskID':str,
                  'ProbeFileID':str,
                  'ProbeFileName':str,
@@ -815,7 +819,7 @@ class DSD_Validator(validator):
             sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
         except ValueError:
             confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)][['ProbeFileID','DonorFileID']]
-            self.printbuffer.append("ERROR: Your Confidence Scores for probe-donor pairs {} are not numeric.".format(confprobes))
+            self.printbuffer.append("ERROR: The Confidence Scores for probe-donor pairs {} are not real numbers.".format(confprobes))
             scoreFlag = 1
         sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
 
@@ -1022,6 +1026,26 @@ class DSD_Validator(validator):
             self.printbuffer.append("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
         return flag
 
+class validation_params:
+    """
+    Description: Stores list of parameters for validation.
+    """
+    def __init__(self,
+                 ncid,
+                 doNameCheck,
+                 identify,
+                 neglectMask,
+                 indexFilter,
+                 ref,
+                 processors):
+        self.ncid=ncid
+        self.doNameCheck=doNameCheck
+        self.identify=identify
+        self.neglectMask=neglectMask
+        self.indexFilter=indexFilter
+        self.ref=ref
+        self.processors=processors
+
 
 if __name__ == '__main__':
     import argparse
@@ -1042,45 +1066,50 @@ if __name__ == '__main__':
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-p','--processors',type=int,default=1,\
     help='The number of processors to use for validation. Choosing too many processors will cause the program to forcibly default to a smaller number. [default=1].',metavar='positive integer')
+    parser.add_argument('-xF','--indexFilter',action='store_true',
+    help="Filter validation only to files that are present in the index file. This option permits validation on a subset of the dataset by modifying the index file.")
     parser.add_argument('-nm','--neglectMask',action="store_true",\
     help="neglect mask dimensionality validation.")
     parser.add_argument('--ncid',type=str,default="NC17",\
     help="the NCID to validate against.")
 
-    if len(sys.argv) > 1:
+    if len(sys.argv) < 2:
+        parser.print_help()
+        exit(0)
 
-        args = parser.parse_args()
-        verbose = args.verbose
-        #TODO: remove later
-        if verbose==1:
-            def printq(mystring,iserr=False):
-                print(mystring)
-        elif verbose==0:
-            printq = lambda *x : None
-        else:
-            verbose = 1
+    args = parser.parse_args()
+    verbose = args.verbose
+    #TODO: remove later
+    if verbose==1:
+        def printq(mystring,iserr=False):
+            print(mystring)
+    elif verbose==0:
+        printq = lambda *x : None
+    else:
+        verbose = 1
 #        else:
 #            def printq(mystring,iserr=False):
 #                if iserr:
 #                    print(mystring)
 
-        if args.identify:
-            try:
-                subprocess.check_output(["identify"])
-            except:
-                print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
-                exit(1)
-
-        if args.valtype == 'SSD':
-            ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
-            exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
-
-        elif args.valtype == 'DSD':
-            dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose)
-            exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
-
-        else:
-            print("Validation type must be 'SSD' or 'DSD'.")
+    if args.identify:
+        try:
+            subprocess.check_output(["identify"])
+        except:
+            print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
             exit(1)
+
+    if args.valtype == 'SSD':
+        ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
+        myval_params = validation_params(args.ncid,args.nameCheck,args.identify,args.neglectMask,args.indexFilter,args.inRef,args.processors)
+        exit(ssd_validation.fullCheck(myval_params))
+#         exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
+
+    elif args.valtype == 'DSD':
+        dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose)
+        myval_params = validation_params(args.ncid,args.nameCheck,args.identify,args.neglectMask,args.indexFilter,args.inRef,args.processors)
+        exit(dsd_validation.fullCheck(myval_params))
+#         exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     else:
-        parser.print_help()
+        print("Validation type must be 'SSD' or 'DSD'.")
+        exit(1)

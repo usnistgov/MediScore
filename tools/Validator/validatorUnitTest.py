@@ -117,7 +117,7 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
 #        self.assertEqual(val,1)
 #        errstr = errmsg.read() #NOTE: len(errmsg.read())==0, but when you set it equal, you get the entire string. What gives?
-        self.assertTrue("ERROR: I can't find your system output" in errstr)
+        self.assertTrue("ERROR: Expected system output" in errstr)
 #        errmsg.close()
         
         print("CASE S0 validated.")
@@ -135,7 +135,8 @@ class TestValidator(ut.TestCase):
 
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
-        self.assertTrue("ERROR: What kind of task is" in errstr)
+        self.assertTrue("ERROR: Task" in errstr)
+        self.assertTrue("unrecognized" in errstr)
         print("CASE S1 validated.")
         os.system('rm vm1.log')
         
@@ -150,7 +151,8 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
 #        errstr = errmsg.read()
-        self.assertTrue("ERROR: What kind of task is" in errstr)
+        self.assertTrue("ERROR: Task" in errstr)
+        self.assertTrue("unrecognized" in errstr)
         print("CASE S2 validated.")
         os.system('rm vm2.log')
         
@@ -217,7 +219,7 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
 #        errstr = errmsg.read()
         self.assertEqual(myval,1)
-        self.assertTrue("ERROR: Your Confidence Scores for probes" in errstr)
+        self.assertTrue("ERROR: The Confidence Scores for probes" in errstr)
         os.system('rm vm4c.log')
 
         print("CASE S4d: Validating behavior for improper OptOut...")
@@ -241,7 +243,7 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
 #        errstr = errmsg.read()
         self.assertEqual(myval,1)
-        self.assertTrue("is not a png. Make it into a png!" in errstr)
+        self.assertTrue("is not a png." in errstr)
         print("CASE S5 validated.")
         os.system('rm vm5.log')
         
@@ -288,13 +290,12 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
 #        errstr = errmsg.read()
         self.assertEqual(myval,1)
-        self.assertTrue("does not exist! Did you name it wrong?" in errstr)
+        self.assertTrue("Expected mask image" in errstr)
+        self.assertTrue("Please check the name of the mask image" in errstr)
         
         print("CASE S8 validated.")
         os.system('rm vm8.log')
         
-        print("\nALL SSD VALIDATION TESTS SUCCESSFULLY PASSED.")
-                
     def testDSDName(self):
         import StringIO
         @contextlib.contextmanager
@@ -329,8 +330,8 @@ class TestValidator(ut.TestCase):
 #        errstr = errmsg.read()
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
-        self.assertTrue("ERROR: I can't find your system output" in errstr)
-        self.assertTrue("ERROR: I can't find your index file" in errstr)
+        self.assertTrue("ERROR: Expected system output" in errstr)
+        self.assertTrue("ERROR: Expected index file" in errstr)
         print("CASE D0 validated.")
         os.system('rm vs0.log')
         
@@ -344,7 +345,8 @@ class TestValidator(ut.TestCase):
 #        errstr = errmsg.read()
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
-        self.assertTrue("ERROR: What kind of task is" in errstr)
+        self.assertTrue("ERROR: Task" in errstr)
+        self.assertTrue("is unrecognized. The task must be \'splice\'." in errstr)
         print("CASE D1 validated.")
         os.system('rm vs1.log')
         
@@ -358,7 +360,8 @@ class TestValidator(ut.TestCase):
 #        errstr = errmsg.read()
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
-        self.assertTrue("ERROR: What kind of task is" in errstr)
+        self.assertTrue("ERROR: Task" in errstr)
+        self.assertTrue("is unrecognized. The task must be \'splice\'." in errstr)
         print("CASE D2 validated.")
         os.system('rm vs2.log')
         
@@ -426,7 +429,7 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
 #        self.assertTrue("ERROR: Row" in errstr) #TODO: temporary measure until we get duplicates back
-        self.assertTrue("ERROR: Your Confidence Score for probe-donor pair" in errstr)
+        self.assertTrue("ERROR: The Confidence Score for probe-donor pair" in errstr)
         os.system('rm vs4c.log')
 
         print("CASE D4d: Validating behavior for inappropriate ProbeStatus and DonorStatus values...")
@@ -490,15 +493,13 @@ class TestValidator(ut.TestCase):
         idx=0
         count=0
         while idx < len(errstr):
-            idx = errstr.find("does not exist! Did you name it wrong?",idx)
+            idx = errstr.find("does not exist",idx)
             if idx == -1:
                 self.assertEqual(count,3)
                 break
             else:
                 count += 1
-                idx += len("does not exist! Did you name it wrong?")
+                idx += len("does not exist")
         os.system('rm vs7.log')
         print("CASE D7 validated.")
-        
-        print("\nALL DSD VALIDATION TESTS SUCCESSFULLY PASSED.")
         
