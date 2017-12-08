@@ -105,7 +105,8 @@ class validator:
             return 1
 
         #option to do a namecheck
-        if params.doNameCheck:
+        self.doNameCheck = params.doNameCheck
+        if self.doNameCheck:
             if self.nameCheck(params.ncid) == 1:
                 self.printbuffer.atomprint(print_lock)
                 return 1
@@ -221,11 +222,12 @@ class SSD_Validator(validator):
         sysHeads = list(sysfile.columns)
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore"]
-        testMask = False
-        if self.condition in ["ImgOnly","ImgMeta"]:
-            truelist.append("OutputProbeMaskFileName")
-            testMask = True 
+        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        testMask = True
+        if self.doNameCheck:
+            if self.condition in ["VidOnly","VidMeta"]:
+                truelist = ["ProbeFileID","ConfidenceScore"]
+                testMask = False 
         self.testMask = testMask
 
         #either IsOptOut or ProbeStatus must be in the file header
@@ -240,6 +242,9 @@ class SSD_Validator(validator):
             if "IsOptOut" in sysHeads:
                 optOut = 1
             elif "ProbeStatus" in sysHeads:
+                if "ProbeOptOutPixelValue" not in sysHeads:
+                    self.printbuffer.append("ERROR: The required column ProbeOptOutPixelValue is absent.")
+                    return 1
                 optOut = 2
         self.optOut = optOut
 
@@ -270,6 +275,7 @@ class SSD_Validator(validator):
 
         if self.condition in ["VidOnly","VidMeta"]:
             neglectMask = True
+            #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error
         self.neglectMask = neglectMask
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
@@ -393,7 +399,9 @@ class SSD_Validator(validator):
                 sysrow['matchFlag'] = 1
 
         #check mask validation
-        if self.testMask and not self.neglectMask:
+        if self.testMask:
+            if self.neglectMask:
+                return sysrow
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 sysrow['Message']=" ".join([sysrow['Message'],"The mask for file {} appears to be absent. Skipping it.".format(probeFileID)])
@@ -466,6 +474,9 @@ class SSD_Validator(validator):
             msg.append(maskname + " is valid.")
     
         return flag,"\n".join(msg)
+
+    #TODO: add video intervals check?
+
 
 class DSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -597,7 +608,7 @@ class DSD_Validator(validator):
         self.printbuffer.append("Index read")
 
         sysPath = os.path.dirname(self.sysname)
-        testMask = False
+        testMask = True
         optOut = 0
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
@@ -612,11 +623,10 @@ class DSD_Validator(validator):
                         self.printbuffer.append("ERROR: The number of columns of the system output file must be at least 6. Please check to see if '|' is used to separate your columns.")
                         return 1
                     allClear = True
-                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore"]
-                    if self.condition in ["ImgOnly","ImgMeta"]:
-                        truelist.extend(["OutputProbeMaskFileName","OutputDonorMaskFileName"])
-                        testMask = True
-
+                    truelist = ["ProbeFileID","DonorFileID","ConfidenceScore","OutputProbeMaskFileName","OutputDonorMaskFileName"]
+#                    if self.condition in ["ImgOnly","ImgMeta"]:
+#                        truelist = ["ProbeFileID","DonorFileID","ConfidenceScore"]
+#                        testMask = True
                     
                     if not (("IsOptOut" in s_headnames) or (("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames))):
                         self.printbuffer.append("ERROR: The column 'IsOptOut', or 'ProbeStatus' and 'DonorStatus', must be in the column headers.")
@@ -672,7 +682,9 @@ class DSD_Validator(validator):
                     self.printbuffer.append("ERROR: The Confidence Score for probe-donor pair ({}) is not a real number.".format(key.replace(":",",")))
                     scoreFlag = 1
 
-                if testMask and not neglectMask:
+                if testMask:
+                    if neglectMask:
+                        continue
                     probeOutputMaskFileName = l_content[s_heads['OutputProbeMaskFileName']]
                     donorOutputMaskFileName = l_content[s_heads['OutputDonorMaskFileName']]
 
@@ -959,7 +971,7 @@ class DSD_Validator(validator):
         
             if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
                 self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
-                self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
+                self.printbuffer.append("Dimensions of donor mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
                 self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
                 flag = 1
      

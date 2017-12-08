@@ -365,6 +365,7 @@ HISTORY
       - Added more thorough tests for ProbeStatus criteria.
       - Edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
+      - Fixed bug that skipped masks when namechecking is turned off.
 
 
 CONTACT

@@ -100,8 +100,15 @@ class TestValidator(ut.TestCase):
 #        self.assertEqual(myval.fullCheck(True,identify,NCID,neglectMask),0)
         myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vmb.log".format(NCID,validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
         self.assertEqual(myval,0)
-        print("BASIC FUNCTIONALITY validated.")
         os.system('rm vmb.log')
+
+        #no namecheck case
+        myval = os.system("python2 validator.py -vt SSD -s {} -x {} -p {} {}{}> vmb1.log".format(validatorRoot + 'foo/foo.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256
+        print "vmb1: {}".format(myval)
+        self.assertEqual(myval,0)
+        os.system('rm vmb1.log')
+
+        print("BASIC FUNCTIONALITY validated.")
         
         print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
         print("CASE S0: Validating behavior when files don't exist.")
@@ -314,8 +321,13 @@ class TestValidator(ut.TestCase):
 #        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
 #        self.assertEqual(myval.fullCheck(True,identify,NCID,neglectMask,validatorRoot + 'NC2016_Test0516_dfz/reference/splice/NC2016-splice-ref.csv'),0)
         self.assertEqual(myval,0)
-        print("BASIC FUNCTIONALITY validated.")
         os.system('rm vsb.log')
+
+        #add validation for namecheck
+        myval = os.system("python2 validator.py -vt DSD -s {} -x {} -p {} {}{}> vsb1.log".format(validatorRoot + 'lorem/lorem.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        self.assertEqual(myval,0)
+        os.system('rm vsb1.log')
+        print("BASIC FUNCTIONALITY validated.")
         
         errmsg = ""
         #Same checks as Validate SSD, but applied to different files
