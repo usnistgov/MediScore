@@ -128,6 +128,7 @@ class mask(object):
         self.name=n
         ext = self.name.split('.')[-1].lower()
         if (ext == 'arw') or (ext == 'nef') or (ext == 'raf') or (ext == 'dng'):
+        if ext in ['arw','nef','raf','dng']:
             self.matrix=rawpy.imread(n).postprocess()
             #rgb2gray this if readopt==0
             if readopt == 0:
