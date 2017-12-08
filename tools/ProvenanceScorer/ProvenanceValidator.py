@@ -74,7 +74,7 @@ class ProvenanceValidator(validator):
             printq('The name of the file is not valid. Please review the requirements in the eval plan.',True)
             return 1 
         
-    def contentCheck(self,identify=False,neglectMask=False,reffname=0):
+    def contentCheck(self,identify=False,neglectMask=False,reffname=0,indexFilter=False):
         printq('Validating the syntactic content of the system output.')
         index_dtype = {'TaskID':str,
                  'ProvenanceProbeFileID':str,
@@ -218,6 +218,26 @@ def jsonCheck(provfile,provID,task,optOutColName,optOutVersion):
         print("{} did not pass the {} schema check!{}".format(provfile,task,provclause))
         return 1
     
+class validation_params:
+    """
+    Description: Stores list of parameters for validation.
+    """
+    def __init__(self,
+                 ncid,
+                 doNameCheck,
+                 identify,
+                 neglectMask,
+                 indexFilter,
+                 ref,
+                 processors):
+        self.ncid=ncid
+        self.doNameCheck=doNameCheck
+        self.identify=identify
+        self.neglectMask=neglectMask
+        self.indexFilter=indexFilter
+        self.ref=ref
+        self.processors=processors
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
@@ -245,7 +265,10 @@ if __name__ == '__main__':
             if iserr:
                 print(mystring)
 
+    myparams = validation_params(args.ncid,args.nameCheck,False,args.neglectJSON,False,0,1)
+
     validation = ProvenanceValidator(args.system_output_file,args.index_file,verbose)
     if args.task:
         validation.task = args.task
-    exit(validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON))
+    exit(validation.fullCheck(myparams))
+#    exit(validation.fullCheck(args.nameCheck,False,args.ncid,args.neglectJSON))
