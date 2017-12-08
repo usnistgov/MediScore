@@ -652,16 +652,18 @@ class DSD_Validator(validator):
                 key = ":".join([probeID,donorID])
 
                 #try catch the key lookup
+                keyPresent=True
                 try:
                     indRec = ind[key]
                 except KeyError:
+                    keyPresent=False
                     if not indexFilter:
                         self.printbuffer.append("ERROR: The pair ({},{}) does not exist in the index file.".format(probeID,donorID))
                         keyFlag = 1
                     continue
 
                 if reffname is not 0:
-                    if r_files[key] == 'N':
+                    if (r_files[key] == 'N') or not keyPresent:
 #                        self.printbuffer.append("Skipping the pair ({},{}).".format(probeID,donorID))
                         continue
 
