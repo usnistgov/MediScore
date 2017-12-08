@@ -377,7 +377,7 @@ class SSD_Validator(validator):
             return sysrow
         elif self.iminiProbes is not 0:
             if not (probeFileID in self.iminiProbes):
-                sysrow['Message']="Neglecting mask validation for probe {}.".format(probeFileID)
+#                sysrow['Message']="Neglecting mask validation for probe {}.".format(probeFileID)
                 return sysrow
 
 #                printq("The contents of your file are not valid!",True)
@@ -658,7 +658,7 @@ class DSD_Validator(validator):
 
                 if reffname is not 0:
                     if r_files[key] == 'N':
-                        self.printbuffer.append("The pair ({},{}) is not a ground truth splice. Skipping it.".format(probeID,donorID))
+#                        self.printbuffer.append("Skipping the pair ({},{}).".format(probeID,donorID))
                         continue
 
                 #confidence score checking
