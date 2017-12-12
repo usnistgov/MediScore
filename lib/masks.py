@@ -322,9 +322,15 @@ class mask(object):
         """
         dims = self.get_dims()
         pns = np.ones((dims[0],dims[1])).astype(np.uint8)
-        if pixelvalue == -1:
-            return pns
-        pns[self.matrix==pixelvalue] = 0
+        try:
+            if pixelvalue == '':
+                return pns
+            else:
+                px = int(pixelvalue)
+        except ValueError:
+            print("The value {} cannot be converted to an integer. Please check your system output.".format(pixelvalue))
+            return 1
+        pns[self.matrix==px] = 0
         return pns
 
     #save mask to file
