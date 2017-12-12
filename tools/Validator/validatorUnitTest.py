@@ -110,7 +110,7 @@ class TestValidator(ut.TestCase):
 
         print("BASIC FUNCTIONALITY validated.")
         
-        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
+        print("\nBeginning experiment ID naming error validations.")
         print("CASE S0: Validating behavior when files don't exist.")
         
 #        myval = SSD_Validator(validatorRoot + 'emptydir_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/foo__NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index0.csv')
@@ -331,7 +331,7 @@ class TestValidator(ut.TestCase):
         
         errmsg = ""
         #Same checks as Validate SSD, but applied to different files
-        print("\nBeginning experiment ID naming error validations. Expect ERROR printouts for the next couple of cases. This is normal here.")
+        print("\nBeginning experiment ID naming error validations.")
         print("\nCASE D0: Validating behavior when files don't exist.") 
 #        myval = DSD_Validator(validatorRoot + 'emptydir_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/emptydir_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index0.csv')
         myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs0.log".format(NCID,validatorRoot + 'emptydir_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/emptydir_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index0.csv',procs,identify_string,nm_string))//256 
