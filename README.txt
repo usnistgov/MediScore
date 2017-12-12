@@ -361,7 +361,7 @@ HISTORY
     * Mask Scorer
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
-      - Fixed bug that threw an error on blank ProbeOptOutPixelValues
+      - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
     * Validator
       - Added more thorough tests for ProbeStatus criteria.
       - Edited error messsages to be more helpful.
