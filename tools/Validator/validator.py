@@ -638,6 +638,13 @@ class DSD_Validator(validator):
                             optOut = 1
                         elif ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
                             optOut = 2
+
+                    self.pixOptOut = False
+                    if ("ProbeOptOutPixelValue" in s_headnames) and ("DonorOptOutPixelValue" in s_headnames):
+                        self.pixOptOut = True
+                    elif (("ProbeOptOutPixelValue" in s_headnames) and not ("DonorOptOutPixelValue" in s_headnames)) or ((not ("ProbeOptOutPixelValue" in s_headnames)) and ("DonorOptOutPixelValue" in s_headnames)):
+                        self.printbuffer.append("ERROR: Both ProbeOptOutPixelValue and DonorOptOutPixelValue are required for the splice task.")
+                        allClear = False
                              
                     for th in truelist:
                         headcheck = th in s_headnames

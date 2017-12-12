@@ -401,11 +401,17 @@ class maskMetricRunner:
             if noScorePixel >= 0:
                 myprintbuffer.append("Setting system optOut no-score zone...")
                 pns=sImg.pixelNoScore(noScorePixel)
+                if pns is 1:
+                    myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
+                    exit(1)
                 rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
                 wts = cv2.bitwise_and(wts,pns)
             if self.perProbePixelNoScore:
                 pppnspx = maskRow[''.join([mymode,'OptOutPixelValue'])]
                 pns=sImg.pixelNoScore(pppnspx)
+                if pns is 1:
+                    myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
+                    exit(1)
                 rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
                 wts = cv2.bitwise_and(wts,pns)
 
