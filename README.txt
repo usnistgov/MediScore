@@ -361,11 +361,13 @@ HISTORY
     * Mask Scorer
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
+      - Fixed bug that threw an error on blank ProbeOptOutPixelValues
     * Validator
       - Added more thorough tests for ProbeStatus criteria.
       - Edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
       - Fixed bug that skipped masks when namechecking is turned off.
+      - Added Probe and DonorOptOutPixelValue checks for validator.
 
 
 CONTACT

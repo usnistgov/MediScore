@@ -689,6 +689,13 @@ class DSD_Validator(validator):
                     self.printbuffer.append("ERROR: The Confidence Score for probe-donor pair ({}) is not a real number.".format(key.replace(":",",")))
                     scoreFlag = 1
 
+                if self.pixOptOut:
+                    oopixvalp = str(l_content[s_heads['ProbeOptOutPixelValue']])
+                    oopixvald = str(l_content[s_heads['DonorOptOutPixelValue']])
+                    if (not ((oopixvalp == '') or (oopixvalp.isdigit()))) or (not ((oopixvald == '') or (oopixvald.isdigit()))):
+                        self.printbuffer.append("ERROR: ProbeOptOutPixelValue for probe-donor pair ({}) is {} and DonorOptOutPixelValue is {}. Please check if either is not blank ('') or an integer.".format(key.replace(":",","),oopixvalp,oopixvald))
+                        scoreFlag = 1
+
                 if testMask:
                     if neglectMask:
                         continue
