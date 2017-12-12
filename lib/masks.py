@@ -322,6 +322,7 @@ class mask(object):
         """
         dims = self.get_dims()
         pns = np.ones((dims[0],dims[1])).astype(np.uint8)
+        px = -1
         try:
             if pixelvalue == '':
                 return pns
