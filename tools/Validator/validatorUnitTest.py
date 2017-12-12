@@ -265,8 +265,8 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
 #        errstr = errmsg.read()
         self.assertEqual(myval,1)
-        self.assertEqual(errstr.count("Dimensions"),2)
-        self.assertTrue("ERROR: The mask image's length and width do not seem to be the same as the base image's." in errstr)
+#        self.assertEqual(errstr.count("Dimensions"),2)
+        self.assertTrue("ERROR: Expected dimensions" in errstr)
         self.assertTrue("is not single-channel." in errstr)
         print("CASE S6 validated.")
         os.system('rm vm6.log')
@@ -475,20 +475,20 @@ class TestValidator(ut.TestCase):
 #        errstr = errmsg.read()
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
-        self.assertTrue("is not a png. Make it into a png!" in errstr)
+        self.assertTrue("is not a png." in errstr)
         idx=0
         count=0
-        while idx < len(errstr):
-            idx = errstr.find("Dimensions",idx)
-            if idx == -1:
-                self.assertEqual(count,2)
-                break
-            else:
-                count += 1
-                idx += len("Dimensions")
-        self.assertTrue("ERROR: The mask image's length and width do not seem to be the same as the base image's." in errstr)
+#        while idx < len(errstr):
+#            idx = errstr.find("Dimensions",idx)
+#            if idx == -1:
+#                self.assertEqual(count,2)
+#                break
+#            else:
+#                count += 1
+#                idx += len("Dimensions")
+        self.assertTrue("ERROR: Expected dimensions" in errstr)
         self.assertTrue("is not single-channel." in errstr)
-        self.assertTrue("is not a png. Make it into a png!" in errstr)
+        self.assertTrue("is not a png." in errstr)
         os.system('rm vs6.log')
         print("CASE D6 validated.")
         
@@ -505,13 +505,13 @@ class TestValidator(ut.TestCase):
         idx=0
         count=0
         while idx < len(errstr):
-            idx = errstr.find("does not exist",idx)
+            idx = errstr.find("Expected mask image",idx)
             if idx == -1:
                 self.assertEqual(count,3)
                 break
             else:
                 count += 1
-                idx += len("does not exist")
+                idx += len("Expected mask imaget")
         os.system('rm vs7.log')
         print("CASE D7 validated.")
         

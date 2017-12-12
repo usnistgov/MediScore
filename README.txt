@@ -364,7 +364,7 @@ HISTORY
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
     * Validator
       - Added more thorough tests for ProbeStatus criteria.
-      - Edited error messsages to be more helpful.
+      - Simplified and edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
       - Fixed bug that skipped masks when namechecking is turned off.
       - Added Probe and DonorOptOutPixelValue checks for validator.

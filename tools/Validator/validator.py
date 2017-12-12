@@ -436,8 +436,8 @@ class SSD_Validator(validator):
         msg=["Validating {} for file {}...".format(maskname,fileid)]
         mask_pieces = maskname.split('.')
         mask_ext = mask_pieces[-1]
-        if mask_ext != 'png':
-            msg.append('ERROR: Mask image {} for FileID {} is not a png.'.format(maskname,fileid))
+        if mask_ext not in ['png','PNG']:
+            msg.append('ERROR: Mask image {} for FileID {} is not a png. It is {}.'.format(maskname,fileid,mask_ext))
             return 1,"\n".join(msg)
         if not os.path.isfile(maskname):
             msg.append("ERROR: Expected mask image {}. Please check the name of the mask image.".format(maskname))
@@ -462,9 +462,7 @@ class SSD_Validator(validator):
             flag = 1
     
         if (baseHeight != dims[0]) or (baseWidth != dims[1]):
-            msg.append("Dimensions for ProbeImg of ProbeFileID {}: {},{}".format(fileid,baseHeight,baseWidth))
-            msg.append("Dimensions of mask {}: {},{}".format(maskname,dims[0],dims[1]))
-            msg.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+            msg.append("ERROR: Expected dimensions {},{} for output mask {} for ProbeFileID {}. Got {},{}.".format(baseHeight,baseWidth,maskname,fileid,dims[0],dims[1]))
             flag = 1
             
         #maskImg <- readPNG(maskname) #EDIT: expensive for only getting the number of channels. Find cheaper option
@@ -923,23 +921,23 @@ class DSD_Validator(validator):
         #check to see if index file input image files are consistent with system output
         if checkThisProbe:
             pmask_pieces,pmask_ext = os.path.splitext(pmaskname)
-            if pmask_ext != '.png':
-                self.printbuffer.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(pmaskname,probeid,donorid,rownum))
+            if pmask_ext not in ['.png','.PNG']:
+                self.printbuffer.append('ERROR: Probe mask image {} for pair ({},{}) at row {} is not a png. It is a {}.'.format(pmaskname,probeid,donorid,rownum,pmask_ext))
                 pngflag = True
         
             #check to see if png files exist before doing anything with them.
             if not os.path.isfile(pmaskname):
-                self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(pmaskname))
+                self.printbuffer.append("ERROR: Expected mask image {}. Please check the name of the mask image.".format(pmaskname))
                 eflag = True
 
         if checkThisDonor:
             dmask_pieces,dmask_ext = os.path.splitext(dmaskname)
-            if dmask_ext != '.png':
-                self.printbuffer.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. Make it into a png!'.format(dmaskname,probeid,donorid,rownum))
+            if dmask_ext not in ['.png','.PNG']:
+                self.printbuffer.append('ERROR: Donor mask image {} for pair ({},{}) at row {} is not a png. It is a {}.'.format(dmaskname,probeid,donorid,rownum,dmask_ext))
                 pngflag = True
         
             if not os.path.isfile(dmaskname):
-                self.printbuffer.append("ERROR: {} does not exist! Did you name it wrong?".format(dmaskname))
+                self.printbuffer.append("ERROR: Expected mask image {}. Please check the name of the mask image.".format(dmaskname))
                 eflag = True
         if eflag or pngflag:
             return 1
@@ -953,9 +951,7 @@ class DSD_Validator(validator):
                 pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
         
             if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
-                self.printbuffer.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
-                self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
-                self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+                self.printbuffer.append("ERROR: Expected dimensions {},{} for output donor mask {} for probe-donor pair ({}.{}). Got {},{}.".format(pbaseHeight,pbaseWidth,pmaskname,probeid,donorid,pdims[0],pdims[1]))
                 flag = 1
         
             if identify:
@@ -984,9 +980,7 @@ class DSD_Validator(validator):
                 flag = 1
         
             if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
-                self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
-                self.printbuffer.append("Dimensions of donor mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
-                self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+                self.printbuffer.append("ERROR: Expected dimensions {},{} for output donor mask {} for probe-donor pair ({}.{}). Got {},{}.".format(dbaseHeight,dbaseWidth,dmaskname,probeid,donorid,ddims[0],ddims[1]))
                 flag = 1
      
         if flag == 0:
@@ -1031,9 +1025,7 @@ class DSD_Validator(validator):
             flag = 1
     
         if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
-            self.printbuffer.append("Dimensions for ProbeImg of pair ({},{}): {},{}".format(probeid,donorid,pbaseHeight,pbaseWidth))
-            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(pmaskname,pdims[0],pdims[1]))
-            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+            self.printbuffer.append("ERROR: Expected dimensions {},{} for output donor mask {} for probe-donor pair ({}.{}). Got {},{}.".format(pbaseHeight,pbaseWidth,pmaskname,probeid,donorid,pdims[0],pdims[1]))
             flag = 1
          
         dbaseHeight = list(map(int,indexfile['DonorHeight'][(indexfile['ProbeFileID'] == probeid) & (indexfile['DonorFileID'] == donorid)]))[0] 
@@ -1045,9 +1037,7 @@ class DSD_Validator(validator):
             flag = 1
     
         if (dbaseHeight != ddims[0]) or (dbaseWidth != ddims[1]):
-            self.printbuffer.append("Dimensions for DonorImg of pair ({},{}): {},{}".format(probeid,donorid,dbaseHeight,dbaseWidth))
-            self.printbuffer.append("Dimensions of probe mask {}: {},{}".format(dmaskname,ddims[0],ddims[1]))
-            self.printbuffer.append("ERROR: The mask image's length and width do not seem to be the same as the base image's.")
+            self.printbuffer.append("ERROR: Expected dimensions {},{} for output donor mask {} for probe-donor pair ({}.{}). Got {},{}.".format(dbaseHeight,dbaseWidth,dmaskname,probeid,donorid,ddims[0],ddims[1]))
             flag = 1
      
         if flag == 0:
