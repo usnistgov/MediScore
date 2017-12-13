@@ -13,6 +13,7 @@ example data for the following tools:
                                     (Localization) Scorer
   ProvenanceFilteringScorer       - Scorer for Provenance Filtering
   ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
+  VideoTemporalLocalisationScoer  - Scorer for Video Temporal Localization
 
 
 This distribution consists of a set of Python2.7 scripts intended to be run
@@ -41,6 +42,7 @@ INSTALLATION
   - rawpy (tested in version 0.9.0)
   - numpngw (tested in version 0.0.6)
   - Glymur (tested in version 0.8.12)
+  - bokeh (tested in version 0.12.13)
   Most of these packages can be installed by running basic_install.sh on your machine.
 
   Optional :
@@ -354,7 +356,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Dec 12, 2017 - MediScore Version *.*.*
+  Dec 13, 2017 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -368,6 +370,8 @@ HISTORY
       - Fixed bug that was reporting ground truth negatives.
       - Fixed bug that skipped masks when namechecking is turned off.
       - Added Probe and DonorOptOutPixelValue checks for validator.
+    * Video Temporal Localization Scorer
+      - Initial release
 
 
 CONTACT
