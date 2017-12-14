@@ -450,7 +450,11 @@ class SSD_Validator(validator):
             dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",maskname]).rstrip().replace("'","").split('|')
             dims = (int(dimoutput[2]),int(dimoutput[1]))
         else:
-            dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
+            try:
+                dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
+            except:
+                self.printbuffer.append("ERROR: system probe mask {} cannot be read as a png.".format(maskname))
+                return 1
     
         if identify:
             channel = subprocess.check_output(["identify","-format","%[channels]",maskname]).rstrip()
@@ -948,7 +952,11 @@ class DSD_Validator(validator):
                 dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",pmaskname]).rstrip().replace("'","").split('|')
                 pdims = (int(dimoutput[2]),int(dimoutput[1]))
             else:
-                pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
+                try:
+                    pdims = cv2.imread(pmaskname,cv2.IMREAD_UNCHANGED).shape
+                except:
+                    self.printbuffer.append("ERROR: system probe mask {} cannot be read as a png.".format(pmaskname))
+                    return 1
         
             if (pbaseHeight != pdims[0]) or (pbaseWidth != pdims[1]):
                 self.printbuffer.append("ERROR: Expected dimensions {},{} for output donor mask {} for probe-donor pair ({}.{}). Got {},{}.".format(pbaseHeight,pbaseWidth,pmaskname,probeid,donorid,pdims[0],pdims[1]))
@@ -967,8 +975,12 @@ class DSD_Validator(validator):
             if identify:
                 dimoutput = subprocess.check_output(["identify","-format","'%f|%w|%h'",dmaskname]).rstrip().replace("'","").split('|')
                 ddims = (int(dimoutput[2]),int(dimoutput[1]))
-            else: 
-                ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
+            else:
+                try:
+                    ddims = cv2.imread(dmaskname,cv2.IMREAD_UNCHANGED).shape
+                except:
+                    self.printbuffer.append("ERROR: system donor mask {} cannot be read as a png.".format(dmaskname))
+                    return 1
         
             if identify:
                 channel = subprocess.check_output(["identify","-format","%[channels]",dmaskname]).rstrip()
