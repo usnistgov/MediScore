@@ -70,6 +70,13 @@ def is_finite_number(s):
     except ValueError:
         return False
 
+def is_integer(s):
+    try:
+        s = int(s)
+        return True
+    except ValueError:
+        return False
+
 def checkProbe(args):
     return SSD_Validator.checkMoreProbes(*args)
 
@@ -394,8 +401,11 @@ class SSD_Validator(validator):
         if self.pixOptOut:
             oopixval = str(sysrow['ProbeOptOutPixelValue'])
             #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
-            if not ((oopixval == '') or (oopixval.isdigit())):
-                sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is not blank ('') or an integer.".format(probeFileID)
+            isProbeOOdigit = True
+            if (oopixval != ''):
+                isProbeOOdigit = is_integer(oopixval)
+            if not ((oopixval == '') or isProbeOOdigit):
+                sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval)
                 sysrow['matchFlag'] = 1
 
         #check mask validation
@@ -694,7 +704,14 @@ class DSD_Validator(validator):
                 if self.pixOptOut:
                     oopixvalp = str(l_content[s_heads['ProbeOptOutPixelValue']])
                     oopixvald = str(l_content[s_heads['DonorOptOutPixelValue']])
-                    if (not ((oopixvalp == '') or (oopixvalp.isdigit()))) or (not ((oopixvald == '') or (oopixvald.isdigit()))):
+                    isProbeOOdigit = True
+                    isDonorOOdigit = True
+                    if (oopixvalp != ''):
+                        isProbeOOdigit = is_integer(oopixvalp)
+                    if (oopixvald != ''):
+                        isDonorOOdigit = is_integer(oopixvald)
+                    
+                    if (not ((oopixvalp == '') or isProbeOOdigit)) or (not ((oopixvald == '') or isDonorOOdigit)):
                         self.printbuffer.append("ERROR: ProbeOptOutPixelValue for probe-donor pair ({}) is {} and DonorOptOutPixelValue is {}. Please check if either is not blank ('') or an integer.".format(key.replace(":",","),oopixvalp,oopixvald))
                         scoreFlag = 1
 
