@@ -443,7 +443,7 @@ class maskMetricRunner:
             #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
             maskRow['OptimumThreshold'] = threshold
 
-            genROC = False
+            genROC = True
             nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
             nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
             nullRocRows = thresMets.query(nullRocQuery)
