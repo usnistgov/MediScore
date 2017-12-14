@@ -356,7 +356,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Dec 13, 2017 - MediScore Version *.*.*
+  Dec 14, 2017 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -364,12 +364,14 @@ HISTORY
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
+      - Now reading cr2 with rawpy instead of OpenCV
     * Validator
       - Added more thorough tests for ProbeStatus criteria.
       - Simplified and edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
       - Fixed bug that skipped masks when namechecking is turned off.
       - Added Probe and DonorOptOutPixelValue checks for validator.
+      - Checks for image readability as png after verifying file name.
     * Video Temporal Localization Scorer
       - Initial release
 
