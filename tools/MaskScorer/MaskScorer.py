@@ -177,10 +177,10 @@ if args.inIndex is None:
 
 #generate plotjson options
 #detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../DetectionScorer/plotJsonFiles')
-detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'plotJsonFiles')
-if not os.path.isdir(detpath):
-    os.system(' '.join(['mkdir',detpath]))
-Render.gen_default_plot_options(path=os.path.join(detpath,'plot_options.json'))
+#detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'plotJsonFiles')
+#if not os.path.isdir(detpath):
+#    os.system(' '.join(['mkdir',detpath]))
+#Render.gen_default_plot_options(path=os.path.join(detpath,'plot_options.json'))
 
 #assume outRoot exists
 if args.outRoot in [None,'']:

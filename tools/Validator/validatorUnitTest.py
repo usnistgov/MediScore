@@ -95,7 +95,7 @@ class TestValidator(ut.TestCase):
         global verbose
         verbose = 1
 
-        print("BASIC FUNCTIONALITY validation of SSDValidator beginning...")
+        print("BASIC FUNCTIONALITY validation of SSD validator beginning...")
 #        myval = SSD_Validator(validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
 #        self.assertEqual(myval.fullCheck(True,identify,NCID,neglectMask),0)
         myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vmb.log".format(NCID,validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
@@ -301,6 +301,21 @@ class TestValidator(ut.TestCase):
         
         print("CASE S8 validated.")
         os.system('rm vm8.log')
+
+    def testSSDVideoContent(self):
+        validatorRoot = '../../data/test_suite/validatorTests/'
+        global verbose
+        verbose = None
+        print("BASDIC FUNCTIONALITY validation of SSD video validator beginning...")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vvb.log".format(NCID,
+                                                                                                                validatorRoot + 'validvidtest/validvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,0)
+        os.system('rm vvb.log')
+        
         
     def testDSDName(self):
         import StringIO
@@ -315,7 +330,7 @@ class TestValidator(ut.TestCase):
         global verbose
         verbose = None
         
-        print("BASIC FUNCTIONALITY validation of DSDValidator.py beginning...")
+        print("BASIC FUNCTIONALITY validation of DSD validator beginning...")
         myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vsb.log".format(NCID,validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
 #        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
 #        self.assertEqual(myval.fullCheck(True,identify,NCID,neglectMask,validatorRoot + 'NC2016_Test0516_dfz/reference/splice/NC2016-splice-ref.csv'),0)

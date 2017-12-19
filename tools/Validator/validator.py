@@ -253,7 +253,7 @@ class SSD_Validator(validator):
             if "IsOptOut" in sysHeads:
                 optOut = 1
             elif "ProbeStatus" in sysHeads:
-                if "ProbeOptOutPixelValue" not in sysHeads:
+                if not (("ProbeOptOutPixelValue" in sysHeads) or self.video):
                     self.printbuffer.append("ERROR: The required column ProbeOptOutPixelValue is absent.")
                     return 1
                 optOut = 2
@@ -420,12 +420,11 @@ class SSD_Validator(validator):
             if self.video:
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
-                    mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame')
+                    maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount
+                    mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame)
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
                 sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
-                return sysrow
-
                 return sysrow
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
@@ -502,11 +501,10 @@ class SSD_Validator(validator):
     
         return flag,"\n".join(msg)
 
-    def vidIntervalsCheck(self,intvl,mode):
+    def vidIntervalsCheck(self,intvl,mode,max_frame_number):
         msg = []
         intervalflag = 0
         cleared_interval_list = []
-        max_frame_number = sys.maxsize #NOTE: temporary until video indexes can be checked.
         try:
             interval_list = ast.literal_eval(intvl)
             for interval in interval_list:

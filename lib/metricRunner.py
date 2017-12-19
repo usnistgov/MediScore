@@ -890,7 +890,8 @@ class maskMetricRunner:
                 else:
                     maxmet_threshold.at[pix,'FPR'] = np.nan
 
-            # probe- and pixel-weighted ROC curves 
+            # probe- and pixel-weighted ROC curves
+            #TODO: double check that the formula is implemented correctly.
             metsum = maxmet_threshold[['TP','TN','FP','FN','TPR','FPR']].sum(axis=0)
             if (metsum['TP'] + metsum['FN']) > 0:
                 roc_values.at[t,'PixelTPR'] = float(metsum['TP'])/(metsum['TP'] + metsum['FN'])
@@ -1631,26 +1632,35 @@ class maskMetricRunner:
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         #things change here for pixel overlay
-        if not self.usejpeg2000:
-            modified = cv2.addWeighted(ref.matrix,alpha,m3chan,1-alpha,0)
-            myagg[refbw==0] = modified[refbw==0]
-    
-            compositeMaskName = "_".join([outputMaskBase,"composite.jpg"])
-            compositePath = os.path.join(outputMaskPath,compositeMaskName)
-            cv2.imwrite(compositePath,myagg)
-        else:
-            aseq = ref.getAnimatedMask('partial')
-            seq = []
-            for frame in aseq:
-                #join the frame with the grayscale manipulated image
-                modified = cv2.addWeighted(frame,alpha,m3chan,1-alpha,0)
-                layermask = (frame[:,:,0] != 255) | (frame[:,:,1] != 255) | (frame[:,:,2] != 255)
-                aggfr = np.copy(m3chan)
-                #overlay colors with particular manipulated regions
-                aggfr[layermask != 0] = modified[layermask != 0]
-                seq.append(aggfr)
-            compositeMaskName = "_".join([outputMaskBase,"composite.png"])
-            compositePath = os.path.join(outputMaskPath,compositeMaskName)
-            write_apng(compositePath,seq,delay=600,use_palette=False)
+        #TODO: try/catch the overlay error. Print out the shapes of all involved items.
+        try:
+            if not self.usejpeg2000:
+                refmat = ref.matrix
+                modified = cv2.addWeighted(ref.matrix,alpha,m3chan,1-alpha,0)
+                myagg[refbw==0] = modified[refbw==0]
+        
+                compositeMaskName = "_".join([outputMaskBase,"composite.jpg"])
+                compositePath = os.path.join(outputMaskPath,compositeMaskName)
+                cv2.imwrite(compositePath,myagg)
+            else:
+                aseq = ref.getAnimatedMask('partial')
+                refmat = ref.matrix
+                seq = []
+                for frame in aseq:
+                    #join the frame with the grayscale manipulated image
+                    refmat = frame
+                    modified = cv2.addWeighted(frame,alpha,m3chan,1-alpha,0)
+                    layermask = (frame[:,:,0] != 255) | (frame[:,:,1] != 255) | (frame[:,:,2] != 255)
+                    aggfr = np.copy(m3chan)
+                    #overlay colors with particular manipulated regions
+                    aggfr[layermask != 0] = modified[layermask != 0]
+                    seq.append(aggfr)
+                compositeMaskName = "_".join([outputMaskBase,"composite.png"])
+                compositePath = os.path.join(outputMaskPath,compositeMaskName)
+                write_apng(compositePath,seq,delay=600,use_palette=False)
+        except:
+            exc_type,exc_obj,exc_tb = sys.exc_info()
+            print("Exception {} encountered at line {} during mask overlay. Reference mask shape: {}. Probe image shape: {}".format(exc_type,exc_tb.tb_lineno,refmat.shape,m3chan.shape))
+            return {'mask':path,'agg':''}
 
         return {'mask':path,'agg':compositePath}
