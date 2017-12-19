@@ -1544,7 +1544,7 @@ class maskMetricRunner:
         return tablestring
 
     #prints out the aggregate mask, reference and other data
-    def aggregateColorMask(self,ref,sys,bns,sns,pns,kern,erodeKernSize,maniImgName,outputMaskPath,colordict):
+    def aggregateColorMask(self,ref,sysmask,bns,sns,pns,kern,erodeKernSize,maniImgName,outputMaskPath,colordict):
         """
         *Description: this function produces the aggregate mask image of the ground truth, system output,
                       and no-score regions for the HTML report, and a composite of the same image superimposed
@@ -1552,7 +1552,7 @@ class maskMetricRunner:
 
         * Inputs:
         *     ref: the reference mask file
-        *     sys: the system output mask file to be evaluated
+        *     sysmask: the system output mask file to be evaluated
         *     bns: the boundary no-score weighted matrix
         *     sns: the selected no-score weighted matrix
         *     kern: kernel shape to be used
@@ -1576,7 +1576,7 @@ class maskMetricRunner:
             eData = ref.bwmat
 
         #flip all because black is 0 by default. Use the regions to determine where to color.
-        b_sImg = 1-sys.bwmat/255
+        b_sImg = 1-sysmask.bwmat/255
         b_eImg = 1-eData/255 #erosion of black/white reference mask
         b_bnsImg = 1-bns
         b_snsImg = 1-sns
@@ -1609,7 +1609,7 @@ class maskMetricRunner:
         mycolor[mImg>=16] = colordict['purple'] #system opt out
 
         #return path to mask
-        outputMaskName = sys.name.split('/')[-1]
+        outputMaskName = sysmask.name.split('/')[-1]
         outputMaskBase = outputMaskName.split('.')[0]
         finalMaskName = "_".join([outputMaskBase,"colored.jpg"])
         path=os.path.join(outputMaskPath,finalMaskName)
