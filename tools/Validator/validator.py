@@ -44,6 +44,7 @@ import contextlib
 import StringIO
 import subprocess
 import multiprocessing
+import ast
 from abc import ABCMeta, abstractmethod
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
 sys.path.append(lib_path)
@@ -132,6 +133,7 @@ class validator:
 #        printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
         self.printbuffer.append("Index file is a pipe-separated csv.")
 
+        self.video = params.video
         if self.contentCheck(params.identify,params.neglectMask,params.ref,params.indexFilter) == 1:
             self.printbuffer.atomprint(print_lock)
             return 1
@@ -230,6 +232,8 @@ class SSD_Validator(validator):
         allClear = True
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
         truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        if self.video:
+            truelist = ['ProbeFileID','ConfidenceScore','ProbeStatus','VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']
         testMask = True
         if self.doNameCheck:
             if self.condition in ["VidOnly","VidMeta"]:
@@ -280,7 +284,8 @@ class SSD_Validator(validator):
 #            optOut=True
 #        self.optOut = optOut
 
-        if self.condition in ["VidOnly","VidMeta"]:
+        #TODO: some way to switch to video validation
+        if self.condition in ["VidOnly","VidMeta"] or self.video:
             neglectMask = True
             #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error
         self.neglectMask = neglectMask
@@ -309,7 +314,7 @@ class SSD_Validator(validator):
             self.printbuffer.append("ERROR: The Confidence Scores for probes {} are not numeric.".format(confprobes))
             scoreFlag = 1
 
-        if testMask:
+        if testMask and not self.video:
             sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
 
 #        idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
@@ -398,7 +403,7 @@ class SSD_Validator(validator):
 #                printq("The contents of your file are not valid!",True)
 #                return 1
 
-        if self.pixOptOut:
+        if self.pixOptOut and not self.video:
             oopixval = str(sysrow['ProbeOptOutPixelValue'])
             #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
             isProbeOOdigit = True
@@ -411,6 +416,16 @@ class SSD_Validator(validator):
         #check mask validation
         if self.testMask:
             if self.neglectMask:
+                return sysrow
+            if self.video:
+                msgs = []
+                for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
+                    mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame')
+                    sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
+                    msgs.append(mymsg)
+                sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
+                return sysrow
+
                 return sysrow
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
@@ -487,7 +502,51 @@ class SSD_Validator(validator):
     
         return flag,"\n".join(msg)
 
-    #TODO: add video intervals check?
+    def vidIntervalsCheck(self,intvl,mode):
+        msg = []
+        intervalflag = 0
+        cleared_interval_list = []
+        max_frame_number = sys.maxsize #NOTE: temporary until video indexes can be checked.
+        try:
+            interval_list = ast.literal_eval(intvl)
+            for interval in interval_list:
+                if len(interval) != 2:
+                    errmsg = "ERROR: The list {} is not a valid interval.".format(interval)
+                    msg.append(errmsg)
+                    intervalflag = 1
+                    continue
+                if interval[0] > interval[1]:
+                    errmsg = "ERROR: Interval {} must be formatted as a valid interval [an,bn], where an <= bn".foramt(interval)
+                    msg.append(errmsg)
+                    intervalflag = 1
+                if mode=='Frame':
+                    min_frame_number=1
+                elif mode=='Time':
+                    min_frame_number=0
+                if (interval[0] < min_frame_number) or (interval[1] > max_frame_number):
+                    errmsg = "ERROR: Interval {} is out of bounds. The max interval for this video is {}.".format(interval,[min_frame_number,max_frame_number])
+                    msg.append(errmsg)
+                    intervalflag = 1
+        
+                if intervalflag == 0:
+                    #each of the intervals in each list of intervals must be disjoint (except for endpoints)
+                    for intvl in cleared_interval_list:
+                        #ensure if a singularity that it only coincides with an endpoint
+                        if interval[0] == interval[1]:
+                            if (interval[0] > intvl[0]) and (interval[0] < intvl[1]):
+                                errmsg = "ERROR: Singular frame {} is contained in interval {} and is not one of its endpoints.".format(interval,intvl)
+                                msg.append(errmsg)
+                                intervalflag = 1
+                        else:
+                            if ((interval[0] >= intvl[0]) and (interval[0] <= intvl[1])) or ((interval[1] <= intvl[1]) and (interval[1] >= intvl[0])):
+                                #coincides with at least an endpoint
+                                errmsg = "ERROR: Interval {} intersects with interval {}.".format(interval,intvl)
+                                intervalflag = 1
+                        cleared_interval_list.append(interval)
+        except:
+            msg.append('ERROR: Interval list cannot be read as intervals.')
+            return 1,msg[0]
+        return intervalflag,'\n'.join(msg)
 
 
 class DSD_Validator(validator):
@@ -1080,16 +1139,18 @@ class validation_params:
     def __init__(self,
                  ncid,
                  doNameCheck,
-                 identify,
-                 neglectMask,
-                 indexFilter,
-                 ref,
-                 processors):
+                 identify=False,
+                 neglectMask=False,
+                 indexFilter=False,
+                 video=False,
+                 ref=0,
+                 processors=1):
         self.ncid=ncid
         self.doNameCheck=doNameCheck
         self.identify=identify
         self.neglectMask=neglectMask
         self.indexFilter=indexFilter
+        self.video=video
         self.ref=ref
         self.processors=processors
 
@@ -1104,7 +1165,7 @@ if __name__ == '__main__':
     parser.add_argument('-r','--inRef',type=str,default=0,\
     help='optional reference file for filtration',metavar='character')
     parser.add_argument('-vt','--valtype',type=str,default=None,\
-    help='required validator type',metavar='character')
+    help='required validator type. Pick one of SSD, DSD, or SSD-video.',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
@@ -1126,7 +1187,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     verbose = args.verbose
-    #TODO: remove later
+    #TODO: remove later for parallel-friendly thing
     if verbose==1:
         def printq(mystring,iserr=False):
             print(mystring)
@@ -1146,17 +1207,18 @@ if __name__ == '__main__':
             print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
             exit(1)
 
-    if args.valtype == 'SSD':
+    if args.valtype in ['SSD','SSD-video']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
-        myval_params = validation_params(args.ncid,args.nameCheck,args.identify,args.neglectMask,args.indexFilter,args.inRef,args.processors)
+        myval_params = validation_params(args.ncid,doNameCheck=args.nameCheck,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
+        if args.valtype == 'SSD-video':
+            myval_params.video = True
         exit(ssd_validation.fullCheck(myval_params))
 #         exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
-
     elif args.valtype == 'DSD':
         dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose)
-        myval_params = validation_params(args.ncid,args.nameCheck,args.identify,args.neglectMask,args.indexFilter,args.inRef,args.processors)
+        myval_params = validation_params(args.ncid,doNameCheck=args.nameCheck,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
         exit(dsd_validation.fullCheck(myval_params))
 #         exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     else:
-        print("Validation type must be 'SSD' or 'DSD'.")
+        print("Validation type must be 'SSD', 'SSD-video', or 'DSD'.")
         exit(1)

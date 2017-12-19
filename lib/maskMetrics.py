@@ -486,15 +486,15 @@ class maskMetrics:
             #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
             #thismet = maskMetrics(ref,sys,w,-1)
             thismet = maskMetrics(ref,sys,w,th)
-            thresMets.set_value(rownum,'Threshold',th)
-            thresMets.set_value(rownum,'NMM',thismet.nmm)
-            thresMets.set_value(rownum,'MCC',thismet.mcc)
-            thresMets.set_value(rownum,'BWL1',thismet.bwL1)
-            thresMets.set_value(rownum,'TP',thismet.conf['TP'])
-            thresMets.set_value(rownum,'TN',thismet.conf['TN'])
-            thresMets.set_value(rownum,'FP',thismet.conf['FP'])
-            thresMets.set_value(rownum,'FN',thismet.conf['FN'])
-            thresMets.set_value(rownum,'N',thismet.conf['N'])
+            thresMets.at[rownum,'Threshold'] = th
+            thresMets.at[rownum,'NMM'] = thismet.nmm
+            thresMets.at[rownum,'MCC'] = thismet.mcc
+            thresMets.at[rownum,'BWL1'] = thismet.bwL1
+            thresMets.at[rownum,'TP'] = thismet.conf['TP']
+            thresMets.at[rownum,'TN'] = thismet.conf['TN']
+            thresMets.at[rownum,'FP'] = thismet.conf['FP']
+            thresMets.at[rownum,'FN'] = thismet.conf['FN']
+            thresMets.at[rownum,'N'] = thismet.conf['N']
             rownum=rownum+1
 
         #generate ROC dataframe for image, preferably from existing library.

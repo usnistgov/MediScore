@@ -53,6 +53,12 @@ print_lock = multiprocessing.Lock() #for printout to std_out
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
 
+def myround(n,precision,truncate=False):
+    if truncate:
+        return float("%.{}f".format(precision) % n)
+    else:
+        return round(n,precision)
+
 #for use with detection metrics plotter
 class detPackage:
     def __init__(self,
@@ -78,11 +84,22 @@ class detPackage:
         
 def plotROC(mydets,plotname,plot_title,outdir):
     #initialize plot options for ROC
-    #TODO: since it's getting generated, make a unique json file for ProbeFileID that will avoid potential collisions?
-    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/plotJsonFiles/plot_options.json")
+#    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/MaskScorer/plotJsonFiles/plot_options.json")
 #    dict_plot_options_path_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/DetectionScorer/plotJsonFiles/plot_options.json")
-    p.gen_default_plot_options(dict_plot_options_path_name,plot_title=plot_title,plot_type='ROC')
-    plot_opts = p.load_plot_options(dict_plot_options_path_name)
+#    p.gen_default_plot_options(dict_plot_options_path_name,plot_title=plot_title,plot_type='ROC')
+#    plot_opts = p.load_plot_options(dict_plot_options_path_name)
+    plot_opts = OrderedDict([
+            ('title', plot_title),
+            ('subtitle', ''),
+            ('plot_type', 'ROC'),
+            ('title_fontsize', 13),  # 15
+            ('subtitle_fontsize', 11),
+            ('xticks_size', 'medium'),
+            ('yticks_size', 'medium'),
+            ('xlabel', "False Alarm Rate [%]"),
+            ('xlabel_fontsize', 11),
+            ('ylabel', "Miss Detection Rate [%]"),
+            ('ylabel_fontsize', 11)])
     
     opts_list = [OrderedDict([('color', 'red'),
                               ('linestyle', 'solid'),
@@ -290,6 +307,7 @@ class maskMetricRunner:
         verbose = self.verbose
         html = self.html
         precision = self.precision
+        truncate = self.truncate
         erodeKernSize = self.erodeKernSize
         dilateKernSize = self.dilateKernSize
         distractionKernSize = self.distractionKernSize
@@ -451,8 +469,10 @@ class maskMetricRunner:
 
             #compute TPR and FPR here for rows that have it.
             if nullRocRows.shape[0] < thresMets.shape[0]:
-                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
-                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
+#                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
+#                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
+                thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
+                thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
 
             #if no rows have it, don't gen the ROC.
             if nullRocRows.shape[0] == 0:
@@ -565,15 +585,16 @@ class maskMetricRunner:
     #                sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
     #                sImg.save(sbin_name,th=threshold)
      
-                mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts) 
-                maskRow['GWL1'] = round(mets['GWL1'],precision)
+                mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
+                maskRow['GWL1'] = myround(mets['GWL1'],precision,truncate)
                 for met in ['NMM','MCC','BWL1']:
                     myprintbuffer.append("Setting value for {}...".format(met))
-                    maskRow[''.join(['Optimum',met])] = round(mets[met],precision)
+#                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) #TODO: debug
+                    maskRow[''.join(['Optimum',met])] = myround(mets[met],precision,truncate)
                     if self.sbin >= -1:
                         #record Actual metrics
-                        maskRow[''.join(['Actual',met])] = round(amets[met],precision)
-                        mets[''.join(['Actual',met])] = round(amets[met],precision)
+                        maskRow[''.join(['Actual',met])] = myround(amets[met],precision,truncate)
+                        mets[''.join(['Actual',met])] = myround(amets[met],precision,truncate)
     
                 for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                     myprintbuffer.append("Setting value for {}...".format(mes))
@@ -782,6 +803,7 @@ class maskMetricRunner:
         self.verbose = verbose
         self.html = html
         self.precision = precision
+        self.truncate = params.truncate
         self.outputRoot = outputRoot
 
         #shared object with multiprocessing manager
@@ -838,65 +860,55 @@ class maskMetricRunner:
                 if t in probedf['Threshold'].tolist():
                     # if threshold is in the dataframe list of thresholds, get the corresponding metrics.
                     mets = probedf.query("Threshold=={}".format(t)).iloc[0]
-                    maxmet_threshold.set_value(pix,'TP',mets['TP'])
-                    maxmet_threshold.set_value(pix,'TN',mets['TN'])
-                    maxmet_threshold.set_value(pix,'FP',mets['FP'])
-                    maxmet_threshold.set_value(pix,'FN',mets['FN'])
-                    maxmet_threshold.set_value(pix,'NMM',mets['NMM'])
-                    maxmet_threshold.set_value(pix,'MCC',mets['MCC'])
-                    maxmet_threshold.set_value(pix,'BWL1',mets['BWL1'])
+                    for met in ['TP','TN','FP','FN','NMM','MCC','BWL1']:
+                        maxmet_threshold.at[pix,met] = mets[met]
                 else:
                     # attempt to get the metric from the threshold right below it
                     t_list = [s for s in probedf['Threshold'].tolist() if s <= t]
                     if len(t_list) == 0:
                         # if nothing is right below it, treat everything as black and recompute NMM and BWL1.
                         mets = probedf.iloc[0]
-                        maxmet_threshold.set_value(pix,'TP',mets['TP'] + mets['FN'])
-                        maxmet_threshold.set_value(pix,'FP',mets['FP'] + mets['TN'])
+                        maxmet_threshold.at[pix,'TP'] = mets['TP'] + mets['FN']
+                        maxmet_threshold.at[pix,'FP'] = mets['FP'] + mets['TN']
                         if mets['N'] > 0:
-                            maxmet_threshold.set_value(pix,'NMM',max([(mets['TP'] + mets['FN'] - mets['FP'] - mets['TN'])/mets['N'],-1]))
-                            maxmet_threshold.set_value(pix,'BWL1',(mets['FP'] + mets['TN'])/mets['N'])
+                            maxmet_threshold.at[pix,'NMM'] = max([(mets['TP'] + mets['FN'] - mets['FP'] - mets['TN'])/mets['N'],-1])
+                            maxmet_threshold.at[pix,'BWL1'] = (mets['FP'] + mets['TN'])/mets['N']
                         else:
-                            maxmet_threshold.set_value(pix,'NMM',np.nan)
-                            maxmet_threshold.set_value(pix,'BWL1',np.nan)
+                            maxmet_threshold.at[pix,'NMM'] = np.nan
+                            maxmet_threshold.at[pix,'BWL1'] = np.nan
                     else:
                         myt = max(t_list)
                         mets = probedf.query("Threshold=={}".format(myt)).iloc[0]
-                        maxmet_threshold.set_value(pix,'TP',mets['TP'])
-                        maxmet_threshold.set_value(pix,'TN',mets['TN'])
-                        maxmet_threshold.set_value(pix,'FP',mets['FP'])
-                        maxmet_threshold.set_value(pix,'FN',mets['FN'])
-                        maxmet_threshold.set_value(pix,'NMM',mets['NMM'])
-                        maxmet_threshold.set_value(pix,'MCC',mets['MCC'])
-                        maxmet_threshold.set_value(pix,'BWL1',mets['BWL1'])
+                        for met in ['TP','TN','FP','FN','NMM','MCC','BWL1']:
+                            maxmet_threshold.at[pix,met] = mets[met]
                 if (mets['TP'] + mets['FN']) > 0:
-                    maxmet_threshold.set_value(pix,'TPR',float(mets['TP'])/(mets['TP'] + mets['FN']))
+                    maxmet_threshold.at[pix,'TPR'] = float(mets['TP'])/(mets['TP'] + mets['FN'])
                 else:
-                    maxmet_threshold.set_value(pix,'TPR',np.nan)
+                    maxmet_threshold.at[pix,'TPR'] = np.nan
                 if (mets['FP'] + mets['TN']) > 0:
-                    maxmet_threshold.set_value(pix,'FPR',float(mets['FP'])/(mets['FP'] + mets['TN']))
+                    maxmet_threshold.at[pix,'FPR'] = float(mets['FP'])/(mets['FP'] + mets['TN'])
                 else:
-                    maxmet_threshold.set_value(pix,'FPR',np.nan)
+                    maxmet_threshold.at[pix,'FPR'] = np.nan
 
             # probe- and pixel-weighted ROC curves 
             metsum = maxmet_threshold[['TP','TN','FP','FN','TPR','FPR']].sum(axis=0)
             if (metsum['TP'] + metsum['FN']) > 0:
-                roc_values.set_value(t,'PixelTPR',float(metsum['TP'])/(metsum['TP'] + metsum['FN']))
+                roc_values.at[t,'PixelTPR'] = float(metsum['TP'])/(metsum['TP'] + metsum['FN'])
             else:
-                roc_values.set_value(t,'PixelTPR',np.nan)
+                roc_values.at[t,'PixelTPR'] = np.nan
             if (metsum['FP'] + metsum['TN']) > 0:
-                roc_values.set_value(t,'PixelFPR',float(metsum['FP'])/(metsum['FP'] + metsum['TN']))
+                roc_values.at[t,'PixelFPR'] = float(metsum['FP'])/(metsum['FP'] + metsum['TN'])
             else:
-                roc_values.set_value(t,'PixelFPR',np.nan)
+                roc_values.at[t,'PixelFPR'] = np.nan
 
             if ~np.isnan(metsum['TPR']):
-                roc_values.set_value(t,'ProbeTPR',metsum['TPR']/maxmet_threshold.shape[0])
+                roc_values.at[t,'ProbeTPR'] = metsum['TPR']/maxmet_threshold.shape[0]
             else:
-                roc_values.set_value(t,'ProbeTPR',np.nan)
+                roc_values.at[t,'ProbeTPR'] = np.nan
             if ~np.isnan(metsum['FPR']):
-                roc_values.set_value(t,'ProbeFPR',metsum['FPR']/maxmet_threshold.shape[0])
+                roc_values.at[t,'ProbeFPR'] = metsum['FPR']/maxmet_threshold.shape[0]
             else:
-                roc_values.set_value(t,'ProbeFPR',np.nan)
+                roc_values.at[t,'ProbeFPR'] = np.nan
             
             maxmets[t] = maxmet_threshold
             #compute biggest average MCC fixing threshold
@@ -1437,13 +1449,13 @@ class maskMetricRunner:
             if (not isinstance(metrics[met],str)) and not np.isnan(metrics[met]):
                 metstr = "{0:.3f}".format(metrics[met])
 
-            met_table.set_value(met,'Optimum',metstr)
+            met_table.at[met,'Optimum'] = metstr
             if self.sbin >= -1:
                 ametstr = "nan"
                 amet = ''.join(['Actual',met])
                 if not isinstance(metrics[amet],str):
                     ametstr = "{0:.3f}".format(metrics[amet])
-                met_table.set_value(met,'Actual',ametstr)
+                met_table.at[met,'Actual'] = ametstr
 
         #rename indices
         rename_keys = rename_dict.keys()
@@ -1485,22 +1497,22 @@ class maskMetricRunner:
             metstr = "nan"
             #generate Pixel count and Proportion separation
             optcol = ''.join(['OptimumPixel',met])
-            met_table.set_value(met,'OptimumPixelCount',conf_metrics[optcol])
+            met_table.at[met,'OptimumPixelCount'] = conf_metrics[optcol]
 
             #round if numeric
             if totalpx > 0:
                 metstr = "{0:.3f}".format(float(conf_metrics[optcol])/totalpx)
-            met_table.set_value(met,'OptimumProportion',metstr)
+            met_table.at[met,'OptimumProportion'] = metstr
 
             #do the same for Actual metrics
             if self.sbin >= -1:
                 ametstr = "nan"
                 optcol = ''.join(['ActualPixel',met])
-                met_table.set_value(met,'ActualPixelCount',conf_metrics[optcol])
+                met_table.at[met,'ActualPixelCount'] = conf_metrics[optcol]
 
                 if totalpx > 0:
                     ametstr = "{0:.3f}".format(float(conf_metrics[optcol])/totalpx)
-                met_table.set_value(met,'ActualProportion',ametstr)
+                met_table.at[met,'ActualProportion'] = ametstr
 
         #rename indices
         rename_keys = rename_dict.keys()

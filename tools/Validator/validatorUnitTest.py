@@ -104,7 +104,6 @@ class TestValidator(ut.TestCase):
 
         #no namecheck case
         myval = os.system("python2 validator.py -vt SSD -s {} -x {} -p {} {}{}> vmb1.log".format(validatorRoot + 'foo/foo.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256
-        print "vmb1: {}".format(myval)
         self.assertEqual(myval,0)
         os.system('rm vmb1.log')
 

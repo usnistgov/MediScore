@@ -356,7 +356,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Dec 14, 2017 - MediScore Version *.*.*
+  Dec 19, 2017 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -372,6 +372,7 @@ HISTORY
       - Fixed bug that skipped masks when namechecking is turned off.
       - Added Probe and DonorOptOutPixelValue checks for validator.
       - Checks for image readability as png after verifying file name.
+      - Fixing video validator and adding video cases.
     * Video Temporal Localization Scorer
       - Initial release
 

@@ -118,6 +118,8 @@ parser.add_argument('-p','--processors',type=int,default=1,
 help="The number of processors to use in the computation. Choosing too many processors will cause the program to forcibly default to a smaller number. [default=1].",metavar='positive integer')
 parser.add_argument('--precision',type=int,default=16,
 help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
+parser.add_argument('--truncate',action='store_true',
+help="Truncate rather than round the figures to the specified precision. If no number is specified for precision, the default 16 will be used.")
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
 parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column.")
 parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
@@ -311,6 +313,7 @@ class loc_scoring_params:
                  verbose,
                  html,
                  precision,
+                 truncate,
                  processors):
         self.mode = mode
         self.eks = eks
@@ -322,6 +325,7 @@ class loc_scoring_params:
         self.verbose = verbose
         self.html = html
         self.precision = precision
+        self.truncate = truncate
         self.processors = processors
 
 #define HTML functions here
@@ -335,7 +339,7 @@ if args.task == 'manipulation':
     
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
         #revise this to outputRoot and loc_scoring_params
-        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
@@ -590,14 +594,14 @@ elif args.task == 'splice':
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
-        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
 #        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.processors)
+        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
