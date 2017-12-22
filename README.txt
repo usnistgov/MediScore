@@ -373,7 +373,7 @@ HISTORY
       - Fixed bug that skipped masks when namechecking is turned off.
       - Added Probe and DonorOptOutPixelValue checks for validator.
       - Checks for image readability as png after verifying file name.
-      - Fixing video validator and adding video cases.
+      - Fixed video validator and adding video cases.
     * Video Temporal Localization Scorer
       - Initial release
 

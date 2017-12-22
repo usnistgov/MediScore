@@ -48,7 +48,7 @@ from validator import SSD_Validator,DSD_Validator
 identify=False
 NCID='NC2016'
 neglectMask=False
-procs = 10
+procs = 1
 
 identify_string = ''
 if identify:
@@ -306,7 +306,7 @@ class TestValidator(ut.TestCase):
         validatorRoot = '../../data/test_suite/validatorTests/'
         global verbose
         verbose = None
-        print("BASDIC FUNCTIONALITY validation of SSD video validator beginning...")
+        print("BASIC FUNCTIONALITY validation of SSD video validator beginning...")
         myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vvb.log".format(NCID,
                                                                                                                 validatorRoot + 'validvidtest/validvidtest.csv',
                                                                                                                 validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index.csv',
@@ -315,7 +315,52 @@ class TestValidator(ut.TestCase):
                                                                                                                 nm_string))//256
         self.assertEqual(myval,0)
         os.system('rm vvb.log')
+        print("BASIC FUNCTIONALITY validated.")
         
+        print("\nBeginning system output content validation for video.")
+        print("\nCASE V0: Validating improper intervals for video.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vv0.log".format(NCID,
+                                                                                                                validatorRoot + 'badstringvidtest/badstringvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture('vv0.log')
+        self.assertTrue("ERROR: Interval list" in errstr)
+        self.assertTrue("cannot be read as intervals." in errstr)
+
+        print("CASE V0 validated.")
+        os.system('rm vv0.log')
+        
+        print("\nCASE V1: Validating intervals that are out of bounds.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vv1.log".format(NCID,
+                                                                                                                validatorRoot + 'oobvidtest/oobvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture('vv1.log')
+        self.assertTrue("ERROR: Interval" in errstr)
+        self.assertTrue("is out of bounds." in errstr)
+        print("CASE V1 validated.")
+        os.system('rm vv1.log')
+        
+        print("\nCASE V2: Validating collections of intervals that intersect.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vv2.log".format(NCID,
+                                                                                                                validatorRoot + 'selfcrossvidtest/selfcrossvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture('vv2.log')
+        self.assertTrue("ERROR: Interval" in errstr)
+        self.assertTrue("intersects with" in errstr)
+        print("CASE V2 validated.")
+        os.system('rm vv2.log')
+
         
     def testDSDName(self):
         import StringIO

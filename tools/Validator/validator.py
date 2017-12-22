@@ -372,12 +372,15 @@ class SSD_Validator(validator):
             print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(max(maxprocs,1)))
             processors = max(maxprocs,1)
 
-        chunksize = nrow//processors
-        maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
-        p = multiprocessing.Pool(processes=processors)
-        maskDataS = p.map(checkProbe,maskDataS)
-        p.close()
-        maskData = pd.concat(maskDataS)
+        if processors > 1:
+            chunksize = nrow//processors
+            maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
+            p = multiprocessing.Pool(processes=processors)
+            maskDataS = p.map(checkProbe,maskDataS)
+            p.close()
+            maskData = pd.concat(maskDataS)
+        else:
+            maskData = maskData.apply(self.checkOneProbe,axis=1)
         #add all mask 'Message' entries to printBuffer
         maskData.apply(lambda x: self.printbuffer.append(x['Message']),axis=1,reduce=False)
 
@@ -414,17 +417,17 @@ class SSD_Validator(validator):
                 sysrow['matchFlag'] = 1
 
         #check mask validation
-        if self.testMask:
-            if self.neglectMask:
-                return sysrow
+        if self.testMask or self.video:
             if self.video:
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
-                    maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount
+                    maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
                     mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame)
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
                 sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
+                return sysrow
+            if self.neglectMask:
                 return sysrow
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
@@ -514,7 +517,7 @@ class SSD_Validator(validator):
                     intervalflag = 1
                     continue
                 if interval[0] > interval[1]:
-                    errmsg = "ERROR: Interval {} must be formatted as a valid interval [an,bn], where an <= bn".foramt(interval)
+                    errmsg = "ERROR: Interval {} must be formatted as a valid interval [a,b], where a <= b".foramt(interval)
                     msg.append(errmsg)
                     intervalflag = 1
                 if mode=='Frame':
@@ -528,6 +531,10 @@ class SSD_Validator(validator):
         
                 if intervalflag == 0:
                     #each of the intervals in each list of intervals must be disjoint (except for endpoints)
+                    if len(cleared_interval_list) == 0:
+                        cleared_interval_list.append(interval)
+                        continue
+
                     for intvl in cleared_interval_list:
                         #ensure if a singularity that it only coincides with an endpoint
                         if interval[0] == interval[1]:
@@ -539,10 +546,13 @@ class SSD_Validator(validator):
                             if ((interval[0] >= intvl[0]) and (interval[0] <= intvl[1])) or ((interval[1] <= intvl[1]) and (interval[1] >= intvl[0])):
                                 #coincides with at least an endpoint
                                 errmsg = "ERROR: Interval {} intersects with interval {}.".format(interval,intvl)
+                                msg.append(errmsg)
                                 intervalflag = 1
-                        cleared_interval_list.append(interval)
-        except:
-            msg.append('ERROR: Interval list cannot be read as intervals.')
+                    cleared_interval_list.append(interval)
+        except Exception,e:
+#            exc_type,exc_obj,exc_tb = sys.exc_info()
+#            print("Exception {} encountered at line {}.".format(exc_type,exc_tb.tb_lineno))
+            msg.append('ERROR: Interval list {} cannot be read as intervals.'.format(intvl))
             return 1,msg[0]
         return intervalflag,'\n'.join(msg)
 
