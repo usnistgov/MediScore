@@ -35,7 +35,7 @@ INSTALLATION
   Prior to running the Scorer, the following packages need to be installed :
   - opencv (tested in version 2.4.13)
   - numpy  (tested in version 1.13.3)
-  - pandas (tested in version 0.18.1) - make sure to use the latest version.
+  - pandas (tested in version 0.21.1) - make sure to use the latest version.
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
   - scikit-learn (tested in version 0.17.1)
@@ -356,7 +356,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Dec 19, 2017 - MediScore Version *.*.*
+  Dec 21, 2017 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -364,6 +364,7 @@ HISTORY
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
+      - Fixed rounding issues with new pandas version.
       - Now reading cr2 with rawpy instead of OpenCV
     * Validator
       - Added more thorough tests for ProbeStatus criteria.

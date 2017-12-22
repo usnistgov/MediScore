@@ -44,6 +44,7 @@ from printbuffer import printbuffer
 from detMetrics import Metrics as dmets
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
+from myround import myround
 #from conn2db import *
 
 debug_mode = True
@@ -52,12 +53,6 @@ print_lock = multiprocessing.Lock() #for printout to std_out
 
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
-
-def myround(n,precision,truncate=False):
-    if truncate:
-        return float("%.{}f".format(precision) % n)
-    else:
-        return round(n,precision)
 
 #for use with detection metrics plotter
 class detPackage:
@@ -307,12 +302,15 @@ class maskMetricRunner:
         verbose = self.verbose
         html = self.html
         precision = self.precision
-        truncate = self.truncate
         erodeKernSize = self.erodeKernSize
         dilateKernSize = self.dilateKernSize
         distractionKernSize = self.distractionKernSize
         noScorePixel = self.noScorePixel
         kern = self.kern
+        truncate = self.truncate
+        round_modes = ['sd']
+        if self.truncate:
+            round_modes.append('t')
         
         manipFileID = maskRow[''.join([mymode,'FileID'])]
         refMaskName = 0
@@ -586,15 +584,15 @@ class maskMetricRunner:
     #                sImg.save(sbin_name,th=threshold)
      
                 mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
-                maskRow['GWL1'] = myround(mets['GWL1'],precision,truncate)
+                maskRow['GWL1'] = myround(mets['GWL1'],precision,round_modes)
                 for met in ['NMM','MCC','BWL1']:
                     myprintbuffer.append("Setting value for {}...".format(met))
 #                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) #TODO: debug
-                    maskRow[''.join(['Optimum',met])] = myround(mets[met],precision,truncate)
+                    maskRow[''.join(['Optimum',met])] = myround(mets[met],precision,round_modes)
                     if self.sbin >= -1:
                         #record Actual metrics
-                        maskRow[''.join(['Actual',met])] = myround(amets[met],precision,truncate)
-                        mets[''.join(['Actual',met])] = myround(amets[met],precision,truncate)
+                        maskRow[''.join(['Actual',met])] = myround(amets[met],precision,round_modes)
+                        mets[''.join(['Actual',met])] = myround(amets[met],precision,round_modes)
     
                 for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                     myprintbuffer.append("Setting value for {}...".format(mes))

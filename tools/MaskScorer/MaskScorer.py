@@ -46,6 +46,7 @@ sys.path.append(lib_path)
 from metricRunner import maskMetricRunner
 import Partition_mask as pt
 import Render
+from myround import myround
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
 #execfile('maskreport.py')
@@ -117,7 +118,7 @@ help="Control print output. Select 1 to print all non-error print output and 0 t
 parser.add_argument('-p','--processors',type=int,default=1,
 help="The number of processors to use in the computation. Choosing too many processors will cause the program to forcibly default to a smaller number. [default=1].",metavar='positive integer')
 parser.add_argument('--precision',type=int,default=16,
-help="The number of digits to round computed scores, [e.g. a score of 0.3333333333333... will round to 0.33333 for a precision of 5], [default=16].",metavar='positive integer')
+help="The number of digits to round computed scores. Note that rounding is not absolute, but is by significant digits (e.g. a score of 0.003333333333333... will round to 0.0033333 for a precision of 5). (default = 16).",metavar='positive integer')
 parser.add_argument('--truncate',action='store_true',
 help="Truncate rather than round the figures to the specified precision. If no number is specified for precision, the default 16 will be used.")
 parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
@@ -301,6 +302,10 @@ if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((
 if args.optOut:
     m_df = m_df.query(" ".join(['not',optOutQuery]))
 
+round_modes = ['sd']
+if args.truncate:
+    round_modes.append('t')
+
 class loc_scoring_params:
     def __init__(self,
                  mode,
@@ -339,7 +344,7 @@ if args.task == 'manipulation':
     
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
         #revise this to outputRoot and loc_scoring_params
-        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
+        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors)
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
@@ -433,7 +438,7 @@ if args.task == 'manipulation':
         
         constant_metrics = {}
         for m in constant_mets:
-            constant_metrics[m] = r_df[m].iloc[0]
+            constant_metrics[m] = myround(r_df[m].iloc[0],args.precision,round_modes)
 
 #        totalTrials = len(r_df)
 #        totalOptOut = len(r_df.query("IsOptOut=='Y'"))
@@ -457,9 +462,9 @@ if args.task == 'manipulation':
                     temp_df['optOutScoring'] = 'Y'
 
                 temp_df['OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
-                if args.sbin >= -1:
-                    temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
-                    temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
+#                if args.sbin >= -1:
+#                    temp_df['MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
+#                    temp_df['ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
 
                 for m in constant_mets:
                     temp_df[m] = constant_metrics[m]
@@ -473,6 +478,8 @@ if args.task == 'manipulation':
                         temp_df.loc[:,'MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
                         temp_df.loc[:,'ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
 
+                float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
+                temp_df[float_mets] = temp_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
                 
@@ -514,16 +521,18 @@ if args.task == 'manipulation':
             if args.optOut:
                 a_df['optOutScoring'] = 'Y'
             a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().astype(int).astype(str)
-            if args.sbin >= -1:
-                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().astype(int).astype(str)
-                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().astype(int).astype(str)
             for m in constant_mets:
                 a_df[m] = constant_metrics[m]
             heads.extend(constant_mets)
+            if args.sbin >= -1:
+                a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().astype(int).astype(str)
+                a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().astype(int).astype(str)
 
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
 
+            float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
+            a_df[float_mets] = a_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
@@ -594,14 +603,14 @@ elif args.task == 'splice':
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
-        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
+        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors)
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
 #        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,args.precision,args.truncate,args.processors)
+        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors)
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
@@ -805,7 +814,7 @@ elif args.task == 'splice':
 
         constant_metrics = {}
         for m in constant_mets:
-            constant_metrics[m] = r_df[m].iloc[0]
+            constant_metrics[m] = myround(r_df[m].iloc[0],args.precision,round_modes)
 
         #substitute for other values that won't get counted in the average
         r_dfc.loc[p_idx,'pOptimumMCC'] = np.nan
@@ -852,6 +861,8 @@ elif args.task == 'splice':
                 heads.extend(constant_mets)
                 heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
+                float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
+                temp_df[float_mets] = temp_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
             #at the same time do an optOut filter where relevant and save that
@@ -919,6 +930,8 @@ elif args.task == 'splice':
                     a_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
                     a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
                     a_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
+            float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
+            a_df[float_mets] = a_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
@@ -1093,15 +1106,15 @@ if args.task == 'manipulation':
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         printq("Beginning mask scoring...")
-        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=args.precision)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16)
 
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
         metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
         if args.sbin >= -1:
-            metrics.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
-                            'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
+            metrics.extend(['MaximumNMM','MaximumMCC','MaximumBWL1',
+                            'ActualNMM','ActualMCC','ActualBWL1'])
         constant_mets = ['PixelAverageAUC','MaskAverageAUC']
         if args.sbin >= -1:
             constant_mets.extend(['MaximumThreshold','ActualThreshold'])
@@ -1146,6 +1159,10 @@ if args.task == 'manipulation':
 
         r_df.loc[r_idx,'OptimumMCC'] = ''
         prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
+
+        #control precision here
+        float_mets = [met for met in metrics if 'Threshold' not in met]
+        r_df[float_mets] = r_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
 
         if args.outMeta:
             roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
@@ -1236,17 +1253,17 @@ elif args.task == 'splice':
         m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
         printq("Beginning mask scoring...")
-        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=args.precision)
+        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here
         metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER',
                    'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
         if args.sbin >= -1:
-            metrics.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
-                            'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
-                            'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
-                            'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1'])
+            metrics.extend(['pMaximumNMM','pMaximumMCC','pMaximumBWL1',
+                            'dMaximumNMM','dMaximumMCC','dMaximumBWL1',
+                            'pActualNMM','pActualMCC','pActualBWL1',
+                            'dActualNMM','dActualMCC','dActualBWL1'])
         constant_mets = ['pPixelAverageAUC','dPixelAverageAUC','pMaskAverageAUC','dMaskAverageAUC']
         if args.sbin >= -1:
             constant_mets.extend(['pMaximumThreshold','dMaximumThreshold','pActualThreshold','dActualThreshold'])
@@ -1302,6 +1319,9 @@ elif args.task == 'splice':
         r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
 
         prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
+        #control precision here
+        float_mets = [met for met in metrics if 'Threshold' not in met]
+        r_df[float_mets] = r_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
 
         #other reports of varying
         if args.outMeta:
