@@ -11781,6 +11781,7 @@ div#notebook {
 <p>7.4 <a href="#optionsscoring">Scoring Options</a></p>
 <p>7.5 <a href="#optionsquery">Performance Evaluation by Query</a></p>
 <p>7.6 <a href="#optionsreport">Report Options</a></p>
+<p>7.7 <a href="#optionsother">Other Options</a></p>
 <p>8. <a href="#examples">Examples</a></p>
 
 </div>
@@ -11998,7 +11999,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--refDir</p>
 <ul>
-<li>Specify the reference and index data path (e.g. "/NC2016_Test0601"). Note that this path must be specified in the non-target directory as masks will be read relative to this reference directory. (default = .)</li>
+<li>Specify the path to the dataset (e.g. "/NC2016_Test0601"). Note that this path must be specified as masks will be read relative to this directory.</li>
 </ul>
 
 </div>
@@ -12256,6 +12257,28 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <p>--displayScoredOnly</p>
 <ul>
 <li>Display only the data for which a localized score could be generated. This will exclude images for which there are no score-able regions.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="7.7-Other-Options">7.7 Other Options<a name="optionsother" /><a class="anchor-link" href="#7.7-Other-Options">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--debug_mode</p>
+<ul>
+<li>Run the scorer in debug mode.</li>
 </ul>
 
 </div>

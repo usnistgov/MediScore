@@ -716,6 +716,7 @@ class maskMetricRunner:
         html = params.html
         precision = params.precision
         processors = params.processors
+        debug_mode = params.debug_mode
 
         #reflist and syslist should come from the same dataframe, so length checking is not required
         mymode='Probe'
