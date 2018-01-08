@@ -421,7 +421,12 @@ class SSD_Validator(validator):
             if self.video:
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
-                    maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
+                    if 'FrameCount' not in list(self.idxfile):
+                        probeFileName=self.idxfile.ProbeFileID.isin([probeFileID]).ProbeFileName.iloc[0]
+                        cap = cv2.VideoCapture(probeFileName)
+                        maxFrame = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT))
+                    else:
+                        maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
                     mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame)
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
