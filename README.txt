@@ -356,11 +356,12 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Dec 21, 2017 - MediScore Version *.*.*
+  Jan 8, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
     * Mask Scorer
+      - Updated ReadMe
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
