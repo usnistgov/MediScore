@@ -365,7 +365,8 @@ HISTORY
       - Changed help message for -xF to be in line with updates to the validator.
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
       - Fixed rounding issues with new pandas version.
-      - Now reading cr2 with rawpy instead of OpenCV
+      - Now reading cr2 with rawpy instead of OpenCV.
+      - Added debug mode.
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.
