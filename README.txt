@@ -361,13 +361,13 @@ HISTORY
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
     * Mask Scorer
-      - Updated ReadMe
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
       - Fixed rounding issues with new pandas version.
       - Now reading cr2 with rawpy instead of OpenCV
     * Validator
+      - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.
       - Simplified and edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
