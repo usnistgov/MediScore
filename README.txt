@@ -376,6 +376,7 @@ HISTORY
       - Added Probe and DonorOptOutPixelValue checks for validator.
       - Checks for image readability as png after verifying file name.
       - Fixed video validator and adding video cases.
+      - Adjusted video validator parameter to be compatible with OpenCV 3+, just in case.
     * Video Temporal Localization Scorer
       - Initial release
 

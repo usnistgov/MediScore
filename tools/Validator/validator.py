@@ -425,7 +425,15 @@ class SSD_Validator(validator):
                         probeFileName=self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].ProbeFileName.iloc[0]
                         refroot = os.path.abspath(os.path.join(os.path.dirname(self.idxname),'..'))
                         cap = cv2.VideoCapture(os.path.join(refroot,probeFileName))
-                        maxFrame = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT))
+                        #NOTE: OpenCV 3+ versions will not have cv2.cv.
+                        try:
+                            vid_frame_feature = cv2.cv.CV_CAP_PROP_FRAME_COUNT
+                        except AttributeError:
+                            try:
+                                vid_frame_feature = cv2.CAP_PROP_FRAME_COUNT
+                            except:
+                                vid_frame_feature = 7
+                        maxFrame = int(cap.get(vid_frame_feature))
                     else:
                         maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
                     mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame,col,probeFileID) #NOTE: 'Frame' evaluation until we have time evaluations
