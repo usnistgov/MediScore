@@ -422,12 +422,13 @@ class SSD_Validator(validator):
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
                     if 'FrameCount' not in list(self.idxfile):
-                        probeFileName=self.idxfile.ProbeFileID.isin([probeFileID]).ProbeFileName.iloc[0]
-                        cap = cv2.VideoCapture(probeFileName)
+                        probeFileName=self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].ProbeFileName.iloc[0]
+                        refroot = os.path.abspath(os.path.join(os.path.dirname(self.idxname),'..'))
+                        cap = cv2.VideoCapture(os.path.join(refroot,probeFileName))
                         maxFrame = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT))
                     else:
                         maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
-                    mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame)
+                    mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame,col,probeFileID) #NOTE: 'Frame' evaluation until we have time evaluations
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
                 sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
@@ -509,8 +510,8 @@ class SSD_Validator(validator):
     
         return flag,"\n".join(msg)
 
-    def vidIntervalsCheck(self,intvl,mode,max_frame_number):
-        msg = []
+    def vidIntervalsCheck(self,intvl,mode,max_frame_number,column_name,probeFileID):
+        msg = ["Evaluationg column {} for probe {}.".format(column_name,probeFileID)]
         intervalflag = 0
         cleared_interval_list = []
         try:
@@ -557,8 +558,8 @@ class SSD_Validator(validator):
         except Exception,e:
 #            exc_type,exc_obj,exc_tb = sys.exc_info()
 #            print("Exception {} encountered at line {}.".format(exc_type,exc_tb.tb_lineno))
-            msg.append('ERROR: Interval list {} cannot be read as intervals.'.format(intvl))
-            return 1,msg[0]
+            msg.append("ERROR: Interval list '{}' cannot be read as intervals for column {} for probe {}.".format(intvl,column_name,probeFileID))
+            return 1,'\n'.join(msg)
         return intervalflag,'\n'.join(msg)
 
 
@@ -666,7 +667,6 @@ class DSD_Validator(validator):
                         r_data = l.rstrip().replace("\"","").split('|')
                         r_files[":".join([r_data[r_heads['ProbeFileID']],r_data[r_heads['DonorFileID']]])] = r_data[r_heads['IsTarget']]
             
-
 #        with open(self.idxname) as idxfile:
 #            for i,l in enumerate(idxfile):
 #                if i==0:
