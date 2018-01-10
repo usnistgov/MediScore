@@ -278,7 +278,7 @@ test_c5_1() {
                           --plotType det
 
     echo "  * OptOut (IsOptOut =='N') scoring *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-3 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-3 \
                           -t manipulation \
                           --refDir $testsuite_directory/reference \
                           -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
@@ -287,7 +287,7 @@ test_c5_1() {
                           --optOut --dLevel 0.1 --ci --plotType roc
 
     echo "  * Reduced (--noNum): legend without the number of target and non-target trials *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-4 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-4 \
                     -t manipulation \
                     --refDir $testsuite_directory/reference \
                     -r NC2016-manipulation-ref.csv \
@@ -297,7 +297,7 @@ test_c5_1() {
                     --ci --noNum
 
     echo "  * Query (-q) with one query *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-5 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-5 \
                       -t manipulation \
                       --refDir $testsuite_directory/reference \
                       -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
@@ -306,7 +306,7 @@ test_c5_1() {
                       -q "Collection==['Nimble-SCI','Nimble-WEB']" --ci
 
     echo "  * Query (-q) with two queries *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-6 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-6 \
                  -t manipulation \
                  --refDir $testsuite_directory/reference \
                  -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
@@ -316,7 +316,7 @@ test_c5_1() {
                  --ci
 
     echo "  * Query for partition (-qp) with one partition *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-7 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-7 \
                  -t manipulation \
                  --refDir $testsuite_directory/reference \
                  -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv \
@@ -326,7 +326,7 @@ test_c5_1() {
                  --ci
 
     echo "  * Query for partition (-qp) with two partitions  *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-8 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-8 \
                 -t manipulation \
                 --refDir $testsuite_directory/reference \
                 -r NC2016-manipulation-ref.csv \
@@ -337,7 +337,7 @@ test_c5_1() {
                 --ci
 
     echo "  * Query for selective manipulation (-qm) with two queries   *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-9 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-9 \
                 -t manipulation \
                 --refDir $testsuite_directory/reference \
                 -r NC2016-manipulation-ref.csv \
@@ -348,7 +348,7 @@ test_c5_1() {
 
 
     echo "  * --multiFigs with the query option    *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-10 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-10 \
                 -t manipulation \
                 --refDir $testsuite_directory/reference \
                 -r NC2016-manipulation-ref.csv \
@@ -359,7 +359,7 @@ test_c5_1() {
                 --ci
 
     echo "  * Splice Task    *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-11 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-11 \
                 -t splice \
                 --refDir $testsuite_directory/reference \
                 -r NC2016-splice-ref.csv -x NC2016-splice-index.csv \
@@ -368,7 +368,7 @@ test_c5_1() {
                 --ci
 
     echo "  * NC2017 Full scoring: rendering ROC curve   *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-12 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-12 \
                 -t manipulation \
                 --refDir $testsuite_directory/ \
                 -r reference/NC2017-manipulation-ref.csv \
@@ -378,7 +378,7 @@ test_c5_1() {
                 --ci
 
     echo "  * NC2017 Query (-q) with two queries    *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-13 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-13 \
                 -t manipulation \
                 --refDir $testsuite_directory/ \
                 -r reference/NC2017-manipulation-ref.csv \
@@ -389,7 +389,7 @@ test_c5_1() {
 
 
     echo "  * NC2017 Query for selective manipulation (-qm) with the factor Purpose    *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-14 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-14 \
                 -t manipulation \
                 --refDir $testsuite_directory/ \
                 -r reference/NC2017-manipulation-ref.csv \
@@ -400,7 +400,7 @@ test_c5_1() {
 
 
     echo "  * NC2017 Query for selective manipulation (-qm) with the factor OperationArgument     *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-15 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-15 \
                 -t manipulation \
                 --refDir $testsuite_directory/ \
                 -r reference/NC2017-manipulation-ref.csv \
@@ -411,7 +411,7 @@ test_c5_1() {
 
 
     echo "  * NC2017 Query for selective manipulation (-qm) with the mixed of factors  *  "
-    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-16 \
+    echo_and_run python2 DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-16 \
                 -t manipulation \
                 --refDir $testsuite_directory/ \
                 -r reference/NC2017-manipulation-ref.csv \
