@@ -229,7 +229,12 @@ if __name__ == '__main__':
     if parameters.dump_dataframe:
         Results.to_pickle(os.path.join(parameters.output_path, parameters.dump_dataframe_file_name))
 
-    Results.to_csv(os.path.join(parameters.output_path, "scores_probes.csv"), sep="|")
+    # Rounding the output to match 12 digits precision instead of the new 16 digits in numpy 1.14
+    f_format = lambda x: round(x, 12)
+
+    Results["MCC"] = Results["MCC"].apply(f_format)
+    Results.to_csv(os.path.join(parameters.output_path, "scores_probes.csv"), 
+                   sep="|")
 
     nb_of_query = len(parameters.query)
     #Computing the average per query
@@ -239,12 +244,14 @@ if __name__ == '__main__':
             Results_overall.loc[i] = Results.loc[i,"MCC"].mean()
     else:
         Results_overall.loc[0] = Results["MCC"].mean()
+
+    Results_overall["MCC"] = Results_overall["MCC"].apply(f_format)
     Results_overall.to_csv(os.path.join(parameters.output_path, "scores.csv"), index_label=['query'], sep="|")
 
     # Query table join
     query_table_join = pd.DataFrame(np.zeros(nb_of_query), columns=["query"])
     query_table_join['query'] = parameters.query
-    query_table_join.to_csv(os.path.join(parameters.output_path, "query_table_join.csv"),index_label = ['id'], sep="|") 
+    query_table_join.to_csv(os.path.join(parameters.output_path, "query_table_join.csv"), index_label = ['id'], sep="|") 
 
     print("Done.")
     
