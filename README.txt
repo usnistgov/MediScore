@@ -356,7 +356,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Jan 10, 2018 - MediScore Version *.*.*
+  Jan 11, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -380,6 +380,8 @@ HISTORY
       - Adjusted video validator parameter to be compatible with OpenCV 3+, just in case.
     * Video Temporal Localization Scorer
       - Initial release
+    * Provenance Scorers:
+      - Fixed rounding issues with new numpy version
 
 
 CONTACT

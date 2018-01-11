@@ -46,6 +46,9 @@ def mkdir_p(path):
         else:
             err_quit("{}. Aborting!".format(exc))
 
+def format_float(f):
+    return round(f, 12)
+
 # Returns ordered array of named tuples representing nodes
 def system_out_to_ordered_nodes(system_out):
     node_w_confidence = collections.namedtuple('node_w_confidence', [ 'confidence', 'file' ])
@@ -270,8 +273,18 @@ if __name__ == '__main__':
         except IOError as ioerr:
             err_quit("{}. Aborting!".format(ioerr))
 
-    _write_df_to_csv("Trial Scores", output_records_df, "trial_scores.csv")
-    _write_df_to_csv("Aggregate Scores", output_agg_records_df, "scores.csv")
+    def _applymap(df, maps):
+        for key in maps.keys():
+            df[[key]] = df[[key]].applymap(maps[key])
+
+        return df
+
+    _write_df_to_csv("Trial Scores", _applymap(output_records_df, { "NodeRecallAt50": format_float,
+                                                                    "NodeRecallAt100": format_float,
+                                                                    "NodeRecallAt200": format_float }), "trial_scores.csv")
+    _write_df_to_csv("Aggregate Scores", _applymap(output_agg_records_df, { "MeanNodeRecallAt50": format_float,
+                                                                            "MeanNodeRecallAt100": format_float,
+                                                                            "MeanNodeRecallAt200": format_float }), "scores.csv")
     _write_df_to_csv("Node Mapping", output_mapping_records_df, "node_mapping.csv")
 
     if args.html_report == True:
