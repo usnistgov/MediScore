@@ -33,7 +33,7 @@ INSTALLATION
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
-  - opencv (tested in version 2.4.13)
+  - opencv (tested in version 2.4.13 and 3.4.0)
   - numpy  (tested in version 1.13.3)
   - pandas (tested in version 0.21.1) - make sure to use the latest version.
   - matplotlib (tested in version 1.5.1)
@@ -91,7 +91,7 @@ HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more deta
 To try some command lines with data files, go to the testing
 directories in 'MediScore/tools/DetectionScorer', and run the command
 lines below.
-  $ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample \
+  $ python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample \
   -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample \
   -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_01 --display
 
@@ -356,10 +356,11 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Jan 8, 2018 - MediScore Version *.*.*
+  Jan 10, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
+      - Updated test cases to use "python2" instead of "python" to remove ambiguity.
     * Mask Scorer
       - Added more thorough tests for ProbeStatus criteria.
       - Changed help message for -xF to be in line with updates to the validator.
