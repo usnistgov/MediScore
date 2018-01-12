@@ -336,6 +336,12 @@ class loc_scoring_params:
         self.processors = processors
         self.debug_mode = debug_mode
 
+def round_df(my_df,metlist):
+    df_cols = list(my_df)
+    final_metlist = [met for met in metlist if met in df_cols]
+    my_df[final_metlist] = my_df[final_metlist].applymap(lambda n: myround(n,args.precision,round_modes))
+    return my_df
+
 #define HTML functions here
 df2html = lambda *a:None
 if args.task == 'manipulation':
@@ -447,6 +453,7 @@ if args.task == 'manipulation':
 #        totalOptOut = len(r_df.query("IsOptOut=='Y'"))
 #        totalOptIn = totalTrials - totalOptOut
 #        TRR = float(totalOptIn)/totalTrials
+        optOutStats = ['TRR']
 
         a_df = 0
         if factor_mode == 'q': #don't print anything if there's nothing to print
@@ -480,9 +487,10 @@ if args.task == 'manipulation':
                     if args.sbin >= -1:
                         temp_df.loc[:,'MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
                         temp_df.loc[:,'ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
-
-                float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
-                temp_df[float_mets] = temp_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
+                stdev_mets = [met for met in list(temp_df) if 'stddev' in met]
+                my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
+                float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
+                temp_df = round_df(temp_df,float_mets)
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
                 
@@ -533,9 +541,10 @@ if args.task == 'manipulation':
 
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
-
-            float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
-            a_df[float_mets] = a_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
+            stdev_mets = [met for met in list(a_df) if 'stddev' in met]
+            my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
+            float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
+            a_df = round_df(a_df,float_mets)
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df
@@ -832,6 +841,7 @@ elif args.task == 'splice':
 #        totalOptOut = len(r_df.query("IsOptOut=='Y'"))
 #        totalOptIn = totalTrials - totalOptOut
 #        TRR = float(totalOptIn)/totalTrials
+        optOutStats = ['TRR']
 
         a_df = 0
         if factor_mode == 'q': #don't print anything if there's nothing to print
@@ -861,11 +871,13 @@ elif args.task == 'splice':
 
                 for m in constant_mets:
                     temp_df[m] = constant_metrics[m]
+                stdev_mets = [met for met in list(temp_df) if 'stddev' in met]
+                my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
+                float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
+                temp_df = round_df(temp_df,float_mets)
                 heads.extend(constant_mets)
                 heads.extend(['TRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
-                float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
-                temp_df[float_mets] = temp_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
                 temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outRootQuery,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
                 a_df = a_df.append(temp_df,ignore_index=True)
             #at the same time do an optOut filter where relevant and save that
@@ -933,8 +945,10 @@ elif args.task == 'splice':
                     a_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
                     a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
                     a_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
-            float_mets = [met for met in metrics_to_be_scored if 'Threshold' not in met]
-            a_df[float_mets] = a_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
+            stdev_mets = [met for met in list(a_df) if 'stddev' in met]
+            my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
+            float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
+            a_df = round_df(a_df,float_mets)
             a_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,"mask_score.csv"])),sep="|",index=False)
 
         return a_df

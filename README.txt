@@ -33,8 +33,8 @@ INSTALLATION
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
-  - opencv (tested in version 2.4.13 and 3.4.0)
-  - numpy  (tested in version 1.13.3)
+  - opencv (tested in versions 2.4.13 and 3.4.0)
+  - numpy  (tested in versions 1.14.0)
   - pandas (tested in version 0.21.1) - make sure to use the latest version.
   - matplotlib (tested in version 1.5.1)
   - scipy (tested in version 0.18.0)
@@ -368,6 +368,9 @@ HISTORY
       - Fixed rounding issues with new pandas version.
       - Now reading cr2 with rawpy instead of OpenCV.
       - Added debug mode.
+      - Extended precision control to TRR and standard deviations for the average metrics.
+         - Updated test cases accordingly for bitmask tests, specifically for precision control for AUC and EER.
+      - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.

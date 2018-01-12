@@ -308,7 +308,7 @@ class maskMetricRunner:
         noScorePixel = self.noScorePixel
         kern = self.kern
         truncate = self.truncate
-        round_modes = ['sd']
+        round_modes = ['sd'] #TODO: debug
         if self.truncate:
             round_modes.append('t')
         

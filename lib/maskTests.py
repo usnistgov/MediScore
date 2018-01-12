@@ -19,7 +19,6 @@
  reliability, or any other characteristic."
 """
 
-import cv
 import cv2
 import math
 import copy
@@ -34,6 +33,14 @@ import masks
 import maskMetrics as mm
 from decimal import Decimal
 
+try:
+    png_compress_const=png_compress_const
+except:
+    try:
+        png_compress_const=cv2.IMWRITE_PNG_COMPRESSION
+    except:
+        png_compress_const=16
+
 class TestImageMethods(ut.TestCase):
     def test_bw(self):
         #Set existing image. Safer test.
@@ -43,7 +50,7 @@ class TestImageMethods(ut.TestCase):
         testimg = 255*np.random.uniform(0,1,(100,100))
         testimg = testimg.astype(np.uint8)
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(0)
         cv2.imwrite('testImg.png',testimg,params)
 
@@ -90,7 +97,7 @@ class TestImageMethods(ut.TestCase):
         testimg_color[tbins==0] = [0,255,0]
         testimg_color = testimg_color.astype(np.uint8)
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(0)
         cv2.imwrite('testImg_color.png',testimg_color,params)
 
@@ -111,7 +118,7 @@ class TestImageMethods(ut.TestCase):
         testimg[61:80,31:45]=0
         testimg = testimg.astype(np.uint8)
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(0)
         cv2.imwrite('testImg.png',testimg,params)
 
@@ -143,7 +150,7 @@ class TestImageMethods(ut.TestCase):
         
         testimg = testimg.astype(np.uint8)
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(0)
 
         #generate journal data
@@ -417,7 +424,7 @@ class TestImageMethods(ut.TestCase):
         #create an image and save it
         testimg = 255*(np.floor(np.random.uniform(0,1.9,(100,100))).astype(np.uint8))
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(0)
         cv2.imwrite('testImg2.png',testimg,params)
 
