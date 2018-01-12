@@ -29,11 +29,15 @@ import math
 import copy
 import numpy as np
 import pandas as pd
+import sys
 import os
 import random
 import glymur
 from scipy import misc
 from decimal import Decimal
+lib_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(lib_path)
+from constants import *
 
 debug_mode=False
 printq = lambda *a:None
@@ -350,7 +354,7 @@ class mask(object):
             print("You should only save {} as a png. Remember to add on the prefix.".format(self.name))
             return 1
         params=list()
-        params.append(cv.CV_IMWRITE_PNG_COMPRESSION)
+        params.append(png_compress_const)
         params.append(compression)
         outmat = self.matrix
         if th >= 0:

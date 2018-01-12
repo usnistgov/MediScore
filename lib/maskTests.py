@@ -25,21 +25,24 @@ import copy
 import numpy as np
 import unittest as ut
 import pandas as pd
-#import matplotlib.pyplot as plt
+import sys
 import os
 import random
 import glymur
 import masks
 import maskMetrics as mm
 from decimal import Decimal
+lib_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(lib_path)
+from constants import *
 
-try:
-    png_compress_const=png_compress_const
-except:
-    try:
-        png_compress_const=cv2.IMWRITE_PNG_COMPRESSION
-    except:
-        png_compress_const=16
+#try:
+#    png_compress_const=cv2.cv.CV_IMWRITE_PNG_COMPRESSION
+#except:
+#    try:
+#        png_compress_const=cv2.IMWRITE_PNG_COMPRESSION
+#    except:
+#        png_compress_const=16
 
 class TestImageMethods(ut.TestCase):
     def test_bw(self):
