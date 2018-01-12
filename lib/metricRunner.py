@@ -21,7 +21,6 @@
  server, and makes no guarantees, expressed or implied, about its quality,
  reliability, or any other characteristic."
 """
-import cv
 import cv2
 import glymur
 import math
@@ -45,6 +44,7 @@ from detMetrics import Metrics as dmets
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
 from myround import myround
+from constants import *
 #from conn2db import *
 
 debug_mode = True
