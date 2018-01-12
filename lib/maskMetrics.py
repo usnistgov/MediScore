@@ -22,7 +22,6 @@
  server, and makes no guarantees, expressed or implied, about its quality,
  reliability, or any other characteristic."
 """
-import cv
 import cv2
 import math
 import copy
@@ -34,6 +33,9 @@ import random
 import masks
 from decimal import Decimal
 from string import Template
+lib_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(lib_path)
+from constants import *
 
 class maskMetrics:
     """
