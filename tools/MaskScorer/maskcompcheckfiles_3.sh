@@ -1,6 +1,7 @@
 #!/bin/bash
 clean=FALSE
 procs=4
+mypython=python2
 
 echo
 echo "CASE 3: VALIDATING BIT-MASK SCORING"
@@ -9,7 +10,7 @@ echo
 #TODO: design function to take test and output root as arguments and output total flag?
 
 #default JPEG2000 testing
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --jpeg2000
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --jpeg2000 --precision 12
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_1.csv > comp_maskreport_bittest_1.txt
@@ -69,7 +70,7 @@ fi
 bt1_total=$(($flag_bt1 + $flag_bt1pi + $flag_bt1jr))
 
 #optOut case
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --optOut --jpeg2000 --precision 12
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --optOut --jpeg2000 --precision 12
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_oo.csv > comp_maskreport_bittest_oo.txt
@@ -129,7 +130,7 @@ fi
 btoo_total=$(($flag_btoo + $flag_btoopi + $flag_btoojr))
 
 #selective no-score
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_partial/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -qm "Operation==['PasteSampled']" -p $procs --jpeg2000 --precision 12 
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_partial/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -qm "Operation==['PasteSampled']" -p $procs --jpeg2000 --precision 12 
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_partial/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_partial.csv > comp_maskreport_bittest_partial.txt
@@ -189,7 +190,7 @@ fi
 btp_total=$(($flag_btp + $flag_btppi + $flag_btpjr))
 
 #selective no-scoreand optOut
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_partial_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -qm "Operation==['PasteSampled']" -p $procs --optOut --jpeg2000 --precision 12 
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_partial_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -qm "Operation==['PasteSampled']" -p $procs --optOut --jpeg2000 --precision 12 
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_partial_oo/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_partial_oo.csv > comp_maskreport_bittest_partial_oo.txt
@@ -249,7 +250,7 @@ fi
 btpoo_total=$(($flag_btpoo + $flag_btpoopi + $flag_btpoojr))
 
 #Per-Probe Pixel No-Score
-python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -p $procs -pppns -html --jpeg2000
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -p $procs -pppns -html --jpeg2000 --precision 12
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_pixns/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_pixns.csv > comp_maskreport_bittest_pixns.txt
