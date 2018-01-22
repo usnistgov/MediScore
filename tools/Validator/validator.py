@@ -134,6 +134,7 @@ class validator:
         self.printbuffer.append("Index file is a pipe-separated csv.")
 
         self.video = params.video
+        self.optOut = params.optOut
         if self.contentCheck(params.identify,params.neglectMask,params.ref,params.indexFilter) == 1:
             self.printbuffer.atomprint(print_lock)
             return 1
@@ -250,14 +251,15 @@ class SSD_Validator(validator):
             if ("IsOptOut" in sysHeads) and ("ProbeStatus" in sysHeads):
                 self.printbuffer.append("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
 
-            if "IsOptOut" in sysHeads:
-                optOut = 1
-            elif "ProbeStatus" in sysHeads:
-                if not (("ProbeOptOutPixelValue" in sysHeads) or self.video):
-                    self.printbuffer.append("ERROR: The required column ProbeOptOutPixelValue is absent.")
-                    return 1
-                optOut = 2
-        self.optOut = optOut
+            if self.optOut:
+                if "IsOptOut" in sysHeads:
+                    optOut = 1
+                elif "ProbeStatus" in sysHeads:
+                    if not (("ProbeOptOutPixelValue" in sysHeads) or self.video):
+                        self.printbuffer.append("ERROR: The required column ProbeOptOutPixelValue is absent.")
+                        return 1
+                    optOut = 2
+        self.optOutNum = optOut
 
         #check for ProbeOptOutPixelValue
         self.pixOptOut = False
@@ -284,10 +286,10 @@ class SSD_Validator(validator):
 #            optOut=True
 #        self.optOut = optOut
 
-        #TODO: some way to switch to video validation
+        #switch to video validation
         if self.condition in ["VidOnly","VidMeta"] or self.video:
             neglectMask = True
-            #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error
+            #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error?
         self.neglectMask = neglectMask
 
         if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
@@ -449,7 +451,7 @@ class SSD_Validator(validator):
                 return sysrow
             #if IsOptOut or ProbeStatus is present
             #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
-            if self.optOut == 1:
+            if self.optOutNum == 1:
                 #throw error if not in set of allowed values
                 all_statuses = ['Y','Detection','Localization','N']
                 if not sysrow['IsOptOut'] in all_statuses:
@@ -458,7 +460,7 @@ class SSD_Validator(validator):
                 if sysrow['IsOptOut'] in ['Y','Localization']:
                     #no need for localization checking
                     return sysrow
-            elif self.optOut == 2:
+            elif self.optOutNum == 2:
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization']
                 if not sysrow['ProbeStatus'] in all_statuses:
                     sysrow['Message'] = " ".join([sysrow['Message'],"Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
@@ -726,10 +728,11 @@ class DSD_Validator(validator):
                         if ("IsOptOut" in s_headnames) and ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
                             self.printbuffer.append("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
 
-                        if "IsOptOut" in s_headnames:
-                            optOut = 1
-                        elif ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
-                            optOut = 2
+                        if self.optOut:
+                            if "IsOptOut" in s_headnames:
+                                optOut = 1
+                            elif ("ProbeStatus" in s_headnames) and ("DonorStatus" in s_headnames):
+                                optOut = 2
 
                     self.pixOptOut = False
                     if ("ProbeOptOutPixelValue" in s_headnames) and ("DonorOptOutPixelValue" in s_headnames):
@@ -806,6 +809,7 @@ class DSD_Validator(validator):
                         continue
 
                     optOutOption = 0
+                    #TODO: add optout option
                     if optOut == 1:
                         all_statuses = ['Y','Detection','Localization','N']
                         if not l_content[s_heads['IsOptOut']] in all_statuses:
@@ -1153,6 +1157,7 @@ class DSD_Validator(validator):
             self.printbuffer.append("Your masks {} and {} are valid.".format(pmaskname,dmaskname))
         return flag
 
+#TODO: use a dictionary instead?
 class validation_params:
     """
     Description: Stores list of parameters for validation.
@@ -1160,6 +1165,7 @@ class validation_params:
     def __init__(self,
                  ncid,
                  doNameCheck,
+                 optOut,
                  identify=False,
                  neglectMask=False,
                  indexFilter=False,
@@ -1168,6 +1174,7 @@ class validation_params:
                  processors=1):
         self.ncid=ncid
         self.doNameCheck=doNameCheck
+        self.optOut=optOut
         self.identify=identify
         self.neglectMask=neglectMask
         self.indexFilter=indexFilter
@@ -1191,6 +1198,7 @@ if __name__ == '__main__':
     help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
     help='use ImageMagick\'s identify to get dimensions of mask. OpenCV reading is used by default.')
+    parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProbeStatus column.")
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     parser.add_argument('-p','--processors',type=int,default=1,\
@@ -1228,16 +1236,15 @@ if __name__ == '__main__':
             print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
             exit(1)
 
+    myval_params = validation_params(args.ncid,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
     if args.valtype in ['SSD','SSD-video']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
-        myval_params = validation_params(args.ncid,doNameCheck=args.nameCheck,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
         if args.valtype == 'SSD-video':
             myval_params.video = True
         exit(ssd_validation.fullCheck(myval_params))
 #         exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     elif args.valtype == 'DSD':
         dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose)
-        myval_params = validation_params(args.ncid,doNameCheck=args.nameCheck,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
         exit(dsd_validation.fullCheck(myval_params))
 #         exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     else:

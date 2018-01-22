@@ -106,12 +106,13 @@ class ProvenanceValidator(validator):
             if ("IsOptOut" in sysHeads) and ("ProvenanceProbeStatus" in sysHeads):
                 printq("The system output has both 'IsOptOut' and 'ProvenanceProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
 
-            if "IsOptOut" in sysHeads:
-                optOut=1
-            elif "ProvenanceProbeStatus" in sysHeads:
-                optOut=2
-                optOutColName = "ProvenanceProbeStatus"
-        self.optOut=optOut
+            if self.optOut:
+                if "IsOptOut" in sysHeads:
+                    optOut=1
+                elif "ProvenanceProbeStatus" in sysHeads:
+                    optOut=2
+                    optOutColName = "ProvenanceProbeStatus"
+        self.optOutNum=optOut
 
         for i in range(0,len(truelist)):
             allClear = allClear and (truelist[i] in sysHeads)
@@ -175,7 +176,7 @@ class ProvenanceValidator(validator):
                 if outputJsonName in [None,'',np.nan,'nan']:
                     printq("The json for file " + sysfile['ProvenanceProbeFileID'][i] + " appears to be absent. Skipping it.")
                     continue
-                jsonFlag = jsonFlag | jsonCheck(os.path.join(sysPath,sysfile['ProvenanceOutputFileName'][i]),sysfile['ProvenanceProbeFileID'][i],self.task,sysfile[optOutColName][i],self.optOut)
+                jsonFlag = jsonFlag | jsonCheck(os.path.join(sysPath,sysfile['ProvenanceOutputFileName'][i]),sysfile['ProvenanceProbeFileID'][i],self.task,sysfile[optOutColName][i],self.optOutNum)
         
         #final validation
         if (jsonFlag == 0) and (dupFlag == 0) and (xrowFlag == 0) and (matchFlag == 0):
@@ -250,6 +251,7 @@ if __name__ == '__main__':
     help="Neglect JSON validation.")
     parser.add_argument('--ncid',type=str,default="NC17",\
     help="the NCID to validate against.")
+    parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm performance on a select number of trials determined by the performer via values in the ProvenanceProbeStatus column.")
     parser.add_argument('-v','--verbose',type=int,default=None,\
     help='Control print output. Select 1 to print all non-error print output and 0 to suppress all printed output (bar argument-parsing errors).',metavar='0 or 1')
     args = parser.parse_args()
@@ -265,7 +267,7 @@ if __name__ == '__main__':
             if iserr:
                 print(mystring)
 
-    myparams = validation_params(args.ncid,doNameCheck=args.nameCheck,identify=False,neglectMask=args.neglectJSON,indexFilter=False,ref=0,processors=1)
+    myparams = validation_params(args.ncid,doNameCheck=args.nameCheck,optOut=args.optOut,identify=False,neglectMask=args.neglectJSON,indexFilter=False,ref=0,processors=1)
 
     validation = ProvenanceValidator(args.system_output_file,args.index_file,verbose)
     if args.task:

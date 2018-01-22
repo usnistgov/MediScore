@@ -229,7 +229,7 @@ class TestValidator(ut.TestCase):
         os.system('rm vm4c.log')
 
         print("CASE S4d: Validating behavior for improper OptOut...")
-        myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm4d.log".format(NCID,validatorRoot + 'food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
+        myval = os.system("python2 validator.py -nc --optOut --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm4d.log".format(NCID,validatorRoot + 'food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
         errstr = msgcapture("vm4d.log")
         self.assertEqual(myval,1)
         self.assertTrue("Probe status" in errstr)
@@ -508,7 +508,7 @@ class TestValidator(ut.TestCase):
         os.system('rm vs4c.log')
 
         print("CASE D4d: Validating behavior for inappropriate ProbeStatus and DonorStatus values...")
-        myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs4d.log".format(NCID,validatorRoot + 'loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        myval = os.system("python2 validator.py -nc --optOut --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs4d.log".format(NCID,validatorRoot + 'loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
         errstr = msgcapture("vs4d.log")
         self.assertEqual(myval,1)
         self.assertTrue("Probe status" in errstr)
