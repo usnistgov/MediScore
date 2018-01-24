@@ -377,6 +377,7 @@ HISTORY
       - Simplified and edited error messsages to be more helpful.
       - Fixed bug that was reporting ground truth negatives.
       - Fixed bug that skipped masks when namechecking is turned off.
+      - Fixed error message reporting for validator mask checker.
       - Added Probe and DonorOptOutPixelValue checks for validator.
       - Checks for image readability as png after verifying file name.
       - Fixed video validator and adding video cases.

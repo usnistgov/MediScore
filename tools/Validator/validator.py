@@ -496,8 +496,8 @@ class SSD_Validator(validator):
             try:
                 dims = cv2.imread(maskname,cv2.IMREAD_UNCHANGED).shape
             except:
-                self.printbuffer.append("ERROR: system probe mask {} cannot be read as a png.".format(maskname))
-                return 1
+                msg.append("ERROR: system probe mask {} cannot be read as a png.".format(maskname))
+                return 1,"\n".join(msg)
     
         if identify:
             channel = subprocess.check_output(["identify","-format","%[channels]",maskname]).rstrip()
