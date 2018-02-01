@@ -390,7 +390,7 @@ class maskMetrics:
         """
         * Description: for pandas apply for running thresholds.
         """
-        thismet = self.getMetrics(self.ref,self.sys,self.w,row['Threshold'],self.myprintbuffer)
+        thismet = self.getMetrics(self.ref,self.sys,self.w,row['Threshold'])
         row['NMM'] = thismet['NMM']
         row['MCC'] = thismet['MCC']
         row['BWL1'] = thismet['BWL1']

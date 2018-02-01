@@ -1,0 +1,5 @@
+ProbeFileID|ConfidenceScore|OutputProbeMaskFileName|IsOptOut
+43e1d6f0a9306a629a51062729549d76|0.7|mask/foo.png|N
+07e65ca7be451f9fc756e9cc7a458eb6|0.3|mask/plus-mask.png|N
+43e1d6f0a9306a629a51062729549d76-2|0.71|mask/leaves-mask-graydient.png|N
+43e1d6f0a9306a629a51062729549d76-3|0.7|mask/leaves-mask.png|Y

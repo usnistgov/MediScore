@@ -639,6 +639,7 @@ class maskMetricRunner:
             self.errlist.append(exc_type)
             if debug_mode == True:
                 raise  #TODO: debug assistant
+            return maskRow
 #            myprintbuffer.atomprint(print_lock)
 
     def scoreMoreMasks(self,maskData):
@@ -715,6 +716,7 @@ class maskMetricRunner:
         html = params.html
         precision = params.precision
         processors = params.processors
+        global debug_mode
         debug_mode = params.debug_mode
 
         #reflist and syslist should come from the same dataframe, so length checking is not required

@@ -320,10 +320,16 @@ fi
 
 splice_optOut_total=$(($flag_soo + $flag_soopi + $flag_soojr))
 
+#faulty test case.
+errflag=1
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1.csv -oR ../../data/test_suite/maskScorerTests/errtest/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1 --speedup $optOutClause -v 1 --debug_off > errlog.txt
+if `grep -q ERROR.*unreadable errlog.txt` && `grep -q Ending errlog.txt` ; then
+    errflag=0
+fi
 
 flag_total=$(($flag_s + $flag_spi + $flag_sjr + $flag_m + $flag_mpi + $flag_mjr + $flag_t + $flag_tpi + $flag_tjr + $flag_sb + $flag_sbpi + $flag_sbjr\
- + $manip_optOut_total\
- + $splice_optOut_total))
+ + $manip_optOut_total + $splice_optOut_total\
+ + $errflag))
 
 if ([ $flag_total -eq 0 ]); then
   echo
@@ -336,6 +342,7 @@ if ([ $flag_total -eq 0 ]); then
 		rm -rf ../../data/test_suite/maskScorerTests/splicebin
 		rm -rf ../../data/test_suite/maskScorerTests/manip_optOut
 		rm -rf ../../data/test_suite/maskScorerTests/splice_optOut
+                rm -rf ../../data/test_suite/maskScorerTests/errtest
 	fi
 else
   echo

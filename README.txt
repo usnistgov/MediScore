@@ -368,7 +368,7 @@ HISTORY
       - Fixed bug that treated -1 as blank ProbeOptOutPixelValue. Blank now ignores opting out of pixel.
       - Fixed rounding issues with new pandas version.
       - Now reading cr2 with rawpy instead of OpenCV.
-      - Added debug mode.
+      - Added option to turn off "debug mode" and added a test case.
       - Extended precision control to TRR and standard deviations for the average metrics.
          - Updated test cases accordingly for bitmask tests, specifically for precision control for AUC and EER.
       - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.

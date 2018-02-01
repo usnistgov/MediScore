@@ -11778,10 +11778,9 @@ div#notebook {
 <p>7.1 <a href="#optionstask">Task Type Options</a></p>
 <p>7.2 <a href="#optionsinputs">Input Options</a></p>
 <p>7.3 <a href="#optionsoutputs">Output Options</a></p>
-<p>7.4 <a href="#optionsscoring">Scoring Options</a></p>
-<p>7.5 <a href="#optionsquery">Performance Evaluation by Query</a></p>
-<p>7.6 <a href="#optionsreport">Report Options</a></p>
-<p>7.7 <a href="#optionsother">Other Options</a></p>
+<p>7.4 <a href="#optionsprintout">Printout Options</a></p>
+<p>7.5 <a href="#optionsscoring">Scoring Options</a></p>
+<p>7.6 <a href="#optionsquery">Performance Evaluation by Query</a></p>
 <p>8. <a href="#examples">Examples</a></p>
 
 </div>
@@ -12109,6 +12108,14 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <ul>
 <li>Save the CSV file with the system output with all available metadata. This is a separate file than the normal outputs.</li>
 </ul>
+<p>-html</p>
+<ul>
+<li>Output the report to HTML files to visualize scoring.</li>
+</ul>
+<p>--displayScoredOnly</p>
+<ul>
+<li>Display only the data for which a localized score could be generated. This will exclude images for which there are no score-able regions.</li>
+</ul>
 
 </div>
 </div>
@@ -12118,7 +12125,33 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="7.4-Scoring-Options">7.4 Scoring Options<a name="optionsscoring" /><a class="anchor-link" href="#7.4-Scoring-Options">&#182;</a></h3>
+<h3 id="7.4-Printout-Options">7.4 Printout Options<a name="optionsprintout" /><a class="anchor-link" href="#7.4-Printout-Options">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-v verbose</p>
+<ul>
+<li>Control print output. Select 1 to print all non-error related output and 0 to suppress all print output (bar argument-parsing errors).</li>
+</ul>
+<p>--debug_off</p>
+<ul>
+<li>Continue running localization scorer on the next probe even when encountering errors. The name of the errors will still be printed, but the relevant error will not be raised.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="7.5-Scoring-Options">7.5 Scoring Options<a name="optionsscoring" /><a class="anchor-link" href="#7.5-Scoring-Options">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -12167,6 +12200,14 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <ul>
 <li>Run mask evaluation with multiple processors to speed up computation further. (default = 1)</li>
 </ul>
+<p>--precision</p>
+<ul>
+<li>The number of digits to round computed scores. Note that rounding is not absolute, but is by significant digits (e.g. a score of 0.003333333333333... will round to 0.0033333 for a precision of 5). (default = 16).</li>
+</ul>
+<p>--truncate</p>
+<ul>
+<li>Truncate rather than round the figures to the specified precision. If no number is specified for precision, the default 16 will be used.</li>
+</ul>
 
 </div>
 </div>
@@ -12176,7 +12217,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="7.5-Performance-Evaluation-by-Query">7.5 Performance Evaluation by Query<a name="optionsquery" /><a class="anchor-link" href="#7.5-Performance-Evaluation-by-Query">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified queries and query options. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting none of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
+<h3 id="7.6-Performance-Evaluation-by-Query">7.6 Performance Evaluation by Query<a name="optionsquery" /><a class="anchor-link" href="#7.6-Performance-Evaluation-by-Query">&#182;</a></h3><p>This option allows the user to evaluate their algorithm performance on either subsets or partitions of the data based on the specified queries and query options. The reference and index CSV files contain a list of factors (e.g., ProbePostProcessed|DonorPostProcessed|ManipulationQuality|IsManipulationTypeRemoval|...). Selecting none of the following factors will output a single report table (CSV) over the entire computed dataset.</p>
 
 </div>
 </div>
@@ -12233,75 +12274,19 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="7.6-Report-Options">7.6 Report Options<a name="optionsreport" /><a class="anchor-link" href="#7.6-Report-Options">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>-v verbose</p>
-<ul>
-<li>Control print output. Select 1 to print all non-error related output and 0 to suppress all print output (bar argument-parsing errors).</li>
-</ul>
-<p>--precision</p>
-<ul>
-<li>The number of digits to round computed scores. Note that rounding is not absolute, but is by significant digits (e.g. a score of 0.003333333333333... will round to 0.0033333 for a precision of 5). (default = 16).</li>
-</ul>
-<p>-html</p>
-<ul>
-<li>Output the report to HTML files to visualize scoring.</li>
-</ul>
-<p>--displayScoredOnly</p>
-<ul>
-<li>Display only the data for which a localized score could be generated. This will exclude images for which there are no score-able regions.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="7.7-Other-Options">7.7 Other Options<a name="optionsother" /><a class="anchor-link" href="#7.7-Other-Options">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--debug_mode</p>
-<ul>
-<li>Run the scorer in debug mode.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="8.-Examples">8. Examples<a name="examples" /><a class="anchor-link" href="#8.-Examples">&#182;</a></h2>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span>%%bash
 python2 MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests <span class="se">\</span>
 -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv <span class="se">\</span>
--s ../../data/test_suite/maskScorerTests/B_NC2017_Manipulation_ImgOnly_c-me2_1/B_NC2017_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
+-s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv <span class="se">\</span>
 -oR outputs/maniptest/maniptest -html -q <span class="s2">&quot;ConfidenceScore &lt; 0.5&quot;</span> <span class="s2">&quot;ManMade==[&#39;no&#39;]&quot;</span>
 </pre></div>
 

@@ -126,7 +126,7 @@ parser.add_argument('--optOut',action='store_true',help="Evaluate algorithm perf
 parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
 parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select smaller index files for the purpose of testing.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
-parser.add_argument('--debug_mode',action='store_true',help="Run scorer in debug mode.")
+parser.add_argument('--debug_off',action='store_false',help="Continue running localization scorer on the next probe even when encountering errors. This can be used to skip unwanted .")
 
 args = parser.parse_args()
 
@@ -353,7 +353,7 @@ if args.task == 'manipulation':
     
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
         #revise this to outputRoot and loc_scoring_params
-        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_mode)
+        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
@@ -615,14 +615,14 @@ elif args.task == 'splice':
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
-        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_mode)
+        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
 #        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_mode)
+        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
