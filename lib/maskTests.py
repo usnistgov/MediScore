@@ -440,8 +440,9 @@ class TestImageMethods(ut.TestCase):
         def absoluteEquality(r,s):
             w=np.ones(r.get_dims())
             #get measures
-            m1measures = mm.maskMetrics(r,s,w)
-            m1img = m1measures.conf
+            m1metrics = mm.maskMetrics(r,s,w)
+            m1img = m1metrics.getMetrics(r,s,w)
+#            m1img = m1measures.conf
             m1imgtp = m1img['TP']
             m1imgtn = m1img['TN']
             m1imgfp = m1img['FP']
@@ -456,11 +457,12 @@ class TestImageMethods(ut.TestCase):
 
             #randomized weights. Should be equal no matter what weights are applied.
             #self.assertEqual(r.hamming(s),0)
-            self.assertEqual(m1measures.bwL1,0)
+#            self.assertEqual(m1measures.bwL1,0)
+            self.assertEqual(m1img['BWL1'],0)
             #self.assertEqual(r.hingeL1(s,m1w,0),0)
             #self.assertEqual(r.hingeL1(s,m1w,-1),0)
-            self.assertTrue(abs(m1measures.mcc - 1) < eps)
-            self.assertEqual(m1measures.nmm,1)
+            self.assertTrue(abs(m1img['MCC'] - 1) < eps)
+            self.assertEqual(m1img['NMM'],1)
 
         absoluteEquality(rImg,sImg)
 
@@ -557,8 +559,10 @@ class TestImageMethods(ut.TestCase):
         sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.erode(255-rImg.matrix,eKern,iterations=1)
 
-        m2measures = mm.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m2measures.bwL1,0)
+        m2obj = mm.maskMetrics(rImg,sImg,wts)
+        m2measures = m2obj.getMetrics(rImg,sImg,wts)
+        self.assertEqual(m2measures['BWL1'],0)
+#        self.assertEqual(m2measures.bwL1,0)
         #self.assertEqual(m2measures.hingeL1(),0)
 
         #erode by a larger amount.
@@ -573,20 +577,26 @@ class TestImageMethods(ut.TestCase):
         errImg = copy.deepcopy(sImg)
         errImg.matrix=np.zeros((10,100))
         with self.assertRaises(ValueError):
-            mEmeasures = mm.maskMetrics(rImg,errImg,wts)
-            mEmeasures.bwL1
+            mEobj = mm.maskMetrics(rImg,errImg,wts)
+            mEmeasures = mEobj.getMetrics(rImg,errImg,wts)
+            mEmeasures['BWL1']
         with self.assertRaises(ValueError):
-            mEmeasures = mm.maskMetrics(rImg,sImg,wts[:,51:100])
-            mEmeasures.bwL1
+            mEobj = mm.maskMetrics(rImg,sImg,wts[:,51:100])
+            mEmeasures = mEobj.getMetrics(rImg,sImg,wts[:,51:100])
+            mEmeasures['BWL1']
         with self.assertRaises(ValueError):
             wts2 = np.copy(wts)
             wts2 = np.reshape(wts2,(200,50))
-            mEmeasures = mm.maskMetrics(rImg,sImg,wts2)
-            mEmeasures.bwL1
+            mEobj = mm.maskMetrics(rImg,sImg,wts2)
+            mEmeasures = mEobj.getMetrics(rImg,sImg,wts2)
+            mEmeasures['BWL1']
 
         #want both to be greater than 0
-        m2measures = mm.maskMetrics(rImg,sImg,wts)
-        if (m2measures.bwL1 == 0):
+        m2obj = mm.maskMetrics(rImg,sImg,wts)
+        m2measures = m2obj.getMetrics(rImg,sImg,wts)
+#        m2measures = mm.maskMetrics(rImg,sImg,wts)
+#        if (m2measures.bwL1 == 0):
+        if (m2measures['BWL1'] == 0):
             print("Case 2: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #commenting out because hinge is not being used
@@ -604,9 +614,11 @@ class TestImageMethods(ut.TestCase):
         sImg = masks.mask('testImg.png')
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
-        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        m3obj = mm.maskMetrics(rImg,sImg,wts)
+        m3measures = m3obj.getMetrics(rImg,sImg,wts)
         #dilate by small amount so that we still get 0
-        self.assertEqual(m3measures.bwL1,0)
+        self.assertEqual(m3measures['BWL1'],0)
+#        self.assertEqual(m3measures.bwL1,0)
         #self.assertEqual(m3measures.hingeL1(0.5),0)
 
         #dilate by a larger amount.
@@ -616,8 +628,11 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
 
         #want both to be greater than 0
-        m3measures = mm.maskMetrics(rImg,sImg,wts)
-        if (m3measures.bwL1 == 0):
+#        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        m3obj = mm.maskMetrics(rImg,sImg,wts)
+        m3measures = m3obj.getMetrics(rImg,sImg,wts)
+        if (m3measures['BWL1'] == 0):
+#        if (m3measures.bwL1 == 0):
             print("Case 3: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(0.005) == 0):
@@ -629,9 +644,11 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix=255-cv2.dilate(255-rImg.matrix,dKern,iterations=1)
         wtlist = rImg.boundaryNoScoreRegion(3,3,'diamond')
         wts = wtlist['wimg']
-        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        m3obj = mm.maskMetrics(rImg,sImg,wts)
+        m3measures = m3obj.getMetrics(rImg,sImg,wts)
+#        m3measures = mm.maskMetrics(rImg,sImg,wts)
 
-        self.assertEqual(m3measures.bwL1,0)
+        self.assertEqual(m3measures['BWL1'],0)
         #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
 
         #dilate by a larger amount
@@ -641,8 +658,10 @@ class TestImageMethods(ut.TestCase):
         wts = wtlist['wimg']
 
         #want both to be greater than 0
-        m3measures = mm.maskMetrics(rImg,sImg,wts)
-        if (m3measures.bwL1 == 0):
+#        m3measures = mm.maskMetrics(rImg,sImg,wts)
+        m3obj = mm.maskMetrics(rImg,sImg,wts)
+        m3measures = m3obj.getMetrics(rImg,sImg,wts)
+        if (m3measures['BWL1'] == 0):
             print("Case 3: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -660,8 +679,9 @@ class TestImageMethods(ut.TestCase):
         wtlist=rImg.boundaryNoScoreRegion(3,3,'gaussian')
         wts=wtlist['wimg']
 
-        m4measures = mm.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m4measures.bwL1,0)
+        m4obj = mm.maskMetrics(rImg,sImg,wts)
+        m4measures = m4obj.getMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures['BWL1'],0)
         #self.assertEqual(rImg.hingeL1(sImg,wts,0.5),0)
         
         #erode and dilate by larger amount
@@ -669,8 +689,10 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix=cv2.erode(255-rImg.matrix,kern,iterations=1)
         sImg.matrix=cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix=255-sImg.matrix
-        m4measures = mm.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m4measures.bwL1,0)
+#        m4measures = mm.maskMetrics(rImg,sImg,wts)
+        m4obj = mm.maskMetrics(rImg,sImg,wts)
+        m4measures = m4obj.getMetrics(rImg,sImg,wts)
+        self.assertEqual(m4measures['BWL1'],0)
 
         #erode and dilate by very large amount
         kern = masks.getKern('gaussian',21)
@@ -678,8 +700,9 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix = cv2.dilate(sImg.matrix,kern,iterations=1)
         sImg.matrix = 255-sImg.matrix
         #want both to be greater than 0
-        m4measures = mm.maskMetrics(rImg,sImg,wts)
-        if (m4measures.bwL1 == 0):
+        m4obj = mm.maskMetrics(rImg,sImg,wts)
+        m4measures = m4obj.getMetrics(rImg,sImg,wts)
+        if m4measures['BWL1'] == 0:
             print("Case 4: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -696,14 +719,16 @@ class TestImageMethods(ut.TestCase):
         sImg.matrix[59:79,33:48] = 0 #translate a small 20 x 15 square
         wtlist=rImg.boundaryNoScoreRegion(5,5,'gaussian')
         wts=wtlist['wimg']
-        m5measures = mm.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m5measures.bwL1,0)
+        m5obj = mm.maskMetrics(rImg,sImg,wts)
+        m5measures = m5obj.getMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures['BWL1'],0)
 
         #move further
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[51:71,36:51] = 0 #translate a small 20 x 15 square
-        m5measures = mm.maskMetrics(rImg,sImg,wts)
-        if (m5measures.bwL1 == 0):
+        m5obj = mm.maskMetrics(rImg,sImg,wts)
+        m5measures = m5obj.getMetrics(rImg,sImg,wts)
+        if m5measures['BWL1'] == 0:
             print("Case 5: binary weightedL1 is not greater than 0. Are you too forgiving?")
             exit(1)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
@@ -714,8 +739,9 @@ class TestImageMethods(ut.TestCase):
         #move completely out of range
         sImg.matrix = 255*np.ones((100,100))
         sImg.matrix[31:46,61:81] = 0 #translate a small 20 x 15 square
-        m5measures = mm.maskMetrics(rImg,sImg,wts)
-        self.assertEqual(m5measures.bwL1,476./9720)
+        m5obj = mm.maskMetrics(rImg,sImg,wts)
+        m5measures = m5obj.getMetrics(rImg,sImg,wts)
+        self.assertEqual(m5measures['BWL1'],476./9720)
 #        if (rImg.hingeL1(sImg,wts,0.005) == 0):
 #            print("Case 5, translate out of range: hingeL1 is not greater than 0. Are you too forgiving?")
 #            exit(1)

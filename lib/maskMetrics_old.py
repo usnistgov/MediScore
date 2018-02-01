@@ -74,7 +74,7 @@ class maskMetrics:
         self.mcc = self.matthews(self.conf)
         self.bwL1 = self.binaryWeightedL1(ref,sys,w)
 
-    def getMetrics(self,popt=0):
+    def getMetrics(self,ref,sys,w,systh,popt=0):
         """
         * Description: this function calculates the metrics with an implemented no-score zone.
                        Due to its repeated use for the same reference and system masks, the

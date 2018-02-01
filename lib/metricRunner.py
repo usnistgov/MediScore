@@ -552,7 +552,6 @@ class maskMetricRunner:
                                         mymeas['FP'] + mymeas['TN'])
                 
                     myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
-    
     #            if len(thresMets) == 1:
     #                thresMets='' #to minimize redundancy
     
@@ -563,8 +562,8 @@ class maskMetricRunner:
                 if self.sbin >= -1:
                     #just get scores in one run if threshold is chosen
                     sImg.binarize(self.sbin)
-                    amets = metricRunner.getMetrics(myprintbuffer)
-                    myameas = metricRunner.conf
+                    amets = metricRunner.getMetrics(rImg,sImg,wts,self.sbin,myprintbuffer)
+                    myameas = amets
     #                totalpx = idxW*idxH
     #                weighted_weights = 3 - bns - 2*sns
     #                mymeas['BNS'] = np.sum(weighted_weights == 1)
@@ -825,7 +824,7 @@ class maskMetricRunner:
         self.thresholds = list(set(templist))
         probelist = self.thresscores.keys()
 
-        #TODO: drop into separate function in maskMetrics and maskMetrics_old
+        #TODO: drop into separate functio. Pandas apply, if possible.n
         #compute maximum metrics here
         maxmets = {}
         maxavgMCC = -1
@@ -836,6 +835,7 @@ class maskMetricRunner:
                                    'ProbeTPR':0.,
                                    'ProbeFPR':0.},index=self.thresholds)
 
+        #************ Scoring ends here ************
         for t in self.thresholds:
             pixel_tpr = 0
             pixel_fpr = 0
@@ -1631,7 +1631,7 @@ class maskMetricRunner:
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         #things change here for pixel overlay
-        #TODO: try/catch the overlay error. Print out the shapes of all involved items.
+        #NOTE: try/catch the overlay error. Print out the shapes of all involved items.
         try:
             if not self.usejpeg2000:
                 refmat = ref.matrix

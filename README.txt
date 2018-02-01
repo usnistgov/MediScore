@@ -43,6 +43,7 @@ INSTALLATION
   - numpngw (tested in version 0.0.6)
   - Glymur (tested in version 0.8.12)
   - bokeh (tested in version 0.12.13)
+  - jsonschema (tested in version 2.5.1)
   Most of these packages can be installed by running basic_install.sh on your machine.
 
   Optional :
@@ -356,7 +357,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Jan 22, 2018 - MediScore Version *.*.*
+  Feb 1, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -371,6 +372,7 @@ HISTORY
       - Extended precision control to TRR and standard deviations for the average metrics.
          - Updated test cases accordingly for bitmask tests, specifically for precision control for AUC and EER.
       - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.
+      - Streamlined localization scorer for efficient pandas usage. 
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.

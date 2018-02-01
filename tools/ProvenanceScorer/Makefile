@@ -13,7 +13,7 @@ check:
 	@(./run_integration_tests.sh)
 	@(echo "** Running integration tests for validator **\n")
 	@(./run_integration_tests_validator.sh)
-	@(echo "PROVENANCE SCORER TESTS SUCCESSFULLY PASSED")
+	@(./finalcheck.sh)
 
 makecheckfiles:
 	(./make_checkfiles.sh)

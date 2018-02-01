@@ -1,0 +1,3 @@
+if [ $? == 0 ]; then
+    echo "PROVENANCE SCORER TESTS SUCCESSFULLY PASSED"
+fi

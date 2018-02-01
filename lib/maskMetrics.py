@@ -37,13 +37,17 @@ lib_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(lib_path)
 from constants import *
 
+metriccall={'MCC':'matthews',
+            'NMM':'NimbleMaskMetric',
+            'BWL1':'binaryWeightedL1'}
+
 class maskMetrics:
     """
     This class evaluates the metrics for the reference and system output masks.
     The image parameters necessary to evaluate most of the objects are included
     in the initialization.
     """
-    def __init__(self,ref,sys,w,systh=-10):
+    def __init__(self,ref,sys,w,systh=-10,metrics=['MCC','NMM','BWL1']):
         """
         Constructor
 
@@ -61,6 +65,10 @@ class maskMetrics:
             ref.binarize(254) #get the black/white mask first if not already gotten
 
         self.sys_threshold = systh
+        self.ref = ref
+        self.sys = sys
+        self.w = w
+        self.metrics = metrics
 #        if systh >= 0:
 #            sys.binarize(systh)
 #        else:
@@ -69,15 +77,15 @@ class maskMetrics:
 #                sys.bwmat = sys.matrix
 
         #pass threshold as a parameter here
-        self.conf = self.confusion_measures(ref,sys,w,systh)
+#        self.conf = self.confusion_measures(ref,sys,w,systh)
 
         #record this dictionary of parameters
-        self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
-        self.mcc = self.matthews(self.conf)
-        self.bwL1 = self.binaryWeightedL1(self.conf)
+#        self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
+#        self.mcc = self.matthews(self.conf)
+#        self.bwL1 = self.binaryWeightedL1(self.conf)
 #        self.bwL1 = self.binaryWeightedL1(ref,sys,w,systh)
 
-    def getMetrics(self,myprintbuffer):
+    def getMetrics(self,ref,sys,w,systh=-10,myprintbuffer=0):
         """
         * Description: this function calculates the metrics with an implemented no-score zone.
                        Due to its repeated use for the same reference and system masks, the
@@ -87,10 +95,17 @@ class maskMetrics:
         *     dictionary of the NMM, MCC, BWL1, and the confusion measures.
         """
 
+        conf = self.confusion_measures(ref,sys,w,systh)
+
+        mcc = self.matthews(conf)
+        nmm = self.NimbleMaskMetric(conf,ref,w)
+        bwL1 = self.binaryWeightedL1(conf)
+
         #for nicer printout
-        myprintbuffer.append("NMM: {}".format(self.nmm))
-        myprintbuffer.append("MCC (Matthews correlation coeff.): {}".format(self.mcc))
-        myprintbuffer.append("Binary Weighted L1: {}".format(self.bwL1))
+        if myprintbuffer:
+            myprintbuffer.append("NMM: {}".format(nmm))
+            myprintbuffer.append("MCC (Matthews correlation coeff.): {}".format(mcc))
+            myprintbuffer.append("Binary Weighted L1: {}".format(bwL1))
 #        ham = self.hamming(sys)
 #        if popt==1:
 #            if (ham==1) or (ham==0):
@@ -104,8 +119,8 @@ class maskMetrics:
 #            else:
 #                print("Hinge Loss L1: %0.9f" % hL1)
 
-        metrics = {'NMM':self.nmm,'MCC':self.mcc,'BWL1':self.bwL1}
-        metrics.update(self.conf)
+        metrics = {'NMM':nmm,'MCC':mcc,'BWL1':bwL1}
+        metrics.update(conf)
         return metrics
 
     def confusion_measures_gs(self,ref,sys,w):
@@ -173,13 +188,13 @@ class maskMetrics:
         mywts = w==1
 #        rpos = cv2.bitwise_and(r==0,mywts)
 #        rneg = cv2.bitwise_and(r==255,mywts)
-        n = np.sum(mywts)
+        n = mywts.sum()
         rpos = (r==0) & mywts
-        nrpos = np.sum(rpos)
+        nrpos = rpos.sum()
         rneg = (r==255) & mywts
 
-        tp = np.float64(np.sum(s & rpos))
-        fp = np.float64(np.sum(s & rneg))
+        tp = np.float64((s & rpos).sum())
+        fp = np.float64((s & rneg).sum())
         fn = np.float64(nrpos - tp)
         tn = np.float64(n - nrpos - fp)
 
@@ -371,6 +386,21 @@ class maskMetrics:
         hL1=max(0,wL1-e*rArea/n)
         return hL1
 
+    def assign_mets(self,row):
+        """
+        * Description: for pandas apply for running thresholds.
+        """
+        thismet = self.getMetrics(self.ref,self.sys,self.w,row['Threshold'],self.myprintbuffer)
+        row['NMM'] = thismet['NMM']
+        row['MCC'] = thismet['MCC']
+        row['BWL1'] = thismet['BWL1']
+        row['TP'] = thismet['TP']
+        row['TN'] = thismet['TN']
+        row['FP'] = thismet['FP']
+        row['FN'] = thismet['FN']
+        row['N'] = thismet['N']
+        return row
+
     #computes metrics running over the set of thresholds for grayscale mask
     def runningThresholds(self,ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer):
         """
@@ -470,34 +500,40 @@ class maskMetrics:
         thresMets = pd.DataFrame({'Reference Mask':ref.name,
                                    'System Output Mask':sys.name,
                                    'Threshold':thresholds,
-                                   'NMM':[-1.]*len(thresholds),
-                                   'MCC':[0.]*len(thresholds),
-                                   'BWL1':[1.]*len(thresholds),
-                                   'TP':[0]*len(thresholds),
-                                   'TN':[0]*len(thresholds),
-                                   'FP':[0]*len(thresholds),
-                                   'FN':[0]*len(thresholds),
+                                   'NMM':-1.,
+                                   'MCC':0.,
+                                   'BWL1':1.,
+                                   'TP':0,
+                                   'TN':0,
+                                   'FP':0,
+                                   'FN':0,
                                    'BNS':btotal,
                                    'SNS':stotal,
                                    'PNS':ptotal,
-                                   'N':[0]*len(thresholds)})
+                                   'N':0})
         #for all thresholds
         rownum=0
         #sys.binarize(0)
-        for th in thresholds:
-            #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
-            #thismet = maskMetrics(ref,sys,w,-1)
-            thismet = maskMetrics(ref,sys,w,th)
-            thresMets.at[rownum,'Threshold'] = th
-            thresMets.at[rownum,'NMM'] = thismet.nmm
-            thresMets.at[rownum,'MCC'] = thismet.mcc
-            thresMets.at[rownum,'BWL1'] = thismet.bwL1
-            thresMets.at[rownum,'TP'] = thismet.conf['TP']
-            thresMets.at[rownum,'TN'] = thismet.conf['TN']
-            thresMets.at[rownum,'FP'] = thismet.conf['FP']
-            thresMets.at[rownum,'FN'] = thismet.conf['FN']
-            thresMets.at[rownum,'N'] = thismet.conf['N']
-            rownum=rownum+1
+        self.myprintbuffer = myprintbuffer
+        thresMets = thresMets.apply(self.assign_mets,axis=1,reduce=False)
+
+        if isinstance(thresMets,pd.Series):
+            thresMets = thresMets.to_frame().transpose()
+
+#        for th in thresholds:
+#            #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
+#            #thismet = maskMetrics(ref,sys,w,-1)
+#            thismet = self.getMetrics(ref,sys,w,th,myprintbuffer)
+##            thresMets.at[rownum,'Threshold'] = th
+#            thresMets.at[rownum,'NMM'] = thismet.nmm
+#            thresMets.at[rownum,'MCC'] = thismet.mcc
+#            thresMets.at[rownum,'BWL1'] = thismet.bwL1
+#            thresMets.at[rownum,'TP'] = thismet.conf['TP']
+#            thresMets.at[rownum,'TN'] = thismet.conf['TN']
+#            thresMets.at[rownum,'FP'] = thismet.conf['FP']
+#            thresMets.at[rownum,'FN'] = thismet.conf['FN']
+#            thresMets.at[rownum,'N'] = thismet.conf['N']
+#            rownum=rownum+1
 
         #generate ROC dataframe for image, preferably from existing library.
         #TPR = TP/(TP + FN); FPR = FP/(FP + TN)
