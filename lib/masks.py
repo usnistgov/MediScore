@@ -232,6 +232,22 @@ class mask(object):
 
         return colors
 
+    def save_color_ns(self,colorPNGname,bns,sns,pns=0):
+        """
+        * Description: generate and save color no score PNG representation
+        """
+        rbinmat = np.copy(self.bwmat)
+        rbinmat = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
+        rbinmat[bns==0] = colordict['yellow']
+        rbinmat[sns==0] = colordict['pink']
+        if pns is not 0:
+            rbinmat[pns==0] = colordict['purple']
+        
+        params=list()
+        params.append(16)
+        params.append(0)
+        cv2.imwrite(colorPNGname,rbinmat,params)
+        return rbinmat
 
     def overlay(self,imgName,alpha=0.7):
         """

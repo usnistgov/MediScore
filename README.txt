@@ -372,7 +372,8 @@ HISTORY
       - Extended precision control to TRR and standard deviations for the average metrics.
          - Updated test cases accordingly for bitmask tests, specifically for precision control for AUC and EER.
       - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.
-      - Streamlined localization scorer for efficient pandas usage. 
+      - Streamlined localization scorer for efficient pandas usage.
+         - Simplified saving the reference png. 
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.

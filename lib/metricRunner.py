@@ -404,37 +404,22 @@ class maskMetricRunner:
 
             myprintbuffer.append("Generating reference mask with no-score zones...")
             #do a 3-channel combine with bns and sns for their colors before saving
-            #TODO: store this as a separate function, save_color_ns(rImg,sImg,bns,sns,noScorePixel)
-            rImgbin = rImg.get_copy()
-            rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
-            rbinmat = np.copy(rImgbin.bwmat)
-            rImgbin.matrix = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
-            rImgbin.matrix[bns==0] = self.colordict['yellow']
-            rImgbin.matrix[sns==0] = self.colordict['pink']
-
             #noScorePixel here
+            myprintbuffer.append("Setting system optOut no-score zone...")
             pns=0
-            if noScorePixel >= 0:
-                myprintbuffer.append("Setting system optOut no-score zone...")
-                pns=sImg.pixelNoScore(noScorePixel)
-                if pns is 1:
-                    myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
-                    exit(1)
-                rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
-                wts = cv2.bitwise_and(wts,pns)
+            pppnspx = noScorePixel
             if self.perProbePixelNoScore:
                 pppnspx = maskRow[''.join([mymode,'OptOutPixelValue'])]
-                pns=sImg.pixelNoScore(pppnspx)
-                if pns is 1:
-                    myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
-                    exit(1)
-                rImgbin.matrix[pns==0] = self.colordict['purple'] #NOTE: temporary measure until different color is picked. Probably keep it?
-                wts = cv2.bitwise_and(wts,pns)
+            pns=sImg.pixelNoScore(pppnspx)
+            if pns is 1:
+                myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
+                exit(1)
+            wts = cv2.bitwise_and(wts,pns)
+            rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
+            rbinmat = rImg.save_color_ns(rbin_name,bns,sns,pns)
 
-            myprintbuffer.append("Saving binarized reference mask...")
-            rImgbin.save(rbin_name)
             #if wts allows for nothing to be scored, (i.e. no GT pos), print warning message, but score as usual
-            if np.sum(cv2.bitwise_and(wts,rImgbin.bwmat)) == 0:
+            if np.sum(cv2.bitwise_and(wts,rImg.bwmat)) == 0:
                 myprintbuffer.append("Warning: No region in the mask {} is score-able.".format(rImg.name))
 
             #if wts covers entire mask, skip it
