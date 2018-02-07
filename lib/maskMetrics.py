@@ -574,7 +574,6 @@ class maskMetrics:
         #sys.binarize(0)
         self.myprintbuffer = myprintbuffer
 #        thresMets = thresMets.apply(self.assign_mets,axis=1,reduce=False)
-        #TODO: try the vectorized implementation
         thresMets = self.confusion_mets_all_thresholds(ref,sys,w)
         thresMets['BNS'] = btotal
         thresMets['SNS'] = stotal

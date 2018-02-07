@@ -357,7 +357,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Feb 1, 2018 - MediScore Version *.*.*
+  Feb 7, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -373,7 +373,8 @@ HISTORY
          - Updated test cases accordingly for bitmask tests, specifically for precision control for AUC and EER.
       - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.
       - Streamlined localization scorer for efficient pandas usage.
-         - Simplified saving the reference png. 
+         - Simplified saving the reference png.
+      - Vectorized metrics computation. 
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.
