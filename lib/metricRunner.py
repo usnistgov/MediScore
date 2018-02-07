@@ -261,7 +261,6 @@ class maskMetricRunner:
 #                color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])#[['Color','Purpose']].drop_duplicates()
 #		color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,probeID,evalcol))
 		color_purpose = self.journalData.query("{}FileID=='{}'".format(mymode,probeID))
-                
 
 #            rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
             if not self.usejpeg2000:
@@ -274,15 +273,6 @@ class maskMetricRunner:
 #                myprintbuffer.append("Initializing reference mask {} with colors {}.".format(refMaskName,rImg.colors))
             myprintbuffer.append("Initializing reference mask {}.".format(refMaskName))
             rImg.binarize(254)
-
-            #check to see if the color in question is even present
-#            presence = 0
-#            rmat = rImg.matrix
-#            for c in rImg.colors:
-#                presence = presence + np.sum((rmat[:,:,0]==c[0]) & (rmat[:,:,1]==c[1]) & (rmat[:,:,2]==c[2]))
-#                if presence > 0:
-#                    break
-#            if presence == 0:
 
         if not rImg.regionIsPresent():
             myprintbuffer.append("The region you are looking for is not in reference mask {}. Scoring neglected.".format(refMaskFName))
@@ -312,7 +302,11 @@ class maskMetricRunner:
         if self.truncate:
             round_modes.append('t')
         
-        manipFileID = maskRow[''.join([mymode,'FileID'])]
+        probe_id_name = ''.join([mymode,'FileID'])
+        probe_width_name = ''.join([mymode,'Width'])
+        probe_height_name = ''.join([mymode,'Height'])
+
+        manipFileID = maskRow[probe_id_name]
         refMaskName = 0
         #how to read in the masks
         if not self.usejpeg2000:
@@ -341,11 +335,11 @@ class maskMetricRunner:
                 #save white matrix as mask in question. Dependent on index file dimensions?
                 if not self.usejpeg2000:
                     refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.png'))
-                    whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
+                    whitemask = 255*np.ones((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
                     cv2.imwrite(refMaskName,whitemask)
                 else:
                     refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.jp2'))
-                    whitemask = np.zeros((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
+                    whitemask = np.zeros((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
                     glymur.Jp2k(refMaskName,whitemask)
 #                continue
 
@@ -355,7 +349,7 @@ class maskMetricRunner:
 #                df.set_value(i,'Scored','N')
                 myprintbuffer.append("Empty system {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
-                whitemask = 255*np.ones((index_row[''.join([mymode,'Height'])],index_row[''.join([mymode,'Width'])]),dtype=np.uint8)
+                whitemask = 255*np.ones((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
                 cv2.imwrite(os.path.join(subOutRoot,'whitemask.png'),whitemask)
 #                continue
 
@@ -424,7 +418,7 @@ class maskMetricRunner:
 
             #if wts covers entire mask, skip it
             if np.sum(wts) == 0:
-                myprintbuffer.append("Warning: No-score region covers all of {} {}. Skipping the {}.".format(mymode,maskRow[''.join([mymode,'FileID'])],mymode))
+                myprintbuffer.append("Warning: No-score region covers all of {} {}. Skipping the {}.".format(mymode,manipFileID,mymode))
                 maskRow['Scored'] = 'Y'
                 maskRow['OptimumThreshold'] = np.nan
                 maskRow['AUC'] = np.nan
@@ -465,6 +459,7 @@ class maskMetricRunner:
             #and pass to HTML accordingly
             amets = 0
             myameas = 0
+            #TODO: might want to throw this into maskMetrics for efficient grouping
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
@@ -505,7 +500,7 @@ class maskMetricRunner:
     
                 #insert the ProbeFileID into the manager dict
                 self.thresholds.extend(thresMets['Threshold'].tolist())
-                self.thresscores[maskRow[''.join([mymode,'FileID'])]] = thresMets
+                self.thresscores[manipFileID] = thresMets
     
                 #lowercase rocvalues' keys
     #            rocvalues['tpr'] = rocvalues.pop('TPR')

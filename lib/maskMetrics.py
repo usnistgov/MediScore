@@ -98,7 +98,7 @@ class maskMetrics:
         conf = self.confusion_measures(ref,sys,w,systh)
 
         mcc = self.matthews(conf)
-        nmm = self.NimbleMaskMetric(conf,ref,w)
+        nmm = self.NimbleMaskMetric(conf)
         bwL1 = self.binaryWeightedL1(conf)
 
         #for nicer printout
@@ -200,7 +200,63 @@ class maskMetrics:
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def NimbleMaskMetric(self,conf,ref,w,c=-1):
+    def confusion_mets_apply_iter(self,thresrow):
+        t = thresrow['Threshold']
+        wtd_vals = self.wtd_vals
+        c_wtd_vals = self.c_wtd_vals
+        ref_const = self.ref_const
+
+        tp_idx = wtd_vals <= t
+        tn_idx = (wtd_vals > (t + ref_const*255))
+        fp_idx = (wtd_vals <= (t + ref_const*255)) & (wtd_vals >= ref_const*255)
+        fn_idx = (wtd_vals <= 255) & (wtd_vals > t)
+        
+        thresrow['TP'] = c_wtd_vals[tp_idx].sum()
+        thresrow['TN'] = c_wtd_vals[tn_idx].sum()
+        thresrow['FP'] = c_wtd_vals[fp_idx].sum()
+        thresrow['FN'] = c_wtd_vals[fn_idx].sum()
+
+        return thresrow
+
+    def confusion_mets_all_thresholds(self,ref,sys,w):
+        r = ref.bwmat
+        s = sys.matrix
+        ref_const = (1 << 8)
+        w_const = (1 << 16)
+
+        t_list = np.unique(s).tolist()
+        t_list = [-1] + t_list
+#        thresMet_fields = ['Reference Mask','System Output Mask','Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','N']
+        thresMets = pd.DataFrame({'Reference Mask':ref.name,
+                                  'System Output Mask':sys.name,
+                                  'Threshold':t_list,
+                                  'NMM':-1.,
+                                  'MCC':0.,
+                                  'BWL1':1.,
+                                  'TP':0,
+                                  'TN':0,
+                                  'FP':0,
+                                  'FN':0,
+                                  'N':0})
+
+        full_composite = s + r*ref_const + (1-w)*w_const
+        all_vals,c_all_vals = np.unique(full_composite,return_counts=True)
+        c_wtd_vals = c_all_vals[all_vals < w_const]
+        wtd_vals = all_vals[all_vals < w_const]
+        self.ref_const = ref_const
+        self.wtd_vals = wtd_vals
+        self.c_wtd_vals = c_wtd_vals
+        thresMets['N'] = c_wtd_vals.sum()
+        thresMets = thresMets.apply(self.confusion_mets_apply_iter,axis=1) 
+
+        #want to vectorize computation of the metrics here
+        thresMets['MCC'] = thresMets.apply(self.matthews,axis=1)
+        thresMets['NMM'] = thresMets.apply(self.NimbleMaskMetric,axis=1)
+        thresMets['BWL1'] = thresMets.apply(self.binaryWeightedL1,axis=1)
+
+        return thresMets
+
+    def NimbleMaskMetric(self,conf,c=-1):
         """
         * Metric: NMM
         * Description: this function calculates the system mask score
@@ -221,7 +277,7 @@ class maskMetrics:
         if Rgt == 0:
             return np.nan
         fp = conf['FP']
-        return max(c,(tp-fn-fp)/Rgt)
+        return max(c,float(tp-fn-fp)/Rgt)
 
     def matthews(self,conf):
         """
@@ -295,7 +351,7 @@ class maskMetrics:
         if n == 0:
             return np.nan
 
-        norm_wL1=(conf['FP'] + conf['FN'])/n
+        norm_wL1=float(conf['FP'] + conf['FN'])/n
         return norm_wL1
 
 #    def binaryWeightedL1(self,ref,sys,w,th):
@@ -423,10 +479,6 @@ class maskMetrics:
         *     thresMets: a dataframe of the computed threshold metrics
         *     tmax: the threshold yielding the maximum MCC 
         """
-        smat = sys.matrix
-        uniques=np.unique(smat.astype(float))
-#        if not (self.sys_threshold in uniques) and self.sys_threshold > -10:
-        uniques=np.sort(np.append(uniques,-1)) #NOTE: adding the threshold that makes everything white. The threshold that makes everything black is already there.
 
         #add bns/sns totals as well
         w = cv2.bitwise_and(bns,sns)
@@ -495,31 +547,43 @@ class maskMetrics:
 #                    thresMets.set_value(rownum,'N',thismet.conf['N'])
 #                    rownum=rownum+1
 #        else:
+
+#        if not (self.sys_threshold in uniques) and self.sys_threshold > -10:
+        smat = sys.matrix
+        uniques=np.unique(smat.astype(float))
+        uniques=np.sort(np.append(uniques,-1)) #NOTE: adding the threshold that makes everything white. The threshold that makes everything black is already there.
+
         #get actual thresholds.
-        thresholds=uniques.tolist()
-        thresMets = pd.DataFrame({'Reference Mask':ref.name,
-                                   'System Output Mask':sys.name,
-                                   'Threshold':thresholds,
-                                   'NMM':-1.,
-                                   'MCC':0.,
-                                   'BWL1':1.,
-                                   'TP':0,
-                                   'TN':0,
-                                   'FP':0,
-                                   'FN':0,
-                                   'BNS':btotal,
-                                   'SNS':stotal,
-                                   'PNS':ptotal,
-                                   'N':0})
+#        thresholds=uniques.tolist()
+#        thresMets = pd.DataFrame({'Reference Mask':ref.name,
+#                                   'System Output Mask':sys.name,
+#                                   'Threshold':thresholds,
+#                                   'NMM':-1.,
+#                                   'MCC':0.,
+#                                   'BWL1':1.,
+#                                   'TP':0,
+#                                   'TN':0,
+#                                   'FP':0,
+#                                   'FN':0,
+#                                   'BNS':btotal,
+#                                   'SNS':stotal,
+#                                   'PNS':ptotal,
+#                                   'N':0})
+
         #for all thresholds
-        rownum=0
         #sys.binarize(0)
         self.myprintbuffer = myprintbuffer
-        thresMets = thresMets.apply(self.assign_mets,axis=1,reduce=False)
+#        thresMets = thresMets.apply(self.assign_mets,axis=1,reduce=False)
+        #TODO: try the vectorized implementation
+        thresMets = self.confusion_mets_all_thresholds(ref,sys,w)
+        thresMets['BNS'] = btotal
+        thresMets['SNS'] = stotal
+        thresMets['PNS'] = ptotal
 
         if isinstance(thresMets,pd.Series):
             thresMets = thresMets.to_frame().transpose()
 
+#        rownum=0
 #        for th in thresholds:
 #            #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
 #            #thismet = maskMetrics(ref,sys,w,-1)
