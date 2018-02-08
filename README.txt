@@ -391,6 +391,10 @@ HISTORY
       - Initial release
     * Provenance Scorers:
       - Fixed rounding issues with new numpy version
+  Feb 8, 2018 - MediScore Version *.*.*
+    * DetectionScorer:
+      - Added EventRepurpose task and its test case
+      - Modified DetectionScoreReadMe files
 
 
 CONTACT
