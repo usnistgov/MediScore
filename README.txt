@@ -169,7 +169,7 @@ HISTORY
       - Score reporting and averaging bug fixed. Dummy scores were leaking through the csv and HTML.
   Mar 31, 2017 - MediScore Version 1.1.3:
     * Validator:
-      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the 
+      - Added checker to see if ImageMagick is installed and in working order. If it is not, it will terminate the
         validator before it can run over the files.
     * MaskScorer:
       - Absolute paths added. Path dependency for the mask scorer is no longer required.
@@ -374,7 +374,7 @@ HISTORY
       - Adjusted unit test png saving parameter to be compatible with OpenCV 3+, just in case.
       - Streamlined localization scorer for efficient pandas usage.
          - Simplified saving the reference png.
-      - Vectorized metrics computation. 
+      - Vectorized metrics computation.
     * Validator
       - Updated ReadMe for readability.
       - Added more thorough tests for ProbeStatus criteria.

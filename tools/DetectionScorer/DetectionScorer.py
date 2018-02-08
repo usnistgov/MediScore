@@ -140,7 +140,7 @@ if __name__ == '__main__':
         parser.add_argument('--plotSubtitle', default='',
                             help="Define the plot subtitle (default: %(default)s)", metavar='character')
 
-        parser.add_argument('--plotType', default='roc', choices=['roc', 'det'],
+        parser.add_argument('--plotType', default='', choices=['roc', 'det'],
                             help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
 
         parser.add_argument('--display', action='store_true',
@@ -410,27 +410,32 @@ if __name__ == '__main__':
         else:
             print("Report table:\n{}".format(table_df))
 
-        plot_opts = OrderedDict([
-            ('title', args.plotTitle),
-            ('subtitle', args.plotSubtitle),
-            ('plot_type', args.plotType.upper()),
-            ('title_fontsize', 13),  # 15
-            ('subtitle_fontsize', 11),
-            ('xticks_size', 'medium'),
-            ('yticks_size', 'medium'),
-            ('xlabel', "False Alarm Rate [%]"),
-            ('xlabel_fontsize', 11),
-            ('ylabel', "Miss Detection Rate [%]"),
-            ('ylabel_fontsize', 11)])
+        # Generating a default plot_options json config file
+        p_json_path = "./plotJsonFiles"
+        if not os.path.exists(p_json_path):
+            os.makedirs(p_json_path)
+        dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
 
-        #print("test plot  {}".format(plot_opts))
+        # Fixed: if plotType is indicated, then should be generated.
+        if args.plotType == '' and os.path.isfile(dict_plot_options_path_name):
+            # Loading of the plot_options json config file
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            args.plotType = plot_opts['plot_type']
+            plot_opts['title'] = args.plotTitle
+            plot_opts['subtitle'] = args.plotSubtitle
+            plot_opts['subtitle_fontsize'] = 11
+            #print("test plot title1 {}".format(plot_opts['title']))
+        else:
+            if args.plotType == '':
+                args.plotType = 'roc'
+            p.gen_default_plot_options(dict_plot_options_path_name, plot_title=args.plotTitle,
+                                       plot_subtitle=args.plotSubtitle, plot_type=args.plotType.upper())
+            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            #print("test plot title2 {}".format(plot_opts['title']))
 
-        if args.configPlot != '':
-            if not os.path.exists(args.configPlot):
-                print("ERROR: The specified JSON file for customizing plot does not exist")
-                exit(1)
-            else:
-                plot_opts = p.load_plot_options(args.configPlot)
+        # opening of the plot_options json config file from command-line
+        if args.configPlot:
+            p.open_plot_options(dict_plot_options_path_name)
 
         # Dumping DetMetrics objects
         if args.dump:
