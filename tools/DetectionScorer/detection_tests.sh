@@ -174,6 +174,16 @@ test_c2_9() {
                -qm "Operation==['PasteSplice']" --optOut
 }
 
+test_c2_10() {
+    echo "  * Testing system output test case for EventRepurpose *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "MFC2018-eventrepurpose-index.csv" \
+        				       -r "MFC2018-eventrepurpose-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_MFC2018_EventRepurpose_ImgOnly_p-me_1/D_MFC2018_EventRepurpose_ImgOnly_p-me_1.csv"
+}
 
 test_c3_1() {
     echo "  * Testing with the manipulation case with full index *  "
@@ -253,6 +263,7 @@ test_c4_3() {
 				       -s "D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv" \
                -qm "Operation==['FillContentAwareFill']"
 }
+
 
 
 test_c5_1() {

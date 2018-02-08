@@ -162,6 +162,8 @@ class Partition:
                 new_df = sub_df.drop_duplicates('ProbeFileID')
             elif self.task == 'splice':
                 new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
+            elif self.task == 'eventrepurpose':
+                new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'EventName'])
 
             #print("new_df data size {}".format(new_df.shape))
             df_list.append(new_df)

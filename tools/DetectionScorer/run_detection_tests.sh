@@ -17,6 +17,7 @@ run_test test_c2_2 "$testsuite_directory/checkfiles/test_c2_2"
 run_test test_c2_3 "$testsuite_directory/checkfiles/test_c2_3"
 run_test test_c2_4 "$testsuite_directory/checkfiles/test_c2_4"
 run_test test_c2_5 "$testsuite_directory/checkfiles/test_c2_5"
+run_test test_c2_10 "$testsuite_directory/checkfiles/test_c2_10"
 
 echo
 echo "CASE 2.2: VALIDATING SYSTEM OUTPUT TESTCASEs with the OptOut option"
@@ -42,6 +43,7 @@ echo
 run_test test_c4_1 "$testsuite_directory/checkfiles/test_c4_1"
 run_test test_c4_2 "$testsuite_directory/checkfiles/test_c4_2"
 run_test test_c4_3 "$testsuite_directory/checkfiles/test_c4_3"
+
 
 
 echo

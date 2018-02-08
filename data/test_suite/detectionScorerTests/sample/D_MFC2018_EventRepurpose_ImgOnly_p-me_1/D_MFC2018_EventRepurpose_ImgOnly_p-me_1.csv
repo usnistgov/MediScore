@@ -1,0 +1,8 @@
+ProbeFileID|EventName|ConfidenceScore|ProbeStatus
+F18|boston_marthon|0.034|Processed
+F166|occupy_melbourne|0.021|Processed
+F165|boston_marthon|0.021|Processed
+F86|occupy_melbourne|0.016|Processed
+F87|boston_marthon|0.016|NonProcessed
+F88|occupy_melbourne|0.016|Processed
+F172|boston_marthon|0.015|Processed
