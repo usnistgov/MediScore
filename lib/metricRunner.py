@@ -51,8 +51,14 @@ debug_mode = True
 
 print_lock = multiprocessing.Lock() #for printout to std_out
 
-def scoreMask(args):
-    return maskMetricRunner.scoreMoreMasks(*args)
+def scoreMaskPerProc(args):
+    return maskMetricRunner.runScoreMask(*args)
+
+def scoreAvgROCPerProc(args):
+    return maskMetricRunner.runROCvals(*args)
+
+def scoreMaxMetricPerProc(args):
+    return maskMetricRunner.runGetThresholdMets(*args)
 
 #for use with detection metrics plotter
 class detPackage:
@@ -298,7 +304,7 @@ class maskMetricRunner:
         noScorePixel = self.noScorePixel
         kern = self.kern
         truncate = self.truncate
-        round_modes = ['sd'] #TODO: debug
+        round_modes = ['sd'] #NOTE: debugging assistant
         if self.truncate:
             round_modes.append('t')
         
@@ -426,158 +432,58 @@ class maskMetricRunner:
                 myprintbuffer.atomprint(print_lock)
 
             #computes differently depending on choice to binarize system output mask
-            mets = 0
-            mymeas = 0
-            threshold = 0
             myprintbuffer.append("Generating metrics...")
             metricRunner = maskMetrics(rImg,sImg,wts,self.sbin)
             #not something that needs to be calculated for every iteration of threshold; only needs to be calculated once
             myprintbuffer.append("Metrics generated. Getting metrics...")
 
-            thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
-            #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
-            maskRow['OptimumThreshold'] = threshold
+            all_metrics,thresMets = metricRunner.get_all_metrics(rImg,sImg,self.sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision,round_modes,myprintbuffer)
+            met_names = all_metrics.keys()
+
+            if 'ActualMCC' in met_names:
+                try:
+                    if np.isnan(all_metrics['ActualMCC']):
+                        for n in ['ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']:
+                            met_names.remove(n)
+                except:
+                    pass
+
+            for m in met_names:
+                maskRow[m] = all_metrics[m]
 
             genROC = True
-            nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
+            threshold = all_metrics['OptimumThreshold']
+
+            #if no rows have values, don't generate the ROC
             nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
-            nullRocRows = thresMets.query(nullRocQuery)
             nonNullRocRows = thresMets.query(nonNullRocQuery)
-
-            #compute TPR and FPR here for rows that have it.
-            if nullRocRows.shape[0] < thresMets.shape[0]:
-#                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
-#                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
-                thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
-                thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
-
-            #if no rows have it, don't gen the ROC.
-            if nullRocRows.shape[0] == 0:
+            if nonNullRocRows.shape[0] == 0:
                 genROC = False
 
-            #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
-            #and pass to HTML accordingly
-            amets = 0
-            myameas = 0
-            #TODO: might want to throw this into maskMetrics for efficient grouping
+            #save the binarized system and plot the ROC curve. 
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
                 sImg.save(optbin_name)
-                metrics = thresMets.iloc[0]
-                mets = metrics[['NMM','MCC','BWL1']].to_dict()
-                mets['GWL1'] = np.nan
-                maskRow['GWL1'] = np.nan
-                mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
-                amets = {}
-                myameas = {}
-
-                for mes in ['BNS','SNS','PNS','N']:
-                    myprintbuffer.append("Setting value for {}...".format(mes))
-                    maskRow[''.join(['Pixel',mes])] = mymeas[mes]
-
-                for met in ['NMM','MCC','BWL1','GWL1']:
-                    myprintbuffer.append("Setting value for {}...".format(met))
-                    maskRow[''.join(['Optimum',met])] = mets[met]
-                    if met != 'GWL1':
-                        mets[''.join(['Actual',met])] = mets[met]
-    
-                for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
-                    myprintbuffer.append("Setting value for {}...".format(mes))
-                    maskRow[''.join(['OptimumPixel',mes])] = mymeas[mes]
-                    myameas[mes] = mymeas[mes]
-                myameas['N'] = mymeas['N']
-    
             else:
-                sImg.binarize(threshold) 
+                sImg.binarize(threshold)
                 optbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
                 sImg.save(optbin_name,th=threshold)
-    
-                metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
-                mets = metrics[['NMM','MCC','BWL1']].to_dict()
-                mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
-                rocvalues = thresMets[['TPR','FPR']]
-    
-                #insert the ProbeFileID into the manager dict
+
                 self.thresholds.extend(thresMets['Threshold'].tolist())
                 self.thresscores[manipFileID] = thresMets
-    
-                #lowercase rocvalues' keys
-    #            rocvalues['tpr'] = rocvalues.pop('TPR')
-    #            rocvalues['fpr'] = rocvalues.pop('FPR')
-    
-                #append 0 and 1 to beginning and end of tpr and fpr respectively
-                
-                rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
-                #reindex rocvalues
-                rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
-    
-                #generate a plot and get detection metrics
-                fpr = rocvalues['FPR']
-                tpr = rocvalues['TPR']
-    
-                myauc = dmets.compute_auc(fpr,tpr)
-                myeer = dmets.compute_eer(fpr,1-tpr)
-    
-                maskRow['AUC'] = myauc
-                maskRow['EER'] = myeer
-        
                 if genROC:
+                    tpr = thresMets['TPR']
+                    fpr = thresMets['FPR']
+                    myauc = all_metrics['AUC']
                     mydets = detPackage(tpr,
                                         fpr,
                                         1,
                                         0,
                                         myauc,
-                                        mymeas['TP'] + mymeas['FN'],
-                                        mymeas['FP'] + mymeas['TN'])
-                
-                    myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
-    #            if len(thresMets) == 1:
-    #                thresMets='' #to minimize redundancy
-    
-                for mes in ['BNS','SNS','PNS','N']:
-                    myprintbuffer.append("Setting value for {}...".format(mes))
-                    maskRow[''.join(['Pixel',mes])] = mymeas[mes]
-    
-                if self.sbin >= -1:
-                    #just get scores in one run if threshold is chosen
-                    sImg.binarize(self.sbin)
-                    amets = metricRunner.getMetrics(rImg,sImg,wts,self.sbin,myprintbuffer)
-                    myameas = amets
-    #                totalpx = idxW*idxH
-    #                weighted_weights = 3 - bns - 2*sns
-    #                mymeas['BNS'] = np.sum(weighted_weights == 1)
-    #                mymeas['SNS'] = np.sum(weighted_weights >= 2)
-    #                if pns is not 0:
-    #                    weighted_weights = weighted_weights + 4*(1-pns)
-    #                    mymeas['PNS'] = np.sum(weighted_weights >= 4)
-    #                else:
-    #                    mymeas['PNS'] = 0
-                    maskRow['ActualThreshold'] = self.sbin
-    #                thresMets = ''
-    #            elif self.sbin == -1:
-    
-    #            if self.sbin == -1:
-    #                myprintbuffer.append("Saving binarized system mask...")
-    #                sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-    #                sImg.save(sbin_name,th=threshold)
-     
-                mets['GWL1'] = maskMetrics.grayscaleWeightedL1(rImg,sImg,wts)
-                maskRow['GWL1'] = myround(mets['GWL1'],precision,round_modes)
-                for met in ['NMM','MCC','BWL1']:
-                    myprintbuffer.append("Setting value for {}...".format(met))
-#                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) #TODO: debug
-                    maskRow[''.join(['Optimum',met])] = myround(mets[met],precision,round_modes)
-                    if self.sbin >= -1:
-                        #record Actual metrics
-                        maskRow[''.join(['Actual',met])] = myround(amets[met],precision,round_modes)
-                        mets[''.join(['Actual',met])] = myround(amets[met],precision,round_modes)
-    
-                for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
-                    myprintbuffer.append("Setting value for {}...".format(mes))
-                    maskRow[''.join(['OptimumPixel',mes])] = mymeas[mes]
-                    if self.sbin >= -1:
-                        maskRow[''.join(['ActualPixel',mes])] = myameas[mes]
+                                        all_metrics['OptimumPixelTP'] + all_metrics['OptimumPixelFN'],
+                                        all_metrics['OptimumPixelFP'] + all_metrics['OptimumPixelTN'])
+                    myroc = plotROC(mydets,'roc',' '.join(['ROC of',manipFileID]),subOutRoot)
 
             myprintbuffer.append("Metrics computed.")
 
@@ -600,17 +506,23 @@ class maskMetricRunner:
                     sbinmaskname = sbin_name
                     smask_threshold = self.sbin
 
-                for met in ['TP','TN','FP','FN']:
-                    mymeas[''.join(['OptimumPixel',met])] = mymeas.pop(met)
-                    if self.sbin >= -1:
-                        mymeas[''.join(['ActualPixel',met])] = myameas[met]
-                mymeas['PixelBNS'] = mymeas.pop('BNS')
-                mymeas['PixelSNS'] = mymeas.pop('SNS')
-                mymeas['PixelPNS'] = mymeas.pop('PNS')
+#                for met in ['TP','TN','FP','FN']:
+#                    all_metrics[''.join(['OptimumPixel',met])] = all_metrics.pop(met)
+#                    if self.sbin >= -1:
+#                        all_metrics[''.join(['ActualPixel',met])] = myameas[met]
+#                all_metrics['PixelBNS'] = all_metrics.pop('BNS')
+#                all_metrics['PixelSNS'] = all_metrics.pop('SNS')
+#                all_metrics['PixelPNS'] = all_metrics.pop('PNS')
     
                 myprintbuffer.append("Generating HTML report...")
-                #TODO: trim the arguments here? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
-                self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg,sImg,rbin_name,sbinmaskname,smask_threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,myprintbuffer)
+                opt_metrics = {}
+                for m in ['NMM','MCC','BWL1']:
+                    opt_metrics[m] = all_metrics[''.join(['Optimum',m])]
+                    if self.sbin >= -1:
+                        actual_met = ''.join(['Actual',m])
+                        opt_metrics[actual_met] = all_metrics[actual_met]
+                opt_metrics['GWL1'] = all_metrics['GWL1']
+                self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg,sImg,rbin_name,sbinmaskname,smask_threshold,thresMets,bns,sns,pns,opt_metrics,all_metrics,colMaskName,aggImgName,myprintbuffer)
             myprintbuffer.atomprint(print_lock)
             return maskRow
         except:
@@ -618,46 +530,317 @@ class maskMetricRunner:
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
             if debug_mode == True:
-                raise  #TODO: debug assistant
+                raise  #NOTE: debug assistant
             return maskRow
 #            myprintbuffer.atomprint(print_lock)
 
-    def scoreMoreMasks(self,maskData):
-        return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
-
-    def scoreMasks(self,maskData,processors):
+    def parallelize(self,df,applyfunc,parfunc,processors,top_procs=0,top_procs_apply=2,verbose=False):
+        """
+        * Description: return the parellelization of the function in question
+        * Inputs:
+        *    df: the pandas dataframe to be passed in
+        *    applyfunc: the function to apply to the dataframe in the event that apply is used
+        *    parfunc: the (wrapper) function to apply to the dataframe if parallelization is to be implemented
+        *    processors: the number of processors to use for the parallelization scheme
+        *    top_procs: the maximum number of processors to use in the event of parallelization. Select 0 to let this number be unbounded. Note that top_procs must be less than processors. (default: 0)
+        *    top_procs_apply: the strict upper bound of processors necessary to apply applyfunc over everything. (default: 2)
+        """
+        nrow = df.shape[0]
         maxprocs = max(multiprocessing.cpu_count() - 2,1)
         #if more, print warning message and use max processors
-        nrow = maskData.shape[0]
         if (processors > nrow) and (nrow > 0):
-            print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
+            if verbose:
+                print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
             processors = nrow
         if processors > maxprocs:
-            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(max(maxprocs,1)))
-            processors = max(maxprocs,1)
-
-        if processors == 1:
-            #case for one processor for efficient debugging and to eliminate overhead when running
-            maskData = maskData.apply(self.scoreOneMask,axis=1,reduce=False)
+            if verbose:
+                print("Warning: the machine does not have {} processors available. Defaulting to max ({}).".format(processors,maxprocs))
+            processors = maxprocs
+    
+        if processors < top_procs_apply:
+            df = applyfunc(df)
         else:
-            #split maskData into array of dataframes based on number of processors (and rows in the file)
-            chunksize = nrow//processors
-            maskDataS = [[self,maskData[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
+            procs_to_use = processors
+            if (top_procs > 0) and (procs_to_use > top_procs):
+                procs_to_use = top_procs
+            chunksize = nrow//procs_to_use
+            df_S = [[self,df[i:(i+chunksize)]] for i in range(0,nrow,chunksize)]
     
-            p = multiprocessing.Pool(processes=processors)
-            maskDataS = p.map(scoreMask,maskDataS)
+            p = multiprocessing.Pool(processes=procs_to_use)
+            df_S = p.map(parfunc,df_S)
             p.close()
+            df = pd.concat(df_S)
     
-            #re-merge in the order found and return
-            maskData = pd.concat(maskDataS)
+        if isinstance(df,pd.Series):
+            df = df.to_frame().transpose()
+    
+        return df
+    
+    def runScoreMask(self,maskData):
+        """
+        * Description: wrapper function to be called by external caller for parallelization
+        """
+        return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
 
-        if isinstance(maskData,pd.Series):
-            maskData = maskData.to_frame().transpose()
+    def runGetThresholdMets(self,maxmet_threshold):
+        return maxmet_threshold.apply(self.metsAtThreshold,axis=1,reduce=False)
+
+    def runROCvals(self,rocdf):
+        return rocdf.apply(self.getAvgROC,axis=1,reduce=False)
+
+    def scoreMasks(self,maskData,processors):
+        maskData = self.parallelize(maskData,self.runScoreMask,scoreMaskPerProc,processors,verbose=self.verbose)
 
         if maskData.query("OptimumMCC==-2").shape[0] > 0:
             self.journalData.loc[self.journalData.query("{}FileID=={}".format(self.mymode,maskData.query("OptimumMCC==-2")[''.join([self.mymode,'FileID'])].tolist())).index,self.evalcol] = 'N'
 
         return maskData
+
+    def metsAtThreshold(self,proberow):
+        probeID = proberow[''.join([self.mymode,'FileID'])]
+        t = proberow['Threshold']
+        probedf = self.thresscores[probeID]
+        mets = 0
+        metlist = ['TP','TN','FP','FN','NMM','MCC','BWL1']
+        if t in probedf['Threshold'].tolist():
+            # if threshold is in the dataframe list of thresholds, get the corresponding metrics.
+            mets = probedf.query("Threshold=={}".format(t)).iloc[0]
+            proberow[metlist] = mets[metlist]
+        else:
+            # attempt to get the metric from the threshold right below it
+            t_list = [s for s in probedf['Threshold'].tolist() if s <= t]
+            if len(t_list) == 0:
+                # if nothing is right below it, treat everything as black and recompute NMM and BWL1.
+                mets = probedf.iloc[0]
+                proberow['TP'] = mets['TP'] + mets['FN']
+                proberow['FP'] = mets['FP'] + mets['TN']
+                if mets['N'] > 0:
+                    proberow['NMM'] = max([(mets['TP'] + mets['FN'] - mets['FP'] - mets['TN'])/mets['N'],-1])
+                    proberow['BWL1'] = (mets['FP'] + mets['TN'])/mets['N']
+                else:
+                    proberow['NMM'] = np.nan
+                    proberow['BWL1'] = np.nan
+            else:
+                myt = max(t_list)
+                mets = probedf.query("Threshold=={}".format(myt)).iloc[0]
+                proberow[metlist] = mets[metlist]
+        if (mets['TP'] + mets['FN']) > 0:
+#            proberow['TPR'] = float(mets['TP'])/(mets['TP'] + mets['FN'])
+            proberow['TPR'] = mets['TPR']
+        else:
+            proberow['TPR'] = np.nan
+        if (mets['FP'] + mets['TN']) > 0:
+#            proberow['FPR'] = float(mets['FP'])/(mets['FP'] + mets['TN'])
+            proberow['FPR'] = mets['FPR']
+        else:
+            proberow['FPR'] = np.nan
+        return proberow
+        
+    def getAvgROC(self,rocrow):
+        pixel_tpr = 0
+        pixel_fpr = 0
+        probe_tpr = 0
+        probe_fpr = 0
+
+        t = rocrow.name
+        mymode = self.mymode
+        maxmet_threshold = pd.DataFrame({''.join([mymode,'FileID']):self.probelist,
+                                'Threshold':t,
+                                'NMM':-1.,
+                                'MCC':0.,
+                                'BWL1':1.,
+                                'TP':0,
+                                'TN':0,
+                                'FP':0,
+                                'FN':0,
+                                'TPR':0.,
+                                'FPR':0.})
+
+        n_sub_procs = self.n_sub_procs
+        maxmet_threshold = self.parallelize(maxmet_threshold,self.runGetThresholdMets,scoreMaxMetricPerProc,n_sub_procs)
+
+        # probe- and pixel-weighted ROC curves
+        metsum = maxmet_threshold[['TP','TN','FP','FN','TPR','FPR']].sum(axis=0)
+        if (metsum['TP'] + metsum['FN']) > 0:
+            rocrow['PixelTPR'] = float(metsum['TP'])/(metsum['TP'] + metsum['FN'])
+        else:
+            rocrow['PixelTPR'] = np.nan
+        if (metsum['FP'] + metsum['TN']) > 0:
+            rocrow['PixelFPR'] = float(metsum['FP'])/(metsum['FP'] + metsum['TN'])
+        else:
+            rocrow['PixelFPR'] = np.nan
+
+        if ~np.isnan(metsum['TPR']):
+            rocrow['ProbeTPR'] = metsum['TPR']/maxmet_threshold.shape[0]
+        else:
+            rocrow['ProbeTPR'] = np.nan
+        if ~np.isnan(metsum['FPR']):
+            rocrow['ProbeFPR'] = metsum['FPR']/maxmet_threshold.shape[0]
+        else:
+            rocrow['ProbeFPR'] = np.nan
+        
+        #compute biggest average MCC fixing threshold
+        self.maxmets[t] = maxmet_threshold
+        #store in rocrow. Max later.
+        rocrow['avgMCC'] = maxmet_threshold['MCC'].mean()
+        return rocrow
+
+    def preprocess_threshold_metrics(self):
+        probe_thres_mets = self.thresscores
+        probe_thres_mets_new = {}
+        all_thresholds = np.array(self.thresholds)
+#        ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']
+        for p in self.probelist:
+            thres_mets_df = probe_thres_mets[p]
+            partial_thresholds = thres_mets_df['Threshold'].as_matrix()
+            sample_row = thres_mets_df.iloc[0]
+            filled_index = np.digitize(all_thresholds,partial_thresholds,right=False) - 1
+            black_rows = filled_index == -1
+            black_thresholds = all_thresholds[black_rows]
+
+            gt_pos = sample_row['TP'] + sample_row['FN']
+            gt_neg = sample_row['FP'] + sample_row['TN']
+
+            thres_mets_new_df = thres_mets_df.iloc[filled_index]
+            thres_mets_new_df.at[all_thresholds[black_rows],'TP'] = gt_pos
+            thres_mets_new_df.at[all_thresholds[black_rows],'FP'] = gt_neg
+            thres_mets_new_df.at[all_thresholds[black_rows],['TN','FN']] = 0
+            if sample_row['N'] == 0:
+                thres_mets_new_df.at[:,['NMM','BWL1']] = np.nan
+            else:
+                thres_mets_new_df.at[all_thresholds[black_rows],'NMM'] = max([float(gt_pos - gt_neg)/sample_row['N'],-1])
+                thres_mets_new_df.at[all_thresholds[black_rows],'MCC'] = 0
+                thres_mets_new_df.at[all_thresholds[black_rows],'BWL1'] = float(gt_neg)/sample_row['N']
+            
+            if gt_pos == 0:
+                thres_mets_new_df['TPR'] = np.nan
+            if gt_neg == 0:
+                thres_mets_new_df['FPR'] = np.nan
+
+            #reassign the thresholds and index to all_thresholds
+            thres_mets_new_df.index = all_thresholds
+            probe_thres_mets_new[p] = thres_mets_new_df
+
+        return probe_thres_mets_new
+
+    def compute_pixel_probe_ROC(self,roc_values):
+        aucs = {}
+        for pfx in ['Pixel','Probe']:
+            tpr_name = ''.join([pfx,'TPR'])
+            fpr_name = ''.join([pfx,'FPR'])
+            roc_pfx = pfx
+            if pfx == 'Probe':
+                roc_pfx = 'Mask'
+            if (roc_values[tpr_name].count() > 0) and (roc_values[fpr_name].count() > 0):
+                p_roc_values = roc_values[[fpr_name,tpr_name]]
+                p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=[fpr_name,tpr_name]),ignore_index=True)
+                p_roc = p_roc_values.sort_values(by=[fpr_name,tpr_name],ascending=[True,True]).reset_index(drop=True)
+                fpr = p_roc[fpr_name]
+                tpr = p_roc[tpr_name]
+                myauc = dmets.compute_auc(fpr,tpr)
+                aucs[''.join([roc_pfx,'AverageAUC'])] = myauc #store in scoredf to tack onto average dataframe later
+        
+                #compute confusion measures by using the totals across all probes
+#                confsum = scoredf[['OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN']].sum(axis=0)
+                confsum = roc_values[['TP','TN','FP','FN']].iloc[0]
+                mydets = detPackage(tpr,
+                                    fpr,
+                                    1,
+                                    0,
+                                    myauc,
+                                    confsum['TP'] + confsum['FN'],
+                                    confsum['FP'] + confsum['TN'])
+#                                    confsum['OptimumPixelTP'] + confsum['OptimumPixelFN'],
+#                                    confsum['OptimumPixelFP'] + confsum['OptimumPixelTN'])
+            
+                if self.task == 'manipulation':
+                    plot_name = '_'.join([roc_pfx.lower(),'average_roc'])
+                    plot_title = ' '.join([roc_pfx,'Average ROC'])
+                elif self.task == 'splice':
+                    if self.mode == 1:
+                        plot_name = '_'.join([roc_pfx.lower(),'average_roc_probe'])
+                        plot_title = ' '.join(['Probe',roc_pfx,'Average ROC'])
+                    if self.mode == 2:
+                        plot_name = '_'.join([roc_pfx.lower(),'average_roc_donor'])
+                        plot_title = ' '.join(['Donor',roc_pfx,'Average ROC'])
+                myroc = plotROC(mydets,plot_name,plot_title,self.outputRoot)
+        return aucs
+        
+
+    def scoreMaxMetrics(self,scoredf,processors):
+        """
+        * Description: the top-level function that scores the maximum metrics.
+        """
+        max_cols = ['MaximumNMM','MaximumMCC','MaximumBWL1','MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN','MaximumThreshold']
+        probe_id_field = ''.join([self.mymode,'FileID'])
+        #if there's nothing to score in scoredf, return it
+        if scoredf.query("OptimumMCC > -2").count()['OptimumMCC'] == 0:
+            auc_cols = ['PixelAverageAUC','MaskAverageAUC']
+            all_cols = max_cols + auc_cols
+            for col in all_cols:
+                scoredf[col] = np.nan
+            return scoredf
+
+        maxThreshold = -1
+
+        roc_values = pd.DataFrame({'PixelTPR':0.,
+                                   'PixelFPR':0.,
+                                   'ProbeTPR':0.,
+                                   'ProbeFPR':0.,
+                                   'avgMCC':0.},index=self.thresholds)
+
+        scoredf['PixelAverageAUC'] = np.nan
+        scoredf['MaskAverageAUC'] = np.nan
+
+#        top_procs_apply=6
+#        top_procs = 0
+#        self.n_sub_procs = processors
+#        if processors > top_procs_apply:
+#            top_procs = 1
+#            self.n_sub_procs = processors//top_procs
+   
+        self.probelist = self.thresscores.keys()
+        
+        #preprocess and then proceed to compute 
+        probe_thres_mets_preprocess = self.preprocess_threshold_metrics()
+        probe_thres_mets_agg = pd.concat(probe_thres_mets_preprocess.values(),keys=probe_thres_mets_preprocess.keys(),names=[probe_id_field,'Threshold'])
+        thres_mets_sum = probe_thres_mets_agg.sum(level=[1])
+        thres_mets_sum['PixelTPR'] = thres_mets_sum['TP']/(thres_mets_sum['TP'] + thres_mets_sum['FN'])
+        thres_mets_sum['PixelFPR'] = thres_mets_sum['FP']/(thres_mets_sum['FP'] + thres_mets_sum['TN'])
+        thres_mets_sum[['ProbeTPR','ProbeFPR']] = probe_thres_mets_agg[['TPR','FPR']].mean(level=[1])
+        maxThreshold = thres_mets_sum['MCC'].idxmax()
+
+        #NOTE: prepare to parallelize if need be, but parallelizing across probes is more important.
+#        roc_values = self.parallelize(roc_values,self.runROCvals,scoreAvgROCPerProc,1,top_procs=top_procs,top_procs_apply=top_procs_apply)
+#        maxThreshold = roc_values['avgMCC'].idxmax()
+
+        aucs = self.compute_pixel_probe_ROC(thres_mets_sum)
+        for pfx in ['Pixel','Mask']:
+            auc_name = ''.join([pfx,'AverageAUC'])
+            scoredf[auc_name] = aucs[auc_name]
+
+        #join roc_values to scoredf
+        if (self.sbin >= -1) and (maxThreshold > -1):
+            #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
+            scoredf['MaximumThreshold'] = maxThreshold
+            #TODO: access the probe_thres_mets_agg for the threshold
+            maxMCCdf = probe_thres_mets_agg.xs(maxThreshold,level=1)
+            maxMCCdf[probe_id_field] = maxMCCdf.index
+            maxMCCdf.drop_duplicates(inplace=True)
+#            maxMCCdf = self.maxmets[maxThreshold]
+            maxMCCdf.rename(columns={'NMM':'MaximumNMM',
+                                     'MCC':'MaximumMCC',
+                                     'BWL1':'MaximumBWL1',
+                                     'TP':'MaximumPixelTP',
+                                     'TN':'MaximumPixelTN',
+                                     'FP':'MaximumPixelFP',
+                                     'FN':'MaximumPixelFN'},inplace=True)
+            scoredf = scoredf.merge(maxMCCdf[[probe_id_field,'MaximumNMM','MaximumMCC','MaximumBWL1','MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN']],on=[probe_id_field],how='left')
+        else:
+            for col in max_cols:
+                scoredf[col] = np.nan
+
+        return scoredf
 
     def getMetricList(self,
                       outputRoot,
@@ -790,13 +973,10 @@ class maskMetricRunner:
         manager = multiprocessing.Manager()
         self.thresscores = manager.dict()
         self.thresholds = manager.list()
+        self.maxmets = manager.dict()
 
         #************ Scoring begins here ************
         df = self.scoreMasks(df,processors)
-#        for i,row in self.maskData.iterrows():
-#            if verbose: print("Scoring {} mask {} out of {}...".format(mymode.lower(),i+1,nrow))
-#            scoreMask(row)
-
         #print all error output at very end and exit (1) if failed at any iteration of loop
         if len(self.errlist) > 1:
             exit(1)
@@ -804,216 +984,7 @@ class maskMetricRunner:
 
         templist = self.thresholds
         self.thresholds = list(set(templist))
-        probelist = self.thresscores.keys()
-
-        #TODO: drop into separate functio. Pandas apply, if possible.n
-        #compute maximum metrics here
-        maxmets = {}
-        maxavgMCC = -1
-        maxThreshold = -1
-
-        roc_values = pd.DataFrame({'PixelTPR':0.,
-                                   'PixelFPR':0.,
-                                   'ProbeTPR':0.,
-                                   'ProbeFPR':0.},index=self.thresholds)
-
-        #************ Scoring ends here ************
-        for t in self.thresholds:
-            pixel_tpr = 0
-            pixel_fpr = 0
-            probe_tpr = 0
-            probe_fpr = 0
-
-            maxmet_threshold = pd.DataFrame({''.join([mymode,'FileID']):probelist,
-                                    'Threshold':t,
-                                    'NMM':-1.,
-                                    'MCC':0.,
-                                    'BWL1':1.,
-                                    'TP':0,
-                                    'TN':0,
-                                    'FP':0,
-                                    'FN':0,
-                                    'TPR':0.,
-                                    'FPR':0.})
-            for pix,probeID in enumerate(probelist):
-                probedf = self.thresscores[probeID]
-                mets = 0
-                if t in probedf['Threshold'].tolist():
-                    # if threshold is in the dataframe list of thresholds, get the corresponding metrics.
-                    mets = probedf.query("Threshold=={}".format(t)).iloc[0]
-                    for met in ['TP','TN','FP','FN','NMM','MCC','BWL1']:
-                        maxmet_threshold.at[pix,met] = mets[met]
-                else:
-                    # attempt to get the metric from the threshold right below it
-                    t_list = [s for s in probedf['Threshold'].tolist() if s <= t]
-                    if len(t_list) == 0:
-                        # if nothing is right below it, treat everything as black and recompute NMM and BWL1.
-                        mets = probedf.iloc[0]
-                        maxmet_threshold.at[pix,'TP'] = mets['TP'] + mets['FN']
-                        maxmet_threshold.at[pix,'FP'] = mets['FP'] + mets['TN']
-                        if mets['N'] > 0:
-                            maxmet_threshold.at[pix,'NMM'] = max([(mets['TP'] + mets['FN'] - mets['FP'] - mets['TN'])/mets['N'],-1])
-                            maxmet_threshold.at[pix,'BWL1'] = (mets['FP'] + mets['TN'])/mets['N']
-                        else:
-                            maxmet_threshold.at[pix,'NMM'] = np.nan
-                            maxmet_threshold.at[pix,'BWL1'] = np.nan
-                    else:
-                        myt = max(t_list)
-                        mets = probedf.query("Threshold=={}".format(myt)).iloc[0]
-                        for met in ['TP','TN','FP','FN','NMM','MCC','BWL1']:
-                            maxmet_threshold.at[pix,met] = mets[met]
-                if (mets['TP'] + mets['FN']) > 0:
-                    maxmet_threshold.at[pix,'TPR'] = float(mets['TP'])/(mets['TP'] + mets['FN'])
-                else:
-                    maxmet_threshold.at[pix,'TPR'] = np.nan
-                if (mets['FP'] + mets['TN']) > 0:
-                    maxmet_threshold.at[pix,'FPR'] = float(mets['FP'])/(mets['FP'] + mets['TN'])
-                else:
-                    maxmet_threshold.at[pix,'FPR'] = np.nan
-
-            # probe- and pixel-weighted ROC curves
-            #TODO: double check that the formula is implemented correctly.
-            metsum = maxmet_threshold[['TP','TN','FP','FN','TPR','FPR']].sum(axis=0)
-            if (metsum['TP'] + metsum['FN']) > 0:
-                roc_values.at[t,'PixelTPR'] = float(metsum['TP'])/(metsum['TP'] + metsum['FN'])
-            else:
-                roc_values.at[t,'PixelTPR'] = np.nan
-            if (metsum['FP'] + metsum['TN']) > 0:
-                roc_values.at[t,'PixelFPR'] = float(metsum['FP'])/(metsum['FP'] + metsum['TN'])
-            else:
-                roc_values.at[t,'PixelFPR'] = np.nan
-
-            if ~np.isnan(metsum['TPR']):
-                roc_values.at[t,'ProbeTPR'] = metsum['TPR']/maxmet_threshold.shape[0]
-            else:
-                roc_values.at[t,'ProbeTPR'] = np.nan
-            if ~np.isnan(metsum['FPR']):
-                roc_values.at[t,'ProbeFPR'] = metsum['FPR']/maxmet_threshold.shape[0]
-            else:
-                roc_values.at[t,'ProbeFPR'] = np.nan
-            
-            maxmets[t] = maxmet_threshold
-            #compute biggest average MCC fixing threshold
-            avgMCC = maxmet_threshold['MCC'].mean()
-            if avgMCC > maxavgMCC:
-                maxavgMCC = avgMCC
-                maxThreshold = t
-
-        #generate pixel and probe average ROC's.
-        #only plot if there are any scores to be plot at all
-        df['PixelAverageAUC'] = np.nan
-        df['MaskAverageAUC'] = np.nan
-
-        if (roc_values['PixelTPR'].count() > 0) and (roc_values['PixelFPR'].count() > 0):
-            p_roc_values = roc_values[['PixelFPR','PixelTPR']]
-            p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=['PixelFPR','PixelTPR']),ignore_index=True)
-            p_roc = p_roc_values.sort_values(by=['PixelFPR','PixelTPR'],ascending=[True,True]).reset_index(drop=True)
-            fpr = p_roc['PixelFPR']
-            tpr = p_roc['PixelTPR']
-            myauc = dmets.compute_auc(fpr,tpr)
-            df['PixelAverageAUC'] = myauc #store in df to tack onto average dataframe later
-    
-            #compute confusion measures by using the totals across all probes
-            confsum = df[['OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN']].sum(axis=0)
-            mydets = detPackage(tpr,
-                                fpr,
-                                1,
-                                0,
-                                myauc,
-                                confsum['OptimumPixelTP'] + confsum['OptimumPixelFN'],
-                                confsum['OptimumPixelFP'] + confsum['OptimumPixelTN'])
-        
-            if task == 'manipulation':
-                plot_name = 'pixel_average_roc'
-                plot_title = 'Pixel Average ROC'
-            elif task == 'splice':
-                if self.mode == 1:
-                    plot_name = 'pixel_average_roc_probe'
-                    plot_title = 'Probe Pixel Average ROC'
-                if self.mode == 2:
-                    plot_name = 'pixel_average_roc_donor'
-                    plot_title = 'Donor Pixel Average ROC'
-            myroc = plotROC(mydets,plot_name,plot_title,outputRoot)
-
-        if (roc_values['ProbeTPR'].count() > 0) and (roc_values['ProbeFPR'].count() > 0):
-            p_roc_values = roc_values[['ProbeFPR','ProbeTPR']]
-            p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=['ProbeFPR','ProbeTPR']),ignore_index=True)
-            p_roc = p_roc_values[['ProbeFPR','ProbeTPR']].sort_values(by=['ProbeFPR','ProbeTPR'],ascending=[True,True]).reset_index(drop=True)
-            fpr = p_roc['ProbeFPR']
-            tpr = p_roc['ProbeTPR']
-            myauc = dmets.compute_auc(fpr,tpr)
-            df['MaskAverageAUC'] = myauc #store in df to tack onto average dataframe later
-    
-            confsum = df[['OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN']].sum(axis=0)
-            #same total number of targets and non-targets as above
-            mydets = detPackage(tpr,
-                                fpr,
-                                1,
-                                0,
-                                myauc,
-                                confsum['OptimumPixelTP'] + confsum['OptimumPixelFN'],
-                                confsum['OptimumPixelFP'] + confsum['OptimumPixelTN'])
-            
-            if task == 'manipulation':
-                plot_name = 'mask_average_roc'
-                plot_title = 'Mask Average ROC'
-            elif task == 'splice':
-                if self.mode == 1:
-                    plot_name = 'mask_average_roc_probe'
-                    plot_title = 'Probe Mask Average ROC'
-                if self.mode == 2:
-                    plot_name = 'mask_average_roc_donor'
-                    plot_title = 'Donor Mask Average ROC'
-            myroc = plotROC(mydets,plot_name,plot_title,outputRoot)
-
-        if (self.sbin >= -1) and (maxThreshold > -1):
-            #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
-            df['MaximumThreshold'] = maxThreshold
-            maxMCCdf = maxmets[maxThreshold]
-            maxMCCdf.rename(columns={'NMM':'MaximumNMM',
-                                     'MCC':'MaximumMCC',
-                                     'BWL1':'MaximumBWL1',
-                                     'TP':'MaximumPixelTP',
-                                     'TN':'MaximumPixelTN',
-                                     'FP':'MaximumPixelFP',
-                                     'FN':'MaximumPixelFN'},inplace=True)
-            df = df.merge(maxMCCdf[[''.join([mymode,'FileID']),'MaximumNMM','MaximumMCC','MaximumBWL1','MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN']],on=[''.join([mymode,'FileID'])],how='left')
-            
-        else:
-            df['MaximumNMM'] = [np.nan]*nrow
-            df['MaximumMCC'] = [np.nan]*nrow
-            df['MaximumBWL1'] = [np.nan]*nrow
-    
-            df['MaximumPixelTP'] = [np.nan]*nrow
-            df['MaximumPixelTN'] = [np.nan]*nrow
-            df['MaximumPixelFP'] = [np.nan]*nrow
-            df['MaximumPixelFN'] = [np.nan]*nrow
-            df['MaximumThreshold'] = [np.nan]*nrow
-
-        #extend Optimum, Maximum, Actual to Pixel values also
-#        df.OptimumThreshold = df.OptimumThreshold.astype(int)
-#        df.OptimumPixelTP = df.OptimumPixelTP.astype(int)
-#        df.OptimumPixelTN = df.OptimumPixelTN.astype(int)
-#        df.OptimumPixelFP = df.OptimumPixelFP.astype(int)
-#        df.OptimumPixelFN = df.OptimumPixelFN.astype(int)
-#        df.PixelN = df.PixelN.astype(int)
-#        df.PixelBNS = df.PixelBNS.astype(int)
-#        df.PixelSNS = df.PixelSNS.astype(int)
-#        df.PixelPNS = df.PixelPNS.astype(int)
-#
-#        if self.sbin >= 0:
-#            print df[['ActualThreshold','ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN']]
-#            df.ActualThreshold = df.ActualThreshold.astype(int)
-#            df.ActualPixelTP = df.ActualPixelTP.astype(int)
-#            df.ActualPixelTN = df.ActualPixelTN.astype(int)
-#            df.ActualPixelFP = df.ActualPixelFP.astype(int)
-#            df.ActualPixelFN = df.ActualPixelFN.astype(int)
-#
-#            df.MaximumThreshold = df.MaximumThreshold.astype(int)
-#            df.MaximumPixelTP = df.MaximumPixelTP.astype(int)
-#            df.MaximumPixelTN = df.MaximumPixelTN.astype(int)
-#            df.MaximumPixelFP = df.MaximumPixelFP.astype(int)
-#            df.MaximumPixelFN = df.MaximumPixelFN.astype(int)
+        df = self.scoreMaxMetrics(df,processors)
 
         df=df[[''.join([mymode,'FileID']),''.join([mymode,'FileName']),'Scored',
                'OptimumNMM',
@@ -1106,7 +1077,7 @@ class maskMetricRunner:
         *     b_weights: the weighted matrix of the no-score zones of the targeted regions
         *     s_weights: the weighted matrix of the no-score zones generated from the non-target regions
         *     p_weights: the weighted matrix of the no-score zones generated from pixels of a select value in the original mask
-        *     metrics: the dictionary of mask scores
+        *     metrics: the dictionary of optimum mask scores
         *     confmeasures: truth table measures evaluated between the reference and system output masks
         *     colMaskName: the aggregate mask image of the ground truth, system output, and no-score regions
                            for the HTML report
@@ -1290,7 +1261,6 @@ class maskMetricRunner:
                 plt.close()
                 thresString = "<img src=\"{}\" alt=\"thresholds graph\" style=\"width:{}px;\">".format('thresMets.png',plt_width)
             except:
-                raise
                 e = sys.exc_info()[0]
 #                print("The plotter encountered error {}. Defaulting to table display for the HTML report.".format(e))
                 print("Warning: The plotter encountered an issue. Defaulting to table display for the HTML report.")

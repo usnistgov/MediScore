@@ -35,6 +35,8 @@ from decimal import Decimal
 from string import Template
 lib_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(lib_path)
+from detMetrics import Metrics as dmets
+from myround import myround
 from constants import *
 
 class maskMetrics:
@@ -625,3 +627,117 @@ class maskMetrics:
 #            fig = plot_fig(metvals[0],1,opts_list,plot_opts,display,multi_fig)
 #            return fig
 
+    def get_all_metrics(self,ref,sys,sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision=16,round_modes=[],myprintbuffer=0):
+        """
+        * Description: get all the metrics for one probe
+        """
+        #TODO: ***** scoring starts here *****
+        all_metrics = {}
+        w = cv2.bitwise_and(bns,sns)
+        if pns is not 0:
+            w = cv2.bitwise_and(w,pns)
+
+        thresMets,threshold = self.runningThresholds(ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,0)
+        #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sys.name)),index=False) #save to a CSV for reference
+        all_metrics['OptimumThreshold'] = threshold
+        thresMets['TPR'] = 0.
+        thresMets['FPR'] = 0.
+
+        nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
+        nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
+        nullRocRows = thresMets.query(nullRocQuery)
+        nonNullRocRows = thresMets.query(nonNullRocQuery)
+
+        #compute TPR and FPR here for rows that have it.
+        if nullRocRows.shape[0] < thresMets.shape[0]:
+#                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
+#                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
+            thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
+            thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
+
+        #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
+        #and pass to HTML accordingly
+        myameas = {} #dictionary of actual metrics
+        if np.isnan(threshold):
+            metrics = thresMets.iloc[0]
+            mets = metrics[['NMM','MCC','BWL1']].to_dict()
+            mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
+            mets['GWL1'] = np.nan
+            all_metrics['GWL1'] = np.nan
+
+            for mes in ['BNS','SNS','PNS','N']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(mes))
+                all_metrics[''.join(['Pixel',mes])] = mymeas[mes]
+
+            for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(mes))
+                all_metrics[''.join(['OptimumPixel',mes])] = mymeas[mes]
+                myameas[mes] = mymeas[mes]
+                if sbin >= -1:
+                    all_metrics[''.join(['ActualPixel',mes])] = mymeas[mes]
+
+            for met in ['NMM','MCC','BWL1','GWL1']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(met))
+                if met != 'GWL1':
+                    all_metrics[''.join(['Optimum',met])] = mets[met]
+                    if sbin >= -1:
+                        all_metrics[''.join(['Actual',met])] = mets[met]
+                else:
+                    all_metrics[met] = mets[met]
+        else:
+            metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
+            mets = metrics[['NMM','MCC','BWL1']].to_dict()
+            mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
+            rocvalues = thresMets[['TPR','FPR']]
+
+            #append 0 and 1 to beginning and end of tpr and fpr respectively
+            rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
+            #reindex rocvalues
+            rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
+
+            #generate a plot and get detection metrics
+            fpr = rocvalues['FPR']
+            tpr = rocvalues['TPR']
+
+            myauc = dmets.compute_auc(fpr,tpr)
+            myeer = dmets.compute_eer(fpr,1-tpr)
+
+            all_metrics['AUC'] = myauc
+            all_metrics['EER'] = myeer
+   
+            for mes in ['BNS','SNS','PNS','N']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(mes))
+                all_metrics[''.join(['Pixel',mes])] = mymeas[mes]
+
+            if sbin >= -1:
+                #just get scores in one run if threshold is chosen
+                sys.binarize(sbin)
+                myameas = self.getMetrics(ref,sys,w,sbin,myprintbuffer)
+                all_metrics['ActualThreshold'] = sbin
+
+            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(ref,sys,w)
+            all_metrics['GWL1'] = myround(mets['GWL1'],precision,round_modes)
+            for met in ['NMM','MCC','BWL1']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(met))
+#                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) #TODO: debug
+                all_metrics[''.join(['Optimum',met])] = myround(mets[met],precision,round_modes)
+                if sbin >= -1:
+                    #record Actual metrics
+                    actual_met_name = ''.join(['Actual',met])
+                    actual_met = myround(myameas[met],precision,round_modes)
+                    all_metrics[actual_met_name] = actual_met
+                    mets[actual_met_name] = actual_met
+
+            for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
+                if myprintbuffer is not 0:
+                    myprintbuffer.append("Setting value for {}...".format(mes))
+                all_metrics[''.join(['OptimumPixel',mes])] = mymeas[mes]
+                if sbin >= -1:
+                    all_metrics[''.join(['ActualPixel',mes])] = myameas[mes]
+
+        return all_metrics,thresMets
