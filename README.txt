@@ -397,6 +397,7 @@ HISTORY
       - Modified DetectionScoreReadMe files
     * MaskScorer:
       - Additional speedups
+      - Vectorized maximum metrics computation.
 
 
 CONTACT
