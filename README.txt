@@ -395,6 +395,8 @@ HISTORY
     * DetectionScorer:
       - Added EventRepurpose task and its test case
       - Modified DetectionScoreReadMe files
+    * MaskScorer:
+      - Additional speedups
 
 
 CONTACT
