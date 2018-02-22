@@ -1,5 +1,5 @@
 #!/bin/bash
-clean=FALSE
+clean=TRUE
 
 echo
 echo "CASE 2: VALIDATING FACTOR-BASED SCORING"

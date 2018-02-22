@@ -207,6 +207,29 @@ class maskMetricRunner:
             os.system(' '.join(['mkdir',subOutRoot]))
         return subOutRoot
 
+    def read_ref_mask(self,refMaskName,probeID,mymode,myprintbuffer):
+        #read in the reference mask
+        rImg = 0
+        color_purpose = 0 
+        if self.rbin >= 0:
+            rImg = masks.refmask_color(refMaskName)
+            rImg.binarize(self.rbin)
+        elif self.rbin == -1:
+            #only need colors if selectively scoring
+            myprintbuffer.append("Fetching {}FileID {} from mask data...".format(mymode,probeID))
+            if self.mode != 2: #NOTE: temporary measure until we get splice sorted out.
+		color_purpose = self.journalData.query("{}FileID=='{}'".format(mymode,probeID))
+            if not self.usejpeg2000:
+                #NOTE: temporary measure for splice task
+                if self.mode == 1:
+                    color_purpose = 0
+                rImg = masks.refmask_color(refMaskName,jData=color_purpose,mode=self.mode)
+            else:
+                rImg = masks.refmask(refMaskName,jData=color_purpose,mode=self.mode)
+#                myprintbuffer.append("Initializing reference mask {} with colors {}.".format(refMaskName,rImg.colors))
+            myprintbuffer.append("Initializing reference mask {}.".format(refMaskName))
+        return rImg
+
     def readMasks(self,refMaskFName,sysMaskFName,probeID,outRoot,myprintbuffer):
         """
         * Description: reads both the reference and system output masks and caches the binarized image
@@ -222,7 +245,6 @@ class maskMetricRunner:
         *     rImg: the reference mask object
         *     sImg: the system output mask object
         """
-
         myprintbuffer.append("Reference Mask: {}, System Mask: {}".format(refMaskFName,sysMaskFName))
 
         refMaskName = os.path.join(self.refDir,refMaskFName)
@@ -230,8 +252,8 @@ class maskMetricRunner:
             sysMaskName = os.path.join(outRoot,'whitemask.png')
         else:
             sysMaskName = os.path.join(self.sysDir,sysMaskFName)
+        sImg = masks.mask(sysMaskName)
  
-        color_purpose = 0 
         if (self.journalData is 0) and (self.rbin == -1): #no journal saved and rbin not set
             self.rbin = 254 #automatically set binary threshold if no journalData provided.
 
@@ -242,44 +264,35 @@ class maskMetricRunner:
         if self.mode==2:
             mymode = 'Donor'
  
-        #read in the reference mask
-        rImg = 0
-        if self.rbin >= 0:
-            rImg = masks.refmask_color(refMaskName)
-            rImg.binarize(self.rbin)
-        elif self.rbin == -1:
-            #only need colors if selectively scoring
-            myprintbuffer.append("Fetching {}FileID {} from mask data...".format(mymode,probeID))
-
-            evalcol='Evaluated'
-            if self.mode != 2: #TODO: temporary measure until we get splice sorted out. Originally mode != 2
-                if self.mode == 1:
-                    evalcol='ProbeEvaluated'
-
-                #get the target colors
-#                joins = self.joinData.query("{}FileID=='{}'".format(mymode,probeID))#[['JournalName','StartNodeID','EndNodeID']]
-#                color_purpose = pd.merge(joins,self.journalData.query("{}=='Y'".format(evalcol)),how='left',on=['JournalName','StartNodeID','EndNodeID'])#[['Color','Purpose']].drop_duplicates()
-#		color_purpose = self.journalData.query("{}FileID=='{}' & {}=='Y'".format(mymode,probeID,evalcol))
-		color_purpose = self.journalData.query("{}FileID=='{}'".format(mymode,probeID))
-
-#            rImg = masks.refmask(refMaskName,cs=colorlist,purposes=purposes_unique)
-            if not self.usejpeg2000:
-                #TODO: temporary measure for splice task
-                if self.mode == 1:
-                    color_purpose = 0
-                rImg = masks.refmask_color(refMaskName,jData=color_purpose,mode=self.mode)
-            else:
-                rImg = masks.refmask(refMaskName,jData=color_purpose,mode=self.mode)
-#                myprintbuffer.append("Initializing reference mask {} with colors {}.".format(refMaskName,rImg.colors))
-            myprintbuffer.append("Initializing reference mask {}.".format(refMaskName))
-            rImg.binarize(254)
+        #read from cache if relevant
+        rImg = self.read_ref_mask(refMaskName,probeID,mymode,myprintbuffer)
+        rImg.binarize(254)
+        #alternative to direct binarization
+#        if self.cache_dir:
+#            cache_mask_name = os.path.join(self.cache_dir,'%s_mask.png' % probeID)
+#            #if file is present, read.
+#            if os.path.isfile(cache_mask_name):
+#                rImg.bwmat = cv2.imread(cache_mask_name,0)
+#            else:
+#                print 'binarize and save in the cache'
+#                rImg.binarize(254)
+#        else:
+#            rImg.binarize(254)
 
         if not rImg.regionIsPresent():
             myprintbuffer.append("The region you are looking for is not in reference mask {}. Scoring neglected.".format(refMaskFName))
             return 0,0
 
-        sImg = masks.mask(sysMaskName)
         return rImg,sImg 
+
+    def get_ref_no_scores(self):
+        wts,bns,sns = 0,0,0
+        if self.cache_dir:
+            print 'cache' #TODO: do this
+            
+        else:
+            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
+        return wts,bns,sns
 
     #for apply
     def scoreOneMask(self,maskRow):
@@ -344,9 +357,6 @@ class maskMetricRunner:
 #                continue
 
             if sysMaskName in [None,'',np.nan]:
-#                self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-                #self.journalData.set_value(i,evalcol,'N')
-#                df.set_value(i,'Scored','N')
                 myprintbuffer.append("Empty system {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
                 whitemask = 255*np.ones((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
@@ -354,11 +364,9 @@ class maskMetricRunner:
 #                continue
 
             rImg,sImg = self.readMasks(refMaskName,sysMaskName,manipFileID,subOutRoot,myprintbuffer)
+
             if (rImg is 0) and (sImg is 0):
                 #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
-                #self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manipFileID)).index,evalcol] = 'N'
-                #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
-                #self.journalData.set_value(i,evalcol,'N')
                 maskRow['Scored'] = 'N'
                 maskRow['OptimumMCC'] = -2 #for reference to filter later
                 myprintbuffer.atomprint(print_lock)
@@ -366,23 +374,10 @@ class maskMetricRunner:
 
             rdims = rImg.get_dims()
             myprintbuffer.append("Beginning scoring for reference image {} with dims {} and system image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
-#            idxdims = self.index.query("{}FileID=='{}'".format(mymode,manipFileID)).iloc[0]
-#            idxW = idxdims[mymode+'Width']
-#            idxH = idxdims[mymode+'Height']
-
-#                if (rdims[0] != idxH) or (rdims[1] != idxW):
-#                    self.journalData.loc[self.journalData.query("{}FileID=='{}'".format(mymode,manip_ids[i])).index,evalcol] = 'N'
-#                    #self.journalData.loc[self.journalData.query("JournalName=='{}'".format(self.joinData.query("{}FileID=='{}'".format(mymode,manip_ids[i]))["JournalName"].iloc[0])).index,evalcol] = 'N'
-#                    #self.journalData.set_value(i,evalcol,'N')
-#                    print("Reference mask {} at index {} has dimensions {} x {}. It does not match dimensions {} x {} in the index files as recorded.\
-# Please notify the NIST team of the issue. Skipping for now.".format(rImg.name,i,rdims[0],rdims[1],idxH,idxW))
-#                    #write mask name, mask dimensions, and image dimensions to index_log.txt
-#                    ilog.write('Mask: {}, Mask Dimensions: {} x {}, Index Dimensions: {} x {}\n'.format(rImg.name,rdims[0],rdims[1],idxH,idxW))
-#                    continue
 
             if (rImg.matrix is None) or (sImg.matrix is None):
                 #Likely this could be FP or FN. Set scores as usual.
-                myprintbuffer.append("The index is at {}.".format(i))
+                myprintbuffer.append("The index is at {}.".format(maskRow.name))
                 myprintbuffer.atomprint(print_lock)
                 return maskRow
 
@@ -394,8 +389,11 @@ class maskMetricRunner:
 
             #save the image separately for html and further review. Use that in the html report
             myprintbuffer.append("Generating no-score zones...")
+            #TODO: get from cache data if exists in cache
+            #TODO: add controls for self.cache_dir
             wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
 
+            #TODO: move this into separate pixel no-score function
             myprintbuffer.append("Generating reference mask with no-score zones...")
             #do a 3-channel combine with bns and sns for their colors before saving
             #noScorePixel here
@@ -403,7 +401,7 @@ class maskMetricRunner:
             pns=0
             pppnspx = noScorePixel #TODO: have this be separate from pppns?
             if self.perProbePixelNoScore:
-                pppnspx = maskRow[''.join([mymode,'OptOutPixelValue'])]
+                pppnspx = maskRow['%sOptOutPixelValue' % mymode]
             pns=sImg.pixelNoScore(pppnspx)
             if pns is 1:
                 myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
@@ -413,11 +411,11 @@ class maskMetricRunner:
             rbinmat = rImg.save_color_ns(rbin_name,bns,sns,pns)
 
             #if wts allows for nothing to be scored, (i.e. no GT pos), print warning message, but score as usual
-            if np.sum(cv2.bitwise_and(wts,rImg.bwmat)) == 0:
+            if (cv2.bitwise_and(wts,rImg.bwmat)).sum() == 0:
                 myprintbuffer.append("Warning: No region in the mask {} is score-able.".format(rImg.name))
 
             #if wts covers entire mask, skip it
-            if np.sum(wts) == 0:
+            if wts.sum() == 0:
                 myprintbuffer.append("Warning: No-score region covers all of {} {}. Skipping the {}.".format(mymode,manipFileID,mymode))
                 maskRow['Scored'] = 'Y'
                 maskRow['OptimumThreshold'] = np.nan
@@ -437,6 +435,8 @@ class maskMetricRunner:
             thresMets,threshold = metricRunner.runningThresholds(rImg,sImg,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
             #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sImg.name)),index=False) #save to a CSV for reference
             maskRow['OptimumThreshold'] = threshold
+            thresMets['TPR'] = 0.
+            thresMets['FPR'] = 0.
 
             genROC = True
             nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
@@ -446,8 +446,6 @@ class maskMetricRunner:
 
             #compute TPR and FPR here for rows that have it.
             if nullRocRows.shape[0] < thresMets.shape[0]:
-#                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
-#                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
                 thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
                 thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
 
@@ -459,7 +457,7 @@ class maskMetricRunner:
             #and pass to HTML accordingly
             amets = 0
             myameas = 0
-            #TODO: might want to throw this into maskMetrics for efficient grouping
+            #TODO: might want to throw this into maskMetrics for efficient grouping?
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
@@ -502,12 +500,7 @@ class maskMetricRunner:
                 self.thresholds.extend(thresMets['Threshold'].tolist())
                 self.thresscores[manipFileID] = thresMets
     
-                #lowercase rocvalues' keys
-    #            rocvalues['tpr'] = rocvalues.pop('TPR')
-    #            rocvalues['fpr'] = rocvalues.pop('FPR')
-    
                 #append 0 and 1 to beginning and end of tpr and fpr respectively
-                
                 rocvalues = rocvalues.append(pd.DataFrame([[0,0]],columns=list(rocvalues)),ignore_index=True)
                 #reindex rocvalues
                 rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
@@ -849,6 +842,7 @@ class maskMetricRunner:
         processors = params.processors
         global debug_mode
         debug_mode = params.debug_mode
+        self.cache_dir = params.cache_dir
 
         #reflist and syslist should come from the same dataframe, so length checking is not required
         mymode='Probe'

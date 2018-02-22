@@ -127,6 +127,9 @@ parser.add_argument('--displayScoredOnly',action='store_true',help="Display only
 parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select smaller index files for the purpose of testing.")
 parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
 parser.add_argument('--debug_off',action='store_false',help="Continue running localization scorer on the next probe even when encountering errors. This can be used to skip unwanted .")
+parser.add_argument('--cache_dir',type=str,default=None,
+help="The directory to cache reference mask data for future use. Subdirectories will be created according to specific details related to the task.",metavar='valid file directory')
+parser.add_argument('--cache_flush',action='store_true',help="Flush the cache directory before starting computation. This is especially crucial when the queryManipulation options are used in conjunction with --cache_dir.")
 
 args = parser.parse_args()
 
@@ -303,10 +306,17 @@ if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((
 if args.optOut:
     m_df = m_df.query(" ".join(['not',optOutQuery]))
 
+#rounding modes
 round_modes = ['sd']
 if args.truncate:
     round_modes.append('t')
 
+#cache directory options
+cache_sub_dir = ['ref_e{}_d{}_nt{}'.format(args.eks,args.dks,args.ntdks)]
+if args.jpeg2000:
+    cache_sub_dir.append('jp2')
+
+#TODO: change this to a dictionary, since this is all it does.
 class loc_scoring_params:
     def __init__(self,
                  mode,
@@ -321,7 +331,8 @@ class loc_scoring_params:
                  precision,
                  truncate,
                  processors,
-                 debug_mode):
+                 debug_mode,
+                 cache_dir=args.cache_dir):
         self.mode = mode
         self.eks = eks
         self.dks = dks
@@ -335,6 +346,7 @@ class loc_scoring_params:
         self.truncate = truncate
         self.processors = processors
         self.debug_mode = debug_mode
+        self.cache_dir = cache_dir
 
 def round_df(my_df,metlist):
     df_cols = list(my_df)
@@ -345,7 +357,7 @@ def round_df(my_df,metlist):
 #define HTML functions here
 df2html = lambda *a:None
 if args.task == 'manipulation':
-    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision):
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision,cache_dir=None):
         # if the confidence score are 'nan', replace the values with the mininum score
         #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
@@ -353,7 +365,9 @@ if args.task == 'manipulation':
     
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
         #revise this to outputRoot and loc_scoring_params
-        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
+        if cache_dir and args.cache_flush:
+            os.system('rm -rf {}/*'.format(cache_dir))
+        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir)
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
@@ -362,22 +376,9 @@ if args.task == 'manipulation':
 #        merged_df['Scored'] = pd.Series(['Y']*len(merged_df))
 #        merged_df.loc[merged_df.query('MCC == -2').index,'Scored'] = 'N'
         midx = nonscore_df.index
+        relevant_met_cols=['OptimumThreshold','OptimumNMM','OptimumBWL1','GWL1','AUC','EER','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelN','PixelBNS','PixelSNS','PixelPNS']
         if len(midx) > 0:
-            merged_df.loc[midx,'OptimumThreshold'] = np.nan
-            merged_df.loc[midx,'OptimumNMM'] = np.nan
-            merged_df.loc[midx,'OptimumBWL1'] = np.nan
-            merged_df.loc[midx,'GWL1'] = np.nan
-            merged_df.loc[midx,'AUC'] = np.nan
-            merged_df.loc[midx,'EER'] = np.nan
-            merged_df.loc[midx,'OptimumThreshold'] = np.nan
-            merged_df.loc[midx,'OptimumPixelTP'] = np.nan
-            merged_df.loc[midx,'OptimumPixelTN'] = np.nan
-            merged_df.loc[midx,'OptimumPixelFP'] = np.nan
-            merged_df.loc[midx,'OptimumPixelFN'] = np.nan
-            merged_df.loc[midx,'PixelN'] = np.nan
-            merged_df.loc[midx,'PixelBNS'] = np.nan
-            merged_df.loc[midx,'PixelSNS'] = np.nan
-            merged_df.loc[midx,'PixelPNS'] = np.nan
+            merged_df.loc[midx,relevant_met_cols] = np.nan
         #remove the rows that were not scored due to no region being present. We set those rows to have MCC == -2.
         if args.displayScoredOnly:
             #get the list of non-scored and delete them
@@ -602,7 +603,7 @@ if args.task == 'manipulation':
             myf.close()
 
 elif args.task == 'splice':
-    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision):
+    def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision,cache_dir=None):
         #finds rows in index and sys which correspond to target reference
         #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
         #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
@@ -615,14 +616,23 @@ elif args.task == 'splice':
         metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
-        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
+        cache_dir_new=None
+        if cache_dir:
+            cache_dir_new = os.path.join(cache_dir,'probe')
+            if args.cache_flush:
+                os.system('rm -rf {}/*'.format(cache_dir_new))
+        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=2) #donor images
 #        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,mode=2,speedup=args.speedup,color=args.color)
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
-        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off)
+        if cache_dir:
+            cache_dir_new = os.path.join(cache_dir,'donor')
+            if args.cache_flush:
+                os.system('rm -rf {}/*'.format(cache_dir_new))
+        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
@@ -647,12 +657,8 @@ elif args.task == 'splice':
 
         sidx = stackmerge.query('OptimumMCC==-2').index
         stackmerge.loc[sidx,'Scored'] = 'N'
-        stackmerge.loc[sidx,'OptimumThreshold'] = np.nan
-        stackmerge.loc[sidx,'OptimumNMM'] = np.nan
-        stackmerge.loc[sidx,'OptimumBWL1'] = np.nan
-        stackmerge.loc[sidx,'GWL1'] = np.nan
-        stackmerge.loc[sidx,'AUC'] = np.nan
-        stackmerge.loc[sidx,'EER'] = np.nan
+        nan_met_cols = ['OptimumThreshold','OptimumNMM','OptimumBWL1','GWL1','AUC','EER']
+        stackmerge.loc[sidx,nan_met_cols] = np.nan
         stackmerge.loc[sidx,'OptimumMCC'] = np.nan
         
         #add other scores for case sbin >= 0
@@ -1122,8 +1128,15 @@ if args.task == 'manipulation':
                 os.system(' '.join(['mkdir',outRootQuery]))
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
+        cache_sub_dir_new = cache_sub_dir[:]
+        if q is not '':
+            cache_sub_dir_new.append('q{}'.format(qnum))
+        cache_full_dir=None
+        if args.cache_dir:
+            cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
+
         printq("Beginning mask scoring...")
-        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16)
+        r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
 
         #get the manipulations that were not scored and set the same columns in journalData0 to 'N'
         journalUpdate(probeJournalJoin,journalData0,r_df)
@@ -1269,8 +1282,14 @@ elif args.task == 'splice':
    
         m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
+        cache_sub_dir_new = cache_sub_dir[:]
+        if q is not '':
+            cache_sub_dir_new.append('q{}'.format(qnum))
+        cache_full_dir=None
+        if args.cache_dir:
+            cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
         printq("Beginning mask scoring...")
-        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16)
+        r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
         journalUpdate(probeJournalJoin,journalData0,r_df)
 
         #filter here

@@ -1,5 +1,5 @@
 #!/bin/bash
-clean=FALSE
+clean=TRUE
 procs=4
 mypython=python2
 

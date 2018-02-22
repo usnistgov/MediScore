@@ -107,13 +107,13 @@ class TestImageMethods(ut.TestCase):
         #read it back in as a color mask image
         mytest_color=masks.refmask_color('testImg_color.png')
         self.assertEqual(len(mytest_color.matrix.shape),3) #test if image is color
-        mytest_color.matrix = mytest_color.binarize(254) #fully binarize the mask for some threshold
+        mytest_color.binarize(254) #fully binarize the mask for some threshold
 
         mytest_bw=masks.refmask_color('testImg_color.png',readopt=0)
         self.assertEqual(len(mytest_bw.matrix.shape),2) #test if image is grayscale
-        mytest_bw.matrix = mytest_bw.binarize(254)
+        mytest_bw.binarize(254)
 
-        self.assertTrue(np.array_equal(mytest_color.matrix,mytest_bw.matrix)) #test if the two matrices are equal.
+        self.assertTrue(np.array_equal(mytest_color.bwmat,mytest_bw.bwmat)) #test if the two matrices are equal.
 
     def test_noScore(self):
         #test that weight matrix is specifically equal to a pre-calculated weight matrix.

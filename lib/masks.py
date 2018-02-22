@@ -70,6 +70,7 @@ def getKern(kernopt,size):
         #build own kernel out of numpy ndarray
         kern=np.ones((size,size),dtype=np.uint8)
         center=(size-1)/2
+        #TODO: find more efficient implementation
         for idx,x in np.ndenumerate(kern):
             if abs(idx[0]-center) + abs(idx[1]-center) > center:
                 kern[idx]=0
@@ -85,7 +86,7 @@ def getKern(kernopt,size):
         kern = np.uint8(kern)
     elif kernopt=='line':
         #45 degree line, or identity matrix
-        kern=np.eye(erodeKernSize,dtype=np.uint8)
+        kern=np.eye(size,dtype=np.uint8)
     else:
         print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
     return kern
@@ -203,12 +204,14 @@ class mask(object):
         return self.get_dims() == img.shape
 
     @staticmethod
-    def getColors(img,popt=0):
+    def getColors(img,popt=0,aggregate=False):
         """
         * Description: outputs the (non-white) colors of the image and their total
         * Input:
         *     img: the image to determine the distinct (non-white) colors
         *     popt: whether or not to print the colors and number of colors
+        *     aggregate: whether or not to return the aggregate values of the image layers instead of the tuple values.
+                         If selected, will also return the aggregate matrix.
         * Output:
         *     the distinct colors in the image and the total number of distinct colors
         """
@@ -216,11 +219,14 @@ class mask(object):
         if len(img.shape) == 3:
 #            colors = list(set(tuple(p) for m2d in img for p in m2d))
             img1L = img[:,:,0]*65536+img[:,:,1]*256+img[:,:,2]
-            colors = np.unique(img1L)
-            colors = [(c//65536,(c % 65536)//256,c % 256) for c in colors]
-            if (255,255,255) in colors:
-                colors.remove((255,255,255))
+            colors = list(np.unique(img1L))
+            white=16777215 #256^3 - 1
+            if white in colors:
+                colors.remove(white)
+            if not aggregate:
+                colors = [(c//65536,(c % 65536)//256,c % 256) for c in colors]
         elif len(img.shape) == 2:
+            img1L = img
             colors = np.unique(img)
             if 255 in colors:
                 colors.remove(255) 
@@ -228,9 +234,12 @@ class mask(object):
         if popt==1:
             for c in colors:
                 print(c)
-            print("Total: " + len(colors))
+            print("Total: %d" % len(colors))
+        retval = colors
+        if aggregate:
+            retval = colors,img1L
 
-        return colors
+        return retval
 
     def save_color_ns(self,colorPNGname,bns,sns,pns=0):
         """
@@ -282,12 +291,16 @@ class mask(object):
         *     bimg: single-channel binarized image
         """
         dims = self.get_dims()
-        bimg = np.zeros((dims[0],dims[1]))
+        bimg = np.zeros((dims[0],dims[1]),dtype=np.uint8)
         reds,greens,blues=cv2.split(self.matrix)
-        upthresh = (reds <= RThresh) | (greens <= GThresh) | (blues <= BThresh)
+        _,r_thresh = cv2.threshold(reds,RThresh,1,cv2.THRESH_BINARY_INV)
+        _,g_thresh = cv2.threshold(greens,GThresh,1,cv2.THRESH_BINARY_INV)
+        _,b_thresh = cv2.threshold(blues,BThresh,1,cv2.THRESH_BINARY_INV)
+#        upthresh = (reds <= RThresh) | (greens <= GThresh) | (blues <= BThresh)
+        upthresh = (r_thresh | g_thresh | b_thresh).astype(bool)
+
         bimg[upthresh] = v
         bimg[~upthresh] = g
-        bimg = np.uint8(bimg)
         return bimg
 
     def binarize3Channel(self):
@@ -318,7 +331,9 @@ class mask(object):
                 intmat = np.zeros(self.get_dims(),dtype=np.uint8)
                 nchannels = self.matrix.shape[2]
                 for j in range(nchannels):
-                    intmat = intmat | (self.matrix[:,:,j] > 0)
+                    _,intmat_tmp = cv2.threshold(self.matrix[:,:,j],0,1,cv2.THRESH_BINARY)
+                    intmat = intmat | intmat_tmp
+#                    intmat = intmat | (self.matrix[:,:,j] > 0)
                 _,intmat = cv2.threshold(intmat,0,255,cv2.THRESH_BINARY_INV)
             else:
                 _,intmat = cv2.threshold(self.matrix,0,255,cv2.THRESH_BINARY_INV)
@@ -476,16 +491,29 @@ class refmask(mask):
         presence = 0
         rmat = self.matrix
         bits = self.bitlist
+        full_bitstack = 0
         for b in bits:
-            if len(rmat.shape) == 3:
-                #modify to account for multi-channel
-                bpos = int(math.log(b,2))
-                layer = bpos//8
-                presence = presence + np.sum(rmat[:,:,layer] & (b >> 8*layer))
-            else:
-                presence = presence + np.sum(rmat & b)
-            if presence > 0:
-                return True
+            full_bitstack += b
+
+        if len(rmat.shape) == 3:
+            for i in range(self.matrix.shape[2]):
+                presence += (rmat[:,:,i] & (full_bitstack >> 8*i)).sum()
+        else:
+            presence += (rmat & full_bitstack).sum()
+
+        if presence > 0:
+            return True
+
+#        for b in bits:
+#            if len(rmat.shape) == 3:
+#                #multi-channel
+#                bpos = int(math.log(b,2))
+#                layer = bpos//8
+#                presence = presence + (rmat[:,:,layer] & (b >> 8*layer)).sum()
+#            else:
+#                presence = presence + (rmat & b).sum()
+#            if presence > 0:
+#                return True
         return False
 
     def getColor(self,b):
@@ -565,8 +593,9 @@ class refmask(mask):
                 else:
                     pixels = self.matrix == p
 
-                base_mask[pixels] = self.getColor(b)
-                tempmask[pixels] = self.getColor(b)
+                bit_color = self.getColor(b)
+                base_mask[pixels] = bit_color
+                tempmask[pixels] = bit_color
 
             if pixel_catch > 0:
 #                print("The mask generator caught pixels at {}.".format(pixel_list))
@@ -620,43 +649,65 @@ class refmask(mask):
         if self.bitlist is not 0:
             #thorough computation for individual bits 
             mymat = np.zeros(self.get_dims(),dtype=np.uint8)
+            full_bitstack = 0
             for b in self.bitlist:
-#                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
-                if is_multi_layer:
-                    layer = int(math.log(b,2)//8)
-                    pixels = (self.matrix[:,:,layer] & (b >> layer*8)) > 0
-                else:
-                    pixels = (selfmat & b) > 0
+                full_bitstack += b
 
-                mymat = mymat | pixels
-            mymat = 255*(1-mymat).astype(np.uint8)
-        else:
             if is_multi_layer:
                 for l in range(self.matrix.shape[2]):
-                    mymat = mymat | (self.matrix[:,:,l] > 0)
-                mymat = 255*(1-(mymat > 0))
+                    _,pixels = cv2.threshold(selfmat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
+                    mymat = mymat | pixels
             else:
-                mymat = 255*(1-(selfmat > 0))
+                _,pixels = cv2.threshold(selfmat & full_bitstack,0,1,cv2.THRESH_BINARY)
+                mymat = pixels
+                
+#            for b in self.bitlist:
+##                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
+#                if is_multi_layer:
+#                    layer = int(math.log(b,2)//8)
+#                    pixels = (self.matrix[:,:,layer] & (b >> layer*8)) > 0
+#                else:
+#                    pixels = cv2.threshold(selfmat & b,0,1,cv2.THRESH_BINARY)
+##                    pixels = (selfmat & b) > 0
+#
+#                mymat = mymat | pixels
+#            mymat = 255*(1-mymat).astype(np.uint8)
+            _,mymat = cv2.threshold(mymat,0,255,cv2.THRESH_BINARY_INV)
+        else:
+            if is_multi_layer:
+                mymat_inv=1
+                for l in range(self.matrix.shape[2]):
+                    bin_layer_inv = cv2.threshold(self.matrix[:,:,l],0,1,cv2.THRESH_BINARY_INV)
+                    mymat_inv = mymat_inv & bin_layer_inv
+#                    mymat = mymat | (self.matrix[:,:,l] > 0)
+                mymat = cv2.threshold(mymat_inv,0,255,cv2.THRESH_BINARY)
+#                mymat = 255*(1-(mymat > 0))
+            else:
+                _,bin_selfmat_inv = cv2.threshold(selfmat,0,255,cv2.THRESH_BINARY_INV)
+                mymat = bin_selfmat_inv
+#                mymat = 255*(1-(selfmat > 0))
+        mymat = np.uint8(mymat)
         self.bwmat = mymat
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
+        #NOTE: dilate and erode are "reversed" because dilation and erosion in this context is relative to white, not black.
         if erodeKernSize > 0:
             eKern=getKern(kern,erodeKernSize)
-            eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+            eImg=cv2.dilate(mymat,eKern,iterations=1)
         else:
             eImg=mymat
 
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
-            dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+            dImg=cv2.erode(mymat,dKern,iterations=1)
         else:
             dImg=mymat
 
-        weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
-        wFlip=1-weight
+#        bns=1-(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
+        _,bns=cv2.threshold(eImg-dImg,0,1,cv2.THRESH_BINARY_INV)
 
-        return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
+        return {'wimg':bns,'eimg':eImg,'dimg':dImg}
 
     def unselectedNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
         """
@@ -679,17 +730,6 @@ class refmask(mask):
         
         is_multi_layer = len(self.matrix.shape) == 3
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-#        notcolors = mask.getColors(mymat)
-#        if is_multi_layer:
-#            singlematrix = np.zeros(dims,dtype=np.uint8)
-#            const_factor = 1
-#            for i in range(self.matrix.shape[2]):
-#                const_factor = 1 << 8*i
-#                singlematrix = singlematrix + const_factor*mymat[:,:,i]
-#            notcolors = np.unique(singlematrix)
-#        else:
-#            notcolors = np.unique(mymat)
-
         notcolors = self.getUniqueValues()
         printq("Colors to consider: {}".format(notcolors))
         top_px = max(notcolors)
@@ -708,22 +748,23 @@ class refmask(mask):
         printq("Colors to consider: {}".format(notcolors))
 
 #        for c in self.colors:
-        scored = np.zeros((dims[0],dims[1]),dtype=np.uint8)
+        scored = np.zeros((dims[0],dims[1]),dtype=bool)
 
+        full_bitstack = 0
         for c in self.bitlist:
-#            if tuple(c) in notcolors:
-            if is_multi_layer:
-                layer = int(math.log(c,2)//8)
-                printq("Multi-layered. Accessing layer {} to get bit {}".format(layer,c))
-                pixels = (mymat[:,:,layer] & (c >> layer*8)) > 0
-            else:
-                printq("Single-layered. Accessing bit {}".format(c))
-                pixels = (mymat & c) > 0
-
-            scored = scored | pixels
+            #skip the colors that aren't present, in case they haven't made it to the mask in question
             if c in notcolors:
                 notcolors.remove(c)
-            #skip the colors that aren't present, in case they haven't made it to the mask in question
+            full_bitstack += c
+
+        if is_multi_layer:
+            for l in range(self.matrix.shape[2]):
+                _,pixels = cv2.threshold(mymat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
+                scored = scored | pixels
+        else:
+            _,pixels = cv2.threshold(mymat & full_bitstack,0,1,cv2.THRESH_BINARY)
+            scored = pixels
+        scored = scored.astype(np.uint8)
 
         printq("Excluded colors: {}".format(notcolors))
         if len(notcolors)==0:
@@ -731,16 +772,18 @@ class refmask(mask):
             return weights
 
         #edit for bit masks
-        mybin = np.zeros((dims[0],dims[1]),dtype=np.uint8)
+        mybin = np.zeros((dims[0],dims[1]),dtype=bool)
+        full_notstack = 0
         for c in notcolors:
-            #set equal to cs
-#            tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
-            if is_multi_layer:
-                layer = int(math.log(c,2)//8)
-                pixels = (mymat[:,:,layer] & (c >> layer*8)) > 0
-            else:
-                pixels = (mymat & c) > 0
-            mybin = mybin | pixels
+            full_notstack += c
+
+        if is_multi_layer:
+            for l in range(self.matrix.shape[2]):
+                _,pixels = cv2.threshold(mymat[:,:,l] & (full_notstack >> l*8),0,1,cv2.THRESH_BINARY)
+                mybin = mybin | pixels
+        else:
+            _,pixels = cv2.threshold(mymat & full_notstack,0,1,cv2.THRESH_BINARY)
+            mybin = pixels
 
         mybin = mybin.astype(np.uint8)
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
@@ -785,13 +828,20 @@ class refmask_color(mask):
         """
         super(refmask_color,self).__init__(n,readopt)
         #store colors and corresponding type
+        rmat = self.matrix
+        if len(rmat.shape) == 3:
+            self.aggmat = 65536*rmat[:,:,0] + 256*rmat[:,:,1] + rmat[:,:,2]
+        else:
+            self.aggmat = self.matrix
         if jData is 0:
             self.colors = [[0,0,0]]
+            self.aggcolors = [0]
             self.purposes = ['add']
         else:
             if (mode == 2) or (mode == 1):
-                #TODO: temporary measure until splice task supports individual tasks again
+                #NOTE: temporary measure until splice task supports individual tasks again
                 self.colors = [[0,0,0]]
+                self.aggcolors = [0]
                 self.purposes = ['add']
             else:
                 filteredJournal = jData.query("Evaluated=='Y'")
@@ -800,16 +850,19 @@ class refmask_color(mask):
                 purposes = filteredJournal['Purpose'].tolist()
                 purposes_unique = []
                 [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
+                #BGR color scheme
                 self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
+                self.aggcolors = [65536*c[0] + 256*c[1] + c[2] for c in self.colors]
                 self.purposes = purposes
 
     def regionIsPresent(self):
         #return True if a scoreable region is present. False if otherwise.
         presence = 0
-        rmat = self.matrix
-        for c in self.colors:
-            presence = presence + np.sum((rmat[:,:,0] == c[0]) & (rmat[:,:,1] == c[1]) & (rmat[:,:,2] == c[2]))
-            if presence > 0:
+#        rmat = self.matrix
+#        aggmat = 65536*rmat[:,:,0] + 256*rmat[:,:,1] + rmat[:,:,2]
+        for c in self.aggcolors:
+#            presence = ((rmat[:,:,0] == c[0]) & (rmat[:,:,1] == c[1]) & (rmat[:,:,2] == c[2])).sum()
+            if (self.aggmat == c).sum() > 0:
                 return True
         return False
 
@@ -853,10 +906,13 @@ class refmask_color(mask):
         mymat = 0
         if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'): 
             selfmat = self.matrix
-            mymat = np.ones(self.get_dims(),dtype=np.uint8)
-            for c in self.colors:
-                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
-            mymat = 255*mymat
+#            aggmat = 65536*selfmat[:,:,0] + 256*selfmat[:,:,1] + selfmat[:,:,2]
+            mymat = np.ones(self.get_dims(),dtype=bool)
+            for aggc in self.aggcolors:
+#                aggc = 65536*c[0] + 256*c[1] + c[2]
+                mymat = mymat & (self.aggmat != aggc)
+#                mymat = mymat & ((selfmat[:,:,0]!=c[0]) | (selfmat[:,:,1]!=c[1]) | (selfmat[:,:,2]!=c[2]))
+            _,mymat = cv2.threshold(np.uint8(mymat),0,255,cv2.THRESH_BINARY)
             self.bwmat = mymat
         else:
             mymat = self.binarize(254)
@@ -865,19 +921,19 @@ class refmask_color(mask):
         kern = kern.lower()
         if erodeKernSize > 0:
             eKern=getKern(kern,erodeKernSize)
-            eImg=255-cv2.erode(255-mymat,eKern,iterations=1)
+            eImg=cv2.dilate(mymat,eKern,iterations=1)
         else:
             eImg = mymat
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
-            dImg=255-cv2.dilate(255-mymat,dKern,iterations=1)
+            dImg=cv2.erode(mymat,dKern,iterations=1)
         else:
             dImg = mymat
 
-        weight=(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
-        wFlip=1-weight
+        _,bns=cv2.threshold(eImg-dImg,0,1,cv2.THRESH_BINARY_INV)
+#        bns=1-(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
 
-        return {'wimg':wFlip,'eimg':eImg,'dimg':dImg}
+        return {'wimg':bns,'eimg':eImg,'dimg':dImg}
 
     def unselectedNoScoreRegion(self,erodeKernSize,dilateKernSize,kern):
         """
@@ -897,28 +953,31 @@ class refmask_color(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        scoredregion = np.zeros(dims)
+        scoredregion = False
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
-        notcolors = mask.getColors(mymat)
+        notcolors,mymat1L = mask.getColors(mymat,aggregate=True)
+#        notcolors = mask.getColors(mymat)
 
         #set erode region to all 1's. Must be in erode region at all times.
-        for c in self.colors:
-            if tuple(c) in notcolors:
-                notcolors.remove(tuple(c))
-                scoredregion = (mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2])
+        for aggc in self.aggcolors:
+            if aggc in notcolors:
+                notcolors.remove(aggc)
+#                scoredregion = scoredregion | ((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
+                scoredregion = scoredregion | (mymat1L==aggc) 
         scoredregion = scoredregion.astype(np.uint8)
             #skip the colors that aren't present, in case they haven't made it to the mask in question
+        mybin = np.ones(dims,dtype=np.uint8)
         if len(notcolors)==0:
-            weights = np.ones(dims,dtype=np.uint8)
-            return weights
+            return mybin
 
-        mybin = np.ones((dims[0],dims[1]),dtype=np.uint8)
+        allbin=True
         for c in notcolors:
             #set equal to cs
-            tbin = ~((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
-            tbin = tbin.astype(np.uint8)
-            mybin = mybin & tbin
+#            tbin = (mymat[:,:,0]!=c[0]) | (mymat[:,:,1]!=c[1]) | (mymat[:,:,2]!=c[2])
+            tbin = mymat1L!=c
+            allbin = allbin & tbin
+        mybin = mybin & allbin
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
@@ -931,7 +990,7 @@ class refmask_color(mask):
         printq(dilateKernSize)
         if dilateKernSize > 0:
             dKern=getKern(kern,dilateKernSize)
-            dImg=1-cv2.dilate(1-mybin,dKern,iterations=1)
+            dImg=cv2.erode(mybin,dKern,iterations=1)
         else:
             dImg = mybin
         dImg=dImg | eImg

@@ -12050,7 +12050,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-s --inSys</p>
 <ul>
-<li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and ProbeOutputMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, ProbeOutputMaskFileName, and DonorOutputMaskFileName fields, in that order. The ProbeOutputMaskFileNames and DonorOutputMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
+<li>Specify the CSV file of the system performance results formatted according to NC2016 specification. The file must contain the ProbeFileID, ConfidenceScore, and OutputProbeMaskFileName fields, in that order, and if scoring on the splice task, the ProbeFileID, DonorFileID, ConfidenceScore, OutputProbeMaskFileName, and OutputDonorMaskFileName fields, in that order. The OutputProbeMaskFileNames and OutputDonorMaskFileNames (where relevant) should be directory strings relative to the location of the system performance CSV.</li>
 </ul>
 
 </div>
@@ -12077,6 +12077,32 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 <p>--jpeg2000</p>
 <ul>
 <li>Evaluate JPEG2000 reference masks. Individual regions in the JPEG2000 masks may interserct; each pixel may contain multiple manipulations.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--cache_dir</p>
+<ul>
+<li>The directory to cache reference mask data for future use. Subdirectories will be created according to specific details related to the task. (NOTE: This feature is currently under development.)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--cache_flush</p>
+<ul>
+<li>Flush the cache directory before starting computation. This is especially crucial when the queryManipulation options are used in conjunction with --cache_dir. (NOTE: This feature is currently under development.)</li>
 </ul>
 
 </div>

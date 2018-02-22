@@ -1,5 +1,5 @@
 #!/bin/bash
-clean=FALSE
+clean=TRUE
 procs=4
 
 echo "BEGINNING FUNCTIONALITY TEST OF MASK SCORER"
@@ -230,7 +230,7 @@ fi
 if test "`eval $filter_moo`" = "" ; then
   flag_moo=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_score.csv
 	fi
 	rm comp_maskreport_manip_optOut.txt
 else
@@ -241,7 +241,7 @@ fi
 if test "`eval $filter_moopi`" = "" ; then
   flag_moopi=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_mask_scores_perimage.csv
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_mask_scores_perimage.csv
 	fi
 	rm comp_maskreport_manip_optOut-perimage.txt
 else
@@ -252,7 +252,7 @@ fi
 if test "`eval $filter_moojr`" = "" ; then
   flag_moojr=0
 	if [ $clean = "TRUE" ] ; then
-		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_p-me_1_journalResults.csv
+		rm ../../data/test_suite/maskScorerTests/manip_optOut/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1_journalResults.csv
 	fi
 	rm comp_maskreport_manip_optOut-journalResults.txt
 else
