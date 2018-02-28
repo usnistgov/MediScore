@@ -523,7 +523,7 @@ class refmask(mask):
             raise ValueError("The input pixel number should be a power of 2.")
 
         cID = int(math.log(b,2)) + 1
-        if self.jounralData is 0:
+        if self.journalData is 0:
             print("No journal data supplied. Returning black.")
             return [0,0,0]
         color = self.journalData.query("BitPlane=='{}'".format(cID)).iloc[0]['Color']

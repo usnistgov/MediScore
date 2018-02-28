@@ -10,7 +10,7 @@ echo
 #TODO: design function to take test and output root as arguments and output total flag?
 
 #default JPEG2000 testing
-$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --jpeg2000 --precision 12 --cache_dir /tmp/bittest_dir
+$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests/ -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-index.csv -s ../../data/test_suite/maskScorerTests/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1 --speedup -html -p $procs --jpeg2000 --precision 12 --cache_dir /tmp/bittest_dir --cache_flush
 
 #compare them to ground truth files
 diff ../../data/test_suite/maskScorerTests/bittest_1/B_MFC18_Unittest_Manipulation_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_bittest_1.csv > comp_maskreport_bittest_1.txt
