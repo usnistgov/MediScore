@@ -391,13 +391,15 @@ HISTORY
       - Initial release
     * Provenance Scorers:
       - Fixed rounding issues with new numpy version
-  Feb 8, 2018 - MediScore Version *.*.*
+  Feb 28, 2018 - MediScore Version *.*.*
     * DetectionScorer:
       - Added EventRepurpose task and its test case
       - Modified DetectionScoreReadMe files
     * MaskScorer:
-      - Additional speedups
+      - Additional misc speedups
       - Vectorized maximum metrics computation.
+      - Refactored mask no-score function to take in less arguments.
+      - Added option to cache no-score zones and others in a directory.
 
 
 CONTACT

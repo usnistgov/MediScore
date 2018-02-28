@@ -37,7 +37,8 @@ import argparse
 import numpy as np
 #import maskreport as mr
 #import pdb #debug purposes
-from abc import ABCMeta, abstractmethod
+#from abc import ABCMeta, abstractmethod
+import configparser
 
 # loading scoring and reporting libraries
 #lib_path = "../../lib"
@@ -194,8 +195,11 @@ if args.outRoot in [None,'']:
 outdir=os.path.dirname(args.outRoot)
 outpfx=os.path.basename(args.outRoot)
 
-if not os.path.isdir(outdir):
-    os.system(' '.join(['mkdir',outdir]))
+def mkdir(dirname):
+    if not os.path.isdir(dirname):
+        os.system('mkdir {}'.format(dirname))
+
+mkdir(outdir)
 
 if args.task == 'manipulation':
     index_dtype = {'TaskID':str,
@@ -311,10 +315,19 @@ round_modes = ['sd']
 if args.truncate:
     round_modes.append('t')
 
-#cache directory options
-cache_sub_dir = ['ref_e{}_d{}_nt{}'.format(args.eks,args.dks,args.ntdks)]
-if args.jpeg2000:
-    cache_sub_dir.append('jp2')
+#cache directory features
+task_sffx = args.task[0]
+
+#if cache_dir exists, notify accordingly.
+if args.cache_dir:
+    if os.path.isdir(args.cache_dir) and not args.cache_flush:
+        print("{} exists.".format(args.cache_dir))
+    mkdir(args.cache_dir)
+
+cache_sub_dir = []
+#cache_sub_dir = ['ref_{}_e{}_d{}_nt{}'.format(task_sffx,args.eks,args.dks,args.ntdks)]
+#if args.jpeg2000:
+#    cache_sub_dir.append('jp2')
 
 #TODO: change this to a dictionary, since this is all it does.
 class loc_scoring_params:
@@ -355,6 +368,7 @@ def round_df(my_df,metlist):
     return my_df
 
 #define HTML functions here
+#TODO: move these to separate files and import from those files
 df2html = lambda *a:None
 if args.task == 'manipulation':
     def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision,cache_dir=None):
@@ -363,10 +377,9 @@ if args.task == 'manipulation':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
     
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
+        metricRunner = maskMetricRunner(m_df,args.refDir,sysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
+
         #revise this to outputRoot and loc_scoring_params
-        if cache_dir and args.cache_flush:
-            os.system('rm -rf {}/*'.format(cache_dir))
         params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir)
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
@@ -404,7 +417,7 @@ if args.task == 'manipulation':
     def journalUpdate(probeJournalJoin,journalData,r_df):
         #get the manipulations that were not scored and set the same columns in journalData to 'N'
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('OptimumMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
-        pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
+        pjoins['Foo'] = 0 #dummy variable to be deleted later
 #        p_idx = pjoins.reset_index().merge(journalData,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
         p_idx = journalData.reset_index().merge(pjoins,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
 
@@ -550,57 +563,56 @@ if args.task == 'manipulation':
 
         return a_df
 
-    if args.html:
-        def df2html(df,average_df,outputRoot,queryManipulation,query):
-            html_out = df.copy()
-    
-            #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
-            if outputRoot[-1] == '/':
-                outputRoot = outputRoot[:-1]
-    
-            #set links around the system output data frame files for images that are not NaN
-            #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-            pd.set_option('display.max_colwidth',-1)
+    def df2html(df,average_df,outputRoot,queryManipulation,query):
+        html_out = df.copy()
+
+        #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
+        if outputRoot[-1] == '/':
+            outputRoot = outputRoot[:-1]
+
+        #set links around the system output data frame files for images that are not NaN
+        #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+        pd.set_option('display.max_colwidth',-1)
 #            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']) & (html_out['Scored'] == 'Y'),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
-            html_out.loc[html_out['Scored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileID'] + '/' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+        html_out.loc[html_out['Scored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileID'] + '/' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['Scored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
 
-            html_out = html_out.round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
+        html_out = html_out.round({'OptimumNMM':3,'OptimumMCC':3,'OptimumBWL1':3,'GWL1':3})
 
-            #final filtering
-            html_out.loc[html_out.query("OptimumMCC == -2").index,'OptimumMCC'] = ''
-            html_out.loc[html_out.query("(OptimumMCC == 0) & (Scored == 'N')").index,'Scored'] = 'Y'
+        #final filtering
+        html_out.loc[html_out.query("OptimumMCC == -2").index,'OptimumMCC'] = ''
+        html_out.loc[html_out.query("(OptimumMCC == 0) & (Scored == 'N')").index,'Scored'] = 'Y'
 
-            #write to index.html
-            fname = os.path.join(outputRoot,'index.html')
-            myf = open(fname,'w')
+        #write to index.html
+        fname = os.path.join(outputRoot,'index.html')
+        myf = open(fname,'w')
 
-            #add other metrics where relevant
-            if average_df is not 0:
-                #write title and then average_df
-                metriclist = {}
-                for met in ['NMM','MCC','BWL1']:
-                    metriclist[''.join(['Optimum',met])] = 3
-                    if args.sbin >= -1:
-                        metriclist[''.join(['Maximum',met])] = 3
-                        metriclist[''.join(['Actual',met])] = 3
-                for met in ['GWL1','AUC','EER']:
-                    metriclist[met] = 3
-                
-                a_df_copy = average_df.copy().round(metriclist)
-                myf.write('<h3>Average Scores</h3>\n')
-                myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
+        #add other metrics where relevant
+        if average_df is not 0:
+            #write title and then average_df
+            metriclist = {}
+            for met in ['NMM','MCC','BWL1']:
+                metriclist[''.join(['Optimum',met])] = 3
+                if args.sbin >= -1:
+                    metriclist[''.join(['Maximum',met])] = 3
+                    metriclist[''.join(['Actual',met])] = 3
+            for met in ['GWL1','AUC','EER']:
+                metriclist[met] = 3
+            
+            a_df_copy = average_df.copy().round(metriclist)
+            myf.write('<h3>Average Scores</h3>\n')
+            myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
-            #insert graphs here
-            myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc.pdf\" alt=\"mask_average_roc\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc.pdf\" alt=\"pixel_average_roc\" width=\"540\" height=\"540\"></td></tr><tr><th>Mask Average ROC</th><th>Pixel Average ROC</th></tr></tbody></table><br/>\n")
+        #insert graphs here
+        myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc.pdf\" alt=\"mask_average_roc\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc.pdf\" alt=\"pixel_average_roc\" width=\"540\" height=\"540\"></td></tr><tr><th>Mask Average ROC</th><th>Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
-            myf.write('<h3>Per Scored Trial Scores</h3>\n')
-            myf.write(html_out.to_html(escape=False,na_rep='').replace("text-align: right;","text-align: center;").encode('utf-8'))
-            myf.write('\n')
-            #write the query if manipulated
-            if queryManipulation:
-                myf.write("\nFiltered by query: {}\n".format(query))
+        myf.write('<h3>Per Scored Trial Scores</h3>\n')
+        myf.write(html_out.to_html(escape=False,na_rep='').replace("text-align: right;","text-align: center;").encode('utf-8'))
+        myf.write('\n')
+        #write the query if manipulated
+        if queryManipulation:
+            myf.write("\nFiltered by query: {}\n".format(query))
 
-            myf.close()
+        myf.close()
 
 elif args.task == 'splice':
     def createReport(m_df, journalData, probeJournalJoin, index, refDir, sysDir, rbin, sbin,erodeKernSize, dilateKernSize,distractionKernSize, kern,outputRoot,html,color,verbose,precision,cache_dir=None):
@@ -613,14 +625,17 @@ elif args.task == 'splice':
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        metricRunner = maskMetricRunner(m_df,args.refDir,mySysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
+        metricRunner = maskMetricRunner(m_df,refDir,sysDir,rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
         cache_dir_new=None
         if cache_dir:
-            cache_dir_new = os.path.join(cache_dir,'probe')
             if args.cache_flush:
-                os.system('rm -rf {}/*'.format(cache_dir_new))
+                os.system('rm -rf {}/*'.format(cache_dir))
+            cache_dir_new = os.path.join(cache_dir,'probe')
+            mkdir(cache_dir_new)
+
+            config_meta = configparser.ConfigParser()
         params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
@@ -630,8 +645,8 @@ elif args.task == 'splice':
 #        donor_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         if cache_dir:
             cache_dir_new = os.path.join(cache_dir,'donor')
-            if args.cache_flush:
-                os.system('rm -rf {}/*'.format(cache_dir_new))
+            mkdir(cache_dir_new)
+
         params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
@@ -783,11 +798,11 @@ elif args.task == 'splice':
     def journalUpdate(probeJournalJoin,journalData,r_df):
         #set where the rows are the same in the join
         pjoins = probeJournalJoin.query("ProbeFileID=={}".format(r_df.query('pOptimumMCC == -2')['ProbeFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','ProbeFileID']]
-        pjoins['Foo'] = pd.Series([0]*len(pjoins)) #dummy variable to be deleted later
+        pjoins['Foo'] = 0 #dummy variable to be deleted later
         p_idx = journalData.reset_index().merge(pjoins,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
 #        p_idx = pjoins.reset_index().merge(journalData,how='left',on=['ProbeFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
         djoins = probeJournalJoin.query("DonorFileID=={}".format(r_df.query('dOptimumMCC == -2')['DonorFileID'].tolist()))[['JournalName','StartNodeID','EndNodeID','DonorFileID']]
-        djoins['Foo'] = pd.Series([0]*len(djoins)) #dummy variable to be deleted later
+        djoins['Foo'] = 0 #dummy variable to be deleted later
         d_idx = journalData.reset_index().merge(djoins,how='left',on=['DonorFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Foo',1).index
 #        d_idx = djoins.reset_index().merge(journalData,how='left',on=['DonorFileID','JournalName','StartNodeID','EndNodeID']).set_index('index').dropna().drop('Color',1).index
 
@@ -959,65 +974,65 @@ elif args.task == 'splice':
 
         return a_df
 
-    if args.html:
-        def df2html(df,average_df,outputRoot,queryManipulation,query):
-            html_out = df.copy()
-    
-            #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
-            if outputRoot[-1] == '/':
-                outputRoot = outputRoot[:-1]
-    
-            #set links around the system output data frame files for images that are not NaN
-            #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
-            #html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
-            pd.set_option('display.max_colwidth',-1)
+    def df2html(df,average_df,outputRoot,queryManipulation,query):
+        html_out = df.copy()
+
+        #os.path.join doesn't seem to work with Pandas Series so just do a manual string addition
+        if outputRoot[-1] == '/':
+            outputRoot = outputRoot[:-1]
+
+        #set links around the system output data frame files for images that are not NaN
+        #html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['ProbeFileName'] + '</a>'
+        #html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + outputRoot + '/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out['DonorFileName'] + '</a>'
+        pd.set_option('display.max_colwidth',-1)
 #            html_out.loc[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/probe/' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileName'].str.split('/').str.get(-1) + '</a>'
 #            html_out.loc[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'] = '<a href="' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'ProbeFileID'] + '_' + html_out.ix[~pd.isnull(html_out['OutputProbeMaskFileName']),'DonorFileID'] + '/donor/' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[~pd.isnull(html_out['OutputDonorMaskFileName']),'DonorFileName'].str.split('/').str.get(-1) + '</a>'
 
-            html_out.loc[html_out['ProbeScored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['ProbeScored'] == 'Y','DonorFileID'] + '/probe/' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
-            html_out.loc[html_out['DonorScored'] == 'Y','DonorFileName'] = '<a href="' + html_out.ix[html_out['DonorScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileID'] + '/donor/' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1) + '</a>'
+        html_out.at[html_out['ProbeScored'] == 'Y','ProbeFileName'] = '<a href="' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['ProbeScored'] == 'Y','DonorFileID'] + '/probe/' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['ProbeScored'] == 'Y','ProbeFileName'].str.split('/').str.get(-1) + '</a>'
+        html_out.at[html_out['DonorScored'] == 'Y','DonorFileName'] = '<a href="' + html_out.ix[html_out['DonorScored'] == 'Y','ProbeFileID'] + '_' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileID'] + '/donor/' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1).str.split('.').str.get(0) + '.html">' + html_out.ix[html_out['DonorScored'] == 'Y','DonorFileName'].str.split('/').str.get(-1) + '</a>'
 
-            html_out = html_out.round({'pOptimumNMM':3,'pOptimumMCC':3,'pOptimumBWL1':3,'pGWL1':3,'dOptimumNMM':3,'dOptimumMCC':3,'dOptimumBWL1':3,'dGWL1':3})
+        html_out = html_out.round({'pOptimumNMM':3,'pOptimumMCC':3,'pOptimumBWL1':3,'pGWL1':3,'dOptimumNMM':3,'dOptimumMCC':3,'dOptimumBWL1':3,'dGWL1':3})
 
-            html_out.loc[html_out.query("pOptimumMCC == -2").index,'pOptimumMCC'] = ''
-            html_out.loc[html_out.query("dOptimumMCC == -2").index,'dOptimumMCC'] = ''
-            html_out.loc[html_out.query("pOptimumMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
-            html_out.loc[html_out.query("dOptimumMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
-            #write to index.html
-            fname = os.path.join(outputRoot,'index.html')
-            myf = open(fname,'w')
+        html_out.at[html_out.query("pOptimumMCC == -2").index,'pOptimumMCC'] = ''
+        html_out.at[html_out.query("dOptimumMCC == -2").index,'dOptimumMCC'] = ''
+        html_out.at[html_out.query("pOptimumMCC == 0 & ProbeScored == 'N'").index,'ProbeScored'] = 'Y'
+        html_out.at[html_out.query("dOptimumMCC == 0 & DonorScored == 'N'").index,'DonorScored'] = 'Y'
+        #write to index.html
+        fname = os.path.join(outputRoot,'index.html')
+        myf = open(fname,'w')
 
-            if average_df is not 0:
-                #write title and then average_df
-                metriclist = {}
-                for pfx in ['p','d']:
-                    for met in ['NMM','MCC','BWL1']:
-                        metriclist[''.join([pfx,'Optimum',met])] = 3
-                        if args.sbin >= -1:
-                            metriclist[''.join([pfx,'Maximum',met])] = 3
-                            metriclist[''.join([pfx,'Actual',met])] = 3
-                    for met in ['GWL1','AUC','EER']:
-                        metriclist[''.join([pfx,met])] = 3
+        if average_df is not 0:
+            #write title and then average_df
+            metriclist = {}
+            for pfx in ['p','d']:
+                for met in ['NMM','MCC','BWL1']:
+                    metriclist[''.join([pfx,'Optimum',met])] = 3
+                    if args.sbin >= -1:
+                        metriclist[''.join([pfx,'Maximum',met])] = 3
+                        metriclist[''.join([pfx,'Actual',met])] = 3
+                for met in ['GWL1','AUC','EER']:
+                    metriclist[''.join([pfx,met])] = 3
 
-                a_df_copy = average_df.copy().round(metriclist)
-                myf.write('<h3>Average Scores</h3>\n')
-                myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
+            a_df_copy = average_df.copy().round(metriclist)
+            myf.write('<h3>Average Scores</h3>\n')
+            myf.write(a_df_copy.to_html().replace("text-align: right;","text-align: center;"))
 
-            #insert graphs here
-            myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc_probe.pdf\" alt=\"mask_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc_probe.pdf\" alt=\"pixel_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Probe Average ROC</th><th>Probe Pixel Average ROC</th></tr><tr><td><embed src=\"mask_average_roc_donor.pdf\" alt=\"mask_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'</td><td><embed src=\"pixel_average_roc_donor.pdf\" alt=\"pixel_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Donor Average ROC</th><th>Donor Pixel Average ROC</th></tr></tbody></table><br/>\n")
+        #insert graphs here
+        myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc_probe.pdf\" alt=\"mask_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc_probe.pdf\" alt=\"pixel_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Probe Average ROC</th><th>Probe Pixel Average ROC</th></tr><tr><td><embed src=\"mask_average_roc_donor.pdf\" alt=\"mask_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'</td><td><embed src=\"pixel_average_roc_donor.pdf\" alt=\"pixel_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Donor Average ROC</th><th>Donor Pixel Average ROC</th></tr></tbody></table><br/>\n")
 
-            myf.write('<h3>Per Scored Trial Scores</h3>\n')
-            myf.write(html_out.to_html(escape=False,na_rep='').encode('utf-8'))
-            myf.write('\n')
-            #write the query if manipulated
-            if queryManipulation:
-                myf.write("\nFiltered by query: {}\n".format(query))
+        myf.write('<h3>Per Scored Trial Scores</h3>\n')
+        myf.write(html_out.to_html(escape=False,na_rep='').encode('utf-8'))
+        myf.write('\n')
+        #write the query if manipulated
+        if queryManipulation:
+            myf.write("\nFiltered by query: {}\n".format(query))
 
-            myf.close()
+        myf.close()
 
 #TODO: basic data init-ing starts here
 factor_mode = ''
 query = '' #in a similar format to queryManipulation elements, since partition treats them similarly
+n_query = 1
 if args.query:
     factor_mode = 'q'
     query = args.query #is a list of items
@@ -1027,6 +1042,7 @@ elif args.queryPartition:
 elif args.queryManipulation:
     factor_mode = 'qm'
     query = args.queryManipulation #is a list of items
+    n_query = len(args.queryManipulation)
 
 ## if the confidence score are 'nan', replace the values with the mininum score
 #mySys[pd.isnull(mySys['ConfidenceScore'])] = mySys['ConfidenceScore'].min()
@@ -1048,18 +1064,92 @@ if args.precision < 1:
 refpfx = os.path.join(myRefDir,args.inRef.split('.')[0])
 #try/catch this
 try:
-    probeJournalJoin = pd.read_csv(refpfx + '-probejournaljoin.csv',sep="|",header=0,na_filter=False)
+    probeJournalJoin = pd.read_csv('-'.join([refpfx,'probejournaljoin.csv']),sep="|",header=0,na_filter=False)
 except IOError:
     print("No probeJournalJoin file is present. This run will terminate.")
     exit(1)
 
 try:
-    journalMask = pd.read_csv(refpfx + '-journalmask.csv',sep="|",header=0,na_filter=False)
+    journalMask = pd.read_csv('-'.join([refpfx,'journalmask.csv']),sep="|",header=0,na_filter=False)
 except IOError:
     print("No journalMask file is present. This run will terminate.")
     exit(1)
     
 #TODO: basic data init-ing ends here
+
+def cache_init(cache_dir,query=''):
+    if args.cache_flush:
+        os.system('rm -rf {}/*'.format(cache_dir))
+    mkdir(cache_dir)
+    #save all metadata in a file in this directory.
+    config_meta = configparser.ConfigParser()
+    refpfx = args.inRef[:-4]
+    pjj_name = '%s-probejournaljoin.csv' % refpfx
+    jm_name = '%s-journalmask.csv' % refpfx
+
+    config_meta['eval_task'] = {'task':args.task}
+    config_meta['reference'] = {'directory':args.refDir,
+                                'reference':args.inRef,
+                                'probejournaljoin':pjj_name,
+                                'journalmask':jm_name}
+    config_meta['index'] = {'indexfile':args.inIndex}
+    config_meta['query'] = {'query':query}
+    config_meta['no_score_parameters'] = {'kernel':args.kernel,
+                                          'erode_size':args.eks,
+                                          'dilate_size':args.dks,
+                                          'non_target_size':args.ntdks,
+                                          'global_pixel_ns':args.nspx,
+                                          'per_probe_pixel_ns':args.perProbePixelNoScore}
+    config_meta['JPEG2000_scoring'] = {'implemented':args.jpeg2000}
+
+    config_name = os.path.join(cache_dir,'config.ini')
+   
+    tmp_path = '/tmp/config_tmp.ini' 
+    with open(tmp_path,'w') as configfile:
+        config_meta.write(configfile)
+    #if exists, check the two to ensure they are equal
+    if os.path.isfile(config_name):
+        existing_config = configparser.ConfigParser()
+        existing_config.read(config_name)
+        #if not equal, print a warning
+        if existing_config != config_meta:
+            print("Warning: a config file exists, but is not identical to the parameters generated.")
+            os.system('diff {} {}'.format(tmp_path,config_name))
+            #if reference files are not identical, terminate and ask for a new reference directory
+            score_status = 0
+            config_check_fields = ['eval_task:task:evaluation tasks',
+                                  'reference:reference:reference files',
+                                  'query:query:queries',
+                                  'JPEG2000_scoring:implemented:JPEG2000 scoring options',
+                                  'no_score_parameters:kernel:kernel types',
+                                  'no_score_parameters:erode_size:erode kernel sizes',
+                                  'no_score_parameters:dilate_size:dilate kernel sizes',
+                                  'no_score_parameters:non_target_size:non-target kernel sizes']
+            for fields in config_check_fields:
+                f1,f2,ferr = fields.split(':')
+                if (f1 == 'no_score_parameters') and (score_status == 0) and (existing_config[f1][f2] != config_meta[f1][f2]):
+                    print("The {} are not equal between the configuration files. Preparing to reset the no-score masks.".format(ferr))
+                    #remove all bns.png and sns.png.
+                    if args.task == 'manipulation':
+                        os.system('rm -f {}'.format(os.path.join(cache_dir,'*_bns.png')))
+                        os.system('rm -f {}'.format(os.path.join(cache_dir,'*_sns.png')))
+                    elif args.task == 'splice':
+                        #append probe and donor dirs if splice
+                        for sub_dir in ['probe','donor']:
+                            cache_sub_dir = os.path.join(cache_dir,sub_dir)
+                            os.system('rm -f {}'.format(os.path.join(cache_sub_dir,'*_bns.png')))
+                            os.system('rm -f {}'.format(os.path.join(cache_sub_dir,'*_sns.png')))
+                    continue
+                if existing_config[f1][f2] != config_meta[f1][f2]:
+                    print("Error: the {} are not equal between the configuration files.".format(ferr))
+                    score_status = 1
+            if score_status == 1:
+                print("Pick a different directory to cache the reference data or rerun with --cache_flush to remove existing data.")
+                exit(1)
+            else:
+                os.rename(tmp_path,config_name)
+    else:
+        os.rename(tmp_path,config_name)
 
 # Merge the reference and system output
 if args.task == 'manipulation':
@@ -1124,16 +1214,16 @@ if args.task == 'manipulation':
         outRootQuery = outRoot
         if len(queryM) > 1:
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
-            if not os.path.isdir(outRootQuery):
-                os.system(' '.join(['mkdir',outRootQuery]))
+            mkdir(outRootQuery)
         m_dfc['Scored'] = ['Y']*len(m_dfc)
 
         cache_sub_dir_new = cache_sub_dir[:]
-        if q is not '':
+        if (q is not '') and n_query > 1:
             cache_sub_dir_new.append('q{}'.format(qnum))
         cache_full_dir=None
         if args.cache_dir:
             cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
+            cache_init(cache_full_dir,q)
 
         printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
@@ -1185,7 +1275,8 @@ if args.task == 'manipulation':
             r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
 
         #generate HTML table report
-        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
+        if args.html:
+            df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
 
         r_df.loc[r_idx,'OptimumMCC'] = ''
         prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
@@ -1221,8 +1312,10 @@ elif args.task == 'splice':
     journalData0 = pd.merge(probeJournalJoin[joinfields].drop_duplicates(),journalMask,how='left',on=journaljoinfields).drop_duplicates()
     if args.indexFilter:
         printq("Filtering the journal data by index file...")
-        myIndex['ProbeDonorID'] = myIndex['ProbeFileID'] + ":" + myIndex['DonorFileID']
-        journalData0['ProbeDonorID'] = journalData0['ProbeFileID'] + ":" + journalData0['DonorFileID']
+#        myIndex['ProbeDonorID'] = ":".join([myIndex['ProbeFileID'],myIndex['DonorFileID']])
+#        journalData0['ProbeDonorID'] = ":".join([journalData0['ProbeFileID'],journalData0['DonorFileID']])
+        myIndex['ProbeDonorID'] = myIndex[['ProbeFileID','DonorFileID']].apply(lambda x: ':'.join(x),axis=1)
+        journalData0['ProbeDonorID'] = journalData0[['ProbeFileID','DonorFileID']].apply(lambda x: ':'.join(x),axis=1)
         myIndex = myIndex.query("ProbeDonorID=={}".format(journalData0.ProbeDonorID.unique().tolist())) #first filter by Probe-Donor pairs
         journalData0 = pd.merge(myIndex[['ProbeDonorID']],journalData0,how='left',on=['ProbeDonorID']).drop('ProbeDonorID',1)
     
@@ -1277,8 +1370,7 @@ elif args.task == 'splice':
         outRootQuery = outRoot
         if len(queryM) > 1:
             outRootQuery = os.path.join(outRoot,'index_{}'.format(qnum)) #affix outRoot with qnum suffix for some length
-            if not os.path.isdir(outRootQuery):
-                os.system(' '.join(['mkdir',outRootQuery]))
+            mkdir(outRootQuery)
    
         m_dfc['Scored'] = ['Y']*m_dfc.shape[0]
 
@@ -1288,6 +1380,7 @@ elif args.task == 'splice':
         cache_full_dir=None
         if args.cache_dir:
             cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
+            cache_init(cache_full_dir,q)
         printq("Beginning mask scoring...")
         r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
         journalUpdate(probeJournalJoin,journalData0,r_df)
@@ -1349,7 +1442,8 @@ elif args.task == 'splice':
             r_df[pix] = r_df[pix].dropna().apply(lambda x: str(int(x)))
 
         #generate HTML table report
-        df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
+        if args.html:
+            df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
         r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
         r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''

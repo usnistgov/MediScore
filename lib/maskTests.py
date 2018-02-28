@@ -178,7 +178,7 @@ class TestImageMethods(ut.TestCase):
 
         self.assertTrue(np.array_equal(baseNoScore,baseNScompare))
         self.assertTrue(np.array_equal(distractionNoScore,distractionNScompare))
-        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box',0)
+        aggwts,_,_ = mytest.aggregateNoScore(3,5,5,'box')
         self.assertTrue(np.array_equal(aggwts,baseNoScore & distractionNoScore))
 
     #test if the no-score zone comes out exactly as expected. Box kernel for now. 
@@ -200,7 +200,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_0.jp2',blank_mask)
         rImg = masks.refmask('testrefmask_0.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         self.assertTrue(np.array_equal(aggwts,np.ones((100,150))))
         self.assertTrue(np.array_equal(bns,np.ones((100,150))))
@@ -214,7 +214,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1.jp2',mask1)
         rImg = masks.refmask('testrefmask_1.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         selmask = np.ones(mask1.shape)
         selmask[38:62,38:62] = 0
@@ -230,7 +230,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_2.jp2',mask2)
         rImg = masks.refmask('testrefmask_2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         selmask = np.ones(mask1.shape)
         selmask[38:62,38:62] = 0
@@ -246,7 +246,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_2a.jp2',mask2)
         rImg = masks.refmask('testrefmask_2a.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
@@ -263,7 +263,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_2ML.jp2',maskML)
         rImg = masks.refmask('testrefmask_2ML.jp2',jData=ML_journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
         
         self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
@@ -277,7 +277,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_2in1.jp2',mask2in1)
         rImg = masks.refmask('testrefmask_2in1.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         selmask = np.ones((100,100))
         selmask[8:92,8:72] = 0
@@ -298,7 +298,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1in2.jp2',mask1in2)
         rImg = masks.refmask('testrefmask_1in2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
         selmask = np.ones((100,100))
         selmask[8:92,8:72] = 0
@@ -317,7 +317,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1and2.jp2',mask1and2)
         rImg = masks.refmask('testrefmask_1and2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box')
 
         selmask = np.ones((100,100))
         selmask[27:53,27:53] = 0
@@ -344,7 +344,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1x2.jp2',mask1x2)
         rImg = masks.refmask('testrefmask_1x2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
         
         selmask = np.ones((100,100))
         selmask[38:62,18:82] = 0
@@ -371,7 +371,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1n2.jp2',mask1n2)
         rImg = masks.refmask('testrefmask_1n2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box')
 
         selmask = np.ones((100,100))
         selmask[37:63,37:53] = 0
@@ -398,7 +398,7 @@ class TestImageMethods(ut.TestCase):
         glymur.Jp2k('testrefmask_1_2.jp2',mask1_2)
         rImg = masks.refmask('testrefmask_1_2.jp2',jData=journal_df)
         rImg.binarize(0)
-        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box',0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,7,'box')
         
 #        mask1vis = np.copy(mask1_2) #debug for images
 #        mask1vis[mask1_2 == 1] = 255

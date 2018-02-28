@@ -251,10 +251,10 @@ class mask(object):
         rbinmat[sns==0] = colordict['pink']
         if pns is not 0:
             rbinmat[pns==0] = colordict['purple']
-        
-        params=list()
-        params.append(16)
-        params.append(0)
+        params = [16,0]        
+#        params=list()
+#        params.append(16)
+#        params.append(0)
         cv2.imwrite(colorPNGname,rbinmat,params)
         return rbinmat
 
@@ -268,7 +268,7 @@ class mask(object):
         * Output:
         *     overmat: the overlayed image
         """
-        mymat = np.copy(self.matrix)
+        mymat = self.matrix
         gImg = cv2.imread(imgName,0)
         gImg = np.dstack(gImg,gImg,gImg)
         if len(self.matrix.shape)==2:
@@ -498,6 +498,8 @@ class refmask(mask):
         if len(rmat.shape) == 3:
             for i in range(self.matrix.shape[2]):
                 presence += (rmat[:,:,i] & (full_bitstack >> 8*i)).sum()
+                if presence > 0:
+                    return True
         else:
             presence += (rmat & full_bitstack).sum()
 
@@ -521,6 +523,9 @@ class refmask(mask):
             raise ValueError("The input pixel number should be a power of 2.")
 
         cID = int(math.log(b,2)) + 1
+        if self.jounralData is 0:
+            print("No journal data supplied. Returning black.")
+            return [0,0,0]
         color = self.journalData.query("BitPlane=='{}'".format(cID)).iloc[0]['Color']
         color = [int(p) for p in color.split(' ')]
         return color
@@ -605,7 +610,7 @@ class refmask(mask):
 
         return seq
 
-    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode):
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
         """
         * Description: this function calculates and generates the aggregate no score zone of the mask
                        by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
@@ -615,8 +620,6 @@ class refmask(mask):
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: total length of the dilation kernel matrix for the distraction no-score zone
         *     kern: kernel shape to be used
-        *     mode: determines the task used. 0 denotes the evaluation of the  manipulation task, 1 denotes the evaluation
-                    of the probe image in the splice task, 2 denotes the evaluation of the donor image in the splice task.
         """
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
 #        wimg = baseNoScore
@@ -829,6 +832,7 @@ class refmask_color(mask):
         super(refmask_color,self).__init__(n,readopt)
         #store colors and corresponding type
         rmat = self.matrix
+        self.mode = mode
         if len(rmat.shape) == 3:
             self.aggmat = 65536*rmat[:,:,0] + 256*rmat[:,:,1] + rmat[:,:,2]
         else:
@@ -866,7 +870,7 @@ class refmask_color(mask):
                 return True
         return False
 
-    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode):
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
         """
         * Description: this function calculates and generates the aggregate no score zone of the mask
                        by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
@@ -876,14 +880,12 @@ class refmask_color(mask):
         *     dilateKernSize: total length of the dilation kernel matrix
         *     distractionKernSize: total length of the dilation kernel matrix for the distraction no-score zone
         *     kern: kernel shape to be used
-        *     mode: determines the task used. 0 denotes the evaluation of the  manipulation task, 1 denotes the evaluation
-                    of the probe image in the splice task, 2 denotes the evaluation of the donor image in the splice task.
         """
         baseNoScore = self.boundaryNoScoreRegion(erodeKernSize,dilateKernSize,kern)['wimg']
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
 
-        if (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
+        if (self.purposes is not 'all') and (self.mode!=1): #case 1 treat other no-scores as white regions
             distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 

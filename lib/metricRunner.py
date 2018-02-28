@@ -285,13 +285,26 @@ class maskMetricRunner:
 
         return rImg,sImg 
 
-    def get_ref_no_scores(self):
+    def get_ref_no_scores(self,rImg,probeID,erodeKernSize,dilateKernSize,distractionKernSize,kern):
         wts,bns,sns = 0,0,0
+
+        if self.cache_dir: 
+            bns_dir = os.path.join(self.cache_dir,'%s_bns.png' % probeID)
+            sns_dir = os.path.join(self.cache_dir,'%s_sns.png' % probeID)
+            #if it's found in the cache, read it in
+            if os.path.isfile(bns_dir) and os.path.isfile(sns_dir):
+                 bns = cv2.imread(bns_dir,0)
+                 sns = cv2.imread(sns_dir,0)
+                 wts = bns & sns
+                 return wts,bns,sns
+     
+        wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
         if self.cache_dir:
-            print 'cache' #TODO: do this
-            
-        else:
-            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
+            #save the files in the cache
+            save_params = [16,0]
+            cv2.imwrite(bns_dir,bns,save_params)
+            cv2.imwrite(sns_dir,sns,save_params)
+
         return wts,bns,sns
 
     #for apply
@@ -308,7 +321,7 @@ class maskMetricRunner:
         erodeKernSize = self.erodeKernSize
         dilateKernSize = self.dilateKernSize
         distractionKernSize = self.distractionKernSize
-        noScorePixel = self.noScorePixel
+#        noScorePixel = self.noScorePixel
         kern = self.kern
         truncate = self.truncate
         round_modes = ['sd'] #TODO: debug
@@ -373,7 +386,11 @@ class maskMetricRunner:
                 return maskRow
 
             rdims = rImg.get_dims()
-            myprintbuffer.append("Beginning scoring for reference image {} with dims {} and system image {} with dims {}...".format(rImg.name,rdims,sImg.name,sImg.get_dims()))
+            sdims = sImg.get_dims()
+            myprintbuffer.append("Beginning scoring for reference image {} with dims {} and system image {} with dims {}...".format(rImg.name,rdims,sImg.name,sdims))
+            if rdims != sdims:
+                myprintbuffer.append("Error: Reference and system image dimensions do not match for probe {}.".format(manipFileID))
+                exit(1)
 
             if (rImg.matrix is None) or (sImg.matrix is None):
                 #Likely this could be FP or FN. Set scores as usual.
@@ -389,22 +406,18 @@ class maskMetricRunner:
 
             #save the image separately for html and further review. Use that in the html report
             myprintbuffer.append("Generating no-score zones...")
-            #TODO: get from cache data if exists in cache
-            #TODO: add controls for self.cache_dir
-            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern,self.mode)
+            wts,bns,sns = self.get_ref_no_scores(rImg,manipFileID,erodeKernSize,dilateKernSize,distractionKernSize,kern)
+#            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
 
-            #TODO: move this into separate pixel no-score function
             myprintbuffer.append("Generating reference mask with no-score zones...")
             #do a 3-channel combine with bns and sns for their colors before saving
-            #noScorePixel here
             myprintbuffer.append("Setting system optOut no-score zone...")
-            pns=0
-            pppnspx = noScorePixel #TODO: have this be separate from pppns?
+            pppnspx = self.noScorePixel #TODO: have this be separate from pppns?
             if self.perProbePixelNoScore:
                 pppnspx = maskRow['%sOptOutPixelValue' % mymode]
             pns=sImg.pixelNoScore(pppnspx)
             if pns is 1:
-                myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,noScorePixel))
+                myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,pppnspx))
                 exit(1)
             wts = cv2.bitwise_and(wts,pns)
             rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
@@ -457,7 +470,7 @@ class maskMetricRunner:
             #and pass to HTML accordingly
             amets = 0
             myameas = 0
-            #TODO: might want to throw this into maskMetrics for efficient grouping?
+            #TODO: throw this into maskMetrics for nice grouping?
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
@@ -580,7 +593,7 @@ class maskMetricRunner:
                 baseFileName = maskRow['BaseFileName']
                 maniImgName = os.path.join(self.refDir,manipFileName)
                 myprintbuffer.append("Generating aggregate color mask for HTML report...")
-                colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,maniImgName,subOutRoot,self.colordict)
+                colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,manipFileID,maniImgName,subOutRoot,self.colordict)
                 colMaskName=colordirs['mask']
                 aggImgName=colordirs['agg']
                 maskRow['ColMaskFileName'] = colMaskName
@@ -610,8 +623,8 @@ class maskMetricRunner:
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
-            if debug_mode == True:
-                raise  #TODO: debug assistant
+            if debug_mode:
+                raise  #debug assistant
             return maskRow
 #            myprintbuffer.atomprint(print_lock)
 
@@ -1260,9 +1273,23 @@ class maskMetricRunner:
             os.symlink(os.path.abspath(rImg_name),rPathNew)
         else:
             #create and save refMask.png.
-            refMask = rImg.getAnimatedMask()
-            write_apng(rPathNew,refMask,delay=600,use_palette=False)
-
+            if self.cache_dir: 
+                cache_acolor_path = os.path.join(os.path.join(self.cache_dir,'%s_acolor.png' % probeFileID))
+                acolor_in_cache = os.path.isfile(cache_acolor_path)
+                if acolor_in_cache:
+                    #generate sym link
+                    os.symlink(os.path.abspath(cache_acolor_path),rPathNew)
+                else:
+                    refMask = rImg.getAnimatedMask()
+                    write_apng(rPathNew,refMask,delay=600,use_palette=False)
+            else:
+                refMask = rImg.getAnimatedMask()
+                write_apng(rPathNew,refMask,delay=600,use_palette=False)
+            if self.cache_dir:
+                cache_acolor_path = os.path.join(os.path.join(self.cache_dir,'%s_acolor.png' % probeFileID))
+                if not acolor_in_cache:
+                    write_apng(cache_acolor_path,refMask,delay=600,use_palette=False)
+            
         myprintbuffer.append(" ".join(["Creating link for manipulated image", maniImageFName]))
         os.symlink(os.path.abspath(mPath),mPathNew)
         myprintbuffer.append(" ".join(["Creating link for system output mask", sImg_name]))
@@ -1441,7 +1468,7 @@ class maskMetricRunner:
         return tablestring
 
     #prints out the aggregate mask, reference and other data
-    def aggregateColorMask(self,ref,sysmask,bns,sns,pns,kern,erodeKernSize,maniImgName,outputMaskPath,colordict):
+    def aggregateColorMask(self,ref,sysmask,bns,sns,pns,kern,erodeKernSize,probeFileID,maniImgName,outputMaskPath,colordict):
         """
         *Description: this function produces the aggregate mask image of the ground truth, system output,
                       and no-score regions for the HTML report, and a composite of the same image superimposed
@@ -1454,7 +1481,8 @@ class maskMetricRunner:
         *     sns: the selected no-score weighted matrix
         *     kern: kernel shape to be used
         *     erodeKernSize: length of the erosion kernel matrix
-        *     maniImgName: a list of reference images (not masks) for superimposition
+        *     probeFileID: the ID of the image to be considered
+        *     maniImgName: a list of reference probe images (not masks) for superimposition
         *     outputMaskPath: the directory in which to output the composite images
         *     colordict: the dictionary of colors to pass in. (e.g. {'red':[0 0 255],'green':[0 255 0]})
        
@@ -1464,31 +1492,39 @@ class maskMetricRunner:
 
         #set new image as some RGB
         mydims = ref.get_dims()
-        mycolor = 255*np.ones((mydims[0],mydims[1],3),dtype=np.uint8)
+        mycolor = 255*np.ones([mydims[0],mydims[1],3],dtype=np.uint8)
 
         if erodeKernSize > 0:
             eKern = masks.getKern(kern,erodeKernSize)
-            eData = 255 - cv2.erode(255 - ref.bwmat,eKern,iterations=1)
+            eData = cv2.dilate(ref.bwmat,eKern,iterations=1)
         else:
             eData = ref.bwmat
 
         #flip all because black is 0 by default. Use the regions to determine where to color.
-        b_sImg = 1-sysmask.bwmat/255
-        b_eImg = 1-eData/255 #erosion of black/white reference mask
-        b_bnsImg = 1-bns
-        b_snsImg = 1-sns
-        b_pnsImg = 1-pns
-
-        b_sImg[b_sImg != 0] = 1
-        b_eImg[b_eImg != 0] = 2
-        b_bnsImg[b_bnsImg != 0] = 4
-        b_snsImg[b_snsImg != 0] = 8
-        if b_pnsImg is not 1:
-            b_pnsImg[b_pnsImg != 0] = 16
-        else:
+#        b_sImg = 1-sysmask.bwmat/255
+#        b_eImg = 1-eData/255 #erosion of black/white reference mask
+#        b_bnsImg = 1-bns
+#        b_snsImg = 1-sns
+#        b_pnsImg = 1-pns
+        _,b_sImg = cv2.threshold(sysmask.bwmat,0,1,cv2.THRESH_BINARY_INV)
+        _,b_eImg = cv2.threshold(eData,0,1,cv2.THRESH_BINARY_INV)
+        _,b_bnsImg = cv2.threshold(bns,0,1,cv2.THRESH_BINARY_INV)
+        _,b_snsImg = cv2.threshold(sns,0,1,cv2.THRESH_BINARY_INV)
+        if pns is 0:
             b_pnsImg = 0
+        else:
+            _,b_pnsImg = cv2.threshold(pns,0,1,cv2.THRESH_BINARY_INV)
+            
+#        b_sImg[b_sImg != 0] = 1
+#        b_eImg[b_eImg != 0] = 2
+#        b_bnsImg[b_bnsImg != 0] = 4
+#        b_snsImg[b_snsImg != 0] = 8
+#        if b_pnsImg is not 1:
+#            b_pnsImg[b_pnsImg != 0] = 16
+#        else:
+#            b_pnsImg = 0
 
-        mImg = b_sImg + b_eImg + b_bnsImg + b_snsImg + b_pnsImg
+        mImg = b_sImg + 2*b_eImg + 4*b_bnsImg + 8*b_snsImg + 16*b_pnsImg
 
         #set pixels equal to some value:
         #red to false accept and false reject
@@ -1525,23 +1561,30 @@ class maskMetricRunner:
         myagg = np.copy(m3chan)
 
         #for modified images, weighted sum the colored mask with the grayscale
-        alpha=0.7
         #np.kron(mData,np.uint8([1,1,1]))
         #mData.shape=(mydims[0],mydims[1],3)
         #things change here for pixel overlay
         #NOTE: try/catch the overlay error. Print out the shapes of all involved items.
+        alpha=0.7
         try:
+            refmat = ref.matrix
             if not self.usejpeg2000:
-                refmat = ref.matrix
-                modified = cv2.addWeighted(ref.matrix,alpha,m3chan,1-alpha,0)
+                modified = cv2.addWeighted(refmat,alpha,m3chan,1-alpha,0)
                 myagg[refbw==0] = modified[refbw==0]
         
                 compositeMaskName = "_".join([outputMaskBase,"composite.jpg"])
                 compositePath = os.path.join(outputMaskPath,compositeMaskName)
                 cv2.imwrite(compositePath,myagg)
             else:
-                aseq = ref.getAnimatedMask('partial')
-                refmat = ref.matrix
+                if self.cache_dir:
+                    cache_acolor_path = os.path.join(os.path.join(self.cache_dir,'%s_acolorpart.npy' % probeFileID))
+                    if os.path.isfile(cache_acolor_path):
+                        #get this animated mask saved in and read from the cache
+                        aseq = np.load(cache_acolor_path)
+                    else:
+                        aseq = ref.getAnimatedMask('partial')
+                else:
+                    aseq = ref.getAnimatedMask('partial')
                 seq = []
                 for frame in aseq:
                     #join the frame with the grayscale manipulated image
@@ -1550,11 +1593,15 @@ class maskMetricRunner:
                     layermask = (frame[:,:,0] != 255) | (frame[:,:,1] != 255) | (frame[:,:,2] != 255)
                     aggfr = np.copy(m3chan)
                     #overlay colors with particular manipulated regions
-                    aggfr[layermask != 0] = modified[layermask != 0]
+                    aggfr[layermask] = modified[layermask]
                     seq.append(aggfr)
                 compositeMaskName = "_".join([outputMaskBase,"composite.png"])
                 compositePath = os.path.join(outputMaskPath,compositeMaskName)
                 write_apng(compositePath,seq,delay=600,use_palette=False)
+                if self.cache_dir:
+                    cache_acolor_path = os.path.join(os.path.join(self.cache_dir,'%s_acolorpart.npy' % probeFileID))
+                    if not os.path.isfile(cache_acolor_path):
+                        np.save(cache_acolor_path,aseq)
         except:
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("Exception {} encountered at line {} during mask overlay. Reference mask shape: {}. Probe image shape: {}".format(exc_type,exc_tb.tb_lineno,refmat.shape,m3chan.shape))
