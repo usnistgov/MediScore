@@ -415,7 +415,7 @@ class refmask(mask):
         #rework the init and other functions to support bit masking
         #default to all regions if it is 0
         self.bitlist=0
-        self.is_multi_layer = len(self.matrix.shape) == 3
+        self.is_multi_layer = self.matrix.ndim == 3
 
         if jData is not 0:
 #            self.colors = [[0,0,0]]
@@ -540,7 +540,6 @@ class refmask(mask):
         """
         dims = self.get_dims()
         base_mask = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
-        is_multi_layer = len(self.matrix.shape) == 3
 
         #get unique pixel values
         unique_px = self.getUniqueValues()
@@ -565,7 +564,7 @@ class refmask(mask):
 
         for p in unique_px:
             if (count_bits(p) == 1) and (p in mybitlist):
-                if is_multi_layer:
+                if self.is_multi_layer:
                     #parse it into the appropriate layer
                     layer = int(math.log(p,2)//8)
                     pixels = self.matrix[:,:,layer] == (p >> layer*8)
@@ -591,7 +590,7 @@ class refmask(mask):
 #                    pixel_list.append(p)
 #                    tempmask[self.matrix == p] = self.getColor(b)
                 pixel_catch = pixel_catch + 1
-                if is_multi_layer:
+                if self.is_multi_layer:
                     #parse it into the appropriate layer
                     layer = int(math.log(p,2)//8)
                     pixels = self.matrix[:,:,layer] == (p >> layer*8)
@@ -647,7 +646,6 @@ class refmask(mask):
         mymat = 0
 #        if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'):
         selfmat = self.matrix
-        is_multi_layer = len(self.matrix.shape) == 3
 
         if self.bitlist is not 0:
             #thorough computation for individual bits 
@@ -656,7 +654,7 @@ class refmask(mask):
             for b in self.bitlist:
                 full_bitstack += b
 
-            if is_multi_layer:
+            if self.is_multi_layer:
                 for l in range(self.matrix.shape[2]):
                     _,pixels = cv2.threshold(selfmat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
                     mymat = mymat | pixels
@@ -666,7 +664,7 @@ class refmask(mask):
                 
 #            for b in self.bitlist:
 ##                mymat = mymat & (~((selfmat[:,:,0]==c[0]) & (selfmat[:,:,1]==c[1]) & (selfmat[:,:,2]==c[2]))).astype(np.uint8)
-#                if is_multi_layer:
+#                if self.is_multi_layer:
 #                    layer = int(math.log(b,2)//8)
 #                    pixels = (self.matrix[:,:,layer] & (b >> layer*8)) > 0
 #                else:
@@ -677,7 +675,7 @@ class refmask(mask):
 #            mymat = 255*(1-mymat).astype(np.uint8)
             _,mymat = cv2.threshold(mymat,0,255,cv2.THRESH_BINARY_INV)
         else:
-            if is_multi_layer:
+            if self.is_multi_layer:
                 mymat_inv=1
                 for l in range(self.matrix.shape[2]):
                     bin_layer_inv = cv2.threshold(self.matrix[:,:,l],0,1,cv2.THRESH_BINARY_INV)
@@ -731,7 +729,6 @@ class refmask(mask):
         mymat = self.matrix
         dims = self.get_dims()
         
-        is_multi_layer = len(self.matrix.shape) == 3
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
         notcolors = self.getUniqueValues()
         printq("Colors to consider: {}".format(notcolors))
@@ -760,7 +757,7 @@ class refmask(mask):
                 notcolors.remove(c)
             full_bitstack += c
 
-        if is_multi_layer:
+        if self.is_multi_layer:
             for l in range(self.matrix.shape[2]):
                 _,pixels = cv2.threshold(mymat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
                 scored = scored | pixels
@@ -780,7 +777,7 @@ class refmask(mask):
         for c in notcolors:
             full_notstack += c
 
-        if is_multi_layer:
+        if self.is_multi_layer:
             for l in range(self.matrix.shape[2]):
                 _,pixels = cv2.threshold(mymat[:,:,l] & (full_notstack >> l*8),0,1,cv2.THRESH_BINARY)
                 mybin = mybin | pixels
