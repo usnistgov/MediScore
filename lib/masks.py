@@ -495,7 +495,7 @@ class refmask(mask):
         for b in bits:
             full_bitstack += b
 
-        if len(rmat.shape) == 3:
+        if self.is_multi_layer:
             for i in range(self.matrix.shape[2]):
                 presence += (rmat[:,:,i] & (full_bitstack >> 8*i)).sum()
                 if presence > 0:
@@ -758,7 +758,8 @@ class refmask(mask):
             full_bitstack += c
 
         if self.is_multi_layer:
-            for l in range(self.matrix.shape[2]):
+            layers = range(self.matrix.shape[2])
+            for l in layers:
                 _,pixels = cv2.threshold(mymat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
                 scored = scored | pixels
         else:
@@ -778,7 +779,7 @@ class refmask(mask):
             full_notstack += c
 
         if self.is_multi_layer:
-            for l in range(self.matrix.shape[2]):
+            for l in layers:
                 _,pixels = cv2.threshold(mymat[:,:,l] & (full_notstack >> l*8),0,1,cv2.THRESH_BINARY)
                 mybin = mybin | pixels
         else:

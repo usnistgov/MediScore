@@ -74,7 +74,8 @@ valid_test_conf() {
 valid_test_optout() {
     python ProvenanceValidator.py -x "$testsuite_directory/indexes/NC2017_Dev1-provenance-index.csv" \
 			     	-s "$testsuite_directory/ValidCheck_NC17_FuncTest_2/ValidCheck_NC17_FuncTest_Provenance_ImgOnly_p-optout_1/ValidCheck_NC17_FuncTest_Provenance_ImgOnly_p-optout_1.csv" \
-        			-nc
+                                --optOut\
+                                -t provenance
 }
 
 valid_test_all() {

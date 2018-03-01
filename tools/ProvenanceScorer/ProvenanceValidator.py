@@ -106,12 +106,12 @@ class ProvenanceValidator(validator):
             if ("IsOptOut" in sysHeads) and ("ProvenanceProbeStatus" in sysHeads):
                 printq("The system output has both 'IsOptOut' and 'ProvenanceProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
 
-            if self.optOut:
-                if "IsOptOut" in sysHeads:
-                    optOut=1
-                elif "ProvenanceProbeStatus" in sysHeads:
+            if 'ProvenanceProbeStatus' in sysHeads:
+                optOutColName = "ProvenanceProbeStatus"
+                if self.optOut:
                     optOut=2
-                    optOutColName = "ProvenanceProbeStatus"
+            elif self.optOut and ("IsOptOut" in sysHeads):
+                optOut=1
         self.optOutNum=optOut
 
         for i in range(0,len(truelist)):
@@ -266,6 +266,10 @@ if __name__ == '__main__':
         def printq(mystring,iserr=False):
             if iserr:
                 print(mystring)
+
+    if not (args.nameCheck or args.task):
+        print("ERROR: either the namecheck or the projec task must be supplied.")
+        exit(1)
 
     myparams = validation_params(args.ncid,doNameCheck=args.nameCheck,optOut=args.optOut,identify=False,neglectMask=args.neglectJSON,indexFilter=False,ref=0,processors=1)
 
