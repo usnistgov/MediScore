@@ -400,6 +400,8 @@ HISTORY
       - Vectorized maximum metrics computation.
       - Refactored mask no-score function to take in less arguments.
       - Added option to cache no-score zones and others in a directory.
+    * Provenance Validator:
+      - Fixed a bug that only changed the column name when the optOut option was selected.
 
 
 CONTACT
