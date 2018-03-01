@@ -78,8 +78,8 @@ if __name__ == '__main__':
     # Task Type Options
     parser.add_argument('-t', '--task', default='manipulation',
                         # add provenanceFiltering and provenance in future
-                        choices=['manipulation', 'splice', 'eventrepurpose'],
-                        help='Define the target manipulation task type for evaluation:[manipulation],[splice], and [eventrepurpose] (default: %(default)s)', metavar='character')
+                        choices=['manipulation', 'splice', 'eventverification'],
+                        help='Define the target manipulation task type for evaluation:[manipulation],[splice], and [eventverification] (default: %(default)s)', metavar='character')
 
     # Input Options
     parser.add_argument('--refDir', default='.',
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('--outMeta', action='store_true',
                         help="Save the CSV file with the system scores with minimal metadata")
 
-    parser.add_argument('--outAllmeta', action='store_true',
+    parser.add_argument('--outSubMeta', action='store_true',
                         help="Save the CSV file with the system scores with all metadata")
 
     parser.add_argument('--dump', action='store_true',
@@ -243,7 +243,7 @@ if __name__ == '__main__':
                          'ConfidenceScore': str,
                          'ProbeOutputMaskFileName': str,
                          'DonorOutputMaskFileName': str}
-        elif args.task in ['eventrepurpose']:
+        elif args.task in ['eventverification']:
             sys_dtype = {'ProbeFileID': str,
                          'EventName': str,
                          # this should be "string" due to the "nan" value, otherwise "nan"s will
@@ -273,7 +273,7 @@ if __name__ == '__main__':
         m_df = pd.merge(myRef, mySys, how='left', on=sys_ref_overlap)
     elif args.task in ['splice']:
         m_df = pd.merge(myRef, mySys, how='left', on=sys_ref_overlap)
-    elif args.task in ['eventrepurpose']:
+    elif args.task in ['eventverification']:
         m_df = pd.merge(myRef, mySys, how='left', on=sys_ref_overlap)
 
     # if the confidence scores are 'nan', replace the values with the mininum score
@@ -306,16 +306,9 @@ if __name__ == '__main__':
                            index_ref_no_overlap + ["IsTarget"] + sys_ref_no_overlap]
     #print("sub_pm_df{}".format(sub_pm_df.columns))
 
-    if args.outAllmeta:  # save all metadata for analysis purpose
-        index_m_df.to_csv(args.outRoot + '_allmeta.csv', index=False, sep='|')
-    # save subset of metadata for analysis purpose
-    if args.outMeta:
+    # save subset of metadata for analysis purpose (according to Jon's requirement)
+    if args.outSubMeta:
         sub_pm_df.to_csv(args.outRoot + '_subset_meta.csv', index=False, sep='|')
-
-    #if args.outMeta and set(mani_meta_list).issubset(index_m_df.columns):
-    #    sub_pm_df = index_m_df[index_cols_overlap +
-    #                           index_cols_no_overlap + ["IsTarget"] + sys_cols_no_overlap]
-        # print(sub_pm_df.columns)
 
     total_num = index_m_df.shape[0]
     v_print("Total data number: {}".format(total_num))
@@ -339,8 +332,6 @@ if __name__ == '__main__':
                 # merge the dataframes above
                 index_m_df = pd.merge(index_m_df, jt_meta, how='left', on='ProbeFileID')
 
-                if args.outAllmeta:
-                    index_m_df.to_csv(args.outRoot + '_allmeta4query.csv', index=False, sep='') #for testing
                 # Removing duplicates in case the data were merged by the JTmask metadata, not for splice
                 # index_m_df = index_m_df.drop_duplicates('ProbeFileID') #only applied to manipulation
         # don't need JTJoin and JTMask for splice?
@@ -370,6 +361,15 @@ if __name__ == '__main__':
         DM_List = selection.part_dm_list
         v_print("Number of partitions generated = {}\n".format(len(DM_List)))
         v_print("Rendering csv tables...\n")
+
+        # Output the meta data as dataframe for queries
+        DF_List = selection.part_df_list
+        v_print("Number of CSV partitions generated = {}\n".format(len(DF_List)))
+        if args.outMeta:  # save all metadata for analysis purpose
+            for i, df in enumerate(DF_List):
+                df.to_csv(args.outRoot + '_query_' + str(i) +
+                          '_allmeta.csv', index=False, sep=',')
+
         table_df = selection.render_table()
         if isinstance(table_df, list):
             v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
@@ -397,6 +397,10 @@ if __name__ == '__main__':
             elif "ProbeStatus" in index_m_df.columns:
                 index_m_df = index_m_df.query(
                     " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']")
+
+        ## Output the meta data as dataframe
+        if args.outMeta:  # save all metadata for analysis purpose
+            index_m_df.to_csv(args.outRoot + '_allmeta.csv', index=False, sep=',')
 
         DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop=args.farStop,
                            isCI=args.ci, ciLevel=args.ciLevel, dLevel=args.dLevel, total_num=total_num, sys_res=sys_response)
