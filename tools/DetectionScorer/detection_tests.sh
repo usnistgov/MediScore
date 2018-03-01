@@ -177,7 +177,7 @@ test_c2_9() {
 test_c2_10() {
     echo "  * Testing system output test case for EventRepurpose *  "
     echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
-                       -t manipulation \
+                       -t eventrepurpose \
                        --refDir "$testsuite_directory/sample/reference" \
                        -x "MFC2018-eventrepurpose-index.csv" \
         				       -r "MFC2018-eventrepurpose-ref.csv" \
