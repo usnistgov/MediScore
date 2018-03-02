@@ -408,6 +408,11 @@ HISTORY
       - Changed EventRepurpose to EventVerification and its test case
       - Added functions for the outMeta and the outSubMeta options and its test cases
 
+  Mar 1, 2018 - MediScore Version *.*.*
+    * DetectionScorer:
+      - Changed EventRepurpose to EventVerification and its test case
+      - Added functions for the outMeta and the outSubMeta options and its test cases
+
 
 CONTACT
 -------
