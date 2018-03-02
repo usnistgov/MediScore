@@ -154,7 +154,8 @@ class Partition:
 #                    new_df = sub_df.drop_duplicates('ProbeFileID', chosenField[0])
 
             sub_df = df.query(query)
-#            print("sub_df data size {}".format(sub_df.shape))
+            #print("sub_df data {}".format(sub_df))
+            #print("sub_df data size {}".format(sub_df.shape))
             #print("Removing duplicates ...\n")
             # Removing duplicates in case the data were merged by the JTmask metadata,
             # not for splice
@@ -162,7 +163,7 @@ class Partition:
                 new_df = sub_df.drop_duplicates('ProbeFileID')
             elif self.task == 'splice':
                 new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
-            elif self.task == 'eventrepurpose':
+            elif self.task == 'eventverification':
                 new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'EventName'])
 
             #print("new_df data size {}".format(new_df.shape))

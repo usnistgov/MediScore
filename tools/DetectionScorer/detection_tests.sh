@@ -175,15 +175,52 @@ test_c2_9() {
 }
 
 test_c2_10() {
-    echo "  * Testing system output test case for EventRepurpose *  "
+    echo "  * Testing system output test case for EventVerification *  "
     echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
-                       -t eventrepurpose \
+                       -t eventverification \
                        --refDir "$testsuite_directory/sample/reference" \
-                       -x "MFC2018-eventrepurpose-index.csv" \
-        				       -r "MFC2018-eventrepurpose-ref.csv" \
+                       -x "MFC2018-eventverification-index.csv" \
+        				       -r "MFC2018-eventverification-ref.csv" \
                        --sysDir "$testsuite_directory/sample/" \
-				       -s "D_MFC2018_EventRepurpose_ImgOnly_p-me_1/D_MFC2018_EventRepurpose_ImgOnly_p-me_1.csv"
+				       -s "D_MFC2018_EventVerification_ImgOnly_p-me_1/D_MFC2018_EventVerification_ImgOnly_p-me_1.csv"
 }
+
+test_c2_11() {
+    echo "  * Testing the outMeta option test case for manipulation *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2016-manipulation-index.csv" \
+        				       -r "NC2016-manipulation-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv" \
+               --outMeta
+}
+
+test_c2_12() {
+    echo "  * Testing the outMeta option test case for manipulation with query1 *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2016-manipulation-index.csv" \
+        				       -r "NC2016-manipulation-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv" \
+               -qm "Purpose==['remove']" --outMeta
+}
+
+test_c2_13() {
+    echo "  * Testing the outMeta option test case for manipulation with query2 *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2016-manipulation-index.csv" \
+        				       -r "NC2016-manipulation-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv" \
+               -qm "Purpose==['remove'] or Operation==['PasteSampled']" --outMeta
+}
+
 
 test_c3_1() {
     echo "  * Testing with the manipulation case with full index *  "

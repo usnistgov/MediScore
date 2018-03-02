@@ -1,0 +1,8 @@
+TaskID|ProbeFileID|ProbeFileName|IsTarget|EventName
+EventVerification|F18|F18.jpg|Y|boston_marthon
+EventVerification|F166|F166.jpg|N|occupy_melbourne
+EventVerification|F165|F165.jpg|N|boston_marthon
+EventVerification|F86|F86.jpg|Y|occupy_melbourne
+EventVerification|F87|F87.jpg|N|boston_marthon
+EventVerification|F88|F88.jpg|Y|occupy_melbourne
+EventVerification|F172|F172.jpg|Y|boston_marthon
