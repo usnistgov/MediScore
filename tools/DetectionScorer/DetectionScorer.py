@@ -368,7 +368,7 @@ if __name__ == '__main__':
         if args.outMeta:  # save all metadata for analysis purpose
             for i, df in enumerate(DF_List):
                 df.to_csv(args.outRoot + '_query_' + str(i) +
-                          '_allmeta.csv', index=False, sep=',')
+                          '_allmeta.csv', index=False, sep='|')
 
         table_df = selection.render_table()
         if isinstance(table_df, list):
@@ -395,12 +395,26 @@ if __name__ == '__main__':
                 #     exit(1)
                 index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
             elif "ProbeStatus" in index_m_df.columns:
+                print("Ouput the metadata table...\n")
                 index_m_df = index_m_df.query(
                     " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']")
 
         ## Output the meta data as dataframe
         if args.outMeta:  # save all metadata for analysis purpose
-            index_m_df.to_csv(args.outRoot + '_allmeta.csv', index=False, sep=',')
+            if args.task in ['manipulation']:
+                # if the files exist, merge the JTJoin and JTMask csv files with the
+                # reference and index file
+                if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
+                    v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
+                    # merge the JournalJoinTable and the JournalMaskTable (this section should
+                    # be inner join)
+                    jt_meta = pd.merge(myJTJoin, myJTMask, how='left', on=[
+                                       'JournalName', 'StartNodeID', 'EndNodeID'])  # JournalName instead of JournalID
+                    # v_print("JT meta: {}".format(jt_meta.shape))
+                    # merge the dataframes above
+                    index_m_df = pd.merge(index_m_df, jt_meta, how='left', on='ProbeFileID')
+
+            index_m_df.to_csv(args.outRoot + '_allmeta.csv', index=False, sep='|')
 
         DM = dm.detMetrics(index_m_df['ConfidenceScore'], index_m_df['IsTarget'], fpr_stop=args.farStop,
                            isCI=args.ci, ciLevel=args.ciLevel, dLevel=args.dLevel, total_num=total_num, sys_res=sys_response)

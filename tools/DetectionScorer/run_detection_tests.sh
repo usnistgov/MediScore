@@ -17,7 +17,7 @@ run_test test_c2_2 "$testsuite_directory/checkfiles/test_c2_2"
 run_test test_c2_3 "$testsuite_directory/checkfiles/test_c2_3"
 run_test test_c2_4 "$testsuite_directory/checkfiles/test_c2_4"
 run_test test_c2_5 "$testsuite_directory/checkfiles/test_c2_5"
-run_test test_c2_10 "$testsuite_directory/checkfiles/test_c2_10"
+
 
 echo
 echo "CASE 2.2: VALIDATING SYSTEM OUTPUT TESTCASEs with the OptOut option"
@@ -27,6 +27,17 @@ run_test test_c2_7 "$testsuite_directory/checkfiles/test_c2_7"
 run_test test_c2_8 "$testsuite_directory/checkfiles/test_c2_8"
 run_test test_c2_9 "$testsuite_directory/checkfiles/test_c2_9"
 
+echo
+echo "CASE 2.3: VALIDATING SYSTEM OUTPUT TESTCASEs for EventVerification"
+echo
+run_test test_c2_10 "$testsuite_directory/checkfiles/test_c2_10"
+
+echo
+echo "CASE 2.4: VALIDATING SYSTEM OUTPUT TESTCASEs with the outMeta options"
+echo
+run_test test_c2_11 "$testsuite_directory/checkfiles/test_c2_11"
+run_test test_c2_12 "$testsuite_directory/checkfiles/test_c2_12"
+run_test test_c2_13 "$testsuite_directory/checkfiles/test_c2_13"
 
 echo
 echo "CASE 3: VALIDATING FULL INDEX and SUBSET INDEX FILEs"
