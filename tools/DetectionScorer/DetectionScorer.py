@@ -118,10 +118,10 @@ if __name__ == '__main__':
                         help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)', metavar='character')
 
     parser.add_argument('--outMeta', action='store_true',
-                        help="Save the CSV file with the system scores with minimal metadata")
+                        help="Save the CSV file with the system scores with metadata")
 
     parser.add_argument('--outSubMeta', action='store_true',
-                        help="Save the CSV file with the system scores with all metadata")
+                        help="Save the CSV file with the system scores with minimal metadata")
 
     parser.add_argument('--dump', action='store_true',
                         help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
