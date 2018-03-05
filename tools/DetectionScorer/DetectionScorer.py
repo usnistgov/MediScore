@@ -319,7 +319,7 @@ if __name__ == '__main__':
         v_print("Query Mode ... \n")
         partition_mode = True
         # SSD
-        if args.task in ['manipulation']:
+        if args.task in ['manipulation', 'splice']:
             # if the files exist, merge the JTJoin and JTMask csv files with the
             # reference and index file
             if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
@@ -401,7 +401,7 @@ if __name__ == '__main__':
 
         ## Output the meta data as dataframe
         if args.outMeta:  # save all metadata for analysis purpose
-            if args.task in ['manipulation']:
+            if args.task in ['manipulation', 'splice']:
                 # if the files exist, merge the JTJoin and JTMask csv files with the
                 # reference and index file
                 if os.path.isfile(myJTJoinFname) and os.path.isfile(myJTMaskFname):
