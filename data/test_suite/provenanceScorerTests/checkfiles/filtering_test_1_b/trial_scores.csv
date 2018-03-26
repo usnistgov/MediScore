@@ -1,0 +1,6 @@
+JournalName|ProvenanceProbeFileID|ProvenanceOutputFileName|NumSysNodes|NumRefNodes|NodeType|NumCorrectNodesAt50|NumMissingNodesAt50|NumFalseAlarmNodesAt50|NumCorrectNodesAt100|NumMissingNodesAt100|NumFalseAlarmNodesAt100|NumCorrectNodesAt200|NumMissingNodesAt200|NumFalseAlarmNodesAt200|NumCorrectNodesAt300|NumMissingNodesAt300|NumFalseAlarmNodesAt300|NodeRecallAt50|NodeRecallAt100|NodeRecallAt200|NodeRecallAt300
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|18|All|6|12|44|12|6|88|18|0|182|18|0|182|0.333333333333|0.666666666667|1.0|1.0
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|2|donor|0|2|50|0|2|100|2|0|198|2|0|198|0.0|0.0|1.0|1.0
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|1|base|0|1|50|1|0|99|1|0|199|1|0|199|0.0|1.0|1.0|1.0
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|3|final|1|2|49|3|0|97|3|0|197|3|0|197|0.333333333333|1.0|1.0|1.0
+c257f3e674aaa597784ae6f5a402c748|9f796693249720d9d4eb8f1c3347c300|jsons/test_case_2-filtering-system_output_1.json|200|11|interim|5|6|45|8|3|92|11|0|189|11|0|189|0.454545454545|0.727272727273|1.0|1.0

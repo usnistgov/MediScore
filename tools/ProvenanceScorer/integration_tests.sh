@@ -156,6 +156,42 @@ filtering_test_2() {
 				   -S "$testsuite_directory/"
 }
 
+filtering_test_0_b() {
+	./ProvenanceFilteringScorer.py -o "$1" \
+				-S "$testsuite_directory/" \
+				-R "$testsuite_directory/" \
+				-x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
+				-r "$testsuite_directory/test_case_2-provenance-ref.csv" \
+				-n "$testsuite_directory/test_case_2-provenance-node.csv" \
+				-w "$testsuite_directory/test_case_2-provenancegraphbuilding-world.csv" \
+				-s "$testsuite_directory/test_case_2-filtering-system_output_0_index.csv" \
+				--nodetype all
+}
+
+filtering_test_1_b() {
+	./ProvenanceFilteringScorer.py -o "$1" \
+				-S "$testsuite_directory/" \
+				-R "$testsuite_directory/" \
+				-x "$testsuite_directory/test_case_2-provenancegraphbuilding-index.csv" \
+				-r "$testsuite_directory/test_case_2-provenance-ref.csv" \
+				-n "$testsuite_directory/test_case_2-provenance-node.csv" \
+				-w "$testsuite_directory/test_case_2-provenancegraphbuilding-world.csv" \
+				-s "$testsuite_directory/test_case_2-filtering-system_output_1_index.csv" \
+				--nodetype all
+}
+
+filtering_test_2_b() {
+	./ProvenanceFilteringScorer.py -o "$1" \
+				-S "$testsuite_directory/" \
+				-R "$testsuite_directory/" \
+				-x "$testsuite_directory/test_case_3-provenancegraphbuilding-index.csv" \
+				-r "$testsuite_directory/test_case_3-provenance-ref.csv" \
+				-n "$testsuite_directory/test_case_3-provenance-node.csv" \
+				-w "$testsuite_directory/test_case_3-provenancegraphbuilding-world.csv" \
+				-s "$testsuite_directory/test_case_3-filtering-system_output_1_index.csv" \
+				--nodetype all
+}
+
 # Filtering test 2 (3_1)
 IsOptOut_test_0() {
     ./ProvenanceFilteringScorer.py -o "$1" \

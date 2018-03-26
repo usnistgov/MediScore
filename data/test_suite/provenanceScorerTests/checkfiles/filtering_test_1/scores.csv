@@ -1,2 +1,2 @@
-MeanNodeRecallAt50|MeanNodeRecallAt100|MeanNodeRecallAt200
-0.333333333333|0.666666666667|1.0
+NodeType|NodeRecallAt50|NodeRecallAt100|NodeRecallAt200|NodeRecallAt300
+All|0.333333333333|0.666666666667|1.0|1.0

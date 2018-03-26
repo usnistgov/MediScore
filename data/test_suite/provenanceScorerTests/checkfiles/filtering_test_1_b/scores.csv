@@ -1,0 +1,6 @@
+NodeType|NodeRecallAt50|NodeRecallAt100|NodeRecallAt200|NodeRecallAt300
+All|0.333333333333|0.666666666667|1.0|1.0
+base|0.0|1.0|1.0|1.0
+donor|0.0|0.0|1.0|1.0
+final|0.333333333333|1.0|1.0|1.0
+interim|0.454545454545|0.727272727273|1.0|1.0
