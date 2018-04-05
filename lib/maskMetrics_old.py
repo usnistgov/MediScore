@@ -70,6 +70,9 @@ class maskMetrics:
             if (np.array_equal(distincts,[0,255])) or (np.array_equal(distincts,[0])) or (np.array_equal(distincts,[255])): #already binarized or uniform, relies on external pipeline
                 sys.bwmat = sys.matrix
 
+        self.ref = ref
+        self.sys = sys
+
         self.conf = self.confusion_measures(ref,sys,w)
         #record this dictionary of parameters
         self.nmm = self.NimbleMaskMetric(self.conf,ref,w)
@@ -627,7 +630,7 @@ class maskMetrics:
 #            fig = plot_fig(metvals[0],1,opts_list,plot_opts,display,multi_fig)
 #            return fig
 
-    def get_all_metrics(self,ref,sys,sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision=16,round_modes=[],myprintbuffer=0):
+    def get_all_metrics(self,sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision=16,round_modes=[],myprintbuffer=0):
         """
         * Description: get all the metrics for one probe
         """
@@ -637,8 +640,8 @@ class maskMetrics:
         if pns is not 0:
             w = cv2.bitwise_and(w,pns)
 
-        thresMets,threshold = self.runningThresholds(ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,0)
-        #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sys.name)),index=False) #save to a CSV for reference
+        thresMets,threshold = self.runningThresholds(self.ref,self.sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,0)
+        #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(self.sys.name)),index=False) #save to a CSV for reference
         all_metrics['OptimumThreshold'] = threshold
         thresMets['TPR'] = 0.
         thresMets['FPR'] = 0.
@@ -715,11 +718,11 @@ class maskMetrics:
 
             if sbin >= -1:
                 #just get scores in one run if threshold is chosen
-                sys.binarize(sbin)
-                myameas = self.getMetrics(ref,sys,w,sbin,myprintbuffer)
+                self.sys.binarize(sbin)
+                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
                 all_metrics['ActualThreshold'] = sbin
 
-            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(ref,sys,w)
+            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(self.ref,self.sys,w)
             all_metrics['GWL1'] = myround(mets['GWL1'],precision,round_modes)
             for met in ['NMM','MCC','BWL1']:
                 if myprintbuffer is not 0:

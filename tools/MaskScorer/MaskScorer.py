@@ -282,15 +282,17 @@ totalTrials = len(m_df)
 optOutCol = localOptOutColName
 if localOptOutColName in sysCols:
     undesirables = str(['OptOutAll','OptOutLocalization'])
-    all_statuses = {'Y','N','Detection','Localization'}
+    all_statuses = {'Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization'}
 elif pastOptOutColName in sysCols:
     optOutCol = pastOptOutColName
     undesirables = str(['Y','Localization'])
-    all_statuses = {'Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization'}
+    all_statuses = {'Y','N','Detection','Localization'}
 #check to see if there are any values not one of these
 probeStatuses = set(list(m_df[optOutCol].unique()))
-if probeStatuses > all_statuses:
-    print("ERROR: Status {} is not recognized.".format(all_statuses - probeStatuses))
+if '' in probeStatuses: #NOTE: accounting for indexFilter to take care of things later
+    probeStatuses.remove('')
+if probeStatuses - all_statuses > set():
+    print("ERROR: Status {} is not recognized.".format(probeStatuses - all_statuses))
     exit(1)
 
 optOutQuery = "==".join([optOutCol,undesirables])
@@ -1078,7 +1080,7 @@ except IOError:
     
 #TODO: basic data init-ing ends here
 
-def cache_init(cache_dir,query=''):
+def cache_init(cache_dir,output_dir,query=''):
     if args.cache_flush:
         os.system('rm -rf {}/*'.format(cache_dir))
     mkdir(cache_dir)
@@ -1105,7 +1107,7 @@ def cache_init(cache_dir,query=''):
 
     config_name = os.path.join(cache_dir,'config.ini')
    
-    tmp_path = '/tmp/config_tmp.ini' 
+    tmp_path = os.path.join(output_dir,'config_tmp.ini') 
     with open(tmp_path,'w') as configfile:
         config_meta.write(configfile)
     #if exists, check the two to ensure they are equal
@@ -1147,10 +1149,10 @@ def cache_init(cache_dir,query=''):
             if score_status == 1:
                 print("Pick a different directory to cache the reference data or rerun with --cache_flush to remove existing data.")
                 exit(1)
-            else:
-                os.rename(tmp_path,config_name)
-    else:
-        os.rename(tmp_path,config_name)
+#            else:
+#                os.rename(tmp_path,config_name)
+#    else:
+#        os.rename(tmp_path,config_name)
 
 # Merge the reference and system output
 if args.task == 'manipulation':
@@ -1224,7 +1226,7 @@ if args.task == 'manipulation':
         cache_full_dir=None
         if args.cache_dir:
             cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
-            cache_init(cache_full_dir,q)
+            cache_init(cache_full_dir,outRootQuery,q)
 
         printq("Beginning mask scoring...")
         r_df = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
@@ -1304,8 +1306,8 @@ elif args.task == 'splice':
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-#    journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
-    journaljoinfields = ['JournalName']
+    journaljoinfields = ['JournalName','StartNodeID','EndNodeID']
+#    journaljoinfields = ['JournalName']
 #    if 'BitPlane' in list(probeJournalJoin):
 #        journaljoinfields.append('BitPlane')
 
@@ -1347,17 +1349,20 @@ elif args.task == 'splice':
             #exit if query does not match
             printq("Merging main data and journal data and querying the result...")
             try:
-                big_df = pd.merge(m_df,journalData_df,how='left',on=param_ids).query(q)
+                bigdf_join_fields = param_ids
+                if 'JournalName' in m_df.columns.values.tolist():
+                    bigdf_join_fields = param_ids + ['JournalName']
+                big_df = pd.merge(m_df,journalData_df,how='left',on=bigdf_join_fields).query(q)
             except pd.computation.ops.UndefinedVariableError:
                 print("The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(q))
                 exit(1)
 
             #do a join with the big dataframe and filter out the stuff that doesn't show up by pairs
-            m_dfc = pd.merge(m_dfc,big_df[param_ids],how='left',on=joinfields).dropna().drop('JournalName',1)
+            m_dfc = pd.merge(m_dfc,big_df[bigdf_join_fields + ['Operation']],how='left',on=bigdf_join_fields).dropna().drop('Operation',1)
             #journalData = pd.merge(journalData0,big_df[['ProbeFileID','DonorFileID','JournalName']],how='left',on=['ProbeFileID','DonorFileID','JournalName'])
-            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','ProbeMaskFileName']],\
+            journalData0.loc[journalData0.reset_index().merge(big_df[journaljoinfields + ['ProbeFileID','DonorFileID','ProbeMaskFileName']],\
                              how='left',on=journaljoinfields).set_index('index').dropna().drop('ProbeMaskFileName',1).index,'ProbeEvaluated'] = 'Y'
-            journalData0.loc[journalData0.reset_index().merge(big_df[['JournalName','StartNodeID','EndNodeID','ProbeFileID','DonorFileID','DonorMaskFileName']],\
+            journalData0.loc[journalData0.reset_index().merge(big_df[journaljoinfields + ['ProbeFileID','DonorFileID','DonorMaskFileName']],\
                              how='left',on=journaljoinfields).set_index('index').dropna().drop('DonorMaskFileName',1).index,'DonorEvaluated'] = 'Y'
 
         m_dfc.index = range(m_dfc.shape[0])
@@ -1381,7 +1386,7 @@ elif args.task == 'splice':
         cache_full_dir=None
         if args.cache_dir:
             cache_full_dir=os.path.join(args.cache_dir,'_'.join(cache_sub_dir_new))
-            cache_init(cache_full_dir,q)
+            cache_init(cache_full_dir,outRootQuery,q)
         printq("Beginning mask scoring...")
         r_df,stackdf = createReport(m_dfc,journalData0, probeJournalJoin, myIndex, myRefDir, mySysDir,args.rbin,args.sbin,args.eks, args.dks, args.ntdks, args.kernel, outRootQuery, html=args.html,color=args.jpeg2000,verbose=reportq,precision=16,cache_dir=cache_full_dir)
         journalUpdate(probeJournalJoin,journalData0,r_df)
@@ -1418,14 +1423,16 @@ elif args.task == 'splice':
 #                a_df['dMaximumThreshold'] = a_df['dMaximumThreshold'].dropna().apply(lambda x: str(int(x)))
 #                a_df['dActualThreshold'] = a_df['dActualThreshold'].dropna().apply(lambda x: str(int(x)))
 
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'ProbeScored'] = 'N'
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumNMM'] = ''
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumBWL1'] = ''
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pGWL1'] = ''
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'DonorScored'] = 'N'
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumNMM'] = ''
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumBWL1'] = ''
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dGWL1'] = ''
+        p_mcc_idx = r_df.query('pOptimumMCC == -2').index
+        d_mcc_idx = r_df.query('dOptimumMCC == -2').index
+        r_df.loc[p_mcc_idx,'ProbeScored'] = 'N'
+        r_df.loc[p_mcc_idx,'pOptimumNMM'] = ''
+        r_df.loc[p_mcc_idx,'pOptimumBWL1'] = ''
+        r_df.loc[p_mcc_idx,'pGWL1'] = ''
+        r_df.loc[d_mcc_idx,'DonorScored'] = 'N'
+        r_df.loc[d_mcc_idx,'dOptimumNMM'] = ''
+        r_df.loc[d_mcc_idx,'dOptimumBWL1'] = ''
+        r_df.loc[d_mcc_idx,'dGWL1'] = ''
 
         #convert all pixel values to decimal-less strings
         pix2ints = ['pOptimumThreshold','pOptimumPixelTP','pOptimumPixelFP','pOptimumPixelTN','pOptimumPixelFN',
@@ -1446,8 +1453,8 @@ elif args.task == 'splice':
         if args.html:
             df2html(r_df,a_df,outRootQuery,args.queryManipulation,q)
     
-        r_df.loc[r_df.query('pOptimumMCC == -2').index,'pOptimumMCC'] = ''
-        r_df.loc[r_df.query('dOptimumMCC == -2').index,'dOptimumMCC'] = ''
+        r_df.loc[p_mcc_idx,'pOptimumMCC'] = ''
+        r_df.loc[d_mcc_idx,'dOptimumMCC'] = ''
 
         prefix = outpfx#os.path.basename(args.inSys).split('.')[0]
         #control precision here

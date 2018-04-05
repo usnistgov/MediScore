@@ -245,18 +245,18 @@ class mask(object):
         """
         * Description: generate and save color no score PNG representation
         """
-        rbinmat = np.copy(self.bwmat)
-        rbinmat = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
-        rbinmat[bns==0] = colordict['yellow']
-        rbinmat[sns==0] = colordict['pink']
+        rbinmat = self.bwmat
+        rbinmat3 = np.stack((rbinmat,rbinmat,rbinmat),axis=2)
+        rbinmat3[bns==0] = colordict['yellow']
+        rbinmat3[sns==0] = colordict['pink']
         if pns is not 0:
-            rbinmat[pns==0] = colordict['purple']
+            rbinmat3[pns==0] = colordict['purple']
         params = [16,0]        
 #        params=list()
 #        params.append(16)
 #        params.append(0)
-        cv2.imwrite(colorPNGname,rbinmat,params)
-        return rbinmat
+        cv2.imwrite(colorPNGname,rbinmat3,params)
+        return rbinmat3
 
     def overlay(self,imgName,alpha=0.7):
         """
@@ -450,7 +450,8 @@ class refmask(mask):
             if self.is_multi_layer:
                 n_layers = self.matrix.shape[2]
                 for l in range(n_layers):
-                    self.matrix[:,:,l] = self.matrix[:,:,l] & (bitmask >> 8*l)
+                    p_bitmask = np.uint8((bitmask >> 8*l) & 255)
+                    self.matrix[:,:,l] = self.matrix[:,:,l] & p_bitmask
             else:
                 self.matrix = self.matrix & bitmask
 
@@ -656,7 +657,8 @@ class refmask(mask):
 
             if self.is_multi_layer:
                 for l in range(self.matrix.shape[2]):
-                    _,pixels = cv2.threshold(selfmat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
+                    p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
+                    _,pixels = cv2.threshold(selfmat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
                     mymat = mymat | pixels
             else:
                 _,pixels = cv2.threshold(selfmat & full_bitstack,0,1,cv2.THRESH_BINARY)
@@ -760,7 +762,8 @@ class refmask(mask):
         if self.is_multi_layer:
             layers = range(self.matrix.shape[2])
             for l in layers:
-                _,pixels = cv2.threshold(mymat[:,:,l] & (full_bitstack >> l*8),0,1,cv2.THRESH_BINARY)
+                p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
+                _,pixels = cv2.threshold(mymat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
                 scored = scored | pixels
         else:
             _,pixels = cv2.threshold(mymat & full_bitstack,0,1,cv2.THRESH_BINARY)
@@ -780,7 +783,8 @@ class refmask(mask):
 
         if self.is_multi_layer:
             for l in layers:
-                _,pixels = cv2.threshold(mymat[:,:,l] & (full_notstack >> l*8),0,1,cv2.THRESH_BINARY)
+                p_notstack = np.uint8((full_notstack >> l*8) & 255)
+                _,pixels = cv2.threshold(mymat[:,:,l] & p_notstack,0,1,cv2.THRESH_BINARY)
                 mybin = mybin | pixels
         else:
             _,pixels = cv2.threshold(mymat & full_notstack,0,1,cv2.THRESH_BINARY)

@@ -402,18 +402,18 @@ class maskMetrics:
         * Outputs:
         *     Normalized grayscale WL1 value
         """
-        n=np.sum(w) #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
+        n=w.sum() #expect w to be 0 or 1, but otherwise, allow to be a naive sum for the sake of flexibility
         if n == 0:
             return np.nan
 
-        rmat = ref.bwmat.astype(int)
-        smat = sys.matrix.astype(int)
+        rmat = ref.bwmat.astype(float)
+        smat = sys.matrix
 
-        wL1=np.multiply(w,abs(rmat-smat)/255.)
-        wL1=np.sum(wL1)
+        wL1=np.multiply(w,abs(rmat-smat)/255)
+        wL1=wL1.sum()
         #wL1=sum([wt*abs(rmat[j]-mask[j])/255 for j,wt in np.ndenumerate(w)])
-        norm_wL1=wL1/n
-        return norm_wL1
+#        norm_wL1=wL1/n
+        return wL1/n
 
     def hingeL1(self,ref,sys,w,e=0.1):
         """
@@ -492,84 +492,10 @@ class maskMetrics:
             weighted_weights = weighted_weights + 4*(1-pns)
             ptotal = np.sum(weighted_weights >= 4)
 
-#        if len(uniques) == 1:
-#            #if mask is uniformly black or uniformly white, assess for some arbitrary threshold
-#            if (uniques[0] == 255) or (uniques[0] == 0):
-#                thresMets = pd.DataFrame({'Reference Mask':ref.name,
-#                                           'System Output Mask':sys.name,
-#                                           'Threshold':0,
-#                                           'NMM':[-1.],
-#                                           'MCC':[0.],
-#                                           'BWL1':[1.],
-#                                           'TP':[0],
-#                                           'TN':[0],
-#                                           'FP':[0],
-#                                           'FN':[0],
-#                                           'BNS':btotal,
-#                                           'SNS':stotal,
-#                                           'PNS':ptotal,
-#                                           'N':[0]})
-#                mets = self.getMetrics(myprintbuffer)
-#                for m in ['NMM','MCC','BWL1']:
-#                    thresMets.set_value(0,m,mets[m])
-#                for m in ['TP','TN','FP','FN','N']:
-#                    thresMets.set_value(0,m,self.conf[m])
-#            else:
-#                #assess for both cases where we treat as all black or all white
-#                thresMets = pd.DataFrame({'Reference Mask':ref.name,
-#                                           'System Output Mask':sys.name,
-#                                           'Threshold':127,
-#                                           'NMM':[-1.]*2,
-#                                           'MCC':[0.]*2,
-#                                           'BWL1':[1.]*2,
-#                                           'TP':[0]*2,
-#                                           'TN':[0]*2,
-#                                           'FP':[0]*2,
-#                                           'FN':[0]*2,
-#                                           'BNS':btotal,
-#                                           'SNS':stotal,
-#                                           'PNS':ptotal,
-#                                           'N':[0]*2})
-#                rownum=0
-#                #sys.binarize(0)
-#                for th in [uniques[0],255]:
-#                    #sys.bwmat[sys.matrix==th] = 0
-#                    #thismet = maskMetrics(ref,sys,w,-1) #avoid binarizing too much
-#                    thismet = maskMetrics(ref,sys,w,th) #avoid binarizing too much
-#
-#                    thresMets.set_value(rownum,'Threshold',th)
-#                    thresMets.set_value(rownum,'NMM',thismet.nmm)
-#                    thresMets.set_value(rownum,'MCC',thismet.mcc)
-#                    thresMets.set_value(rownum,'BWL1',thismet.bwL1)
-#                    thresMets.set_value(rownum,'TP',thismet.conf['TP'])
-#                    thresMets.set_value(rownum,'TN',thismet.conf['TN'])
-#                    thresMets.set_value(rownum,'FP',thismet.conf['FP'])
-#                    thresMets.set_value(rownum,'FN',thismet.conf['FN'])
-#                    thresMets.set_value(rownum,'N',thismet.conf['N'])
-#                    rownum=rownum+1
-#        else:
-
 #        if not (self.sys_threshold in uniques) and self.sys_threshold > -10:
         smat = sys.matrix
         uniques=np.unique(smat.astype(float))
         uniques=np.sort(np.append(uniques,-1)) #NOTE: adding the threshold that makes everything white. The threshold that makes everything black is already there.
-
-        #get actual thresholds.
-#        thresholds=uniques.tolist()
-#        thresMets = pd.DataFrame({'Reference Mask':ref.name,
-#                                   'System Output Mask':sys.name,
-#                                   'Threshold':thresholds,
-#                                   'NMM':-1.,
-#                                   'MCC':0.,
-#                                   'BWL1':1.,
-#                                   'TP':0,
-#                                   'TN':0,
-#                                   'FP':0,
-#                                   'FN':0,
-#                                   'BNS':btotal,
-#                                   'SNS':stotal,
-#                                   'PNS':ptotal,
-#                                   'N':0})
 
         #for all thresholds
         #sys.binarize(0)
@@ -582,22 +508,6 @@ class maskMetrics:
 
         if isinstance(thresMets,pd.Series):
             thresMets = thresMets.to_frame().transpose()
-
-#        rownum=0
-#        for th in thresholds:
-#            #sys.bwmat[sys.matrix==th] = 0 #increasing thresholds
-#            #thismet = maskMetrics(ref,sys,w,-1)
-#            thismet = self.getMetrics(ref,sys,w,th,myprintbuffer)
-##            thresMets.at[rownum,'Threshold'] = th
-#            thresMets.at[rownum,'NMM'] = thismet.nmm
-#            thresMets.at[rownum,'MCC'] = thismet.mcc
-#            thresMets.at[rownum,'BWL1'] = thismet.bwL1
-#            thresMets.at[rownum,'TP'] = thismet.conf['TP']
-#            thresMets.at[rownum,'TN'] = thismet.conf['TN']
-#            thresMets.at[rownum,'FP'] = thismet.conf['FP']
-#            thresMets.at[rownum,'FN'] = thismet.conf['FN']
-#            thresMets.at[rownum,'N'] = thismet.conf['N']
-#            rownum=rownum+1
 
         #generate ROC dataframe for image, preferably from existing library.
         #TPR = TP/(TP + FN); FPR = FP/(FP + TN)
@@ -628,7 +538,7 @@ class maskMetrics:
 
         return thresMets,tmax
 
-    def get_all_metrics(self,ref,sys,sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision=16,round_modes=[],myprintbuffer=0):
+    def get_all_metrics(self,sbin,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,precision=16,round_modes=[],myprintbuffer=0):
         """
         * Description: get all the metrics for one probe
         """
@@ -637,8 +547,7 @@ class maskMetrics:
         if pns is not 0:
             w = cv2.bitwise_and(w,pns)
 
-        thresMets,threshold = self.runningThresholds(ref,sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
-        #thresMets.to_csv(os.path.join(path_or_buf=outputRoot,'{}-thresholds.csv'.format(sys.name)),index=False) #save to a CSV for reference
+        thresMets,threshold = self.runningThresholds(self.ref,self.sys,bns,sns,pns,erodeKernSize,dilateKernSize,distractionKernSize,kern,myprintbuffer)
         all_metrics['OptimumThreshold'] = threshold
         thresMets['TPR'] = 0.
         thresMets['FPR'] = 0.
@@ -700,7 +609,7 @@ class maskMetrics:
 
             all_metrics['AUC'] = myauc
             all_metrics['EER'] = myeer
-   
+
             for mes in ['BNS','SNS','PNS','N']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(mes))
@@ -708,20 +617,21 @@ class maskMetrics:
 
             if sbin >= -1:
                 #just get scores in one run if threshold is chosen
-                sys.binarize(sbin)
-                myameas = self.getMetrics(ref,sys,w,sbin,myprintbuffer)
+                #TODO: threshold table lookup this instead.
+                self.sys.binarize(sbin)
+                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
                 all_metrics['ActualThreshold'] = sbin
 
-            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(ref,sys,w)
+            mets['GWL1'] = maskMetrics.grayscaleWeightedL1(self.ref,self.sys,w)
             all_metrics['GWL1'] = myround(mets['GWL1'],precision,round_modes)
             for met in ['NMM','MCC','BWL1']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(met))
 #                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) # debug flag
-                all_metrics[''.join(['Optimum',met])] = myround(mets[met],precision,round_modes)
+                all_metrics['Optimum%s' % met] = myround(mets[met],precision,round_modes)
                 if sbin >= -1:
                     #record Actual metrics
-                    actual_met_name = ''.join(['Actual',met])
+                    actual_met_name = 'Actual%s' % met
                     actual_met = myround(myameas[met],precision,round_modes)
                     all_metrics[actual_met_name] = actual_met
                     mets[actual_met_name] = actual_met
