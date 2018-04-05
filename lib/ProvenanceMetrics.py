@@ -1,16 +1,51 @@
 import numpy as np
 
-def set_similarity_overlap(set_1, set_2):
-    return 2 * np.float64(len(set_1 & set_2)) / (len(set_1) + len(set_2))
+def ref_selector(t):
+    k, r, s = t
+    return (r != None)
 
-def SimNLO(nodeset_1, edgeset_1, nodeset_2, edgeset_2):
-    return 2 * np.float64(len(nodeset_1 & nodeset_2) + len(edgeset_1 & edgeset_2)) / (len(nodeset_1) + len(nodeset_2) + len(edgeset_1) + len(edgeset_2))
+def sys_selector(t):
+    k, r, s = t
+    return (s != None)
 
-def SimNO(nodeset_1, nodeset_2):
-    return set_similarity_overlap(nodeset_1, nodeset_2)
+def corr_selector(t):
+    k, r, s = t
+    return (r != None and s != None)
 
-def SimLO(edgeset_1, edgeset_2):
-    return set_similarity_overlap(edgeset_1, edgeset_2)
+def fa_selector(t):
+    k, r, s = t
+    return (r == None and s != None)
 
-def node_recall(ref_nodeset, sys_nodeset):
-    return np.float64(len(ref_nodeset & sys_nodeset)) / len(ref_nodeset)
+def miss_selector(t):
+    k, r, s = t
+    return (r != None and s == None)
+
+def num_ref(mapping):
+    return len(filter(ref_selector, mapping))
+
+def num_sys(mapping):
+    return len(filter(sys_selector, mapping))
+
+def num_corr(mapping):
+    return len(filter(corr_selector, mapping))
+
+def num_miss(mapping):
+    return len(filter(miss_selector, mapping))
+
+def num_fa(mapping):
+    return len(filter(fa_selector, mapping))
+
+def set_similarity_overlap(mapping):
+    return 2 * np.float64(num_corr(mapping)) / (num_ref(mapping) + num_sys(mapping))
+
+def SimNLO(node_mapping, edge_mapping):
+    return 2 * np.float64(num_corr(node_mapping) + num_corr(edge_mapping)) / (num_ref(node_mapping) + num_sys(node_mapping) + num_ref(edge_mapping) + num_sys(edge_mapping))
+
+def SimNO(node_mapping):
+    return set_similarity_overlap(node_mapping)
+
+def SimLO(edge_mapping):
+    return set_similarity_overlap(edge_mapping)
+
+def node_recall(node_mapping):
+    return np.float64(num_corr(node_mapping)) / num_ref(node_mapping)

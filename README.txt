@@ -409,6 +409,7 @@ HISTORY
   Apr 5, 2018 - MediScore Version *.*.*
     * Provenance Graph Building Scorer:
       - Speedup of cycle detection during validation
+      - Added option for undirected graph scoring (-u)
 
 
 CONTACT

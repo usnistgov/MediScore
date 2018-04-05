@@ -2,6 +2,8 @@ import os
 import pydot
 import cv2
 
+from ProvenanceMetrics import *
+
 def generate_thumbnail(input_fn, output_fn, height = 64):
     # Resize to fixed height while preserving aspect ratio
     if not os.path.isfile(output_fn):
@@ -43,7 +45,7 @@ def render_provenance_graph(nodes, edges, output_fn):
 
     graph.write_png(output_fn)
 
-def render_provenance_graph_from_mapping(probe_node, correct_nodes, fa_nodes, missing_nodes, correct_edges, fa_edges, missing_edges, output_fn, ref_dir = None, thumb_cache_dir = None):
+def render_provenance_graph_from_mapping(probe_node, node_mapping, edge_mapping, output_fn, ref_dir = None, thumb_cache_dir = None, undirected = False):
     correct_color = "green"
     fa_color = "red"
     missing_color = "dimgray"
@@ -80,13 +82,16 @@ def render_provenance_graph_from_mapping(probe_node, correct_nodes, fa_nodes, mi
     def generate_node_properties(node_id, color="black"):
         return { "color": color, "label": _generate_label(node_id), "penwidth": _generate_penwidth(node_id) }
     
-    nodes = ([ (n, generate_node_properties(n, correct_color)) for n in correct_nodes ] +
-             [ (n, generate_node_properties(n, fa_color)) for n in fa_nodes ] +
-             [ (n, generate_node_properties(n, missing_color)) for n in missing_nodes ])
-    
-    edges = ([ (s, t, { "color": correct_color }) for s, t in correct_edges ] +
-             [ (s, t, { "color": fa_color }) for s, t in fa_edges ] +
-             [ (s, t, { "color": missing_color }) for s, t in missing_edges ])
+    nodes = ([ (n, generate_node_properties(n, correct_color)) for n, r, s in filter(corr_selector, node_mapping) ] +
+             [ (n, generate_node_properties(n, fa_color)) for n, r, s in filter(fa_selector, node_mapping) ] +
+             [ (n, generate_node_properties(n, missing_color)) for n, r, s in filter(miss_selector, node_mapping) ])
+
+    arrowhead = "normal"
+    if undirected:
+        arrowhead = "none"
+
+    edges = ([ (l[0], l[1], { "color": correct_color, "arrowhead": arrowhead }) for l, r, s in filter(corr_selector, edge_mapping) ] +
+             [ (l[0], l[1], { "color": fa_color, "arrowhead": arrowhead }) for l, r, s in filter(fa_selector, edge_mapping) ] +
+             [ (l[0], l[1], { "color": missing_color, "arrowhead": arrowhead }) for l, r, s in filter(miss_selector, edge_mapping) ])
 
     render_provenance_graph(nodes, edges, output_fn)
-    
