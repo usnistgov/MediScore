@@ -1,6 +1,6 @@
 #!/bin/bash
-clean=TRUE
 procs=4
+source test_init.sh
 
 echo "BEGINNING FUNCTIONALITY TEST OF MASK SCORER"
 echo "PROCEEDING TO THOROUGHLY CHECK ALL CASES"

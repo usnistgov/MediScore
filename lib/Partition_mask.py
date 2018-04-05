@@ -11,7 +11,7 @@ class Partition:
        using one or several queries.
        It generates and stores each dataframe and their computed scores.
     """
-    def __init__(self,dataframe,query,factor_mode,metrics,verbose=False): #,fpr_stop=1, isCI=False):
+    def __init__(self,task,dataframe,query,factor_mode,metrics,verbose=False): #,fpr_stop=1, isCI=False):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -35,6 +35,7 @@ class Partition:
         - part_dm_list : List of each partition's DetMetric object generated
         """
 
+        self.task = task
         self.factor_mode = factor_mode
         self.factors_names = dataframe.columns.values
         self.index_factor = self.gen_index_factor(self.factors_names)
@@ -167,6 +168,14 @@ class Partition:
             #base case
             return [df]
 
+        df_columns = df.columns.values.tolist()
+        if 'IsOptOut' in df_columns:
+            opt_out_col = 'IsOptOut'
+        elif 'ProbeStatus' in df_columns:
+            opt_out_col = 'ProbeStatus'
+            #TODO: something with splice. See the splice average for implementation.
+
+        #TODO: for each of these, generate its own individual values for TRR, etc.
         for query in self.part_query_list:
 #            df_list.append(df.query(query))
 
@@ -182,7 +191,11 @@ class Partition:
                 print("The query '{}' doesn't seem to refer to a valid key. Partitioning has failed. Please correct the query and try again.".format(query))
                 exit(1)
             #print("Removing duplicates ...\n")
-            new_df = sub_df.drop_duplicates('ProbeFileID') #Removing duplicates in case the data were merged by the JTmask metadata
+            #Removing duplicates in case the data was merged by the JTmask metadata
+            if self.task == 'manipulation':
+                new_df = sub_df.drop_duplicates('ProbeFileID')
+            elif self.task == 'splice':
+                new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
             df_list.append(new_df)
 
         return df_list
@@ -221,7 +234,23 @@ class Partition:
                          .replace('<',' < ')\
                          .replace('>',' > ')
 
-    #def render_table(self):
+    #TODO: add compute_metrics
+    def compute_metrics(self,dm,metrics):
+        data = {}
+        metsplus = []
+        for m in metrics:
+            data[m] = dm[m].mean(skipna=True) #average this
+            metsplus.append(m)
+            stdname = 'stddev_%s' % m
+            metsplus.append(stdname)
+            #add standard deviations too if length of data not nan is > 1
+            if dm[m].count() > 1:
+                data[stdname] = [dm[m].std(skipna=True)]
+            else:
+                data[stdname] = ['']
+        data['TaskID'] = [self.task]
+        return data,metsplus
+
     def render_table(self,metrics):
         """ This function computes a table (as a dataframe) for each partition
             containing the informations stored in the corresponding object.
@@ -239,15 +268,7 @@ class Partition:
             #base case
             data = dict()
             dm = self.part_metric_list[0]
-            metsplus = []
-            for m in metrics:
-                data[m] = [dm[m].mean(skipna=True)]
-                metsplus.append(m)
-                #add standard deviations too if length of data not nan is > 1
-                if dm[m].count() > 1:
-                    stdname = '_'.join(['stddev',m])
-                    data[stdname] = [dm[m].std(skipna=True)]
-                    metsplus.append(stdname)
+            data,metsplus = self.compute_metrics(dm,metrics)
             data['TaskID'] = [self.task]
             data['Query'] = self.part_query_list
             if data['Query'] == ['']:
@@ -264,17 +285,9 @@ class Partition:
                 if len(dm) == 0:
                     #skip where dm is empty
                     continue
-                data = {'Query': query}
-                metsplus = []
-                for m in metrics:
-                    data[m] = dm[m].mean(skipna=True) #average this
-                    metsplus.append(m)
-                    #add standard deviations too if length of data not nan is > 1
-                    if dm[m].count() > 1:
-                        stdname = '_'.join(['stddev',m])
-                        data[stdname] = [dm[m].std(skipna=True)]
-                        metsplus.append(stdname)
-
+                
+                data,metsplus = self.compute_metrics(dm,metrics)
+                data['Query'] = query
 #                data = {'Query': query,
 #                         'auc': dm.auc,
 #                         'fpr_stop' : dm.fpr_stop,
@@ -297,12 +310,17 @@ class Partition:
 #            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
             n_emptydf = 0
             metsplus = []
+            #NOTE: the loop is only here to unpack the structure
             for i,partition in enumerate(self.part_values_list):
                 dm = self.part_metric_list[i]
                 if len(dm) == 0:
                     #skip where dm is empty
                     n_emptydf = n_emptydf + 1
                     continue
+
+                data,metsplus = self.compute_metrics(dm,metrics)
+#                dm = self.part_dm_list[i]
+
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition,field)]
                     if '==' in full_condition:
@@ -314,22 +332,6 @@ class Partition:
                     else:
                         data[field].append(condition)
 
-#                dm = self.part_dm_list[i]
-                for m in metrics:
-                    data[m] = dm[m].mean(skipna=True) #average this
-                    metsplus.append(m)
-                    #add standard deviations too if length of data not nan is > 1
-                    if dm[m].count() > 1:
-                        stdname = '_'.join(['stddev',m])
-                        data[stdname] = [dm[m].std(skipna=True)]
-                        if stdname not in metsplus:
-                            metsplus.append(stdname)
-
-#                data['auc'].append(dm.auc)
-#                data['fpr_stop'].append(dm.fpr_stop)
-#                data['eer'].append(dm.eer)
-#                data['auc_ci_lower'].append(dm.ci_lower)
-#                data['auc_ci_upper'].append(dm.ci_upper)
             data['TaskID'] = self.task
             columns = ['TaskID']
             columns.extend(self.factors_order)

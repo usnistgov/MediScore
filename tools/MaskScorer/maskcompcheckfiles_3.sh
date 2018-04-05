@@ -1,7 +1,7 @@
 #!/bin/bash
-clean=TRUE
 procs=4
 mypython=python2
+source test_init.sh
 
 echo
 echo "CASE 3: VALIDATING BIT-MASK SCORING"

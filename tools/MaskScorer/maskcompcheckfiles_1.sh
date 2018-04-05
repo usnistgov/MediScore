@@ -1,6 +1,6 @@
 #!/bin/bash
-clean=TRUE
 procs=2
+source test_init.sh
 
 echo
 echo "CASE 1: VALIDATING SCORING OF TARGET REGIONS"
@@ -378,6 +378,64 @@ fi
 
 target_optOut_total=$(($flag_target_optOut + $flag_target_optOutpi + $flag_target_optOutjr))
 
+$mypython MaskScorer.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Splice_ImgOnly_p-me_1/B_NC2017_Unittest_Splice_ImgOnly_p-me_1.csv -oR ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1 -qm "Operation==['PasteSplice']" -html --precision 12
+
+diff ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_query.csv > comp_maskreport_splice_query.txt
+diff ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_query-perimage.csv > comp_maskreport_splice_query-perimage.txt
+diff ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv ../../data/test_suite/maskScorerTests/compcheckfiles/ref_maskreport_splice_query-journalResults.csv > comp_maskreport_splice_query-journalResults.txt
+
+flag_splice_query=1
+flag_splice_querypi=1
+flag_splice_queryjr=1
+
+filter_splice_query="cat comp_maskreport_splice_query.txt | grep -v CVS"
+filter_splice_querypi="cat comp_maskreport_splice_query-perimage.txt | grep -v CVS"
+filter_splice_queryjr="cat comp_maskreport_splice_query-journalResults.txt | grep -v CVS"
+
+if ([ ! -f comp_maskreport_splice_query.txt -o ! -f comp_maskreport_splice_query-perimage.txt -o ! -f comp_maskreport_splice_query-journalResults.txt \
+]); then
+  echo
+  echo "    !!!!! MASK SCORER TEST FAILED AT CASE 1 !!!!!    "
+  echo "     MISSING FILES ABSENT     "
+  echo
+  exit
+fi
+
+if test "`eval $filter_splice_query`" = "" ; then
+  flag_splice_query=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_score.csv
+	fi
+	rm comp_maskreport_splice_query.txt
+else
+	echo comp_maskreport_splice_query.txt
+	cat comp_maskreport_splice_query.txt
+fi
+
+if test "`eval $filter_splice_querypi`" = "" ; then
+  flag_splice_querypi=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_mask_scores_perimage.csv
+	fi
+	rm comp_maskreport_splice_query-perimage.txt
+else
+	echo comp_maskreport_splice_query-perimage.txt
+	cat comp_maskreport_splice_query-perimage.txt
+fi
+
+if test "`eval $filter_splice_queryjr`" = "" ; then
+  flag_splice_queryjr=0
+	if [ $clean = "TRUE" ] ; then
+		rm ../../data/test_suite/maskScorerTests/splice_query/B_NC2017_Unittest_Splice_ImgOnly_p-me_1_journalResults.csv
+	fi
+	rm comp_maskreport_splice_query-journalResults.txt
+else
+	echo comp_maskreport_splice_query-journalResults.txt
+	cat comp_maskreport_splice_query-journalResults.txt
+fi
+
+splice_query_total=$((flag_splice_query + flag_splice_querypi + flag_splice_queryjr))
+
 flag_total=$(($flag_all + $flag_allpi + $flag_alljr\
  + $flag_clone + $flag_clonepi + $flag_clonejr\
  + $flag_add + $flag_addpi + $flag_addjr\
@@ -395,6 +453,7 @@ if ([ $flag_total == 0 ]); then
 		rm -rf ../../data/test_suite/maskScorerTests/target_optOut
 		rm -rf ../../data/test_suite/maskScorerTests/target_purpose
 		rm -rf ../../data/test_suite/maskScorerTests/target_display
+		rm -rf ../../data/test_suite/maskScorerTests/splice_query
 #		rm -rf ../../data/test_suite/maskScorerTests/target_clone
 #		rm -rf ../../data/test_suite/maskScorerTests/target_add
 #		rm -rf ../../data/test_suite/maskScorerTests/target_removal

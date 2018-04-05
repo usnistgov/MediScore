@@ -287,8 +287,8 @@ elif pastOptOutColName in sysCols:
     all_statuses = {'Y','N','Detection','Localization'}
 #check to see if there are any values not one of these
 probeStatuses = set(list(m_df[optOutCol].unique()))
-if '' in probeStatuses: #NOTE: accounting for indexFilter to take care of things later
-    probeStatuses.remove('')
+if '' in probeStatuses:
+    probeStatuses.remove('') #NOTE: wrt index filtering
 if probeStatuses - all_statuses > set():
     print("ERROR: Status {} is not recognized.".format(probeStatuses - all_statuses))
     exit(1)
@@ -307,6 +307,7 @@ if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((
         print("ERROR: 'ProbeOptOutPixelValue' or 'DonorOptOutPixelValue' is not found in the columns of the system output.")
     exit(1)
 
+#TODO: move this into the localization scorer and optout at the very end
 #opting out at the beginning
 #if args.optOut:
 #    m_df = m_df.query(" ".join(['not',optOutQuery]))
@@ -424,11 +425,11 @@ if args.task == 'manipulation':
         #reorder merged_df's columns. Names first, then scores, then other metadata
         rcols = merged_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','IsTarget','OutputProbeMaskFileName','ConfidenceScore','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER','Scored','PixelN','OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN','PixelBNS','PixelSNS','PixelPNS']
-        if args.sbin >= -1:
-            firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
-                              'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
-                              'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
-                              'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
+#        if args.sbin >= -1:
+        firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                          'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                          'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
+                          'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
 
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
@@ -483,7 +484,7 @@ if args.task == 'manipulation':
         r_dfc.loc[r_idx,'OptimumMCC'] = np.nan
         r_df_scored = r_dfc.query("Scored=='Y'")
         ScoreableTrials = len(r_df_scored)
-        my_partition = pt.Partition(r_df_scored,query,factor_mode,metrics) #average over queries
+        my_partition = pt.Partition(args.task,r_df_scored,query,factor_mode,metrics) #average over queries
         df_list = my_partition.render_table(metrics)
         if len(df_list) == 0:
             return 0
@@ -525,11 +526,14 @@ if args.task == 'manipulation':
                 heads.extend(constant_mets)
                 heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
                 temp_df = temp_df[heads]
-                if temp_df is not 0:
+                if temp_df is not 0: #TODO: reconsider the placement of this piece of code
                     temp_df.loc[:,'OptimumThreshold'] = temp_df['OptimumThreshold'].dropna().astype(int).astype(str)
                     if args.sbin >= -1:
                         temp_df.loc[:,'MaximumThreshold'] = temp_df['MaximumThreshold'].dropna().astype(int).astype(str)
                         temp_df.loc[:,'ActualThreshold'] = temp_df['ActualThreshold'].dropna().astype(int).astype(str)
+                    else:
+                        temp_df.loc[:,'MaximumThreshold'] = ''
+                        temp_df.loc[:,'ActualThreshold'] = ''
                 stdev_mets = [met for met in list(temp_df) if 'stddev' in met]
                 my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
                 float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
@@ -581,6 +585,9 @@ if args.task == 'manipulation':
             if args.sbin >= -1:
                 a_df['MaximumThreshold'] = a_df['MaximumThreshold'].dropna().astype(int).astype(str)
                 a_df['ActualThreshold'] = a_df['ActualThreshold'].dropna().astype(int).astype(str)
+            else:
+                a_df['MaximumThreshold'] = ''
+                a_df['ActualThreshold'] = ''
 
             heads.extend(['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring'])
             a_df = a_df[heads]
@@ -620,10 +627,10 @@ if args.task == 'manipulation':
             #write title and then average_df
             metriclist = {}
             for met in ['NMM','MCC','BWL1']:
-                metriclist[''.join(['Optimum',met])] = 3
+                metriclist['Optimum%s' % met] = 3
                 if args.sbin >= -1:
-                    metriclist[''.join(['Maximum',met])] = 3
-                    metriclist[''.join(['Actual',met])] = 3
+                    metriclist['Maximum%s' % met] = 3
+                    metriclist['Actual%s' % met] = 3
             for met in ['GWL1','AUC','EER']:
                 metriclist[met] = 3
             
@@ -649,12 +656,12 @@ elif args.task == 'splice':
         #sub_index = index[sub_ref['ProbeFileID'].isin(index['ProbeFileID']) & sub_ref['DonorFileID'].isin(index['DonorFileID'])]
         #sub_sys = sys[sub_ref['ProbeFileID'].isin(sys['ProbeFileID']) & sub_ref['DonorFileID'].isin(sys['DonorFileID'])]
     
-        # if the confidence score are 'nan', replace the values with the mininum score
+#        # if the confidence score are 'nan', replace the values with the mininum score
         #m_df[pd.isnull(m_df['ConfidenceScore'])] = m_df['ConfidenceScore'].min()
         # convert to the str type to the float type for computations
         #m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 #        maskMetricRunner = mm.maskMetricList(m_df,refDir,sysDir,rbin,sbin,journalData,probeJournalJoin,index,mode=1)
-        metricRunner = maskMetricRunner(m_df,refDir,sysDir,rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
+        metricRunner = maskMetricRunner(m_df,refDir,sysDir,rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=False)
 #        probe_df = maskMetricRunner.getMetricList(erodeKernSize,dilateKernSize,0,kern,outputRoot,verbose,html,precision=precision)
         #TODO: temporary until we can evaluate color for the splice task
         cache_dir_new=None
@@ -682,7 +689,6 @@ elif args.task == 'splice':
                                     debug_off = args.debug_off,
                                     cache_dir = cache_dir_new
                                    )
-
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
@@ -710,7 +716,6 @@ elif args.task == 'splice':
                                     debug_off = args.debug_off,
                                     cache_dir = cache_dir_new
                                    )
-
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
@@ -725,9 +730,9 @@ elif args.task == 'splice':
         stackdf = pd.concat([stackp,stackd],axis=0)
         stackmerge = pd.merge(stackdf,m_df.drop('Scored',1),how='left',on=['ProbeFileID','DonorFileID'])
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','ScoredMask','OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
-        if args.sbin >= -1:
-            firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
-                              'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
+#        if args.sbin >= -1:
+        firstcols.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                          'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1'])
         rcols = stackmerge.columns.tolist()
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
@@ -823,15 +828,15 @@ elif args.task == 'splice':
         d_idx = merged_df.query('dOptimumMCC == -2').index
         rcols = merged_df.columns.tolist()
         firstcols = ['TaskID','ProbeFileID','ProbeFileName','ProbeMaskFileName','DonorFileID','DonorFileName','DonorMaskFileName','IsTarget','OutputProbeMaskFileName','OutputDonorMaskFileName','ConfidenceScore','pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER','dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
-        if args.sbin >= -1:
-            firstcols.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
-                              'pMaximumPixelTP','pMaximumPixelTN','pMaximumPixelFP','pMaximumPixelFN',
-                              'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
-                              'dMaximumPixelTP','dMaximumPixelTN','dMaximumPixelFP','dMaximumPixelFN',
-                              'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
-                              'pActualPixelTP','pActualPixelTN','pActualPixelFP','pActualPixelFN',
-                              'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1',
-                              'dActualPixelTP','dActualPixelTN','dActualPixelFP','dActualPixelFN'])
+#        if args.sbin >= -1:
+        firstcols.extend(['pMaximumThreshold','pMaximumNMM','pMaximumMCC','pMaximumBWL1',
+                          'pMaximumPixelTP','pMaximumPixelTN','pMaximumPixelFP','pMaximumPixelFN',
+                          'dMaximumThreshold','dMaximumNMM','dMaximumMCC','dMaximumBWL1',
+                          'dMaximumPixelTP','dMaximumPixelTN','dMaximumPixelFP','dMaximumPixelFN',
+                          'pActualThreshold','pActualNMM','pActualMCC','pActualBWL1',
+                          'pActualPixelTP','pActualPixelTN','pActualPixelFP','pActualPixelFN',
+                          'dActualThreshold','dActualNMM','dActualMCC','dActualBWL1',
+                          'dActualPixelTP','dActualPixelTN','dActualPixelFP','dActualPixelFN'])
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
@@ -841,11 +846,11 @@ elif args.task == 'splice':
             metriclist = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1',
                           'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
                           'PixelN','PixelBNS','PixelSNS','PixelPNS']
-            if args.sbin >= -1:
-                metriclist.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
-                                           'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
-                                           'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
-                                           'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
+#            if args.sbin >= -1:
+            metriclist.extend(['MaximumThreshold','MaximumNMM','MaximumMCC','MaximumBWL1',
+                                       'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                                       'ActualThreshold','ActualNMM','ActualMCC','ActualBWL1',
+                                       'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN'])
             
             for met in metriclist:
                 merged_df.loc[p_idx,''.join(['p',met])] = np.nan
@@ -923,7 +928,7 @@ elif args.task == 'splice':
         #substitute for other values that won't get counted in the average
         r_dfc.loc[p_idx,'pOptimumMCC'] = np.nan
         r_dfc.loc[d_idx,'dOptimumMCC'] = np.nan
-        my_partition = pt.Partition(r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),query,factor_mode,metrics) #average over queries
+        my_partition = pt.Partition(args.task,r_dfc.query("ProbeScored=='Y' | DonorScored=='Y'"),query,factor_mode,metrics) #average over queries
 #            my_partition = pt.Partition(r_dfc,q,factor_mode,metrics,verbose) #average over queries
         df_list = my_partition.render_table(metrics)
         if len(df_list) == 0:
@@ -955,11 +960,14 @@ elif args.task == 'splice':
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-10,axis=1,inplace=True)
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = temp_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-10',value='',inplace=True)
+                bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                 if args.sbin >= -1:
-                    bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                     temp_df.loc[:,bincols].fillna(value=-10,axis=1,inplace=True)
                     temp_df.loc[:,bincols] = temp_df[bincols].astype(int).astype(str)
                     temp_df.loc[:,bincols].replace(to_replace='-10',value='',inplace=True)
+                else:
+                    for col in bincols:
+                        temp_df.loc[:,col] = ''
 
                 for m in constant_mets:
                     temp_df[m] = constant_metrics[m]
@@ -1028,15 +1036,21 @@ elif args.task == 'splice':
 #                        else:
 #                            row.set_value(k,str(int(n)))#"{:.0f}".format(n)
 #                    return row
-#
+
+                #integer-ize everything to get rid of trailing decimak okaces#
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-10,axis=1,inplace=True)
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = a_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-10',value='',inplace=True)
+
+                bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                 if args.sbin >= -1:
-                    bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
                     a_df.loc[:,bincols].fillna(value=-10,axis=1,inplace=True)
                     a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
                     a_df.loc[:,bincols].replace(to_replace='-10',value='',inplace=True)
+                else:
+                    for col in bincols:
+                        a_df.loc[:,col] = ''
+                    
             stdev_mets = [met for met in list(a_df) if 'stddev' in met]
             my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
             float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
@@ -1175,7 +1189,7 @@ def cache_init(cache_dir,output_dir,query=''):
 
     config_name = os.path.join(cache_dir,'config.ini')
    
-    tmp_path = os.path.join(output_dir,'config_tmp.ini') 
+    tmp_path = os.path.join(output_dir,'config_tmp.ini')
     with open(tmp_path,'w') as configfile:
         config_meta.write(configfile)
     #if exists, check the two to ensure they are equal
@@ -1303,12 +1317,12 @@ if args.task == 'manipulation':
         journalUpdate(probeJournalJoin,journalData0,r_df)
         
         metrics = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER']
-        if args.sbin >= -1:
-            metrics.extend(['MaximumNMM','MaximumMCC','MaximumBWL1',
-                            'ActualNMM','ActualMCC','ActualBWL1'])
+#        if args.sbin >= -1:
+        metrics.extend(['MaximumNMM','MaximumMCC','MaximumBWL1',
+                        'ActualNMM','ActualMCC','ActualBWL1'])
         constant_mets = ['PixelAverageAUC','MaskAverageAUC']
-        if args.sbin >= -1:
-            constant_mets.extend(['MaximumThreshold','ActualThreshold'])
+#        if args.sbin >= -1:
+        constant_mets.extend(['MaximumThreshold','ActualThreshold'])
 
         a_df = 0
         if factor_mode == 'qm':
@@ -1318,8 +1332,8 @@ if args.task == 'manipulation':
 
         # tack on PixelAverageAUC and MaskAverageAUC to a_df and remove from r_df
         r_df = r_df.drop(['PixelAverageAUC','MaskAverageAUC'],1)
-        if args.sbin >= -1:
-            r_df = r_df.drop(['MaximumThreshold','ActualThreshold'],1)
+#        if args.sbin >= -1:
+        r_df = r_df.drop(['MaximumThreshold','ActualThreshold'],1)
 
 #        if a_df is not 0:
 #            a_df['OptimumThreshold'] = a_df['OptimumThreshold'].dropna().apply(lambda x: str(int(x)))
@@ -1357,7 +1371,15 @@ if args.task == 'manipulation':
         r_df[float_mets] = r_df[float_mets].applymap(lambda n: myround(n,args.precision,round_modes))
 
         if args.outMeta:
-            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
+            roM_df = r_df[['TaskID','ProbeFileID','ProbeFileName','OutputProbeMaskFileName','IsTarget','ConfidenceScore',optOutCol,
+                           'OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER',
+                           'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
+                           'MaximumNMM','MaximumMCC','MaximumBWL1',
+                           'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                           'ActualNMM','ActualMCC','ActualBWL1',
+                           'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN',
+                           'PixelN','PixelBNS','PixelSNS','PixelPNS'
+                          ]]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data
@@ -1462,14 +1484,14 @@ elif args.task == 'splice':
         #filter here
         metrics = ['pOptimumThreshold','pOptimumNMM','pOptimumMCC','pOptimumBWL1','pGWL1','pAUC','pEER',
                    'dOptimumThreshold','dOptimumNMM','dOptimumMCC','dOptimumBWL1','dGWL1','dAUC','dEER']
-        if args.sbin >= -1:
-            metrics.extend(['pMaximumNMM','pMaximumMCC','pMaximumBWL1',
-                            'dMaximumNMM','dMaximumMCC','dMaximumBWL1',
-                            'pActualNMM','pActualMCC','pActualBWL1',
-                            'dActualNMM','dActualMCC','dActualBWL1'])
+#        if args.sbin >= -1:
+        metrics.extend(['pMaximumNMM','pMaximumMCC','pMaximumBWL1',
+                        'dMaximumNMM','dMaximumMCC','dMaximumBWL1',
+                        'pActualNMM','pActualMCC','pActualBWL1',
+                        'dActualNMM','dActualMCC','dActualBWL1'])
         constant_mets = ['pPixelAverageAUC','dPixelAverageAUC','pMaskAverageAUC','dMaskAverageAUC']
-        if args.sbin >= -1:
-            constant_mets.extend(['pMaximumThreshold','dMaximumThreshold','pActualThreshold','dActualThreshold'])
+#        if args.sbin >= -1:
+        constant_mets.extend(['pMaximumThreshold','dMaximumThreshold','pActualThreshold','dActualThreshold'])
 
         a_df = 0
         if factor_mode == 'qm':
@@ -1478,8 +1500,8 @@ elif args.task == 'splice':
             a_df = averageByFactors(r_df,metrics,constant_mets,factor_mode,query)
 
         r_df = r_df.drop(['pPixelAverageAUC','pMaskAverageAUC','dPixelAverageAUC','dMaskAverageAUC'],1)
-        if args.sbin >= -1:
-            r_df = r_df.drop(['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold'],1)
+#        if args.sbin >= -1:
+        r_df = r_df.drop(['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold'],1)
 
         #convert all to ints.
 #        if a_df is not 0:
@@ -1531,7 +1553,15 @@ elif args.task == 'splice':
 
         #other reports of varying
         if args.outMeta:
-            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',optOutCol,'OptimumNMM','OptimumMCC','OptimumBWL1','GWL1']]
+            roM_df = stackdf[['TaskID','ProbeFileID','ProbeFileName','DonorFileID','DonorFileName','OutputProbeMaskFileName','OutputDonorMaskFileName','ScoredMask','IsTarget','ConfidenceScore',optOutCol,
+                              'OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1','GWL1','AUC','EER',
+                              'OptimumPixelTP','OptimumPixelTN','OptimumPixelFP','OptimumPixelFN',
+                              'MaximumNMM','MaximumMCC','MaximumBWL1',
+                              'MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN',
+                              'ActualNMM','ActualMCC','ActualBWL1',
+                              'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN',
+                              'PixelN','PixelBNS','PixelSNS','PixelPNS'
+                              ]]
             roM_df.to_csv(path_or_buf=os.path.join(outRootQuery,'_'.join([prefix,'perimage-outMeta.csv'])),sep="|",index=False)
         if args.outAllmeta:
             #left join with index file and journal data

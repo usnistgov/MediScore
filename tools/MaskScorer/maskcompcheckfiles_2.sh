@@ -1,11 +1,11 @@
 #!/bin/bash
-clean=TRUE
 
 echo
 echo "CASE 2: VALIDATING FACTOR-BASED SCORING"
 echo
 
 mypython=python2
+source test_init.sh
 
 $mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconf/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -q "0.5 < ConfidenceScore" --speedup --precision 12 --cache_dir /tmp/manip_queries --cache_flush
 $mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/manipconfmanmade/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 -html -q "ConfidenceScore < 0.5" "ManMade=='no'" --optOut --speedup --precision 12 --cache_dir /tmp/manip_queries
