@@ -36,7 +36,7 @@ def reduce_graph(edge_records, selected_nodes):
             for o in out_edges:
                 new_edges.append(EdgeRecord(i.source, o.target, append_to_path(i.path, o.path)))
         return new_edges
-        
+
     to_rm = (set(ins.keys()) | set(outs.keys())) - set(selected_nodes)
     if len(to_rm) == 0:
         return edge_set
@@ -56,7 +56,7 @@ def build_direct_graph(edge_records, probe_node):
         up_edges = reduce(lambda x, y: x | y, map(lambda n: set(ins.get(n, [])), up_nodes), set())
         out_edges |= up_edges
         up_nodes = set(map(lambda e: e.source, up_edges))
-    
+
     down_nodes = {probe_node}
     while len(down_nodes) > 0:
         down_edges = reduce(lambda x, y: x | y, map(lambda n: set(outs.get(n, [])), down_nodes), set())
@@ -74,33 +74,46 @@ def build_direct_graph(edge_records, probe_node):
 def reject_edges(edge_list, edge_list_filters=[], edge_filters=[]):
     def composed_edge_list_filter(edge_list):
         return map(lambda edge: any(map(lambda f: f(edge), edge_filters)), edge_list)
-    
+
     edge_list_filters.append(composed_edge_list_filter)
     return map(any, zip(*map(lambda f: f(edge_list), edge_list_filters)))
 
 def detect_cycle(edge_records):
-    class CycleDetected(Exception):
-        pass
-
     edge_set = set(edge_records)
     ins = group_by_fun(lambda e: e.target, edge_set)
     outs = group_by_fun(lambda e: e.source, edge_set)
-
     roots = { k for k in outs } - { k for k in ins }
 
     # Handle "rootless" case
     if len(roots) == 0 and len(edge_set) > 0:
         return True
-    
-    def visit(nodes, visited):
-        for node in nodes:
-            if node in visited:
-                raise CycleDetected
-            else:
-                visit({ e.target for e in outs.get(node, []) }, visited | { node })
 
-    try:
-        visit(roots, set())
-        return False
-    except CycleDetected:
-        return True
+    stack = []
+    current_path = []
+    current_visited = set()
+    block_list = set()
+
+    for root in roots:
+        stack.append(root)
+
+    current_path.append(None)
+    while len(stack) > 0:
+        current = stack[-1]
+        if current == current_path[-1]:
+            current_path.pop()
+            stack.pop()
+            current_visited.remove(current)
+            block_list.add(current)
+            continue
+        else:
+            current_path.append(current)
+            current_visited.add(current)
+
+        children = outs.get(current, [])
+        for child in children:
+            if child.target in current_visited:
+                return True
+            elif child.target not in block_list:
+                stack.append(child.target)
+
+    return False
