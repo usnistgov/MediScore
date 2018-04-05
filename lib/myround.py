@@ -9,8 +9,14 @@ Description: a function used to round numbers. A list of options may be provided
 """
 
 def myround(n,precision,mode=[]):
-    if n in [None,'',np.nan] or np.isnan(n):
+    if isinstance(n,str):
         return n
+
+    if n in [None,np.nan]:
+        return n
+    elif np.isnan(n):
+        return n
+
     prec = precision
     if 'sd' in mode: #significant digits
         sd1 = 0

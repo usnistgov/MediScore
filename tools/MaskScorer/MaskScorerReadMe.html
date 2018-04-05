@@ -12166,7 +12166,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </ul>
 <p>--debug_off</p>
 <ul>
-<li>Continue running localization scorer on the next probe even when encountering errors. The name of the errors will still be printed, but the relevant error will not be raised.</li>
+<li>Continue running localization scorer on the next probe even when encountering errors. The errors will still be printed, but not raised.</li>
 </ul>
 
 </div>
@@ -12204,7 +12204,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </ul>
 <p>--pppns perProbePixelNoScore</p>
 <ul>
-<li>"Use the pixel values in the OptOutPixel column of the system output to designate no-score zones.</li>
+<li>"Use the pixel values in the OptOutPixel column of the system output to designate no-score zones. This value will override the value set for the global no-score pixel.</li>
 </ul>
 <p>-k kernel</p>
 <ul>

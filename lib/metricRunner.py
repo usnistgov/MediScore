@@ -47,7 +47,7 @@ from myround import myround
 from constants import *
 #from conn2db import *
 
-debug_mode = True
+debug_off = True
 
 print_lock = multiprocessing.Lock() #for printout to std_out
 
@@ -289,26 +289,42 @@ class maskMetricRunner:
         wts,bns,sns = 0,0,0
 
         if self.cache_dir: 
-            bns_dir = os.path.join(self.cache_dir,'%s_bns.png' % probeID)
-            sns_dir = os.path.join(self.cache_dir,'%s_sns.png' % probeID)
+            bns_dir = os.path.join(self.cache_dir,'%s_bns.npy' % probeID)
+            sns_dir = os.path.join(self.cache_dir,'%s_sns.npy' % probeID)
             #if it's found in the cache, read it in
             if os.path.isfile(bns_dir) and os.path.isfile(sns_dir):
-                 bns = cv2.imread(bns_dir,0)
-                 sns = cv2.imread(sns_dir,0)
+#                 bns = cv2.imread(bns_dir,0)
+#                 sns = cv2.imread(sns_dir,0)
+                 bns = np.load(bns_dir)
+                 sns = np.load(sns_dir)
                  wts = bns & sns
                  return wts,bns,sns
      
         wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
         if self.cache_dir:
             #save the files in the cache
-            save_params = [16,0]
-            cv2.imwrite(bns_dir,bns,save_params)
-            cv2.imwrite(sns_dir,sns,save_params)
+#            save_params = [16,0]
+#            cv2.imwrite(bns_dir,bns,save_params)
+#            cv2.imwrite(sns_dir,sns,save_params)
+            np.save(bns_dir,bns)
+            np.save(sns_dir,sns)
 
         return wts,bns,sns
 
     #for apply
     def scoreOneMask(self,maskRow):
+        #optout and return a set of preset null metrics if opting out
+        if self.optout_mode == 1:
+            if maskRow['IsOptOut'] in ['Y','Localization']:
+                return maskRow
+        elif self.optout_mode == 2:
+            if self.mode == 2:
+                if maskRow['DonorStatus'] == 'OptOutLocalization':
+                    return maskRow
+            else:
+                if maskRow['ProbeStatus'] in ['OptOutLocalization','OptOutAll']:
+                    return maskRow
+        
         #parameter control
         binpfx = self.binpfx
         mymode = self.mymode
@@ -327,10 +343,10 @@ class maskMetricRunner:
         round_modes = ['sd'] #TODO: debug
         if self.truncate:
             round_modes.append('t')
-        
-        probe_id_name = ''.join([mymode,'FileID'])
-        probe_width_name = ''.join([mymode,'Width'])
-        probe_height_name = ''.join([mymode,'Height'])
+
+        probe_id_name = '%sFileID' % mymode
+        probe_width_name = '%sWidth' % mymode
+        probe_height_name = '%sHeight' % mymode
 
         manipFileID = maskRow[probe_id_name]
         refMaskName = 0
@@ -349,7 +365,7 @@ class maskMetricRunner:
             if self.speedup:
                 maskMetrics = maskMetrics1
             subOutRoot = self.getSubOutRoot(outputRoot,task,mymode,maskRow)
-            index_row = self.index.query("{}FileID=='{}'".format(mymode,manipFileID))
+            index_row = self.index.query("{}=='{}'".format(probe_id_name,manipFileID))
             if len(index_row) == 0:
                 myprintbuffer.append("The probe '{}' is not in the index file. Skipping.".format(manipFileID))
                 myprintbuffer.atomprint(print_lock)
@@ -421,7 +437,7 @@ class maskMetricRunner:
                 exit(1)
             wts = cv2.bitwise_and(wts,pns)
             rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
-            rbinmat = rImg.save_color_ns(rbin_name,bns,sns,pns)
+            rImg.save_color_ns(rbin_name,bns,sns,pns)
 
             #if wts allows for nothing to be scored, (i.e. no GT pos), print warning message, but score as usual
             if (cv2.bitwise_and(wts,rImg.bwmat)).sum() == 0:
@@ -463,7 +479,7 @@ class maskMetricRunner:
                 thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
 
             #if no rows have it, don't gen the ROC.
-            if nullRocRows.shape[0] == 0:
+            if nonNullRocRows.shape[0] == 0:
                 genROC = False
 
             #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
@@ -584,16 +600,20 @@ class maskMetricRunner:
                     maskRow[''.join(['OptimumPixel',mes])] = mymeas[mes]
                     if self.sbin >= -1:
                         maskRow[''.join(['ActualPixel',mes])] = myameas[mes]
+            #save the thresmets information in the image directory for recordkeeping.
+            thresMets.to_csv(os.path.join(subOutRoot,'thresMets.csv'),sep="|",index=False)
+            manipFileName = maskRow['%sFileName' % mymode]
+            maniImgName = os.path.join(self.refDir,manipFileName)
+            colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,manipFileID,maniImgName,subOutRoot,self.colordict)
 
             myprintbuffer.append("Metrics computed.")
+            maskRow['Scored'] = 'Y'
 
             #generate the HTML report
+            #TODO: ideally want the HTML report to be in a separate module
             if html:
-                manipFileName = maskRow[''.join([mymode,'FileName'])]
                 baseFileName = maskRow['BaseFileName']
-                maniImgName = os.path.join(self.refDir,manipFileName)
                 myprintbuffer.append("Generating aggregate color mask for HTML report...")
-                colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,manipFileID,maniImgName,subOutRoot,self.colordict)
                 colMaskName=colordirs['mask']
                 aggImgName=colordirs['agg']
                 maskRow['ColMaskFileName'] = colMaskName
@@ -607,9 +627,9 @@ class maskMetricRunner:
                     smask_threshold = self.sbin
 
                 for met in ['TP','TN','FP','FN']:
-                    mymeas[''.join(['OptimumPixel',met])] = mymeas.pop(met)
+                    mymeas['OptimumPixel%s' % met] = mymeas.pop(met)
                     if self.sbin >= -1:
-                        mymeas[''.join(['ActualPixel',met])] = myameas[met]
+                        mymeas['ActualPixel%s' % met] = myameas[met]
                 mymeas['PixelBNS'] = mymeas.pop('BNS')
                 mymeas['PixelSNS'] = mymeas.pop('SNS')
                 mymeas['PixelPNS'] = mymeas.pop('PNS')
@@ -623,7 +643,7 @@ class maskMetricRunner:
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
-            if debug_mode:
+            if debug_off:
                 raise  #debug assistant
             return maskRow
 #            myprintbuffer.atomprint(print_lock)
@@ -684,9 +704,12 @@ class maskMetricRunner:
             thres_mets_new_df = thres_mets_df.iloc[filled_index]
             thres_mets_new_df.at[black_thresholds,['TP','FP','TN','FN']] = gt_pos,gt_neg,0,0
             if sample_row['N'] == 0:
-                thres_mets_new_df.at[:,['NMM','BWL1']] = np.nan
+                thres_mets_new_df.at[:,['NMM','MCC','BWL1']] = np.nan
             else:
-                thres_mets_new_df.at[black_thresholds,['NMM','MCC','BWL1']] = max([float(gt_pos - gt_neg)/gt_pos,-1]),0,float(gt_neg)/sample_row['N']
+                if gt_pos == 0:
+                    thres_mets_new_df.at[black_thresholds,['NMM','MCC','BWL1']] = np.nan,0,float(gt_neg)/sample_row['N']
+                else:
+                    thres_mets_new_df.at[black_thresholds,['NMM','MCC','BWL1']] = max([float(gt_pos - gt_neg)/gt_pos,-1]),0,float(gt_neg)/sample_row['N']
             
             if gt_pos == 0:
                 thres_mets_new_df['TPR'] = np.nan
@@ -784,7 +807,6 @@ class maskMetricRunner:
         thres_mets_sum[['ProbeTPR','ProbeFPR']] = probe_thres_mets_agg[['TPR','FPR']].mean(level=[1])
         maxThreshold = thres_mets_sum['MCC'].idxmax()
 
-        #NOTE: prepare to parallelize if need be, but parallelizing across probes is more important.
 #        roc_values = self.parallelize(roc_values,self.runROCvals,scoreAvgROCPerProc,1,top_procs=top_procs,top_procs_apply=top_procs_apply)
 #        maxThreshold = roc_values['avgMCC'].idxmax()
 
@@ -797,7 +819,7 @@ class maskMetricRunner:
         if (self.sbin >= -1) and (maxThreshold > -1):
             #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
             scoredf['MaximumThreshold'] = maxThreshold
-            #TODO: access the probe_thres_mets_agg for the threshold
+            #access the probe_thres_mets_agg for the threshold
             maxMCCdf = probe_thres_mets_agg.xs(maxThreshold,level=1)
             maxMCCdf[probe_id_field] = maxMCCdf.index
             maxMCCdf.drop_duplicates(inplace=True)
@@ -853,9 +875,17 @@ class maskMetricRunner:
         html = params.html
         precision = params.precision
         processors = params.processors
-        global debug_mode
-        debug_mode = params.debug_mode
+        global debug_off
+        debug_off = params.debug_off
         self.cache_dir = params.cache_dir
+
+        df_cols = self.maskData.columns.values.tolist()        
+        self.optout_mode = 0
+        if params.optOut:
+            if "IsOptOut" in df_cols:
+                self.optout_mode = 1
+            elif "ProbeStatus" in df_cols:
+                self.optout_mode = 2
 
         #reflist and syslist should come from the same dataframe, so length checking is not required
         mymode='Probe'
@@ -893,6 +923,7 @@ class maskMetricRunner:
 #                         'AggMaskFileName':['']*nrow})
 
         df=self.maskData.copy()
+        df['Scored'] = 'N' #nothing is scored until it's scored
         nrow = df.shape[0]
         #Include Optimum metrics always. (Global) Maximum and Actual (performer) when the performer specifies it.
         #initialize with numpy matrix
@@ -902,10 +933,12 @@ class maskMetricRunner:
                     'ActualPixelTP','ActualPixelTN','ActualPixelFP','ActualPixelFN','ActualThreshold',
                     'PixelN','PixelBNS','PixelSNS','PixelPNS']
         
-        met_mat = np.zeros((nrow,len(met_cols)))
-        met_mat[:,[0,14]] = -1.
-        met_mat[:,[2,3,5]] = 1.
-        met_mat[:,[6,7,8,14,15,16,17,18]] = np.nan
+#        met_mat = np.zeros((nrow,len(met_cols)))
+#        met_mat[:,[0,14]] = -1.
+#        met_mat[:,[2,3,5]] = 1.
+#        met_mat[:,[6,7,8,14,15,16,17,18]] = np.nan
+        met_mat = np.empty((nrow,len(met_cols)))
+        met_mat.fill(np.nan)
         metrics_init = pd.DataFrame(met_mat,columns=met_cols)
         df = pd.concat([df,metrics_init],axis=1)
         
@@ -913,7 +946,7 @@ class maskMetricRunner:
         df['AggMaskFileName'] = ''
 
         task = self.maskData['TaskID'].iloc[0] #should all be the same for one file
-        ilog = open('index_log.txt','w+')
+#        ilog = open('index_log.txt','w+')
         self.errlist = []
 
         #parameter control
@@ -945,13 +978,13 @@ class maskMetricRunner:
         #print all error output at very end and exit (1) if failed at any iteration of loop
         if len(self.errlist) > 1:
             exit(1)
-        ilog.close()
+#        ilog.close()
 
         templist = self.thresholds
         self.thresholds = list(sorted(set(templist)))
         df = self.scoreMaxMetrics(df)
 
-        last_cols = [self.manip_file_id_col,''.join([mymode,'FileName']),'Scored',
+        last_cols = [self.manip_file_id_col,'%sFileName' % mymode,'Scored',
                'OptimumNMM',
                'OptimumMCC',
                'OptimumBWL1',
@@ -986,7 +1019,7 @@ class maskMetricRunner:
                'PixelSNS',
                'PixelPNS',
                'ColMaskFileName','AggMaskFileName']
-        return df[last_cols].drop(''.join([mymode,'FileName']),1)
+        return df[last_cols].drop('%sFileName' % mymode,1)
 
     #TODO: drop this into a maskMetricsRender.py object later with renderParams object. Ideally would like to generate reports in a separate loop at the end of computations.
     def num2hex(self,color):
@@ -1172,10 +1205,10 @@ class maskMetricRunner:
         #generate table for confusion measures
         conf_measures = {}
         for m in ['TP','FP','TN','FN']:
-            m_name = ''.join(['OptimumPixel',m]) 
+            m_name = 'OptimumPixel%s' % m 
             conf_measures[m_name] = int(confmeasures[m_name])
             if self.sbin >= -1:
-                am_name = ''.join(['ActualPixel',m])
+                am_name = 'ActualPixel%s' % m
                 conf_measures[am_name] = int(confmeasures[am_name])
         conf_measures['TotalPixels'] = totalpx
 
@@ -1377,7 +1410,7 @@ class maskMetricRunner:
             met_table.at[met,'Optimum'] = metstr
             if self.sbin >= -1:
                 ametstr = "nan"
-                amet = ''.join(['Actual',met])
+                amet = 'Actual%s' % met
                 if not isinstance(metrics[amet],str):
                     ametstr = "{0:.3f}".format(metrics[amet])
                 met_table.at[met,'Actual'] = ametstr
@@ -1421,7 +1454,7 @@ class maskMetricRunner:
         for met in mets_for_some:
             metstr = "nan"
             #generate Pixel count and Proportion separation
-            optcol = ''.join(['OptimumPixel',met])
+            optcol = 'OptimumPixel%s' % met
             met_table.at[met,'OptimumPixelCount'] = conf_metrics[optcol]
 
             #round if numeric
@@ -1432,7 +1465,7 @@ class maskMetricRunner:
             #do the same for Actual metrics
             if self.sbin >= -1:
                 ametstr = "nan"
-                optcol = ''.join(['ActualPixel',met])
+                optcol = 'ActualPixel%s' % met
                 met_table.at[met,'ActualPixelCount'] = conf_metrics[optcol]
 
                 if totalpx > 0:
@@ -1507,13 +1540,15 @@ class maskMetricRunner:
 #        b_snsImg = 1-sns
 #        b_pnsImg = 1-pns
         _,b_sImg = cv2.threshold(sysmask.bwmat,0,1,cv2.THRESH_BINARY_INV)
-        _,b_eImg = cv2.threshold(eData,0,1,cv2.THRESH_BINARY_INV)
-        _,b_bnsImg = cv2.threshold(bns,0,1,cv2.THRESH_BINARY_INV)
-        _,b_snsImg = cv2.threshold(sns,0,1,cv2.THRESH_BINARY_INV)
-        if pns is 0:
+        _,b_eImg = cv2.threshold(eData,0,2,cv2.THRESH_BINARY_INV)
+        _,b_bnsImg = cv2.threshold(bns,0,4,cv2.THRESH_BINARY_INV)
+        _,b_snsImg = cv2.threshold(sns,0,8,cv2.THRESH_BINARY_INV)
+        mImg = b_sImg + b_eImg + b_bnsImg + b_snsImg
+        if pns is not 0:
             b_pnsImg = 0
         else:
-            _,b_pnsImg = cv2.threshold(pns,0,1,cv2.THRESH_BINARY_INV)
+            _,b_pnsImg = cv2.threshold(pns,0,16,cv2.THRESH_BINARY_INV)
+            mImg = mImg + b_pnsImg
             
 #        b_sImg[b_sImg != 0] = 1
 #        b_eImg[b_eImg != 0] = 2
@@ -1524,7 +1559,6 @@ class maskMetricRunner:
 #        else:
 #            b_pnsImg = 0
 
-        mImg = b_sImg + 2*b_eImg + 4*b_bnsImg + 8*b_snsImg + 16*b_pnsImg
 
         #set pixels equal to some value:
         #red to false accept and false reject
@@ -1571,7 +1605,6 @@ class maskMetricRunner:
             if not self.usejpeg2000:
                 modified = cv2.addWeighted(refmat,alpha,m3chan,1-alpha,0)
                 myagg[refbw==0] = modified[refbw==0]
-        
                 compositeMaskName = "_".join([outputMaskBase,"composite.jpg"])
                 compositePath = os.path.join(outputMaskPath,compositeMaskName)
                 cv2.imwrite(compositePath,myagg)

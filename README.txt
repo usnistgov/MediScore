@@ -413,7 +413,7 @@ HISTORY
       - Added option for undirected graph scoring (-u)
     * MaskScorer:
       - JPEG2000 fix to stabilize bit filtering and take full advantage of cv2's thresholding routine to speed up computation.
-      - Modified optOut functionality to suit splice optOut task
+      - Modified optOut functionality for separate Probe/Donor statuses in the splice optOut task
       - All metric columns will be displayed, even if not scored (e.g. MaximumMCC)
 
 

@@ -47,7 +47,6 @@ lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 from metricRunner import maskMetricRunner
 import Partition_mask as pt
-import Render
 from myround import myround
 #import masks
 #execfile(os.path.join(lib_path,"masks.py"))
@@ -187,7 +186,6 @@ if args.inIndex is None:
 #detpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'plotJsonFiles')
 #if not os.path.isdir(detpath):
 #    os.system(' '.join(['mkdir',detpath]))
-#Render.gen_default_plot_options(path=os.path.join(detpath,'plot_options.json'))
 
 #assume outRoot exists
 if args.outRoot in [None,'']:
@@ -310,8 +308,8 @@ if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((
     exit(1)
 
 #opting out at the beginning
-if args.optOut:
-    m_df = m_df.query(" ".join(['not',optOutQuery]))
+#if args.optOut:
+#    m_df = m_df.query(" ".join(['not',optOutQuery]))
 
 #rounding modes
 round_modes = ['sd']
@@ -324,7 +322,7 @@ task_sffx = args.task[0]
 #if cache_dir exists, notify accordingly.
 if args.cache_dir:
     if os.path.isdir(args.cache_dir) and not args.cache_flush:
-        print("{} exists.".format(args.cache_dir))
+        print("{} exists. Content in the directory can be used for efficient scoring.".format(args.cache_dir))
     mkdir(args.cache_dir)
 
 cache_sub_dir = []
@@ -333,36 +331,40 @@ cache_sub_dir = []
 #    cache_sub_dir.append('jp2')
 
 #TODO: change this to a dictionary, since this is all it does.
+#class loc_scoring_params:
+#    def __init__(self,
+#                 mode,
+#                 eks,
+#                 dks,
+#                 ntdks,
+#                 nspx,
+#                 pppns,
+#                 kernel,
+#                 verbose,
+#                 html,
+#                 precision,
+#                 truncate,
+#                 processors,
+#                 debug_mode,
+#                 cache_dir=args.cache_dir):
+#        self.mode = mode
+#        self.eks = eks
+#        self.dks = dks
+#        self.ntdks = ntdks
+#        self.nspx = nspx
+#        self.pppns = pppns
+#        self.kernel = kernel
+#        self.verbose = verbose
+#        self.html = html
+#        self.precision = precision
+#        self.truncate = truncate
+#        self.processors = processors
+#        self.debug_mode = debug_mode
+#        self.cache_dir = cache_dir
+
 class loc_scoring_params:
-    def __init__(self,
-                 mode,
-                 eks,
-                 dks,
-                 ntdks,
-                 nspx,
-                 pppns,
-                 kernel,
-                 verbose,
-                 html,
-                 precision,
-                 truncate,
-                 processors,
-                 debug_mode,
-                 cache_dir=args.cache_dir):
-        self.mode = mode
-        self.eks = eks
-        self.dks = dks
-        self.ntdks = ntdks
-        self.nspx = nspx
-        self.pppns = pppns
-        self.kernel = kernel
-        self.verbose = verbose
-        self.html = html
-        self.precision = precision
-        self.truncate = truncate
-        self.processors = processors
-        self.debug_mode = debug_mode
-        self.cache_dir = cache_dir
+    def __init__(self,**kwds):
+        self.__dict__.update(kwds)
 
 def round_df(my_df,metlist):
     df_cols = list(my_df)
@@ -383,7 +385,24 @@ if args.task == 'manipulation':
         metricRunner = maskMetricRunner(m_df,args.refDir,sysDir,args.rbin,args.sbin,journalData,probeJournalJoin,index,speedup=args.speedup,color=args.jpeg2000)
 
         #revise this to outputRoot and loc_scoring_params
-        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir)
+#        params = loc_scoring_params(0,args.eks,args.dks,args.ntdks,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir)
+        params = loc_scoring_params(mode = 0,
+                                    optOut = args.optOut,
+                                    eks = args.eks,
+                                    dks = args.dks,
+                                    ntdks = args.ntdks,
+                                    nspx = args.nspx,
+                                    pppns = args.perProbePixelNoScore,
+                                    kernel = args.kernel,
+                                    verbose = args.verbose,
+                                    html = args.html,
+                                    precision = precision,
+                                    truncate = args.truncate,
+                                    processors = args.processors,
+                                    debug_off = args.debug_off,
+                                    cache_dir = cache_dir
+                                   )
+
         df = metricRunner.getMetricList(outputRoot,params)
 #        df = metricRunner.getMetricList(args.eks,args.dks,args.ntdks,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
         merged_df = pd.merge(m_df.drop('Scored',1),df,how='left',on='ProbeFileID')
@@ -414,6 +433,13 @@ if args.task == 'manipulation':
         metadata = [t for t in rcols if t not in firstcols]
         firstcols.extend(metadata)
         merged_df = merged_df[firstcols]
+        #filter for optout here
+        all_cols = merged_df.columns.values.tolist()
+        if params.optOut:
+            if "IsOptOut" in all_cols:
+                merged_df = merged_df.query("IsOptOut==['N','Detection']")
+            elif "ProbeStatus" in all_cols:
+                merged_df = merged_df.query("ProbeStatus==['Processed','NonProcessed','OptOutDetection']") 
     
         return merged_df
 
@@ -639,7 +665,24 @@ elif args.task == 'splice':
             mkdir(cache_dir_new)
 
             config_meta = configparser.ConfigParser()
-        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
+#        params = loc_scoring_params(1,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
+        params = loc_scoring_params(mode = 1,
+                                    optOut = args.optOut,
+                                    eks = args.eks,
+                                    dks = args.dks,
+                                    ntdks = 0,
+                                    nspx = args.nspx,
+                                    pppns = args.perProbePixelNoScore,
+                                    kernel = args.kernel,
+                                    verbose = args.verbose,
+                                    html = args.html,
+                                    precision = precision,
+                                    truncate = args.truncate,
+                                    processors = args.processors,
+                                    debug_off = args.debug_off,
+                                    cache_dir = cache_dir_new
+                                   )
+
         probe_df = metricRunner.getMetricList(outputRoot,params)
 #        probe_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
     
@@ -650,7 +693,24 @@ elif args.task == 'splice':
             cache_dir_new = os.path.join(cache_dir,'donor')
             mkdir(cache_dir_new)
 
-        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
+#        params = loc_scoring_params(2,args.eks,args.dks,0,args.nspx,args.perProbePixelNoScore,args.kernel,args.verbose,args.html,precision,args.truncate,args.processors,args.debug_off,cache_dir=cache_dir_new)
+        params = loc_scoring_params(mode = 2,
+                                    optOut = args.optOut,
+                                    eks = args.eks,
+                                    dks = args.dks,
+                                    ntdks = 0,
+                                    nspx = args.nspx,
+                                    pppns = args.perProbePixelNoScore,
+                                    kernel = args.kernel,
+                                    verbose = args.verbose,
+                                    html = args.html,
+                                    precision = precision,
+                                    truncate = args.truncate,
+                                    processors = args.processors,
+                                    debug_off = args.debug_off,
+                                    cache_dir = cache_dir_new
+                                   )
+
         donor_df = metricRunner.getMetricList(outputRoot,params)
 #        donor_df = metricRunner.getMetricList(args.eks,args.dks,0,args.nspx,args.kernel,outputRoot,args.verbose,args.html,precision=args.precision,processors=args.processors)
 
@@ -791,6 +851,14 @@ elif args.task == 'splice':
                 merged_df.loc[p_idx,''.join(['p',met])] = np.nan
                 merged_df.loc[d_idx,''.join(['d',met])] = np.nan
 
+        #filter for optout here where both are opted out
+        all_cols = merged_df.columns.values.tolist()
+        if params.optOut:
+            if "IsOptOut" in all_cols:
+                merged_df = merged_df.query("IsOptOut==['N','Detection']")
+            elif "ProbeStatus" in all_cols and 'DonorStatus' in all_cols:
+                merged_df = merged_df.query("ProbeStatus==['Processed','NonProcessed','OptOutDetection'] || DonorStatus=['Processed','NonProcessed']")
+
         if args.displayScoredOnly:
             #get the list of non-scored and delete them
             nonscore_df.apply(lambda x: os.system('rm -rf {}'.format(os.path.join(outputRoot,'_'.join(x['ProbeFileID'],x['DonorFileID'])))))
@@ -884,14 +952,14 @@ elif args.task == 'splice':
                 if args.optOut:
                     temp_df['optOutScoring'] = 'Y'
 
-                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
+                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-10,axis=1,inplace=True)
                 temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = temp_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
-                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
+                temp_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-10',value='',inplace=True)
                 if args.sbin >= -1:
                     bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
-                    temp_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
+                    temp_df.loc[:,bincols].fillna(value=-10,axis=1,inplace=True)
                     temp_df.loc[:,bincols] = temp_df[bincols].astype(int).astype(str)
-                    temp_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
+                    temp_df.loc[:,bincols].replace(to_replace='-10',value='',inplace=True)
 
                 for m in constant_mets:
                     temp_df[m] = constant_metrics[m]
@@ -961,14 +1029,14 @@ elif args.task == 'splice':
 #                            row.set_value(k,str(int(n)))#"{:.0f}".format(n)
 #                    return row
 #
-                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-1,axis=1,inplace=True)
+                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].fillna(value=-10,axis=1,inplace=True)
                 a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']] = a_df[['pOptimumThreshold','dOptimumThreshold']].astype(int).astype(str)
-                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-1',value='',inplace=True)
+                a_df.loc[:,['pOptimumThreshold','dOptimumThreshold']].replace(to_replace='-10',value='',inplace=True)
                 if args.sbin >= -1:
                     bincols = ['pMaximumThreshold','pActualThreshold','dMaximumThreshold','dActualThreshold']
-                    a_df.loc[:,bincols].fillna(value=-1,axis=1,inplace=True)
+                    a_df.loc[:,bincols].fillna(value=-10,axis=1,inplace=True)
                     a_df.loc[:,bincols] = a_df[bincols].astype(int).astype(str)
-                    a_df.loc[:,bincols].replace(to_replace='-1',value='',inplace=True)
+                    a_df.loc[:,bincols].replace(to_replace='-10',value='',inplace=True)
             stdev_mets = [met for met in list(a_df) if 'stddev' in met]
             my_metrics_to_be_scored = metrics_to_be_scored + stdev_mets + optOutStats
             float_mets = [met for met in my_metrics_to_be_scored if ('Threshold' not in met) or ('stddev' in met)]
