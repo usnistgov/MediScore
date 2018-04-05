@@ -1,6 +1,6 @@
 File: README.txt
-Date: November 20, 2017
-MediScore Version: 1.2.0
+Date: April 5, 2018
+MediScore Version: 1.3.2
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
@@ -33,17 +33,18 @@ INSTALLATION
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
-  - opencv (tested in versions 2.4.13 and 3.4.0)
-  - numpy  (tested in versions 1.14.0)
-  - pandas (tested in version 0.21.1) - make sure to use the latest version.
-  - matplotlib (tested in version 1.5.1)
-  - scipy (tested in version 0.18.0)
-  - scikit-learn (tested in version 0.17.1)
-  - rawpy (tested in version 0.9.0)
-  - numpngw (tested in version 0.0.6)
-  - Glymur (tested in version 0.8.12)
-  - bokeh (tested in version 0.12.13)
-  - jsonschema (tested in version 2.5.1)
+  - opencv        (tested in versions 2.4.13 and 3.4.0)
+  - numpy         (tested in versions 1.14.0)
+  - pandas        (tested in version 0.21.1) - make sure to use the latest version.
+  - matplotlib    (tested in version 1.5.1)
+  - scipy         (tested in version 0.18.0)
+  - scikit-learn  (tested in version 0.17.1)
+  - rawpy         (tested in version 0.9.0)
+  - numpngw       (tested in version 0.0.6)
+  - Glymur        (tested in version 0.8.12)
+  - bokeh         (tested in version 0.12.13)
+  - jsonschema    (tested in version 2.5.1)
+  - configparser  (tested in version 3.5.0)
   Most of these packages can be installed by running basic_install.sh on your machine.
 
   Optional :
@@ -357,7 +358,7 @@ HISTORY
       - Regenerated all the test cases
     * Provenance Scorers:
       - Added support for opt out in ProvenanceProbeStatus
-  Feb 7, 2018 - MediScore Version *.*.*
+  Feb 7, 2018 - MediScore Version 1.2.1
     * DetectionScorer:
       - Changed to ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']
       - Modified test cases for OptOut
@@ -391,7 +392,7 @@ HISTORY
       - Initial release
     * Provenance Scorers:
       - Fixed rounding issues with new numpy version
-  Feb 28, 2018 - MediScore Version *.*.*
+  Feb 28, 2018 - MediScore Version 1.3.0
     * DetectionScorer:
       - Added EventRepurpose task and its test case
       - Modified DetectionScoreReadMe files
@@ -402,11 +403,11 @@ HISTORY
       - Added option to cache no-score zones and others in a directory.
     * Provenance Validator:
       - Fixed a bug that only changed the column name when the optOut option was selected.
-  Mar 1, 2018 - MediScore Version *.*.*
+  Mar 1, 2018 - MediScore Version 1.3.1
     * DetectionScorer:
       - Changed EventRepurpose to EventVerification and its test case
       - Added functions for the outMeta and the outSubMeta options and its test cases
-  Apr 5, 2018 - MediScore Version *.*.*
+  Apr 5, 2018 - MediScore Version 1.3.2
     * Provenance Graph Building Scorer:
       - Speedup of cycle detection during validation
       - Added option for undirected graph scoring (-u)
