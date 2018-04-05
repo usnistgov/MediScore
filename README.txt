@@ -411,6 +411,10 @@ HISTORY
     * Provenance Graph Building Scorer:
       - Speedup of cycle detection during validation
       - Added option for undirected graph scoring (-u)
+    * MaskScorer:
+      - JPEG2000 fix to stabilize bit filtering and take full advantage of cv2's thresholding routine to speed up computation.
+      - Modified optOut functionality to suit splice optOut task
+      - All metric columns will be displayed, even if not scored (e.g. MaximumMCC)
 
 
 CONTACT
