@@ -1,6 +1,7 @@
 #!/bin/bash
 
-clean=FALSE
+clean=TRUE
+mypython='python2 -OO'
 
 check_file(){
     ref_file=$1
@@ -31,4 +32,5 @@ check_file(){
 
 export check_file
 export clean
+export mypython
 

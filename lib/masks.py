@@ -99,17 +99,24 @@ def count_bits(n):
     * Output:
     *     c: the number of bits in the integer
     """
+    if n == np.nan:
+        print("Error: The input to count_bits is NaN. Expected an integer.")
+        exit(1)
     if n == 0:
         return 0
     c = 0
     top_bit = 1
-    if n > 0:
-        top_bit = int(math.floor(math.log(n,2))) + 1
-    else: # n < 0
-        print("The integer {} put into count_bits is not unsigned.".format(n))
-        return -1
-    all_bits = range(0,top_bit)
-    all_bits = [ 1 << b for b in all_bits ]
+    if not np.issubdtype(n,np.unsignedinteger):
+        try:
+            print("{} is not an unsigned integer. Attempting to turn it into a signed integer.".format(n))
+            n = np.uint64(n)
+        except:
+            print("The number {} put into count_bits cannot be unsigned.".format(n))
+            return -1
+    top_bit = int(math.floor(math.log(n,2))) + 1
+    all_bits = np.zeros((top_bit,),dtype=np.uint64)
+    for x in range(top_bit):
+        all_bits[x] = 1 << x
     for b in all_bits:
         if b & n != 0:
             c = c + 1
@@ -460,8 +467,11 @@ class refmask(mask):
                 bitlist.remove('')
             if 'None' in bitlist:
                 bitlist.remove('None')
-            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
+            self.bitlist = np.zeros((len(bitlist),),dtype=np.uint64)
+            for i,b in enumerate(bitlist):
+                self.bitlist[i] = 1 << (int(b) - 1)
 
+#            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
 #            purposes = list(jData['Purpose'])
 #            purposes_unique = []
 #            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
@@ -487,7 +497,7 @@ class refmask(mask):
 
     def regionIsPresent(self):
         """
-        * Description: return True if a scoreable region is present. Does not account for no-score zones yet. False if otherwise.
+        * Description: return True if a scoreable region is present. Does not account for no-score zones. False if otherwise.
         """
         presence = 0
         rmat = self.matrix
@@ -495,10 +505,11 @@ class refmask(mask):
         full_bitstack = 0
         for b in bits:
             full_bitstack += b
+        full_bitstack = np.uint64(full_bitstack)
 
         if self.is_multi_layer:
             for i in range(self.matrix.shape[2]):
-                presence += (rmat[:,:,i] & (full_bitstack >> 8*i)).sum()
+                presence += (rmat[:,:,i] & (full_bitstack >> np.uint64(8*i))).sum()
                 if presence > 0:
                     return True
         else:
@@ -557,7 +568,11 @@ class refmask(mask):
                     mybitlist.remove('')
                 if 'None' in mybitlist:
                     mybitlist.remove('None')
-                mybitlist = [1 << (int(b) - 1) for b in mybitlist]
+                bitlist_alloc = np.zeros((len(mybitlist),),dtype=np.uint64)
+                for i,b in enumerate(mybitlist):
+                    bitlist_alloc[i] = 1 << (int(b) - 1)
+#                mybitlist = [1 << (int(b) - 1) for b in mybitlist]
+                mybitlist = bitlist_alloc
     
             elif option=='partial':
                 mybitlist = self.bitlist
@@ -581,7 +596,7 @@ class refmask(mask):
             pixel_list = []
             tempmask = np.copy(base_mask) #NOTE: additive masks, so continuously overlay. But need a new copy each time
 
-            pixel_list = [p for p in unique_px if p & b != 0]
+            pixel_list = [p for p in unique_px if p & b != 0] #TODO: guarantee mybitlist is unsigned?
 #            for p in unique_px:
             for p in pixel_list:
                 if count_bits(p) == 1:
@@ -654,13 +669,16 @@ class refmask(mask):
             full_bitstack = 0
             for b in self.bitlist:
                 full_bitstack += b
+            full_bitstack = np.uint64(full_bitstack)
 
             if self.is_multi_layer:
                 for l in range(self.matrix.shape[2]):
-                    p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
+#                    p_bitstack = np.uint8(full_bitstack >> l*8) & 255
+                    p_bitstack = np.uint8(full_bitstack >> np.uint64(l*8))
                     _,pixels = cv2.threshold(selfmat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
                     mymat = mymat | pixels
             else:
+                full_bitstack = np.uint8(full_bitstack)
                 _,pixels = cv2.threshold(selfmat & full_bitstack,0,1,cv2.THRESH_BINARY)
                 mymat = pixels
                 
@@ -759,13 +777,16 @@ class refmask(mask):
                 notcolors.remove(c)
             full_bitstack += c
 
+        full_bitstack = np.uint64(full_bitstack) #type-safety
         if self.is_multi_layer:
             layers = range(self.matrix.shape[2])
             for l in layers:
-                p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
+#                p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
+                p_bitstack = np.uint8(full_bitstack >> np.uint64(l*8))
                 _,pixels = cv2.threshold(mymat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
                 scored = scored | pixels
         else:
+            full_bitstack = np.uint8(full_bitstack)
             _,pixels = cv2.threshold(mymat & full_bitstack,0,1,cv2.THRESH_BINARY)
             scored = pixels
         scored = scored.astype(np.uint8)

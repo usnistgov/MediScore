@@ -202,9 +202,9 @@ class TestImageMethods(ut.TestCase):
         rImg.binarize(0)
         aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
-        self.assertTrue(np.array_equal(aggwts,np.ones((100,150))))
         self.assertTrue(np.array_equal(bns,np.ones((100,150))))
         self.assertTrue(np.array_equal(sns,np.ones((100,150))))
+        self.assertTrue(np.array_equal(aggwts,np.ones((100,150))))
         os.system('rm testrefmask_0.jp2')
 
         #single mask of 1
@@ -218,9 +218,9 @@ class TestImageMethods(ut.TestCase):
 
         selmask = np.ones(mask1.shape)
         selmask[38:62,38:62] = 0
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,np.ones(aggwts.shape)))
         self.assertTrue(np.array_equal(sns,selmask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1.jp2')
 
         #single mask of 2
@@ -235,9 +235,9 @@ class TestImageMethods(ut.TestCase):
         selmask = np.ones(mask1.shape)
         selmask[38:62,38:62] = 0
         selmask[41:59,41:59] = 1
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_2.jp2')
 
         #add case with bitplane 4 set, make sure it's equal to above
@@ -248,9 +248,9 @@ class TestImageMethods(ut.TestCase):
         rImg.binarize(0)
         aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_2a.jp2')
 
         #add multi-layer test case
@@ -265,10 +265,26 @@ class TestImageMethods(ut.TestCase):
         rImg.binarize(0)
         aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
         
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,selmask))
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_2ML.jp2')
+
+        #multi-layer test case that forces data change to np.uint64
+        mask64 = np.zeros((100,100,5),dtype=np.uint8)
+        mask64[40:60,50:60,0] = 2
+        mask64[40:60,40:50,4] = 1 << 7
+        journal_df_64 = pd.DataFrame({'JournalName':'Foo','Color':['255 0 0','0 255 0'],'Operation':['PasteSplice','Blur'],'BitPlane':[2,40],'Sequence':[2,3],'Evaluated':['Y','Y']})
+
+        glymur.Jp2k('testrefmask_64.jp2',mask64)
+        rImg = masks.refmask('testrefmask_64.jp2',jData=journal_df_64)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
+        
+        self.assertTrue(np.array_equal(bns,selmask))
+        self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        os.system('rm testrefmask_64.jp2')
         
         #2 contained in 1
         mask2in1 = np.zeros((100,100),dtype=np.uint8)
@@ -286,9 +302,9 @@ class TestImageMethods(ut.TestCase):
         boundmask[28:62,28:52] = 0
         boundmask[31:59,31:49] = 1
 
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
         self.assertTrue(np.array_equal(sns,selmask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_2in1.jp2')
 
         #1 contained in 2
@@ -307,8 +323,8 @@ class TestImageMethods(ut.TestCase):
         boundmask[8:92,8:72] = 0
         boundmask[11:89,11:69] = 1
 
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1in2.jp2')
 
         #2 and 1 coincide
@@ -331,9 +347,9 @@ class TestImageMethods(ut.TestCase):
         dismask[27:53,27:53] = 0
         dismask[31:49,31:49] = 1
         
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
         self.assertTrue(np.array_equal(sns,dismask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1and2.jp2')
         
         #2 and 1 intersect
@@ -359,9 +375,9 @@ class TestImageMethods(ut.TestCase):
         dismask[38:62,18:82] = 0
         dismask[21:79,41:59] = 1
         
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
         self.assertTrue(np.array_equal(sns,dismask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1x2.jp2')
 
         #2 and 1 are adjacent
@@ -386,9 +402,9 @@ class TestImageMethods(ut.TestCase):
         dismask[37:63,37:53] = 0
         dismask[41:59,51:59] = 1
 
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
         self.assertTrue(np.array_equal(sns,dismask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1n2.jp2')
 
         #2 and 1 are separate
@@ -415,9 +431,9 @@ class TestImageMethods(ut.TestCase):
         dismask = np.ones((100,100))
         dismask[37:63,17:43] = 0
 
-        self.assertTrue(np.array_equal(aggwts,selmask))
         self.assertTrue(np.array_equal(bns,boundmask))
         self.assertTrue(np.array_equal(sns,dismask))
+        self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_1_2.jp2')
 
     def test_metrics(self):
