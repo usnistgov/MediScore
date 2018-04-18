@@ -59,7 +59,8 @@ def getKern(kernopt,size):
         printq("Kernel size 0 chosen. Returning 0.")
         return 0
     if (size % 2 == 0):
-        raise Exception('ERROR: One of your kernel sizes is not an odd integer.')
+        print('ERROR: One of your kernel sizes is not an odd integer.')
+        exit(1)
     kern = 0
     kernopt=kernopt.lower()
     if kernopt=='box':
@@ -91,9 +92,22 @@ def getKern(kernopt,size):
         print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
     return kern
 
+#define erode and dilate functions here.
+def erode(matrix,kernel,kernsize):
+    if kernsize == 0:
+        return matrix
+    kern=getKern(kernel,kernsize)
+    return cv2.erode(matrix,kern,iterations=1)
+
+def dilate(matrix,kernel,kernsize):
+    if kernsize == 0:
+        return matrix
+    kern=getKern(kernel,kernsize)
+    return cv2.dilate(matrix,kern,iterations=1)
+
 def count_bits(n):
     """
-    * Description: counts the number of bits in an unsigned integer.
+    * Description: counts the number of bits in an unsigned integer up to 64 bits.
     * Input:
     *     n: the unsigned integer with bits to be counted
     * Output:
@@ -106,20 +120,25 @@ def count_bits(n):
         return 0
     c = 0
     top_bit = 1
-    if not np.issubdtype(n,np.unsignedinteger):
+    if not np.issubdtype(type(n),np.unsignedinteger):
         try:
-            print("{} is not an unsigned integer. Attempting to turn it into a signed integer.".format(n))
-            n = np.uint64(n)
+            printq("{} is not an unsigned integer. Attempting to turn it into a signed integer.".format(n))
+            n2 = np.uint64(n)
+            if n2 == n:
+                n = n2 #in case information is erased
         except:
             print("The number {} put into count_bits cannot be unsigned.".format(n))
             return -1
     top_bit = int(math.floor(math.log(n,2))) + 1
-    all_bits = np.zeros((top_bit,),dtype=np.uint64)
+    type_n = type(n)
+    all_bits = np.zeros((top_bit,),dtype=type_n)
     for x in range(top_bit):
         all_bits[x] = 1 << x
-    for b in all_bits:
-        if b & n != 0:
+        if type_n(1 << x) & n != 0:
             c = c + 1
+#    for b in all_bits:
+#        if b & n != 0:
+#            c = c + 1
     return c
 
 class mask(object):
@@ -343,7 +362,7 @@ class mask(object):
 #                    intmat = intmat | (self.matrix[:,:,j] > 0)
                 _,intmat = cv2.threshold(intmat,0,255,cv2.THRESH_BINARY_INV)
             else:
-                _,intmat = cv2.threshold(self.matrix,0,255,cv2.THRESH_BINARY_INV)
+                _,intmat = cv2.threshold(np.uint8(self.matrix),0,255,cv2.THRESH_BINARY_INV)
             self.bwmat = intmat
             return self.bwmat
 
@@ -421,8 +440,11 @@ class refmask(mask):
         super(refmask,self).__init__(n,readopt)
         #rework the init and other functions to support bit masking
         #default to all regions if it is 0
-        self.bitlist=0
+#        self.bitlist=0
+        self.bitplanes=0
         self.is_multi_layer = self.matrix.ndim == 3
+        if not self.is_multi_layer:
+            self.matrix = np.uint8(self.matrix)
 
         if jData is not 0:
 #            self.colors = [[0,0,0]]
@@ -441,7 +463,6 @@ class refmask(mask):
 
             #sort in sequence first
             self.journalData = jData.sort_values("Sequence",ascending=False)
-            desired_rows = self.journalData.query("{}=='Y'".format(evalcol))
 
             all_bitlist = self.journalData['BitPlane'].unique().tolist()
             if '' in all_bitlist:
@@ -450,26 +471,42 @@ class refmask(mask):
                 all_bitlist.remove('None')
             
             #filter out bits that aren't present for that probe.
-            bitmask = 0
-            for b in all_bitlist:
-                bitmask = bitmask + (1 << (int(b) - 1))
-            printq(bitmask)
             if self.is_multi_layer:
                 n_layers = self.matrix.shape[2]
-                for l in range(n_layers):
-                    p_bitmask = np.uint8((bitmask >> 8*l) & 255)
-                    self.matrix[:,:,l] = self.matrix[:,:,l] & p_bitmask
-            else:
-                self.matrix = self.matrix & bitmask
+                bitmask = np.zeros((n_layers,),dtype=np.uint8)
+                trial_bitlist = all_bitlist[:]
+                for b in trial_bitlist:
+#                    layer = int(math.log(b,2))//8
+                    layer = (int(b) - 1)//8
+                    if layer > n_layers - 1:
+                        print("The bitplane {} at layer {} is not accessible from the {} layers in the reference mask {}. Skipping it.".format(b,layer,n_layers,n))
+                        all_bitlist.remove(b)
+                        self.journalData.at[self.journalData['BitPlane'] == b,evalcol] = 'N'
+                        continue
+                    bitmask[layer] = bitmask[layer] + (1 << (int(b) - 1 - 8*layer))
 
+                for l in range(n_layers):
+#                    p_bitmask = np.uint8((bitmask >> 8*l) & 255)
+                    self.matrix[:,:,l] = self.matrix[:,:,l] & bitmask[l]
+            else:
+                bitmask = 0
+                for b in all_bitlist:
+                    bitmask = bitmask + (1 << (int(b) - 1))
+                bitmask = np.uint8(bitmask)
+                self.matrix = self.matrix & bitmask
+            printq(bitmask)
+
+            desired_rows = self.journalData.query("{}=='Y'".format(evalcol))
             bitlist = desired_rows['BitPlane'].unique().tolist()
             if '' in bitlist:
                 bitlist.remove('')
             if 'None' in bitlist:
                 bitlist.remove('None')
-            self.bitlist = np.zeros((len(bitlist),),dtype=np.uint64)
+#            self.bitlist = np.zeros((len(bitlist),),dtype=np.uint64)
+            self.bitplanes = np.zeros((len(bitlist),),dtype=int)
             for i,b in enumerate(bitlist):
-                self.bitlist[i] = 1 << (int(b) - 1)
+                self.bitplanes[i] = int(b)
+#                self.bitlist[i] = 1 << (int(b) - 1)
 
 #            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
 #            purposes = list(jData['Purpose'])
@@ -482,14 +519,14 @@ class refmask(mask):
 
     def getUniqueValues(self):
         """
-        * Description: return unique values in the matrix
+        * Description: stacks values in matrix to return unique values
         """
         if self.is_multi_layer:
             singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
             const_factor = 1
-            for i in range(self.matrix.shape[2]):
-                const_factor = 1 << 8*i
-                singlematrix = singlematrix + const_factor*self.matrix[:,:,i]
+            for l in range(self.matrix.shape[2]):
+                const_factor = 1 << 8*l
+                singlematrix = singlematrix + const_factor*self.matrix[:,:,l]
             unique_px = np.unique(singlematrix)
         else:
             unique_px = np.unique(self.matrix)
@@ -501,18 +538,23 @@ class refmask(mask):
         """
         presence = 0
         rmat = self.matrix
-        bits = self.bitlist
+        bps = self.bitplanes
         full_bitstack = 0
-        for b in bits:
-            full_bitstack += b
-        full_bitstack = np.uint64(full_bitstack)
 
         if self.is_multi_layer:
-            for i in range(self.matrix.shape[2]):
-                presence += (rmat[:,:,i] & (full_bitstack >> np.uint64(8*i))).sum()
+            n_layers = self.matrix.shape[2]
+            bitmask = np.zeros((n_layers,),dtype=np.uint8)
+            for b in self.bitplanes:
+                layer = (int(b) - 1)//8
+                bitmask[layer] = bitmask[layer] + (1 << (int(b) - 1 - 8*layer))
+            for i in range(n_layers):
+                presence += (rmat[:,:,i] & bitmask[i]).sum()
                 if presence > 0:
                     return True
         else:
+            for b in self.bitplanes:
+                full_bitstack += (1 << (int(b) - 1))
+            full_bitstack = np.uint8(full_bitstack)
             presence += (rmat & full_bitstack).sum()
 
         if presence > 0:
@@ -542,6 +584,14 @@ class refmask(mask):
         color = [int(p) for p in color.split(' ')]
         return color
 
+    def getColorBP(self,bp):
+        if self.journalData is 0:
+            print("No journal data supplied. Returning black.")
+            return [0,0,0]
+        color = self.journalData.query("BitPlane=='{}'".format(bp)).iloc[0]['Color']
+        color = [int(p) for p in color.split(' ')]
+        return color
+
     def getAnimatedMask(self,option='all'):
         """
         * Description: return the array of color masks that can then be saved as an animated png.
@@ -552,53 +602,74 @@ class refmask(mask):
         """
         dims = self.get_dims()
         base_mask = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
+        n_layers = 1
+        if self.is_multi_layer:
+            n_layers = self.matrix.shape[2]
 
         #get unique pixel values
         unique_px = self.getUniqueValues()
+        type_unique = type(unique_px[-1]) #get value of unique type
 
         if self.journalData is 0:
             top_bit = int(math.floor(math.log(max(unique_px),2))) + 1
-            all_bits = [1 << b for b in range(top_bit)]
-            mybitlist = all_bits
+            mybitplanes = range(0,top_bit + 1)
+#            all_bits = [1 << b for b in range(top_bit)]
+#            mybitlist = all_bits
         #get all the non-intersecting regions first
         else:
             if option=='all':
-                mybitlist = self.journalData['BitPlane'].unique().tolist()
-                if '' in mybitlist:
-                    mybitlist.remove('')
-                if 'None' in mybitlist:
-                    mybitlist.remove('None')
-                bitlist_alloc = np.zeros((len(mybitlist),),dtype=np.uint64)
-                for i,b in enumerate(mybitlist):
-                    bitlist_alloc[i] = 1 << (int(b) - 1)
+                mybitplanes = self.journalData['BitPlane'].unique().tolist()
+                if '' in mybitplanes:
+                    mybitplanes.remove('')
+                if 'None' in mybitplanes:
+                    mybitplanes.remove('None')
+                bitlist_alloc = np.zeros((len(mybitplanes),),dtype=type_unique)
+                for i,b in enumerate(mybitplanes):
+                    layer = (int(b) - 1)//8
+                    if layer > n_layers - 1:
+                        mybitplanes[i] = np.nan
+                    else:
+                        mybitplanes[i] = int(b)
+#                    bitlist_alloc[i] = (1 << (int(b) - 1))
 #                mybitlist = [1 << (int(b) - 1) for b in mybitlist]
-                mybitlist = bitlist_alloc
+#                mybitlist = bitlist_alloc
     
             elif option=='partial':
-                mybitlist = self.bitlist
-            printq((option,mybitlist))
+                mybitplanes = np.array(self.bitplanes).astype(type_unique)
+#                mybitlist = np.array([1 << (int(b) - 1) for b in self.bitplanes]).astype(type_unique)
+            printq((option,mybitplanes))
+        mybitplanes = [x for x in mybitplanes if ~np.isnan(x)] #ideally want something more elegant
 
+        #NOTE: all the regions that have only one manipulation
         for p in unique_px:
-            if (count_bits(p) == 1) and (p in mybitlist):
+            if p == 0:
+                continue
+            p_bp = int(math.log(p,2)) + 1
+            if (count_bits(p) == 1) and (p_bp in mybitplanes):
                 if self.is_multi_layer:
                     #parse it into the appropriate layer
-                    layer = int(math.log(p,2)//8)
-                    pixels = self.matrix[:,:,layer] == (p >> layer*8)
+                    layer = int(math.log(p,256))
+                    pixels = self.matrix[:,:,layer] == np.uint8(p >> type_unique(layer*8))
                 else:
                     pixels = self.matrix == p
 
-                base_mask[pixels] = self.getColor(p)
+                base_mask[pixels] = self.getColorBP(p_bp)
 
+        #NOTE: multi-manipulation regions
         seq = []
-        
-        for b in mybitlist:
+#        for b in mybitlist:
+        for bp in mybitplanes:
             pixel_catch = 0
             pixel_list = []
             tempmask = np.copy(base_mask) #NOTE: additive masks, so continuously overlay. But need a new copy each time
 
-            pixel_list = [p for p in unique_px if p & b != 0] #TODO: guarantee mybitlist is unsigned?
+            b = 1 << (int(bp) - 1)
+#            pixel_list = [p for p in unique_px if p & type_unique(b) != 0]
 #            for p in unique_px:
-            for p in pixel_list:
+            for p in unique_px:
+                type_p = type(p)
+                if p & type_p(b) == 0:
+                    continue
                 if count_bits(p) == 1:
                     continue
 #                if b & p != 0:
@@ -608,12 +679,12 @@ class refmask(mask):
                 pixel_catch = pixel_catch + 1
                 if self.is_multi_layer:
                     #parse it into the appropriate layer
-                    layer = int(math.log(p,2)//8)
-                    pixels = self.matrix[:,:,layer] == (p >> layer*8)
+                    layer = int(math.log(p,256))
+                    pixels = self.matrix[:,:,layer] == np.uint8(p >> type_unique(layer*8))
                 else:
                     pixels = self.matrix == p
 
-                bit_color = self.getColor(b)
+                bit_color = self.getColorBP(bp)
                 base_mask[pixels] = bit_color
                 tempmask[pixels] = bit_color
 
@@ -657,27 +728,37 @@ class refmask(mask):
         if (erodeKernSize==0) and (dilateKernSize==0):
             dims = self.get_dims()
             weight = np.ones(dims,dtype=np.uint8)
-            return {'rimg':self.matrix,'wimg':weight}
+            return {'rimg':self.matrix,'wimg':weight,'eimg':weight,'dimg':weight}
 
         mymat = 0
 #        if (len(self.matrix.shape) == 3) and (self.purposes is not 'all'):
         selfmat = self.matrix
 
-        if self.bitlist is not 0:
+        if self.bitplanes is not 0:
             #thorough computation for individual bits 
             mymat = np.zeros(self.get_dims(),dtype=np.uint8)
-            full_bitstack = 0
-            for b in self.bitlist:
-                full_bitstack += b
-            full_bitstack = np.uint64(full_bitstack)
+#            full_bitstack = 0
+#            for b in self.bitlist:
+#                full_bitstack += b
+#            full_bitstack = np.uint64(full_bitstack)
 
             if self.is_multi_layer:
-                for l in range(self.matrix.shape[2]):
+                n_layers = self.matrix.shape[2]
+                full_bitstack = np.zeros((n_layers,),dtype=np.uint8)
+                for b in self.bitplanes:
+#                    bitlayer = int(math.log(b,2))//8
+                    bitlayer = (int(b)-1)//8
+                    full_bitstack[bitlayer] = full_bitstack[bitlayer] + (1 << (b - 1 - 8*bitlayer))
+
+                printq("Full bitstack: {}".format(full_bitstack))
+                for l in range(n_layers):
 #                    p_bitstack = np.uint8(full_bitstack >> l*8) & 255
-                    p_bitstack = np.uint8(full_bitstack >> np.uint64(l*8))
-                    _,pixels = cv2.threshold(selfmat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
+                    _,pixels = cv2.threshold(selfmat[:,:,l] & full_bitstack[l],0,1,cv2.THRESH_BINARY)
                     mymat = mymat | pixels
             else:
+                full_bitstack = 0
+                for b in self.bitplanes:
+                    full_bitstack += (1 << (int(b) - 1))
                 full_bitstack = np.uint8(full_bitstack)
                 _,pixels = cv2.threshold(selfmat & full_bitstack,0,1,cv2.THRESH_BINARY)
                 mymat = pixels
@@ -713,17 +794,8 @@ class refmask(mask):
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
         #NOTE: dilate and erode are "reversed" because dilation and erosion in this context is relative to white, not black.
-        if erodeKernSize > 0:
-            eKern=getKern(kern,erodeKernSize)
-            eImg=cv2.dilate(mymat,eKern,iterations=1)
-        else:
-            eImg=mymat
-
-        if dilateKernSize > 0:
-            dKern=getKern(kern,dilateKernSize)
-            dImg=cv2.erode(mymat,dKern,iterations=1)
-        else:
-            dImg=mymat
+        eImg = dilate(mymat,kern,erodeKernSize)
+        dImg = erode(mymat,kern,dilateKernSize)
 
 #        bns=1-(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
         _,bns=cv2.threshold(eImg-dImg,0,1,cv2.THRESH_BINARY_INV)
@@ -749,65 +821,85 @@ class refmask(mask):
         mymat = self.matrix
         dims = self.get_dims()
         
-        #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
+        #take all distinct "colors" in mymat, subtract the colors that are reported, and then iterate
         notcolors = self.getUniqueValues()
         printq("Colors to consider: {}".format(notcolors))
         top_px = max(notcolors)
 
         printq(self.journalData)
-        if (np.array_equal(mymat,np.zeros(dims))) or (self.bitlist is 0):
+        if (np.array_equal(mymat,np.zeros(dims))) or (self.bitplanes is 0):
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
         #decompose into individual bit channels.
         #but this won't represent all colors, so max with the max bit in self.bitlist
-        top_bit = max([int(math.floor(math.log(top_px,2))),int(math.floor(math.log(max(self.bitlist),2)))]) + 1
+        top_bit = max([int(math.floor(math.log(top_px,2))),int(max(self.bitplanes) - 1)]) + 1
 #        top_bit = int(math.floor(math.log(max(self.bitlist),2))) + 1
-        notcolors = range(0,top_bit)
-        notcolors = [ 1 << b for b in notcolors ]
-        printq("Colors to consider: {}".format(notcolors))
+        notcolors = range(1,top_bit + 1) #up to and including top_bit
+        notcolors_b = [ 1 << (b - 1) for b in notcolors ]
+        printq("Colors to consider: {}".format(notcolors_b))
 
 #        for c in self.colors:
         scored = np.zeros((dims[0],dims[1]),dtype=bool)
 
-        full_bitstack = 0
-        for c in self.bitlist:
-            #skip the colors that aren't present, in case they haven't made it to the mask in question
-            if c in notcolors:
-                notcolors.remove(c)
-            full_bitstack += c
+#        full_bitstack = 0
+#        for c in self.bitlist:
+#            #skip the colors that aren't present, in case they haven't made it to the mask in question
+#            if c in notcolors:
+#                notcolors.remove(c)
+#            full_bitstack += c
+#        full_bitstack = np.uint64(full_bitstack) #type-safety
 
-        full_bitstack = np.uint64(full_bitstack) #type-safety
         if self.is_multi_layer:
-            layers = range(self.matrix.shape[2])
+            n_layers = mymat.shape[2]
+            layers = range(n_layers)
+            full_bitstack = np.zeros((n_layers,),dtype=np.uint8)
+            for c in self.bitplanes:
+                if c in notcolors:
+                    notcolors.remove(c)
+                    notcolors_b.remove(1 << (int(c) - 1))
+                layer = (int(c) - 1)//8
+                full_bitstack[layer] = full_bitstack[layer] + (1 << (int(c) - 1 - 8*layer))
+
             for l in layers:
 #                p_bitstack = np.uint8((full_bitstack >> l*8) & 255)
-                p_bitstack = np.uint8(full_bitstack >> np.uint64(l*8))
-                _,pixels = cv2.threshold(mymat[:,:,l] & p_bitstack,0,1,cv2.THRESH_BINARY)
+                _,pixels = cv2.threshold(mymat[:,:,l] & full_bitstack[l],0,1,cv2.THRESH_BINARY)
                 scored = scored | pixels
         else:
+            full_bitstack = 0
+            for c in self.bitplanes:
+                #skip the colors that aren't present, in case they haven't made it to the mask in question
+                c_bit = 1 << (c-1)
+                if c in notcolors:
+                    notcolors.remove(c)
+                    notcolors_b.remove(c_bit)
+                full_bitstack += c_bit
             full_bitstack = np.uint8(full_bitstack)
             _,pixels = cv2.threshold(mymat & full_bitstack,0,1,cv2.THRESH_BINARY)
             scored = pixels
         scored = scored.astype(np.uint8)
 
-        printq("Excluded colors: {}".format(notcolors))
+        printq("Excluded colors: {}".format(notcolors_b))
         if len(notcolors)==0:
             weights = np.ones(dims,dtype=np.uint8)
             return weights
 
         #edit for bit masks
         mybin = np.zeros((dims[0],dims[1]),dtype=bool)
-        full_notstack = 0
-        for c in notcolors:
-            full_notstack += c
 
         if self.is_multi_layer:
+            full_notstack = np.zeros((n_layers,),dtype=np.uint8)
+            for c in notcolors:
+                layer = (int(c) - 1)//8
+                full_notstack[layer] = full_notstack[layer] + (1 << (int(c) - 1 - 8*layer))
             for l in layers:
-                p_notstack = np.uint8((full_notstack >> l*8) & 255)
-                _,pixels = cv2.threshold(mymat[:,:,l] & p_notstack,0,1,cv2.THRESH_BINARY)
+#                p_notstack = np.uint8((full_notstack >> np.uint64(l*8)) & 255)
+                _,pixels = cv2.threshold(mymat[:,:,l] & full_notstack[l],0,1,cv2.THRESH_BINARY)
                 mybin = mybin | pixels
         else:
+            full_notstack = 0
+            for c in notcolors:
+                full_notstack += (1 << (int(c) - 1))
             _,pixels = cv2.threshold(mymat & full_notstack,0,1,cv2.THRESH_BINARY)
             mybin = pixels
 
@@ -815,17 +907,8 @@ class refmask(mask):
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         #eroded region must be set to 1 and must not be overrideen by the unselected NSR
         kern = kern.lower()
-        if erodeKernSize > 0:
-            eKern=getKern(kern,erodeKernSize)
-            eImg = cv2.erode(scored,eKern,iterations=1)
-        else:
-            eImg = scored
-
-        if dilateKernSize > 0:
-            dKern=getKern(kern,dilateKernSize)
-            dImg = 1 - cv2.dilate(mybin,dKern,iterations=1)
-        else:
-            dImg = 1-mybin
+        eImg = erode(scored,kern,erodeKernSize)
+        dImg = 1-dilate(mybin,kern,dilateKernSize)
 
         dImg = dImg | eImg
         weights=dImg.astype(np.uint8)
@@ -944,16 +1027,8 @@ class refmask_color(mask):
 
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
-        if erodeKernSize > 0:
-            eKern=getKern(kern,erodeKernSize)
-            eImg=cv2.dilate(mymat,eKern,iterations=1)
-        else:
-            eImg = mymat
-        if dilateKernSize > 0:
-            dKern=getKern(kern,dilateKernSize)
-            dImg=cv2.erode(mymat,dKern,iterations=1)
-        else:
-            dImg = mymat
+        eImg = dilate(mymat,kern,erodeKernSize)
+        dImg = erode(mymat,kern,dilateKernSize)
 
         _,bns=cv2.threshold(eImg-dImg,0,1,cv2.THRESH_BINARY_INV)
 #        bns=1-(eImg-dImg)/255 #note: eImg - dImg because black is treated as 0.
@@ -1007,17 +1082,9 @@ class refmask_color(mask):
         #note: erodes relative to 0. We have to invert it twice to get the actual effects we want relative to 255.
         kern = kern.lower()
         printq(erodeKernSize)
-        if erodeKernSize > 0:
-            eKern=getKern(kern,erodeKernSize)
-            eImg=cv2.erode(scoredregion,eKern,iterations=1)
-        else:
-            eImg = scoredregion
+        eImg = erode(scoredregion,kern,erodeKernSize)
         printq(dilateKernSize)
-        if dilateKernSize > 0:
-            dKern=getKern(kern,dilateKernSize)
-            dImg=cv2.erode(mybin,dKern,iterations=1)
-        else:
-            dImg = mybin
+        dImg = erode(mybin,kern,dilateKernSize)
         dImg=dImg | eImg
         weights=dImg.astype(np.uint8)
 

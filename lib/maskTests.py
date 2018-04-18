@@ -191,6 +191,7 @@ class TestImageMethods(ut.TestCase):
 #        cv2.imwrite('testsysmask.png',sample_mask,png_params)
 #        sImg = masks.mask('testsysmask.png')
 #        os.system('rm testsysmask.png')
+        print("CASE 1b: Testing behavior of JPEG2000 scoring and masks...")
 
         journal_df = pd.DataFrame({'JournalName':['Foo','Foo','Foo'],'Color':['255 0 0','0 255 0','0 0 255'],'Operation':['PasteSplice','LocalBlur','ContentAwareFill'],'BitPlane':[3,2,1],'Sequence':[3,2,1],'Evaluated':['Y','Y','N']})
 
@@ -199,6 +200,16 @@ class TestImageMethods(ut.TestCase):
         #glymur write to jp2
         glymur.Jp2k('testrefmask_0.jp2',blank_mask)
         rImg = masks.refmask('testrefmask_0.jp2',jData=journal_df)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
+
+        self.assertTrue(np.array_equal(bns,np.ones((100,150))))
+        self.assertTrue(np.array_equal(sns,np.ones((100,150))))
+        self.assertTrue(np.array_equal(aggwts,np.ones((100,150))))
+
+        #try again for a bigger journal_df up to 16,32,64 bits. Should be the same regardless
+        journal_df_64 = pd.DataFrame({'JournalName':['Foo','Foo','Foo'],'Color':['255 0 0','0 255 0','0 0 255'],'Operation':['PasteSplice','LocalBlur','ContentAwareFill'],'BitPlane':[63,2,1],'Sequence':[3,2,1],'Evaluated':['Y','Y','N']})
+        rImg = masks.refmask('testrefmask_0.jp2',jData=journal_df_64)
         rImg.binarize(0)
         aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
 
@@ -285,6 +296,26 @@ class TestImageMethods(ut.TestCase):
         self.assertTrue(np.array_equal(sns,np.ones((100,100))))
         self.assertTrue(np.array_equal(aggwts,selmask))
         os.system('rm testrefmask_64.jp2')
+        rImg.getAnimatedMask('all')
+        rImg.getAnimatedMask('partial')
+        
+        #multi-layer test case that forces data change to higher bits than 64
+        mask64plus = np.zeros((100,100,9),dtype=np.uint8)
+        mask64plus[40:60,50:60,0] = 2
+        mask64plus[40:60,40:50,8] = 1
+        journal_df_64plus = pd.DataFrame({'JournalName':'Foo','Color':['255 0 0','0 255 0'],'Operation':['PasteSplice','Blur'],'BitPlane':[2,65],'Sequence':[2,3],'Evaluated':['Y','Y']})
+
+        glymur.Jp2k('testrefmask_64plus.jp2',mask64plus)
+        rImg = masks.refmask('testrefmask_64plus.jp2',jData=journal_df_64plus)
+        rImg.binarize(0)
+        aggwts,bns,sns = rImg.aggregateNoScore(3,5,5,'box')
+        
+        self.assertTrue(np.array_equal(bns,selmask))
+        self.assertTrue(np.array_equal(sns,np.ones((100,100))))
+        self.assertTrue(np.array_equal(aggwts,selmask))
+        os.system('rm testrefmask_64plus.jp2')
+        rImg.getAnimatedMask('all')
+        rImg.getAnimatedMask('partial')
         
         #2 contained in 1
         mask2in1 = np.zeros((100,100),dtype=np.uint8)

@@ -415,9 +415,10 @@ HISTORY
       - JPEG2000 fix to stabilize bit filtering and take full advantage of cv2's thresholding routine to speed up computation.
       - Modified optOut functionality for separate Probe/Donor statuses in the splice optOut task
       - All metric columns will be displayed, even if not scored (e.g. MaximumMCC)
-  Apr 10, 2018 - MediScore Version 1.3.3
+  Apr 18, 2018 - MediScore Version 1.3.3
     * MaskScorer:
       - JPEG2000 fix to stabilize bit operations for unsigned 64-bit integer operations.
+      - Additional upgrades to make JPEG2000 scoring amenable for more than 64 layers of localizable operations.
 
 CONTACT
 -------
