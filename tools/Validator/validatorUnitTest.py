@@ -229,7 +229,7 @@ class TestValidator(ut.TestCase):
         os.system('rm vm4c.log')
 
         print("CASE S4d: Validating behavior for improper OptOut...")
-        myval = os.system("python2 validator.py -nc --optOut --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm4d.log".format(NCID,validatorRoot + 'food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
+        myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm4d.log".format(NCID,validatorRoot + 'food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/food_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
         errstr = msgcapture("vm4d.log")
         self.assertEqual(myval,1)
         self.assertTrue("Probe status" in errstr)
@@ -508,7 +508,7 @@ class TestValidator(ut.TestCase):
         os.system('rm vs4c.log')
 
         print("CASE D4d: Validating behavior for inappropriate ProbeStatus and DonorStatus values...")
-        myval = os.system("python2 validator.py -nc --optOut --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs4d.log".format(NCID,validatorRoot + 'loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs4d.log".format(NCID,validatorRoot + 'loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/loremd_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
         errstr = msgcapture("vs4d.log")
         self.assertEqual(myval,1)
         self.assertTrue("Probe status" in errstr)
@@ -555,7 +555,7 @@ class TestValidator(ut.TestCase):
         os.system('rm vs6.log')
         print("CASE D6 validated.")
         
-        print("\nCASE D7: Validating behavior when at least one mask file is not present...") 
+        print("\nCASE D7: Validating behavior when at least one mask file is not empty and not present...") 
 #        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs7.log".format(NCID,validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
         errstr = msgcapture("vs7.log")

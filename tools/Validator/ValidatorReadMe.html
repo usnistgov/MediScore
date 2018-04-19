@@ -11949,7 +11949,33 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>--optOut</p>
 <ul>
-<li>Whether or not to skip validation for rows with the appropriate ProbeStatus field.</li>
+<li>Deprecated as of 4/19/2018. Presently will attempt to validate rows regardless of whether the option is set.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Processing-Options">Processing Options<a class="anchor-link" href="#Processing-Options">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-id --identify</p>
+<ul>
+<li>Use ImageMagick's <code>identify</code> command to get dimensions of the masks for accelerated image processing. OpenCV reading is used by default.</li>
+</ul>
+<p>-p --processors</p>
+<ul>
+<li>The number of processors to use for validation. Choosing too many processors will force the program to default to the number of rows. This option will take effect for SSD or SSD-video validation only (i.e. selecting this for DSD will have no effect). (default = 1)</li>
 </ul>
 
 </div>

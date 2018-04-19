@@ -419,6 +419,10 @@ HISTORY
     * MaskScorer:
       - JPEG2000 fix to stabilize bit operations for unsigned 64-bit integer operations.
       - Additional upgrades to make JPEG2000 scoring amenable for more than 64 layers of localizable operations.
+  Apr 19, 2018 - MediScore Version 1.3.4
+    * Validator:
+      - Refining validator to check values regardless of optOut option.
+      - Updated documentation to record ImageMagick's identify option and parallelization option (for SSD only)
 
 CONTACT
 -------
