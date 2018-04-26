@@ -423,6 +423,9 @@ HISTORY
     * Validator:
       - Refining validator to check values regardless of optOut option.
       - Updated documentation to record ImageMagick's identify option and parallelization option (for SSD only)
+  Apr 26, 2018 - MediScore Version 1.3.5
+    * DetectionScorer:
+      - Added the value "FailedValidation" to ProbeStatus (Optout option)
 
 CONTACT
 -------

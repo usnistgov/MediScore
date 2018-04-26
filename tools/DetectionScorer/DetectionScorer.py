@@ -161,7 +161,7 @@ if __name__ == '__main__':
                               help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
 
     parser.add_argument('--optOut', action='store_true',
-                        help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only.")
+                        help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
 
     parser.add_argument('--noNum', action='store_true',
                         help="Do not print the number of target trials and non-target trials on the legend of the plot")
@@ -352,7 +352,7 @@ if __name__ == '__main__':
                 index_m_df = index_m_df.query(" IsOptOut==['N', 'Localization'] ")
             elif "ProbeStatus" in index_m_df.columns:
                 index_m_df = index_m_df.query(
-                    " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization'] ")
+                    " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation'] ")
 
         v_print("Query : {}\n".format(query))
         v_print("Creating partitions...\n")
@@ -397,7 +397,7 @@ if __name__ == '__main__':
             elif "ProbeStatus" in index_m_df.columns:
                 print("Ouput the metadata table...\n")
                 index_m_df = index_m_df.query(
-                    " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization']")
+                    " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
 
         ## Output the meta data as dataframe
         if args.outMeta:  # save all metadata for analysis purpose
