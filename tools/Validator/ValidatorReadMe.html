@@ -11860,6 +11860,19 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>--output_revised_system</p>
+<ul>
+<li>Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>-nc --nameCheck</p>
 <ul>
 <li>Whether or not to check the naming format of the file according to the ENBF (Extended Backus-Naur Form) <TEAM><em>NC17</em><DATA><em><TASK></em><CONDITION><em><SYS></em><VERSION>. Selecting the option will run the name checker. Further information on the meaning of the ENBF is available in the evaluation plan.</li>

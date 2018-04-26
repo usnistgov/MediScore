@@ -53,8 +53,8 @@ from myround import myround
 #execfile('maskreport.py')
 
 ########### Temporary Variable ############################################################
-localOptOutColName = "ProbeStatus"
-pastOptOutColName = "IsOptOut"
+mfc18_oo_name = "ProbeStatus"
+nc17_oo_name = "IsOptOut"
 
 ########### Command line interface ########################################################
 
@@ -254,8 +254,8 @@ m_df = m_df.replace([np.inf,-np.inf],np.nan).dropna(subset=[''.join([e,'MaskFile
 sysCols = list(mySys)
 refCols = list(sub_ref)
 
-if args.optOut and (not (localOptOutColName in sysCols) and not (pastOptOutColName in sysCols)):
-    print("ERROR: No {} or {} column detected. Filtration is meaningless.".format(localOptOutColName,pastOptOutColName))
+if args.optOut and (not (mfc18_oo_name in sysCols) and not (nc17_oo_name in sysCols)):
+    print("ERROR: No {} or {} column detected. Filtration is meaningless.".format(mfc18_oo_name,nc17_oo_name))
     exit(1)
 
 sysCols = [c for c in sysCols if c not in refCols]
@@ -277,14 +277,14 @@ if len(m_df) == 0:
 totalTrials = len(m_df)
 #NOTE: IsOptOut values can be any one of "Y", "N", "Detection", or "Localization"
 #NOTE: ProbeStatus values can be any one of "Processed", "NonProcessed", "OptOutAll", "OptOutDetection", "OptOutLocalization"
-optOutCol = localOptOutColName
-if localOptOutColName in sysCols:
+optOutCol = mfc18_oo_name
+if mfc18_oo_name in sysCols:
     undesirables = str(['OptOutAll','OptOutLocalization'])
-    all_statuses = {'Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization'}
-elif pastOptOutColName in sysCols:
-    optOutCol = pastOptOutColName
+    all_statuses = {'Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation'}
+elif nc17_oo_name in sysCols:
+    optOutCol = nc17_oo_name
     undesirables = str(['Y','Localization'])
-    all_statuses = {'Y','N','Detection','Localization'}
+    all_statuses = {'Y','N','Detection','Localization','FailedValidation'}
 #check to see if there are any values not one of these
 probeStatuses = set(list(m_df[optOutCol].unique()))
 if '' in probeStatuses:
@@ -293,12 +293,29 @@ if probeStatuses - all_statuses > set():
     print("ERROR: Status {} is not recognized.".format(probeStatuses - all_statuses))
     exit(1)
 
-optOutQuery = "==".join([optOutCol,undesirables])
+if (args.task == 'splice') and (mfc18_oo_name in sysCols):
+    donorStatuses = set(list(m_df['DonorStatus'].unique()))
+    all_donor_statuses = {'Processed','NonProcessed','OptOutLocalization','FailedValidation'}
+    if donorStatuses - all_donor_statuses > set():
+        print("ERROR: Status {} is not recognized for column DonorStatus.".format(donorStatuses - all_donor_statuses))
+        exit(1)
 
-totalOptOut = len(m_df.query(optOutQuery))
-totalOptIn = totalTrials - totalOptOut
+#optout filter here for faster processing
+if nc17_oo_name in sysCols:
+    oo_df = m_df.query("IsOptOut!={}".format(undesirables))
+elif mfc18_oo_name in sysCols:
+    if args.task == 'manipulation':
+        oo_df = m_df.query("ProbeStatus!={}".format(undesirables))
+    elif args.task == 'splice':
+        oo_df = m_df.query("not ((ProbeStatus=={}) & (DonorStatus=={}))".format(undesirables,undesirables))
+
+if args.optOut:
+    m_df = oo_df
+
+totalOptIn = len(oo_df)
+totalOptOut = totalTrials - totalOptIn
 TRR = float(totalOptIn)/totalTrials
-m_df = m_df.query("IsTarget=='Y'") #TODO: don't filter anymore, but see Jon first.
+m_df = m_df.query("IsTarget=='Y'") 
 
 if args.perProbePixelNoScore and (('ProbeOptOutPixelValue' not in sysCols) or ((args.task == 'splice') and ('DonorOptOutPixelValue' not in sysCols))):
     if args.task == 'manipulation':
@@ -436,11 +453,14 @@ if args.task == 'manipulation':
         merged_df = merged_df[firstcols]
         #filter for optout here
         all_cols = merged_df.columns.values.tolist()
-        if params.optOut:
-            if "IsOptOut" in all_cols:
-                merged_df = merged_df.query("IsOptOut==['N','Detection']")
-            elif "ProbeStatus" in all_cols:
-                merged_df = merged_df.query("ProbeStatus==['Processed','NonProcessed','OptOutDetection']") 
+        if "IsOptOut" in all_cols:
+            merged_df.loc[merged_df.query("IsOptOut==['FailedValidation']").index,'OutputProbeMaskFileName'] = ''
+            if params.optOut:
+                merged_df = merged_df.query("IsOptOut==['N','Detection','FailedValidation']")
+        elif "ProbeStatus" in all_cols:
+            merged_df.loc[merged_df.query("ProbeStatus==['FailedValidation']").index,'OutputProbeMaskFileName'] = ''
+            if params.optOut:
+                merged_df = merged_df.query("ProbeStatus==['Processed','NonProcessed','OptOutDetection','FailedValidation']")
     
         return merged_df
 
@@ -858,11 +878,17 @@ elif args.task == 'splice':
 
         #filter for optout here where both are opted out
         all_cols = merged_df.columns.values.tolist()
-        if params.optOut:
-            if "IsOptOut" in all_cols:
-                merged_df = merged_df.query("IsOptOut==['N','Detection']")
-            elif "ProbeStatus" in all_cols and 'DonorStatus' in all_cols:
-                merged_df = merged_df.query("ProbeStatus==['Processed','NonProcessed','OptOutDetection'] || DonorStatus=['Processed','NonProcessed']")
+        if "IsOptOut" in all_cols:
+            failidx = merged_df.query("IsOptOut==['FailedValidation']").index
+            merged_df.loc[failidx,'OutputProbeMaskFileName'] = ''
+            merged_df.loc[failidx,'OutputDonorMaskFileName'] = ''
+            if params.optOut:
+                merged_df = merged_df.query("IsOptOut==['N','Detection','FailedValidation']")
+        elif "ProbeStatus" in all_cols and 'DonorStatus' in all_cols:
+            merged_df.loc[merged_df.query("ProbeStatus==['FailedValidation']").index,'OutputProbeMaskFileName'] = ''
+            merged_df.loc[merged_df.query("DonorStatus==['FailedValidation']").index,'OutputDonorMaskFileName'] = ''
+            if params.optOut:
+                merged_df = merged_df.query("(ProbeStatus==['Processed','NonProcessed','OptOutDetection','FailedValidation']) | (DonorStatus==['Processed','NonProcessed','FailedValidation'])")
 
         if args.displayScoredOnly:
             #get the list of non-scored and delete them
