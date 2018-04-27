@@ -39,7 +39,7 @@ sys.path.append(lib_path)
 import masks
 import Render as p
 from collections import OrderedDict
-from printbuffer import printbuffer
+#from printbuffer import printbuffer
 from detMetrics import Metrics as dmets
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
@@ -47,9 +47,9 @@ from myround import myround
 from constants import *
 #from conn2db import *
 
-debug_off = True
+debug_off = False
 
-print_lock = multiprocessing.Lock() #for printout to std_out
+#print_lock = multiprocessing.Lock() #for printout to std_out
 
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
@@ -355,10 +355,25 @@ class maskMetricRunner:
             refMaskName = maskRow['{}{}MaskFileName'.format(binpfx,mymode)]
         else:
             refMaskName = maskRow['{}BitPlaneMaskFileName'.format(mymode)]
+        #if optOut value is 'FailedValidation, treat the name as blank
         sysMaskName = maskRow['Output{}MaskFileName'.format(mymode)]
+        if 'IsOptOut' in maskRow.keys():
+            if maskRow['IsOptOut'] == 'FailedValidation':
+                maskRow['Output{}MaskFileName'.format(mymode)] = ''
+                sysMaskName = ''
+        elif 'ProbeStatus' in maskRow.keys():
+            if self.mode == 2:
+                if maskRow['DonorStatus'] == 'FailedValidation':
+                    maskRow['Output{}MaskFileName'.format(mymode)] = ''
+                    sysMaskName = ''
+            else:
+                if maskRow['ProbeStatus'] == 'FailedValidation':
+                    maskRow['Output{}MaskFileName'.format(mymode)] = ''
+                    sysMaskName = ''
 
         #use atomic print buffer with atomic printout at end
-        myprintbuffer = printbuffer(verbose)
+#        myprintbuffer = printbuffer(verbose)
+        myprintbuffer = []
 
         try:
             maskMetrics = maskMetrics2
@@ -368,7 +383,8 @@ class maskMetricRunner:
             index_row = self.index.query("{}=='{}'".format(probe_id_name,manipFileID))
             if len(index_row) == 0:
                 myprintbuffer.append("The probe '{}' is not in the index file. Skipping.".format(manipFileID))
-                myprintbuffer.atomprint(print_lock)
+                self.msg_queue.put("\n".join(myprintbuffer))
+#                myprintbuffer.atomprint(print_lock)
                 return maskRow
             index_row = index_row.iloc[0]
 
@@ -398,7 +414,15 @@ class maskMetricRunner:
                 #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
                 maskRow['Scored'] = 'N'
                 maskRow['OptimumMCC'] = -2 #for reference to filter later
-                myprintbuffer.atomprint(print_lock)
+                self.msg_queue.put("\n".join(myprintbuffer))
+#                myprintbuffer.atomprint(print_lock)
+                return maskRow
+
+            if (rImg.matrix is None) or (sImg.matrix is None):
+                #Likely this could be FP or FN. Set scores as usual.
+                myprintbuffer.append("The index is at {}.".format(maskRow.name))
+                self.msg_queue.put("\n".join(myprintbuffer))
+#                myprintbuffer.atomprint(print_lock)
                 return maskRow
 
             rdims = rImg.get_dims()
@@ -407,12 +431,6 @@ class maskMetricRunner:
             if rdims != sdims:
                 myprintbuffer.append("Error: Reference and system image dimensions do not match for probe {}.".format(manipFileID))
                 exit(1)
-
-            if (rImg.matrix is None) or (sImg.matrix is None):
-                #Likely this could be FP or FN. Set scores as usual.
-                myprintbuffer.append("The index is at {}.".format(maskRow.name))
-                myprintbuffer.atomprint(print_lock)
-                return maskRow
 
             #threshold before scoring if sbin >= 0. Otherwise threshold after scoring.
             sbin_name = ''
@@ -433,7 +451,8 @@ class maskMetricRunner:
                 pppnspx = maskRow['%sOptOutPixelValue' % mymode]
             pns=sImg.pixelNoScore(pppnspx)
             if pns is 1:
-                myprintbuffer.append("{}OptOutPixelValue {} is not recognized.".format(mymode,pppnspx))
+                myprintbuffer.append("Error: {}OptOutPixelValue {} is not recognized.".format(mymode,pppnspx))
+                self.msg_queue.put("\n".join(myprintbuffer))
                 exit(1)
             wts = cv2.bitwise_and(wts,pns)
             rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
@@ -450,7 +469,8 @@ class maskMetricRunner:
                 maskRow['OptimumThreshold'] = np.nan
                 maskRow['AUC'] = np.nan
                 maskRow['EER'] = np.nan
-                myprintbuffer.atomprint(print_lock)
+                self.msg_queue.put("\n".join(myprintbuffer))
+#                myprintbuffer.atomprint(print_lock)
 
             #computes differently depending on choice to binarize system output mask
             mets = 0
@@ -637,13 +657,22 @@ class maskMetricRunner:
                 myprintbuffer.append("Generating HTML report...")
                 #TODO: trim the arguments here? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
                 self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg,sImg,rbin_name,sbinmaskname,smask_threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,myprintbuffer)
-            myprintbuffer.atomprint(print_lock)
+            self.msg_queue.put("\n".join(myprintbuffer))
+#            myprintbuffer.atomprint(print_lock)
             return maskRow
         except:
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
-            if debug_off:
+            if not debug_off:
+                self.msg_queue.put("\n".join(myprintbuffer))
+#                myprintbuffer.atomprint(print_lock)
+                while not self.msg_queue.empty():
+                    msg = self.msg_queue.get()
+                    print("*"*30) #TODO: tentative
+                    print(msg)
+                for e in self.errlist:
+                    print(e)
                 raise  #debug assistant
             return maskRow
 #            myprintbuffer.atomprint(print_lock)
@@ -673,6 +702,7 @@ class maskMetricRunner:
             p = multiprocessing.Pool(processes=processors)
             maskDataS = p.map(scoreMask,maskDataS)
             p.close()
+            p.join()
     
             #re-merge in the order found and return
             maskData = pd.concat(maskDataS)
@@ -692,6 +722,8 @@ class maskMetricRunner:
 #        ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']
         for p in self.probelist:
             thres_mets_df = probe_thres_mets[p]
+            if thres_mets_df.shape[0] == 0: #a safeguard
+                continue
             partial_thresholds = thres_mets_df['Threshold']
             sample_row = thres_mets_df.iloc[0]
             filled_index = np.digitize(all_thresholds,partial_thresholds,right=False) - 1
@@ -763,6 +795,8 @@ class maskMetricRunner:
                         plot_name = '_'.join([roc_pfx.lower(),'average_roc_donor'])
                         plot_title = ' '.join(['Donor',roc_pfx,'Average ROC'])
                 myroc = plotROC(mydets,plot_name,plot_title,self.outputRoot)
+            else:
+                aucs[''.join([roc_pfx,'AverageAUC'])] = np.nan
         return aucs
 
     def scoreMaxMetrics(self,scoredf):
@@ -772,14 +806,14 @@ class maskMetricRunner:
         max_cols = ['MaximumNMM','MaximumMCC','MaximumBWL1','MaximumPixelTP','MaximumPixelTN','MaximumPixelFP','MaximumPixelFN','MaximumThreshold']
         probe_id_field = ''.join([self.mymode,'FileID'])
         #if there's nothing to score in scoredf, return it
-        if scoredf.query("OptimumMCC > -2").count()['OptimumMCC'] == 0:
+        if (scoredf.query("OptimumMCC > -2").count()['OptimumMCC'] == 0):
             auc_cols = ['PixelAverageAUC','MaskAverageAUC']
             all_cols = max_cols + auc_cols
             for col in all_cols:
                 scoredf[col] = np.nan
             return scoredf
 
-        maxThreshold = -1
+        maxThreshold = -10
 
 #        roc_values = pd.DataFrame({'PixelTPR':0.,
 #                                   'PixelFPR':0.,
@@ -800,6 +834,14 @@ class maskMetricRunner:
         
         #preprocess and then proceed to compute 
         probe_thres_mets_preprocess = self.preprocess_threshold_metrics()
+        #if nothing in here, cease further computation
+        if len(probe_thres_mets_preprocess) == 0:
+            for col in max_cols:
+                scoredf[col] = np.nan
+            for pfx in ['Pixel','Mask']:
+                auc_name = ''.join([pfx,'AverageAUC'])
+                scoredf[auc_name] = np.nan
+            return scoredf
         probe_thres_mets_agg = pd.concat(probe_thres_mets_preprocess.values(),keys=probe_thres_mets_preprocess.keys(),names=[probe_id_field,'Threshold'])
         thres_mets_sum = probe_thres_mets_agg.sum(level=[1])
         thres_mets_sum['PixelTPR'] = thres_mets_sum['TP']/(thres_mets_sum['TP'] + thres_mets_sum['FN'])
@@ -816,7 +858,7 @@ class maskMetricRunner:
             scoredf[auc_name] = aucs[auc_name]
 
         #join roc_values to scoredf
-        if (self.sbin >= -1) and (maxThreshold > -1):
+        if (self.sbin >= -1) and (maxThreshold > -10):
             #with the maxThreshold, set MaximumMCC for everything. Join that dataframe with this one
             scoredf['MaximumThreshold'] = maxThreshold
             #access the probe_thres_mets_agg for the threshold
@@ -968,6 +1010,7 @@ class maskMetricRunner:
         manager = multiprocessing.Manager()
         self.thresscores = manager.dict()
         self.thresholds = manager.list()
+        self.msg_queue = manager.Queue()
 
         #************ Scoring begins here ************
         df = self.scoreMasks(df,processors)
@@ -985,40 +1028,47 @@ class maskMetricRunner:
         df = self.scoreMaxMetrics(df)
 
         last_cols = [self.manip_file_id_col,'%sFileName' % mymode,'Scored',
-               'OptimumNMM',
-               'OptimumMCC',
-               'OptimumBWL1',
-               'OptimumThreshold',
-               'GWL1',
-               'AUC',
-               'EER',
-               'PixelAverageAUC',
-               'MaskAverageAUC',
-               'OptimumPixelTP',
-               'OptimumPixelTN',
-               'OptimumPixelFP',
-               'OptimumPixelFN',
-               'MaximumNMM',
-               'MaximumMCC',
-               'MaximumBWL1',
-               'MaximumThreshold',
-               'MaximumPixelTP',
-               'MaximumPixelTN',
-               'MaximumPixelFP',
-               'MaximumPixelFN',
-               'ActualNMM',
-               'ActualMCC',
-               'ActualBWL1',
-               'ActualThreshold',
-               'ActualPixelTP',
-               'ActualPixelTN',
-               'ActualPixelFP',
-               'ActualPixelFN',
-               'PixelN',
-               'PixelBNS',
-               'PixelSNS',
-               'PixelPNS',
-               'ColMaskFileName','AggMaskFileName']
+                     'OptimumNMM',
+                     'OptimumMCC',
+                     'OptimumBWL1',
+                     'OptimumThreshold',
+                     'GWL1',
+                     'AUC',
+                     'EER',
+                     'PixelAverageAUC',
+                     'MaskAverageAUC',
+                     'OptimumPixelTP',
+                     'OptimumPixelTN',
+                     'OptimumPixelFP',
+                     'OptimumPixelFN',
+                     'MaximumNMM',
+                     'MaximumMCC',
+                     'MaximumBWL1',
+                     'MaximumThreshold',
+                     'MaximumPixelTP',
+                     'MaximumPixelTN',
+                     'MaximumPixelFP',
+                     'MaximumPixelFN',
+                     'ActualNMM',
+                     'ActualMCC',
+                     'ActualBWL1',
+                     'ActualThreshold',
+                     'ActualPixelTP',
+                     'ActualPixelTN',
+                     'ActualPixelFP',
+                     'ActualPixelFN',
+                     'PixelN',
+                     'PixelBNS',
+                     'PixelSNS',
+                     'PixelPNS',
+                     'ColMaskFileName','AggMaskFileName']
+
+        if self.verbose:
+            while not self.msg_queue.empty():
+                msg = self.msg_queue.get()
+                print("="*30)
+                print(msg)
+
         return df[last_cols].drop('%sFileName' % mymode,1)
 
     #TODO: drop this into a maskMetricsRender.py object later with renderParams object. Ideally would like to generate reports in a separate loop at the end of computations.

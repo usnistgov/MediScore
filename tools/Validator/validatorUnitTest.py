@@ -269,6 +269,26 @@ class TestValidator(ut.TestCase):
         self.assertTrue("is not single-channel." in errstr)
         print("CASE S6 validated.")
         os.system('rm vm6.log')
+
+        print("\nCASE S6.1: Validating behavior when mask is not single channel and when mask does not have the same dimensions.")
+        myval = os.system("python2 validator.py -nc --ncid {} -vt SSD -s {} -x {} --output_revised_system rewritten_output.csv -p {} {}{}> vm6_1.log".format(NCID,validatorRoot + 'baz_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/baz_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
+        errstr = msgcapture("vm6_1.log")
+        
+        self.assertEqual(myval,1)
+        self.assertTrue("ERROR: Expected dimensions" in errstr)
+        self.assertTrue("is not single-channel." in errstr)
+        print("CASE S6.1 validated.")
+        os.system('rm vm6_1.log')
+        
+        print("\nCASE S6.2: Validating behavior when mask is not single channel and when mask does not have the same dimensions.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD -s {} -x {} -p {} {}{}> vm6_2.log".format(NCID,validatorRoot + 'baz_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_1/rewritten_output.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256 
+        errstr = msgcapture("vm6_2.log")
+        
+#        self.assertEqual(myval,1)
+        self.assertTrue("ERROR: Expected dimensions" not in errstr)
+#        self.assertTrue("is not single-channel." in errstr)
+        print("CASE S6.2 validated.")
+        os.system('rm vm6_2.log')
         
         print("\nCASE S7: Validating behavior when system output column number is less than 3.") 
 #        myval = SSD_Validator(validatorRoot + 'foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_3/foo_NC2016_UnitTest_Manipulation_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv')
@@ -539,8 +559,8 @@ class TestValidator(ut.TestCase):
 #        errstr,val = print_capture('myval.fullCheck(True,identify,NCID,neglectMask)')
         self.assertEqual(myval,1)
         self.assertTrue("is not a png." in errstr)
-        idx=0
-        count=0
+#        idx=0
+#        count=0
 #        while idx < len(errstr):
 #            idx = errstr.find("Dimensions",idx)
 #            if idx == -1:
@@ -554,7 +574,33 @@ class TestValidator(ut.TestCase):
         self.assertTrue("is not a png." in errstr)
         os.system('rm vs6.log')
         print("CASE D6 validated.")
-        
+
+        #add case for output
+        print("\nCASE D6.1: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...")
+        myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} --output_revised_system revised_splice.csv -p {} {}{}> vs6_1.log".format(NCID,validatorRoot + 'ipsum_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/ipsum_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        errstr = msgcapture("vs6_1.log")
+        self.assertEqual(myval,1)
+        self.assertTrue("is not a png." in errstr)
+
+        self.assertTrue("ERROR: Expected dimensions" in errstr)
+        self.assertTrue("is not single-channel." in errstr)
+        self.assertTrue("is not a png." in errstr)
+#        os.system('rm vs6_1.log')
+        print("CASE D6.1 validated.")
+
+        #then repeat the run again with the revised output 
+        print("\nCASE D6.2: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...")
+        myval = os.system("python2 validator.py --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs6_2.log".format(NCID,validatorRoot + 'ipsum_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/revised_splice.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        errstr = msgcapture("vs6_2.log")
+        self.assertEqual(myval,1)
+        self.assertTrue("is not a png." in errstr)
+
+        self.assertTrue("ERROR: Expected dimensions" not in errstr)
+        self.assertTrue("is not single-channel." in errstr)
+        self.assertTrue("is not a png." in errstr)
+        os.system('rm vs6_2.log')
+        print("CASE D6.2 validated.")
+
         print("\nCASE D7: Validating behavior when at least one mask file is not empty and not present...") 
 #        myval = DSD_Validator(validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv')
         myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} {}{}> vs7.log".format(NCID,validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_3.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
@@ -574,7 +620,7 @@ class TestValidator(ut.TestCase):
                 break
             else:
                 count += 1
-                idx += len("Expected mask imaget")
+                idx += len("Expected mask image")
         os.system('rm vs7.log')
         print("CASE D7 validated.")
         

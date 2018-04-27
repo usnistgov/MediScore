@@ -219,27 +219,6 @@ def jsonCheck(provfile,provID,task,optOutColName,optOutVersion):
         print("{} did not pass the {} schema check!{}".format(provfile,task,provclause))
         return 1
     
-#class validation_params:
-#    """
-#    Description: Stores list of parameters for validation.
-#    """
-#    def __init__(self,
-#                 ncid,
-#                 doNameCheck,
-#                 identify,
-#                 neglectMask,
-#                 indexFilter,
-#                 ref,
-#                 processors):
-#        self.ncid=ncid
-#        self.doNameCheck=doNameCheck
-#        self.identify=identify
-#        self.neglectMask=neglectMask
-#        self.indexFilter=indexFilter
-#        self.ref=ref
-#        self.processors=processors
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score Medifor ProvenanceFiltering task output")
     parser.add_argument("-x", "--index_file", help="Task Index file", type=str, required=True)
@@ -271,7 +250,7 @@ if __name__ == '__main__':
         print("ERROR: either the namecheck or the projec task must be supplied.")
         exit(1)
 
-    myparams = validation_params(args.ncid,doNameCheck=args.nameCheck,optOut=args.optOut,identify=False,neglectMask=args.neglectJSON,indexFilter=False,ref=0,processors=1)
+    myparams = validation_params(ncid=args.ncid,doNameCheck=args.nameCheck,optOut=args.optOut,identify=False,neglectMask=args.neglectJSON,indexFilter=False,ref=0,processors=1)
 
     validation = ProvenanceValidator(args.system_output_file,args.index_file,verbose)
     if args.task:
