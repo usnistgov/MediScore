@@ -39,7 +39,7 @@ sys.path.append(lib_path)
 import masks
 import Render as p
 from collections import OrderedDict
-#from printbuffer import printbuffer
+from printbuffer import printbuffer
 from detMetrics import Metrics as dmets
 from maskMetrics import maskMetrics as maskMetrics1
 from maskMetrics_old import maskMetrics as maskMetrics2
@@ -49,7 +49,7 @@ from constants import *
 
 debug_off = False
 
-#print_lock = multiprocessing.Lock() #for printout to std_out
+print_lock = multiprocessing.Lock() #for printout to std_out
 
 def scoreMask(args):
     return maskMetricRunner.scoreMoreMasks(*args)
@@ -372,8 +372,7 @@ class maskMetricRunner:
                     sysMaskName = ''
 
         #use atomic print buffer with atomic printout at end
-#        myprintbuffer = printbuffer(verbose)
-        myprintbuffer = []
+        myprintbuffer = printbuffer(verbose)
 
         try:
             maskMetrics = maskMetrics2
@@ -383,8 +382,7 @@ class maskMetricRunner:
             index_row = self.index.query("{}=='{}'".format(probe_id_name,manipFileID))
             if len(index_row) == 0:
                 myprintbuffer.append("The probe '{}' is not in the index file. Skipping.".format(manipFileID))
-                self.msg_queue.put("\n".join(myprintbuffer))
-#                myprintbuffer.atomprint(print_lock)
+                myprintbuffer.atomprint(print_lock)
                 return maskRow
             index_row = index_row.iloc[0]
 
@@ -414,15 +412,13 @@ class maskMetricRunner:
                 #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
                 maskRow['Scored'] = 'N'
                 maskRow['OptimumMCC'] = -2 #for reference to filter later
-                self.msg_queue.put("\n".join(myprintbuffer))
-#                myprintbuffer.atomprint(print_lock)
+                myprintbuffer.atomprint(print_lock)
                 return maskRow
 
             if (rImg.matrix is None) or (sImg.matrix is None):
                 #Likely this could be FP or FN. Set scores as usual.
                 myprintbuffer.append("The index is at {}.".format(maskRow.name))
-                self.msg_queue.put("\n".join(myprintbuffer))
-#                myprintbuffer.atomprint(print_lock)
+                myprintbuffer.atomprint(print_lock)
                 return maskRow
 
             rdims = rImg.get_dims()
@@ -452,7 +448,6 @@ class maskMetricRunner:
             pns=sImg.pixelNoScore(pppnspx)
             if pns is 1:
                 myprintbuffer.append("Error: {}OptOutPixelValue {} is not recognized.".format(mymode,pppnspx))
-                self.msg_queue.put("\n".join(myprintbuffer))
                 exit(1)
             wts = cv2.bitwise_and(wts,pns)
             rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
@@ -469,8 +464,7 @@ class maskMetricRunner:
                 maskRow['OptimumThreshold'] = np.nan
                 maskRow['AUC'] = np.nan
                 maskRow['EER'] = np.nan
-                self.msg_queue.put("\n".join(myprintbuffer))
-#                myprintbuffer.atomprint(print_lock)
+                myprintbuffer.atomprint(print_lock)
 
             #computes differently depending on choice to binarize system output mask
             mets = 0
@@ -657,25 +651,18 @@ class maskMetricRunner:
                 myprintbuffer.append("Generating HTML report...")
                 #TODO: trim the arguments here? Just use threshold and thresMets, at min len 1? Remove mets and mymeas since we have threshold to index.
                 self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg,sImg,rbin_name,sbinmaskname,smask_threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,myprintbuffer)
-            self.msg_queue.put("\n".join(myprintbuffer))
-#            myprintbuffer.atomprint(print_lock)
+            myprintbuffer.atomprint(print_lock)
             return maskRow
         except:
             exc_type,exc_obj,exc_tb = sys.exc_info()
             print("{}FileName {} for {}FileID {} encountered exception {} at line {}.".format(mymode,refMaskName,mymode,manipFileID,exc_type,exc_tb.tb_lineno))
             self.errlist.append(exc_type)
             if not debug_off:
-                self.msg_queue.put("\n".join(myprintbuffer))
-#                myprintbuffer.atomprint(print_lock)
-                while not self.msg_queue.empty():
-                    msg = self.msg_queue.get()
-                    print("*"*30) #TODO: tentative
-                    print(msg)
+                myprintbuffer.atomprint(print_lock)
                 for e in self.errlist:
                     print(e)
                 raise  #debug assistant
             return maskRow
-#            myprintbuffer.atomprint(print_lock)
 
     def scoreMoreMasks(self,maskData):
         return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
@@ -1010,7 +997,6 @@ class maskMetricRunner:
         manager = multiprocessing.Manager()
         self.thresscores = manager.dict()
         self.thresholds = manager.list()
-        self.msg_queue = manager.Queue()
 
         #************ Scoring begins here ************
         df = self.scoreMasks(df,processors)
@@ -1063,12 +1049,7 @@ class maskMetricRunner:
                      'PixelPNS',
                      'ColMaskFileName','AggMaskFileName']
 
-        if self.verbose:
-            while not self.msg_queue.empty():
-                msg = self.msg_queue.get()
-                print("="*30)
-                print(msg)
-
+        print("Perimage scoring finished.")
         return df[last_cols].drop('%sFileName' % mymode,1)
 
     #TODO: drop this into a maskMetricsRender.py object later with renderParams object. Ideally would like to generate reports in a separate loop at the end of computations.

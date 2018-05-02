@@ -434,6 +434,8 @@ HISTORY
   May 2, 2018 - MediScore Version *.*.*
     * Validator:
       - Added "ERROR" message to ProbeStatus error reporting.
+    * Localization Scorer
+      - Refining localization scorer printout operations.
 
 CONTACT
 -------
