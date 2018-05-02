@@ -107,6 +107,11 @@ class TestValidator(ut.TestCase):
         self.assertEqual(myval,0)
         os.system('rm vmb1.log')
 
+        #no mask
+        myval = os.system("python2 validator.py -vt SSD -s {} -x {} -p {} {}{}> vmb2.log".format(validatorRoot + 'nomask/nomask.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256
+        self.assertEqual(myval,0)
+        os.system('rm vmb2.log')
+
         print("BASIC FUNCTIONALITY validated.")
         
         print("\nBeginning experiment ID naming error validations.")
@@ -585,7 +590,7 @@ class TestValidator(ut.TestCase):
         self.assertTrue("ERROR: Expected dimensions" in errstr)
         self.assertTrue("is not single-channel." in errstr)
         self.assertTrue("is not a png." in errstr)
-#        os.system('rm vs6_1.log')
+        os.system('rm vs6_1.log')
         print("CASE D6.1 validated.")
 
         #then repeat the run again with the revised output 

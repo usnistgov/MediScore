@@ -423,9 +423,10 @@ class SSD_Validator(validator):
             p = multiprocessing.Pool(processes=processors)
             maskDataS = p.map(checkProbe,maskDataS)
             p.close()
+            p.join()
             maskData = pd.concat(maskDataS)
         else:
-            maskData = maskData.apply(self.checkOneProbe,axis=1)
+            maskData = self.checkMoreProbes(maskData)
         #add all mask 'Message' entries to printBuffer
         maskData.apply(lambda x: self.printbuffer.put(x['Message']),axis=1,reduce=False)
 
@@ -437,8 +438,8 @@ class SSD_Validator(validator):
     #attach the flag to each row and send the row back
     def checkOneProbe(self,sysrow):
         probeFileID = sysrow['ProbeFileID']
-        maskFlag = 0
-        matchFlag = 0
+        sysrow['maskFlag'] = 0
+        sysrow['matchFlag'] = 0
         if not ((probeFileID in self.idxProbes) or self.indexFilter):
             sysrow['Message']="ERROR: {} does not exist in the index file.".format(probeFileID)
             sysrow['matchFlag'] = 1
@@ -494,7 +495,7 @@ class SSD_Validator(validator):
                 #throw error if not in set of allowed values
                 all_statuses = ['Y','Detection','Localization','N','FailedValidation']
                 if not sysrow['IsOptOut'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
+                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
                 if sysrow['IsOptOut'] == 'FailedValidation':
                     return sysrow
@@ -504,7 +505,7 @@ class SSD_Validator(validator):
             elif self.optOutNum == 2:
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
                 if not sysrow['ProbeStatus'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
+                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
                 if sysrow['ProbeStatus'] == 'FailedValidation':
                     return sysrow
@@ -882,7 +883,7 @@ class DSD_Validator(validator):
                     if optOut == 1:
                         all_statuses = ['Y','Detection','Localization','N','FailedValidation']
                         if not l_content[s_heads['IsOptOut']] in all_statuses:
-                            self.printbuffer.put("Probe status {} for probe {} is not recognized.".format(l_content[s_heads['IsOptOut']],probeID))
+                            self.printbuffer.put("ERROR: Probe status {} for probe {} is not recognized.".format(l_content[s_heads['IsOptOut']],probeID))
                             colFlag = 1
                         if l_content[s_heads['IsOptOut']] == 'FailedValidation':
                             continue
@@ -893,10 +894,10 @@ class DSD_Validator(validator):
                         #split into donor and probe checking with optOutOption
                         all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
                         if not l_content[s_heads['ProbeStatus']] in all_statuses:
-                            self.printbuffer.put("Probe status {} for probe {} is not recognized.".format(l_content[s_heads['ProbeStatus']],probeID))
+                            self.printbuffer.put("ERROR: Probe status {} for probe {} is not recognized.".format(l_content[s_heads['ProbeStatus']],probeID))
                             colFlag = 1
                         if not l_content[s_heads['DonorStatus']] in ['Processed','NonProcessed','OptOutLocalization','FailedValidation']:
-                            self.printbuffer.put("Donor status {} for donor {} is not recognized.".format(l_content[s_heads['DonorStatus']],donorID))
+                            self.printbuffer.put("ERROR: Donor status {} for donor {} is not recognized.".format(l_content[s_heads['DonorStatus']],donorID))
                             colFlag = 1
 
                         if l_content[s_heads['ProbeStatus']] == 'FailedValidation':
