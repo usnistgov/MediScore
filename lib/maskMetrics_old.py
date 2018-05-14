@@ -665,8 +665,16 @@ class maskMetrics:
             metrics = thresMets.iloc[0]
             mets = metrics[['NMM','MCC','BWL1']].to_dict()
             mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
-            mets['GWL1'] = np.nan
             all_metrics['GWL1'] = np.nan
+            all_metrics['AUC'] = np.nan
+            all_metrics['EER'] = np.nan
+
+            all_metrics['OptimumThreshold'] = threshold
+            if sbin >= -1:
+                #just get scores in one run if threshold is chosen
+                self.sys.binarize(sbin)
+                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
+                all_metrics['ActualThreshold'] = sbin
 
             for mes in ['BNS','SNS','PNS','N']:
                 if myprintbuffer is not 0:
@@ -681,15 +689,12 @@ class maskMetrics:
                 if sbin >= -1:
                     all_metrics[''.join(['ActualPixel',mes])] = mymeas[mes]
 
-            for met in ['NMM','MCC','BWL1','GWL1']:
+            for met in ['NMM','MCC','BWL1']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(met))
-                if met != 'GWL1':
-                    all_metrics[''.join(['Optimum',met])] = mets[met]
-                    if sbin >= -1:
-                        all_metrics[''.join(['Actual',met])] = mets[met]
-                else:
-                    all_metrics[met] = mets[met]
+                all_metrics[''.join(['Optimum',met])] = mets[met]
+                if sbin >= -1:
+                    all_metrics[''.join(['Actual',met])] = mets[met]
         else:
             metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
             mets = metrics[['NMM','MCC','BWL1']].to_dict()
@@ -716,10 +721,20 @@ class maskMetrics:
                     myprintbuffer.append("Setting value for {}...".format(mes))
                 all_metrics[''.join(['Pixel',mes])] = mymeas[mes]
 
+            all_metrics['OptimumThreshold'] = threshold
             if sbin >= -1:
                 #just get scores in one run if threshold is chosen
-                self.sys.binarize(sbin)
-                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
+                #TODO: get from thresMets instead of having to recompute
+                threslist = thresMets['Threshold'].tolist()
+                if sbin in threslist:
+                    t = sbin
+                else:
+                    threslist_less = [t for t in threslist if t <= sbin]
+                    t = max(threslist_less)
+                myameas = thresMets.query("Threshold=={}".format(t)).iloc[0]
+#                self.sys.binarize(sbin)
+#                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
+
                 all_metrics['ActualThreshold'] = sbin
 
             mets['GWL1'] = maskMetrics.grayscaleWeightedL1(self.ref,self.sys,w)

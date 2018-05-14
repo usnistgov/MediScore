@@ -105,6 +105,39 @@ def dilate(matrix,kernel,kernsize):
     kern=getKern(kernel,kernsize)
     return cv2.dilate(matrix,kern,iterations=1)
 
+def split_number(n,vsize=8):
+    """
+    * Description: splits a postive number into packets. Packet size is determined by data type
+                   (e.g. vsize=16 prompts the data to be stored as 16-bit unsigned integers.)
+    """
+    if n < 0:
+        print("Error: {} must be nonnegative.".format(n))
+        exit(1)
+    type_p = np.uint8
+    type_n = type(n)
+    if vsize == 16:
+        type_p = np.uint16
+    elif vsize == 32:
+        type_p = np.uint32
+    elif vsize == 64:
+        type_p = np.uint64
+    else:
+        print("Error: Packet size {} is not recognized. Expected one of [8,16,32,64]".format(vsize))
+        exit(1)
+
+    if n > 0:
+        top_bit = int(math.log(n,2)) + 1
+        n_layers = int(math.ceil((top_bit - 1)/vsize)) + 1
+    else:
+        top_bit = 1
+        n_layers = 1
+    pack = np.zeros((n_layers,),dtype=type_p)
+    pack_mask = type_p((1 << vsize) - 1)
+    for l in range(n_layers):
+        pack[l] = type_p(n & type_n(pack_mask))
+        n = type_n(n//(1 << vsize)) #for stability, just in case
+    return pack
+
 def count_bits(n):
     """
     * Description: counts the number of bits in an unsigned integer up to 64 bits.
@@ -118,27 +151,20 @@ def count_bits(n):
         exit(1)
     if n == 0:
         return 0
+    if n < 0:
+        print("Error: Will not attempt to count bits in a negative integer.")
+        exit(1)
+    top_bit = int(math.log(n,2)) + 1
+    n_layers = 1
+    pack_n = split_number(n,vsize=32)
+
     c = 0
-    top_bit = 1
-    if not np.issubdtype(type(n),np.unsignedinteger):
-        try:
-            printq("{} is not an unsigned integer. Attempting to turn it into a signed integer.".format(n))
-            n2 = np.uint64(n)
-            if n2 == n:
-                n = n2 #in case information is erased
-        except:
-            print("The number {} put into count_bits cannot be unsigned.".format(n))
-            return -1
-    top_bit = int(math.floor(math.log(n,2))) + 1
-    type_n = type(n)
-    all_bits = np.zeros((top_bit,),dtype=type_n)
-    for x in range(top_bit):
-        all_bits[x] = 1 << x
-        if type_n(1 << x) & n != 0:
-            c = c + 1
-#    for b in all_bits:
-#        if b & n != 0:
-#            c = c + 1
+    for npc in pack_n:
+        while npc > 0:
+            if npc & 1 > 0:
+                c += 1
+            npc >>= 1
+
     return c
 
 class mask(object):
@@ -1053,7 +1079,7 @@ class refmask_color(mask):
 
         mymat = self.matrix
         dims = self.get_dims()
-        scoredregion = False
+        scoredregion = np.zeros((dims[0],dims[1]),dtype=np.uint8)
         
         #take all distinct 3-channel colors in mymat, subtract the colors that are reported, and then iterate
         notcolors,mymat1L = mask.getColors(mymat,aggregate=True)
@@ -1064,8 +1090,8 @@ class refmask_color(mask):
             if aggc in notcolors:
                 notcolors.remove(aggc)
 #                scoredregion = scoredregion | ((mymat[:,:,0]==c[0]) & (mymat[:,:,1]==c[1]) & (mymat[:,:,2]==c[2]))
-                scoredregion = scoredregion | (mymat1L==aggc) 
-        scoredregion = scoredregion.astype(np.uint8)
+                scoredregion = scoredregion | (mymat1L==aggc)
+#        scoredregion = scoredregion.astype(np.uint8)
             #skip the colors that aren't present, in case they haven't made it to the mask in question
         mybin = np.ones(dims,dtype=np.uint8)
         if len(notcolors)==0:

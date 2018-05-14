@@ -89,7 +89,8 @@ class maskMetrics:
 
     def getMetrics(self,ref,sys,w,systh=-10,myprintbuffer=0):
         """
-        * Description: this function calculates the metrics with an implemented no-score zone.
+        * Description: this function calculates the metrics with an implemented no-score zone
+                       for a single threshold.
                        Due to its repeated use for the same reference and system masks, the
                        getMetrics function excludes the GWL1
 
@@ -570,6 +571,11 @@ class maskMetrics:
         if np.isnan(threshold):
             metrics = thresMets.iloc[0]
             all_metrics['GWL1'] = np.nan
+            all_metrics['AUC'] = np.nan
+            all_metrics['EER'] = np.nan
+
+            if sbin >= -1:
+                all_metrics['ActualThreshold'] = sbin
 
             for mes in ['BNS','SNS','PNS','N']:
                 if myprintbuffer is not 0:
@@ -616,10 +622,16 @@ class maskMetrics:
                 all_metrics[''.join(['Pixel',mes])] = mymeas[mes]
 
             if sbin >= -1:
-                #just get scores in one run if threshold is chosen
-                #TODO: threshold table lookup this instead.
-                self.sys.binarize(sbin)
-                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
+                #threshold table lookup
+                threslist = thresMets['Threshold'].tolist()
+                if sbin in threslist:
+                    t = sbin
+                else:
+                    threslist_less = [t for t in threslist if t <= sbin]
+                    t = max(threslist_less)
+                myameas = thresMets.query("Threshold=={}".format(t)).iloc[0]
+#                self.sys.binarize(sbin)
+#                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
                 all_metrics['ActualThreshold'] = sbin
 
             mets['GWL1'] = maskMetrics.grayscaleWeightedL1(self.ref,self.sys,w)

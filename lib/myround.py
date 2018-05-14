@@ -12,8 +12,8 @@ def myround(n,precision,mode=[]):
     if isinstance(n,str):
         return n
 
-    if n in [None,np.nan]:
-        return n
+    if n is None:
+        return np.nan
     elif np.isnan(n):
         return n
 

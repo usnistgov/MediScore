@@ -55,6 +55,8 @@ errflag=1
 $mypython MaskScorer.py -t manipulation --refDir $TESTDIR/ -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s $TESTDIR/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1.csv -oR $TESTDIR/errtest/Error_NC2017_Unittest_Manipulation_ImgOnly_c-me_1 --speedup $optOutClause -v 1 --debug_off > errlog.txt
 if `grep -q ERROR.*unreadable errlog.txt` && `grep -q Ending errlog.txt` ; then
     errflag=0
+else
+    echo "ERROR: Error messages not found in the error test."
 fi
 flagsum=$((flagsum+errflag))
 
@@ -69,6 +71,8 @@ if ([ $flagsum -eq 0 ]); then
 		rm -rf $TESTDIR/splicebin
 		rm -rf $TESTDIR/manip_optOut
 		rm -rf $TESTDIR/splice_optOut
+                rm -rf $TESTDIR/manipfailvalid
+                rm -rf $TESTDIR/splicefailvalid
                 rm -rf $TESTDIR/errtest
 	fi
 else
