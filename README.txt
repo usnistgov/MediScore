@@ -436,6 +436,9 @@ HISTORY
       - Added "ERROR" message to ProbeStatus error reporting.
     * Localization Scorer
       - Refining localization scorer printout operations.
+  May 15, 2018 - MediScore Version *.*.*
+    * Localization Scorer
+      - Refining HTML deselect option to not generate any images for probes. (A CSV containing the metrics at each relevant threshold will still be generated.)
 
 CONTACT
 -------
