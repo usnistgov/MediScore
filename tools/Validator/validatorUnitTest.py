@@ -390,6 +390,18 @@ class TestValidator(ut.TestCase):
         print("CASE V2 validated.")
         os.system('rm vv2.log')
 
+        print("\nCASE V3: Validating collections of intervals that intersect.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vv3.log".format(NCID,
+                                                                                                                validatorRoot + 'failvalidvidtest/failvalidvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index{}.csv'.format(versfx),
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,0)
+        errstr = msgcapture('vv3.log')
+        print("CASE V3 validated.")
+        os.system('rm vv3.log')
+
         
     def testDSDName(self):
         import StringIO

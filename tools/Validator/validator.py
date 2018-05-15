@@ -464,6 +464,24 @@ class SSD_Validator(validator):
 
         #check mask validation
         if self.testMask or self.video:
+            #if IsOptOut or ProbeStatus is present
+            #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
+            if self.optOutNum == 1:
+                #throw error if not in set of allowed values
+                all_statuses = ['Y','Detection','Localization','N','FailedValidation']
+                if not sysrow['IsOptOut'] in all_statuses:
+                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
+                    sysrow['matchFlag'] = 1
+                if sysrow['IsOptOut'] == 'FailedValidation':
+                    return sysrow
+            elif self.optOutNum == 2:
+                all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
+                if not sysrow['ProbeStatus'] in all_statuses:
+                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
+                    sysrow['matchFlag'] = 1
+                if sysrow['ProbeStatus'] == 'FailedValidation':
+                    return sysrow
+
             if self.video:
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
@@ -489,28 +507,6 @@ class SSD_Validator(validator):
                 return sysrow
             if self.neglectMask:
                 return sysrow
-            #if IsOptOut or ProbeStatus is present
-            #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
-            if self.optOutNum == 1:
-                #throw error if not in set of allowed values
-                all_statuses = ['Y','Detection','Localization','N','FailedValidation']
-                if not sysrow['IsOptOut'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
-                    sysrow['matchFlag'] = 1
-                if sysrow['IsOptOut'] == 'FailedValidation':
-                    return sysrow
-#                if sysrow['IsOptOut'] in ['Y','Localization']:
-#                    #no need for localization checking
-#                    return sysrow
-            elif self.optOutNum == 2:
-                all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
-                if not sysrow['ProbeStatus'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
-                    sysrow['matchFlag'] = 1
-                if sysrow['ProbeStatus'] == 'FailedValidation':
-                    return sysrow
-#                if sysrow['ProbeStatus'] in ['OptOutAll','OptOutLocalization']:
-#                    return sysrow
 
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
