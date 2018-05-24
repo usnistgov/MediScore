@@ -7,9 +7,10 @@ import multiprocessing
 from numpngw import write_apng
 from string import Template
 import numbers
-lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../../lib')
 sys.path.append(lib_path)
 from masks import refmask,refmask_color,mask
+from plotROC import plotROC,detPackage
 from constants import *
 try:
     import matplotlib
@@ -27,6 +28,13 @@ def is_number(n):
             return True
     return False
 
+def rm(filepath):
+    try:
+        os.remove(filepath)
+    except OSError:
+        pass
+
+plt_width = 540 #custom value for plot sizes
 debug_off=False
 
 class html_generator():
@@ -35,6 +43,7 @@ class html_generator():
                  perimage_df,
                  average_df,
                  journal_df,
+                 index_df,
                  refdir,
                  sysdir,
                  outroot,
@@ -46,9 +55,10 @@ class html_generator():
         self.perimage_df = perimage_df
         self.average_df = average_df
         self.journal_df = journal_df
-        self.refdir = refdir
-        self.sysdir = sysdir
-        self.outroot = os.path.dirname(outroot)
+        self.index_df = index_df
+        self.refdir = os.path.abspath(refdir)
+        self.sysdir = os.path.abspath(sysdir)
+        self.outroot = os.path.abspath(os.path.dirname(outroot))
         self.outpfx = os.path.basename(outroot)
         
         self.query = query
@@ -56,6 +66,35 @@ class html_generator():
         self.overwrite = overwrite
         self.usejpeg2000 = usejpeg2000
         self.cache_dir=cache_dir #NOTE: for now
+
+    def init_params(self,mode):
+        self.mode = mode
+        self.probe_ID_field = 'ProbeFileID'
+        self.probe_file_field = 'ProbeFileName'
+        self.probe_w_field = 'ProbeWidth'
+        self.probe_h_field = 'ProbeHeight'
+        self.probe_mask_file_field = 'ProbeMaskFileName'
+        if self.usejpeg2000:
+            self.probe_mask_file_field = 'ProbeBitPlaneMaskFileName'
+        self.output_probe_mask_file_field = 'OutputProbeMaskFileName'
+        self.modestr = 'Probe'
+        self.thres_pfx = ''
+        if mode == 0:
+            self.scored_col = 'Scored'
+        elif mode == 1:
+            self.probe_mask_file_field = 'BinaryProbeMaskFileName'
+            self.scored_col = 'ProbeScored'
+            self.thres_pfx = 'p'
+        elif mode == 2:
+            self.scored_col = 'DonorScored'
+            self.probe_ID_field = 'DonorFileID'
+            self.probe_file_field = 'DonorFileName'
+            self.probe_w_field = 'DonorWidth'
+            self.probe_h_field = 'DonorHeight'
+            self.probe_mask_file_field = 'DonorMaskFileName'
+            self.output_probe_mask_file_field = 'OutputDonorMaskFileName'
+            self.modestr = 'Donor'
+            self.thres_pfx = 'd'
 
     def gen_report(self,params):
         processors = params.processors
@@ -74,12 +113,17 @@ class html_generator():
 
         if self.perimage_df.shape[0] > 0:
             if self.task == 'manipulation':
-                self.mode = 0
+                self.init_params(0)
                 self.gen_perimage(processors)
             elif self.task == 'splice':
-                for mode in [1,2]:
-                    self.mode = mode
-                    self.gen_perimage(processors)
+                self.init_params(1)
+                self.gen_perimage(processors)
+                self.init_params(2)
+                self.gen_perimage(processors)
+
+        #generate Pixel and Mask Average ROC's
+        self.genPixMaskROC()
+
         self.gen_top_page()
 
         default_name = 'html_mask_scores_perimage.csv'
@@ -92,8 +136,9 @@ class html_generator():
         #output all messages
         while not self.msg_queue.empty():
             msg = self.msg_queue.get()
-            print("*"*30)
+            print("="*80)
             print(msg)
+        print("All visual reports generated.")
         return 0
 
     #define average report
@@ -185,6 +230,8 @@ class html_generator():
             print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
             processors = maxprocs
 
+        self.genROCs(self.perimage_df)
+
         if processors == 1:
             #case for one processor for efficient debugging and to eliminate overhead when running
             self.perimage_df = self.perimage_df.apply(self.gen_one_img_page,axis=1,reduce=False)
@@ -207,124 +254,145 @@ class html_generator():
     def apply_gen_imgs(self,df):
         return df.apply(self.gen_one_img_page,axis=1,reduce=False)
 
-    def gen_one_img_page(self,pi_row):
-        #self.manipReport(task,subOutRoot,manipFileID,manipFileName,baseFileName,rImg,sImg,rbin_name,sbinmaskname,smask_threshold,thresMets,bns,sns,pns,mets,mymeas,colMaskName,aggImgName,myprintbuffer)
-        if self.mode == 0:
-            scored_col = 'Scored'
-        elif self.mode == 1:
-            scored_col = 'ProbeScored'
-        elif self.mode == 2:
-            scored_col = 'DonorScored'
-        #don't generate page for an image that wasn't scored
-        if pi_row[scored_col] == 'N':
-            return pi_row
-
-        probe_ID_field = 'ProbeFileID'
-        probe_file_field = 'ProbeFileName'
-        probe_mask_file_field = 'ProbeMaskFileName'
-        if self.usejpeg2000:
-            probe_mask_file_field = 'ProbeBitPlaneMaskFileName'
-        output_probe_mask_file_field = 'OutputProbeMaskFileName'
-        mymode = 'Probe'
-
-        printbuffer = []
-        if self.mode == 0:
-            output_dir = os.path.join(self.outroot,pi_row['ProbeFileID'])
-        elif self.mode > 0:
-            output_dir = os.path.join(self.outroot,'_'.join([pi_row['ProbeFileID'],pi_row['DonorFileID']]))
-            if self.mode == 1:
-                probe_mask_file_field = 'BinaryProbeMaskFileName'
-                output_dir = os.path.join(output_dir,'probe')
-            elif self.mode == 2:
-                output_dir = os.path.join(output_dir,'donor')
-                probe_ID_field = 'DonorFileID'
-                probe_file_field = 'DonorFileName'
-                probe_mask_file_field = 'DonorMaskFileName'
-                output_probe_mask_file_field = 'OutputDonorMaskFileName'
-                mymode = 'Donor'
-
-        probe_file_id = pi_row[probe_ID_field]
-        probe_file_name = pi_row[probe_file_field]
-        probe_mask_file_name = pi_row[probe_mask_file_field]
+    def get_ref_and_sys(self,probe_mask_file_name,probe_file_id,output_probe_mask_file_name,output_dir):
+        """
+        * Description: returns the reference and system output mask objects.
+                       output_dir is required to output blank masks where relevant.
+        """
         refpath = os.path.join(self.refdir,probe_mask_file_name)
+        index_row = self.index_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id))
+        if len(index_row) == 0:
+            return 2,2
+        index_row = index_row.iloc[0]
+        height = index_row[self.probe_h_field]
+        width = index_row[self.probe_w_field]
+
         if probe_mask_file_name in [np.nan,'',None]:
-            if self.usejpeg2000 and (self.mode == 0):
-                refpath = os.path.join(self.sysdir,'whitemask_ref.jp2')
-            else:
-                refpath = os.path.join(self.sysdir,'whitemask_ref.png')
+            outpfx = os.path.join(output_dir,'whitemask_ref')
+            refpath = self.gen_white_mask(outpfx,height,width,self.usejpeg2000 and (self.mode == 0))
 
-        output_probe_mask_file_name = pi_row[output_probe_mask_file_field]
+        journalkeys = self.gen_journal_keys()
+        jData = self.journal_df.query("{}=='{}' and Color!=''".format(self.probe_ID_field,probe_file_id))[journalkeys]
+        if self.usejpeg2000 and self.mode == 0:
+            rImg = refmask(refpath,jData=jData,mode=self.mode)
+        else:
+            rImg = refmask_color(refpath,jData=jData,mode=self.mode)
+
+        #system output mask
+        syspath = os.path.join(self.sysdir,output_probe_mask_file_name)
         if output_probe_mask_file_name in [np.nan,'',None]:
-            output_probe_mask_file_name = 'whitemask.png'
+            outpfx = os.path.join(output_dir,'whitemask')
+            syspath = self.gen_white_mask(outpfx,height,width)
+        sImg = mask(syspath)
 
-        #read in the weight images
-        bns_name = os.path.join(output_dir,'_'.join([probe_file_id,'bns.png']))
-        sns_name = os.path.join(output_dir,'_'.join([probe_file_id,'sns.png']))
-        pns_name = os.path.join(output_dir,'_'.join([probe_file_id,'pns.png']))
+        return rImg,sImg
 
-        rImg = 0
-        bwts,swts = 0,0
-        if not (os.path.isfile(bns_name) and os.path.isfile(sns_name)):
-            jData = self.journal_df.query("ProbeFileID=='{}'".format(probe_file_id))
-            if self.usejpeg2000 and self.mode == 0:
-                rImg = refmask(refpath,jData=jData,mode=self.mode)
-            else:
-                rImg = refmask_color(refpath,jData=jData,mode=self.mode)
-            printbuffer.append("Generating weights image...")
-            mywts,bwts,swts = rImg.aggregateNoScore(self.eks,self.dks,self.ntdks,self.kernel)
+    def gen_white_mask(self,outpfx,height,width,jpeg2000=False):
+        if jpeg2000:
+            whitemask = np.zeros((height,width),dtype=np.uint8)
+            whitepath = '.'.join([outpfx,'jp2'])
+            glymur.Jp2k(whitepath,whitemask)
+        else:
+            whitemask = 255*np.ones((height,width),dtype=np.uint8)
+            whitepath = '.'.join([outpfx,'png'])
+            cv2.imwrite(whitepath,whitemask)
+        return whitepath
 
-        #read in erode kern size, dilate kern size, and all that no-score jazz. Generate the files where present
-        if bwts is 0:
-            try:
-                _,bwts=cv2.threshold(cv2.imread(bns_name,cv2.IMREAD_GRAYSCALE),0,1,cv2.THRESH_BINARY)
-            except:
-                None
+    def get_color_ns(self,rImg,sImg,no_score_pixel,output_dir):
+        mywts,bwts,swts = rImg.aggregateNoScore(self.eks,self.dks,self.ntdks,self.kernel)
 
-        if swts is 0:
-            try:
-                _,swts=cv2.threshold(cv2.imread(sns_name,cv2.IMREAD_GRAYSCALE),0,1,cv2.THRESH_BINARY)
-            except:
-                None
-
-        sImg = 0
-        pwts = 0
-        if not os.path.isfile(pns_name):
-            sImg = mask(os.path.join(output_dir,output_probe_mask_file_name))
-            no_score_pixel = self.nspx
-            if self.pppns:
-                try:
-                    no_score_pixel = pi_row['{}OptOutPixelValue'.format(mymode)]
-                except:
-                    pass
-            pwts = sImg.pixelNoScore(no_score_pixel)
-
-        if pwts is 0:
-            try:
-                _,pwts=cv2.threshold(cv2.imread(pns_name,cv2.IMREAD_GRAYSCALE),0,1,cv2.THRESH_BINARY)
-            except:
-                None
-
-        sys_base = os.path.basename(output_probe_mask_file_name)[:-4]
-
+        pwts = sImg.pixelNoScore(no_score_pixel)
+        sys_base = os.path.basename(sImg.name)[:-4]
         color_weight_name = '-'.join([sys_base,'weights.png'])
         color_weight_path = os.path.join(output_dir,color_weight_name)
         
         mywts = cv2.bitwise_and(cv2.bitwise_and(bwts,swts),pwts)
-        
         dims = bwts.shape
         colwts = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
         colwts[bwts==0] = colordict['yellow']
         colwts[swts==0] = colordict['pink']
         colwts[pwts==0] = colordict['purple']
 
-        printbuffer.append("Saving weights image...")
         cv2.imwrite(color_weight_path,colwts)
+        #return the weights
+        return mywts,bwts,swts,pwts
 
-        display_width = min(dims[1],640) #limit on width of images for readability of the report
+    def gen_base_link(self,b_path,output_dir,plt_width=540):
+        b_base = os.path.basename(b_path)
+        b_base_new = 'baseFile%s' % b_base[-4:]
+        b_path_new = os.path.join(output_dir,b_base_new)
+        rm(b_path_new)
+        print("Creating link for base image %s" % b_base)
+        os.symlink(os.path.abspath(b_path),b_path_new)
+        basehtml="<img src={} alt='base image' style='width:{}px;'>".format(b_base_new,plt_width)
+        return basehtml
+
+    def gen_ref_mask_link(self,rImg,probe_file_id,output_dir):
+        #if color, create a symbolic link. Otherwise, create and save the refMask.png
+        refpath = rImg.name
+        r_path_new = os.path.join(output_dir,'refMask.png')
+        rm(r_path_new)
+        if not self.usejpeg2000:
+            os.symlink(os.path.abspath(refpath),r_path_new)
+        elif self.mode == 0:
+            #cache dir. Has much more impact in the report generating stage.
+            if self.cache_dir:
+                cache_acolor_path = os.path.join(self.cache_dir,'%s_acolor.png' % probe_file_id)
+                acolor_in_cache = os.path.isfile(cache_acolor_path)
+                if acolor_in_cache:
+                    os.symlink(os.path.abspath(cache_acolor_path),r_path_new)
+                else:
+                    ref_mask = rImg.getAnimatedMask()
+                    write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
+            else:
+                ref_mask = rImg.getAnimatedMask()
+                write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
+            if self.cache_dir:
+                cache_acolor_path = os.path.join(self.cache_dir,'%s_acolor.png' % probe_file_id)
+                if not acolor_in_cache:
+                    write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
+
+    def gen_one_img_page(self,pi_row):
+        #don't generate page for an image that wasn't scored
+        if pi_row[self.scored_col] == 'N':
+            return pi_row
+
+        printbuffer = []
+        if self.mode == 0:
+            output_dir = os.path.join(self.outroot,pi_row['ProbeFileID'])
+        elif self.mode > 0:
+            subdir = 'probe' if self.mode == 1 else 'donor'
+            output_dir = os.path.join(self.outroot,os.path.join('_'.join([pi_row['ProbeFileID'],pi_row['DonorFileID']]),subdir))
+
+        probe_file_id = pi_row[self.probe_ID_field]
+        probe_file_name = pi_row[self.probe_file_field]
+        probe_mask_file_name = pi_row[self.probe_mask_file_field]
+        output_probe_mask_file_name = pi_row[self.output_probe_mask_file_field]
+
+        rImg,sImg = self.get_ref_and_sys(probe_mask_file_name,probe_file_id,output_probe_mask_file_name,output_dir)
+        if rImg is 2:
+            printbuffer.append("The probe '{}' is not in the index file. Skipping HTML generation.")
+            self.msg_queue.put("\n".join(printbuffer))
+            return pi_row
+        refpath = rImg.name
+        dims = rImg.get_dims()
+        output_probe_mask_file_name = sImg.name
+
+        printbuffer.append("Generating weights image...")
+        no_score_pixel = self.nspx
+        if self.pppns:
+            try:
+                no_score_pixel = pi_row['%sOptOutPixelValue' % self.modestr]
+            except:
+                pass
+        printbuffer.append("Saving weights image...")
+        mywts,bwts,swts,pwts = self.get_color_ns(rImg,sImg,no_score_pixel,output_dir)
+
+#        display_width = min(dims[1],640) #limit on width of images for readability of the report
 
         #generate HTML files
         printbuffer.append("Reading HTML template...")
-        html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../html_template.txt")
+        html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"html_template.txt")
         with open(html_path,'r') as f:
             htmlstr = Template(f.read())
 
@@ -335,20 +403,15 @@ class html_generator():
         #generate the HTML for the metrics table
         met_table = self.gen_metrics_table(pi_row)
 
-        thres_pfx = ''
-        if self.mode == 1:
-            thres_pfx = 'p'
-        elif self.mode == 2:
-            thres_pfx = 'd'
-        optT = pi_row['%sOptimumThreshold' % thres_pfx]
+        optT = pi_row['%sOptimumThreshold' % self.thres_pfx]
         met_table_prefix=''
         if is_number(optT):
             optT = int(optT)
             met_table_prefix = 'Optimum Threshold: {}<br>'.format(optT)
-            if is_number(pi_row['%sActualThreshold' % thres_pfx]):
+            if is_number(pi_row['%sActualThreshold' % self.thres_pfx]):
                 met_table_prefix = "<ul><li><b>Optimum Threshold</b>: {}</li>\
                                     <li><b>Maximum Threshold</b>: {}</li>\
-                                    <li><b>Actual Threshold</b>: {}</li></ul><br>".format(optT,pi_row['%sMaximumThreshold' % thres_pfx],pi_row['%sActualThreshold' % thres_pfx])
+                                    <li><b>Actual Threshold</b>: {}</li></ul><br>".format(optT,pi_row['%sMaximumThreshold' % self.thres_pfx],pi_row['%sActualThreshold' % self.thres_pfx])
         met_table = ''.join([met_table_prefix,met_table])
 
         printbuffer.append("Computing pixel count...")
@@ -357,9 +420,9 @@ class html_generator():
         _,invwts = cv2.threshold(mywts,0,1,cv2.THRESH_BINARY_INV)
         totalns = invwts.sum()
         totals = {}
-        totals['BNS'] = pi_row['%sPixelBNS' % thres_pfx]
-        totals['SNS'] = pi_row['%sPixelSNS' % thres_pfx]
-        totals['PNS'] = pi_row['%sPixelPNS' % thres_pfx]
+        totals['BNS'] = pi_row['%sPixelBNS' % self.thres_pfx]
+        totals['SNS'] = pi_row['%sPixelSNS' % self.thres_pfx]
+        totals['PNS'] = pi_row['%sPixelPNS' % self.thres_pfx]
         totals['TNS'] = totalns
         
         percstrings = {}
@@ -369,9 +432,9 @@ class html_generator():
         #set up dictionary for and generate confusion measures
         conf_measures = {}
         for m in ['TP','TN','FP','FN']:
-            m_name = '{}OptimumPixel{}'.format(thres_pfx,m)
-            max_m_name = '{}MaximumPixel{}'.format(thres_pfx,m)
-            am_name = '{}ActualPixel{}'.format(thres_pfx,m)
+            m_name = '{}OptimumPixel{}'.format(self.thres_pfx,m)
+            max_m_name = '{}MaximumPixel{}'.format(self.thres_pfx,m)
+            am_name = '{}ActualPixel{}'.format(self.thres_pfx,m)
             if totalpx > 0:
                 percstrings[m] = '{0:.3f}'.format(float(pi_row[m_name])/totalpx)
             conf_measures[m_name] = int(pi_row[m_name])
@@ -381,112 +444,63 @@ class html_generator():
         conf_measures['TotalPixels'] = totalpx
         
         conf_table = self.gen_confusion_table(conf_measures)
-        #recolor the conf_table measures
-        conf_table = (conf_table.replace("TP: green",'<font style="color:#{}">TP: green</font>'.format(self.hexs[self.cols['tpcol']]))
-                                .replace("FP: red",'<font style="color:#{}">FP: red</font>'.format(self.hexs[self.cols['fpcol']]))
-                                .replace("TN: white",'<font style="color:#{}">TN: white</font>'.format(self.hexs[self.cols['tncol']]))
-                                .replace("FN: blue",'<font style="color:#{}">FN: blue</font>'.format(self.hexs[self.cols['fncol']]))
-                                )
 
         if allpx > 0:
             for m in ['BNS','SNS','PNS','TNS']:
                 percstrings[m] = '{0:.3f}'.format(float(totals[m])/allpx)
 
-        thres_string = ''
-        plt_width = 540 #NOTE: custom value for plot sizes
-
         #read in thresMets.
         thres_string = self.gen_thres_plot(pi_row,output_dir,plt_width,printbuffer)
-
-        #build symbolic links for existing files
         probe_path = os.path.join(self.refdir,probe_file_name)
-        m_base = os.path.basename(probe_path)
-        r_base = os.path.basename(refpath)
-        s_base = os.path.basename(output_probe_mask_file_name)
+
+        #building symbolic links for probe image, reference image, and system output mask
+        s_path_new = os.path.join(output_dir,'sysMask.png')
+        print("Creating link for system output mask {}".format(output_probe_mask_file_name))
+        rm(s_path_new)
+        os.symlink(os.path.abspath(sImg.name),s_path_new)
 
         basehtml = ''
         b_base = ''
-        mpfx = mymode.lower()
         if self.mode < 2:
             b_path = os.path.join(self.refdir,pi_row['BaseFileName'])
             b_base = os.path.basename(b_path)
-            b_base_new = 'baseFile%s' % b_base[-4:]
-            b_path_new = os.path.join(output_dir,b_base_new)
-            try:
-                os.remove(b_path_new)
-            except OSError:
-                None
-            printbuffer.append("Creating link for base image %s" % b_base)
-            os.symlink(os.path.abspath(b_path),b_path_new)
-            basehtml="<img src={} alt='base image' style='width:{}px;'>".format(b_base_new,plt_width)
+            basehtml = self.gen_base_link(b_path,output_dir,plt_width)
 
-        r_path_new = os.path.join(output_dir,'refMask.png')
-        s_path_new = os.path.join(output_dir,'sysMask.png')
+        m_base = os.path.basename(probe_path)
+        mpfx = self.modestr.lower()
         m_path_new = os.path.join(output_dir,''.join([mpfx,'File',m_base[-4:]]))
-
-        for mypath in [r_path_new,s_path_new,m_path_new]:
-            try:
-                os.remove(mypath)
-            except OSError:
-                None
-        
-        #if color, create a symbolic link. Otherwise, create and save the refMask.png
-        printbuffer.append("Creating link for reference mask %s..." % refpath)
-        if not self.usejpeg2000:
-            os.symlink(os.path.abspath(refpath),r_path_new)
-        elif self.mode == 0:
-            #cache dir. Has much more impact in the report generating stage.
-            journalkeys = self.gen_journal_keys()
-            jdata = self.journal_df.query("ProbeFileID=='{}' and Color!=''".format(probe_file_id))[journalkeys]
-            if self.cache_dir:
-                cache_acolor_path = os.path.join(self.cache_dir,'%s_acolor.png' % probe_file_id)
-                acolor_in_cache = os.path.isfile(cache_acolor_path)
-                if acolor_in_cache:
-                    os.symlink(os.path.abspath(cache_acolor_path),r_path_new)
-                else:
-                    if not rImg is 0:
-                        rImg = refmask(refpath,jData=jdata,mode=0)
-                    ref_mask = rImg.getAnimatedMask()
-                    write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
-            else:
-                rImg = refmask(refpath,jData=jdata,mode=0)
-                ref_mask = rImg.getAnimatedMask()
-                write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
-            if self.cache_dir:
-                cache_acolor_path = os.path.join(self.cache_dir,'%s_acolor.png' % probe_file_id)
-                if not acolor_in_cache:
-                    write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
-
-        printbuffer.append("Creating link for manipulated image {}".format(refpath))
+        print("Creating link for manipulated image {}".format(probe_path))
+        rm(m_path_new)
         os.symlink(os.path.abspath(probe_path),m_path_new)
-        printbuffer.append("Creating link for system output mask {}".format(output_probe_mask_file_name))
-        os.symlink(os.path.abspath(os.path.join(self.sysdir,output_probe_mask_file_name)),s_path_new)
+
+        print("Creating link for reference mask %s..." % refpath)
+        self.gen_ref_mask_link(rImg,probe_file_id,output_dir)
 
         #generate aggregate image
         colMaskName,aggImgName = self.aggregate_color_masks(probe_file_id,
                                                             probe_file_name,
                                                             refpath,
-                                                            os.path.join(self.sysdir,output_probe_mask_file_name),
+                                                            sImg.name,
                                                             output_dir,
                                                             bwts,
                                                             swts,
                                                             pwts)
-        pi_row['%sColMaskFileName' % thres_pfx] = colMaskName
-        pi_row['%sAggMaskFileName' % thres_pfx] = aggImgName
+        pi_row['%sColMaskFileName' % self.thres_pfx] = colMaskName
+        pi_row['%sAggMaskFileName' % self.thres_pfx] = aggImgName
 
         syspfx = ''
-        if is_number(self.average_df['%sActualThreshold' % thres_pfx].iloc[0]):
+        if is_number(self.average_df['%sActualThreshold' % self.thres_pfx].iloc[0]):
             syspfx = 'Actual '
 
         rbin_name = os.path.join(output_dir,'-'.join([refpath.split('/')[-1][:-4],'bin.png']))
         sbin_name = os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
-        sys_threshold = pi_row['%sOptimumThreshold' % thres_pfx]
-        if is_number(pi_row['%sActualThreshold' % thres_pfx]):
+        sys_threshold = pi_row['%sOptimumThreshold' % self.thres_pfx]
+        if is_number(pi_row['%sActualThreshold' % self.thres_pfx]):
             sbin_name = os.path.join(output_dir,'{}-actual_bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
-            sys_threshold = pi_row['%sActualThreshold' % thres_pfx]
+            sys_threshold = pi_row['%sActualThreshold' % self.thres_pfx]
 
         printbuffer.append("Writing HTML...")
-        htmlstr = htmlstr.substitute({'probeName': pi_row[probe_file_field],
+        htmlstr = htmlstr.substitute({'probeName': pi_row[self.probe_file_field],
                                       'probeFname': "".join([mpfx,'File',m_base[-4:]]),#mBase,
                                       'width': plt_width,
                                       'baseName': b_base,
@@ -497,13 +511,9 @@ class html_generator():
                                       'binRefMask' : os.path.basename(rbin_name),
                                       'binSysMask' : os.path.basename(sbin_name),
                                       'systh' : sys_threshold,
-                                      'noScoreZone' : os.path.basename(color_weight_name),
+                                      'noScoreZone' : '-'.join([os.path.basename(sImg.name)[:-4],'weights.png']),
                                       'colorMask' : os.path.basename(colMaskName),
                                       'met_table' : met_table,
-#  				      'nmm' : round(metrics['NMM'],3),
-#  				      'mcc' : round(metrics['MCC'],3),
-#  				      'bwL1' : round(metrics['BWL1'],3),
-#  				      'gwL1' : round(metrics['GWL1'],3),
                                       'syspfx' : syspfx,
                                       'totalPixels' : totalpx,
                                       'conftable':conf_table,
@@ -526,15 +536,103 @@ class html_generator():
                                       'roc_curve':'<embed src=\"roc.pdf\" alt=\"roc curve\" width=\"{}\" height=\"{}\" type=\'application/pdf\'>'.format(plt_width,plt_width)}) #add journal operations and set bg color to the html
 
         #print htmlstr
-        fprefix=os.path.basename(probe_file_name)
-        fprefix=fprefix.split('.')[0]
+        fprefix=os.path.basename(probe_file_name).split('.')[0]
         fname=os.path.join(output_dir,'.'.join([fprefix,'html']))
         myhtml=open(fname,'w')
         myhtml.write(htmlstr)
         printbuffer.append("HTML page written.")
+        self.msg_queue.put("\n".join(printbuffer))
         myhtml.close()
         return pi_row
     
+    def genPixMaskROC(self):
+        tmetname = os.path.join(self.outroot,'thresMets_pixelprobe.csv')
+        try:
+            roc_values = pd.read_csv(tmetname,sep="|",header=0)
+        except:
+            return 0
+
+        try:
+            #generate both pixel and mask average ROC
+            for pfx in ['Pixel','Probe']:
+                tpr_name = "%sTPR" % pfx
+                fpr_name = "%sFPR" % pfx
+                roc_pfx = pfx
+                if pfx == 'Probe':
+                    roc_pfx = 'Mask'
+                if (roc_values[tpr_name].count() > 0) and (roc_values[fpr_name].count() > 0):
+                    p_roc_values = roc_values[[fpr_name,tpr_name]]
+                    p_roc_values = p_roc_values.append(pd.DataFrame([[0,0],[1,1]],columns=[fpr_name,tpr_name]),ignore_index=True)
+                    p_roc = p_roc_values.sort_values(by=[fpr_name,tpr_name],ascending=[True,True]).reset_index(drop=True)
+                    fpr = p_roc[fpr_name]
+                    tpr = p_roc[tpr_name]
+#                    myauc = dmets.compute_auc(fpr,tpr)
+                    try:
+                        myauc = self.average_df['%s%sAverageAUC' % (self.thres_pfx,pfx)].iloc[0]
+                    except:
+                        return 0
+ 
+                    #compute confusion measures by using the totals across all probes
+                    confsum = roc_values[['TP','TN','FP','FN']].iloc[0]
+                    mydets = detPackage(tpr,
+                                        fpr,
+                                        1,0,
+                                        myauc,
+                                        confsum['TP'] + confsum['FN'],
+                                        confsum['FP'] + confsum['TN'])
+                
+                    if self.task == 'manipulation':
+                        plot_name = '_'.join([roc_pfx.lower(),'average_roc'])
+                        plot_title = ' '.join([roc_pfx,'Average ROC'])
+                    elif self.task == 'splice':
+                        if self.mode == 1:
+                            plot_name = '_'.join([roc_pfx.lower(),'average_roc_probe'])
+                            plot_title = ' '.join(['Probe',roc_pfx,'Average ROC'])
+                        if self.mode == 2:
+                            plot_name = '_'.join([roc_pfx.lower(),'average_roc_donor'])
+                            plot_title = ' '.join(['Donor',roc_pfx,'Average ROC'])
+                    plotROC(mydets,plot_name,plot_title,self.outroot)
+        except:
+            raise #TODO: debug
+            return 0
+
+    def genROCs(self,df):
+        df.apply(self.genROC,axis=1,reduce=False,threshold_mets_fname='thresMets.csv')
+        return df
+
+    def genROC(self,dfrow,threshold_mets_fname):
+        if self.mode == 0:
+            outdir = dfrow['ProbeFileID']
+        elif self.mode > 0:
+            outdirtop = "_".join([dfrow['ProbeFileID'],dfrow['DonorFileID']])
+            if self.mode == 1:
+                outdir = os.path.join(outdirtop,'probe')
+            elif self.mode == 2:
+                outdir = os.path.join(outdirtop,'donor')
+        outdir = os.path.join(self.outroot,outdir)
+        try:
+            #need to make suret there are rows present
+            thresMets = pd.read_csv(os.path.join(outdir,threshold_mets_fname),sep="|",header=0,na_filter=False)
+            sample_mets = thresMets.iloc[0]
+        except:
+            return dfrow
+
+        rocvalues = thresMets[['FPR','TPR']]
+        rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
+
+        dets = detPackage(rocvalues['TPR'],
+                          rocvalues['FPR'],
+                          1,0,
+                          dfrow['%sAUC' % self.thres_pfx],
+                          sample_mets['TP'] + sample_mets['FN'],
+                          sample_mets['FP'] + sample_mets['TN'])
+        
+        plotROC(dets,'roc.pdf','ROC of {} {}'.format(self.modestr,dfrow[self.probe_ID_field]),outdir)
+
+        return dfrow
+
+    #TODO: split this into gen_color_mask() and gen_aggregate_mask()
+    #TODO: take in the rImg 
     def aggregate_color_masks(self,probe_file_id,probe_file_name,ref_mask_name,sys_mask_name,output_dir,bns,sns,pns):
         #can simply get the eroded image from this image
         rmat = cv2.imread(os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(ref_mask_name)[:-4])),1)
@@ -576,10 +674,11 @@ class html_generator():
         m3chan = np.stack((mData,mData,mData),axis=2)
         myagg = np.copy(m3chan)
 
+        #TODO: remove and take in the rImg
         if self.usejpeg2000 and (self.mode == 0):
             ref_mask = refmask(ref_mask_name,jData=self.journal_df.query("ProbeFileID=='{}'".format(probe_file_id)))
         else:
-            ref_mask = refmask_color(ref_mask_name,jData=self.journal_df.query("ProbeFileID=='{}'".format(probe_file_id)),mode=self.mode)
+            ref_mask = refmask_color(ref_mask_name,jData=self.journal_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id)),mode=self.mode)
         ref_mask.binarize(254)
         refbw = ref_mask.bwmat
 
@@ -597,7 +696,7 @@ class html_generator():
                 cv2.imwrite(composite_path,myagg)
             elif self.mode == 0:
                 if self.cache_dir:
-                    cache_acolor_path = os.path.join(os.path.join(self.cache_dir,'%s_acolorpart.npy' % probe_file_id))
+                    cache_acolor_path = os.path.join(self.cache_dir,'%s_acolorpart.npy' % probe_file_id)
                     if os.path.isfile(cache_acolor_path):
                         #get this animated mask saved in and read from the cache
                         aseq = np.load(cache_acolor_path)
@@ -632,6 +731,11 @@ class html_generator():
 
     def gen_journal_keys(self):
         evalcol='Evaluated'
+        if self.mode == 1:
+            evalcol='ProbeEvaluated'
+        elif self.mode == 2:
+            evalcol='DonorEvaluated'
+
         journal_headers = self.journal_df.columns.values.tolist()
         journalkeys = ['Operation','Purpose','Color',evalcol]
         if self.usejpeg2000:
@@ -659,13 +763,6 @@ class html_generator():
         return jtable
 
     def gen_thres_plot(self,pi_row,output_dir,plt_width,printbuffer):
-        if self.mode == 0:
-            thres_pfx = ''
-        elif self.mode == 1:
-            thres_pfx = 'p'
-        elif self.mode == 2:
-            thres_pfx = 'd'
-
         thres_mets = pd.read_csv(os.path.join(output_dir,'thresMets.csv'),sep="|",header=0)
         if thres_mets.dropna().shape[0] > 1:
             printbuffer.append("Generating MCC per threshold graph...")
@@ -673,21 +770,22 @@ class html_generator():
             try:
                 plotname = 'thresMets.png'
                 plt.plot(thres_mets['Threshold'],thres_mets['MCC'],'bo',thres_mets['Threshold'],thres_mets['MCC'],'k')
+                
                 #plot cyan point for supremum, purple for maximum and red point for actual if sbin >= 0, and legend with two or three as appropriate
-                optT = pi_row['%sOptimumThreshold' % thres_pfx]
-                optMCC = pi_row['%sOptimumMCC' % thres_pfx]
+                optT = pi_row['%sOptimumThreshold' % self.thres_pfx]
+                optMCC = pi_row['%sOptimumMCC' % self.thres_pfx]
                 optpt, = plt.plot([optT],[optMCC],'co',markersize=12)
                 handles = [optpt]
                 labels = ['Optimum MCC']
-                actT = pi_row['%sActualThreshold' % thres_pfx]
+                actT = pi_row['%sActualThreshold' % self.thres_pfx]
                 if is_number(actT):
-                    maxT = pi_row['%sMaximumThreshold' % thres_pfx]
-                    maxMCC = pi_row['%sMaximumMCC' % thres_pfx]
-                    maxpt, = plt.plot([maxT,maxMCC],'mo',markersize=8)
+                    maxT = pi_row['%sMaximumThreshold' % self.thres_pfx]
+                    maxMCC = pi_row['%sMaximumMCC' % self.thres_pfx]
+                    maxpt, = plt.plot([maxT],[maxMCC],'mo',markersize=8)
                     handles.append(maxpt)
                     labels.append('Maximum MCC')
                 
-                    actMCC = pi_row['%sActualMCC' % thres_pfx]
+                    actMCC = pi_row['%sActualMCC' % self.thres_pfx]
                     actpt, = plt.plot([actT],[actMCC],'ro',markersize=8)
                     handles.append(actpt)
                     labels.append('Actual MCC')
@@ -901,6 +999,12 @@ class html_generator():
                                   .replace("<tr>","<tr align='right'>")
                                   .replace('<table border="1" class="dataframe">','<table border="1" class="dataframe" bgcolor="#C8C8C8">'))
 
+        #recolor the measures
+        tablestring = (tablestring.replace("TP: green",'<font style="color:#{}">TP: green</font>'.format(self.hexs[self.cols['tpcol']]))
+                                .replace("FP: red",'<font style="color:#{}">FP: red</font>'.format(self.hexs[self.cols['fpcol']]))
+                                .replace("TN: white",'<font style="color:#{}">TN: white</font>'.format(self.hexs[self.cols['tncol']]))
+                                .replace("FN: blue",'<font style="color:#{}">FN: blue</font>'.format(self.hexs[self.cols['fncol']]))
+                                )
         return tablestring
 
 if __name__ == '__main__':
@@ -916,6 +1020,8 @@ if __name__ == '__main__':
         help="The file of journal manipulations evaluated, generated by the localization scorer.",metavar='valid file path')
     parser.add_argument('--refDir',type=str,
         help="Dataset directory path: [e.g., ../../data/test_suite/maskscorertests]",metavar='valid directory string')
+    parser.add_argument('-x','--inIndex',type=str,
+        help='Task Index csv file name, relative to the dataset directory: [e.g., indexes/NC2016-manipulation-index.csv]',metavar='character')
     parser.add_argument('--sysDir',type=str,
         help="System output directory path: [e.g., ../../data/NC2016_Test].",metavar='valid directory string')
     parser.add_argument('-oR','--outRoot',type=str,
@@ -947,11 +1053,13 @@ if __name__ == '__main__':
     perimage_df = pd.read_csv(args.perimage,sep="|",header=0,na_filter=False)
     average_df = pd.read_csv(args.average,sep="|",header=0,na_filter=False)
     journal_df = pd.read_csv(args.journal,sep="|",header=0,na_filter=False)
+    index_df = pd.read_csv(os.path.join(args.refDir,args.inIndex),sep="|",header=0,na_filter=False)
 
     html_gen = html_generator(task=args.task,
                               perimage_df = perimage_df,
                               average_df = average_df,
                               journal_df = journal_df,
+                              index_df = index_df,
                               refdir = args.refDir,
                               sysdir = args.sysDir,
                               outroot = args.outRoot,
@@ -973,3 +1081,4 @@ if __name__ == '__main__':
                         pppns = args.perProbePixelNoScore,
                         processors = args.processors)
     html_gen.gen_report(loc_params)
+    print("All HTML reports generated.")

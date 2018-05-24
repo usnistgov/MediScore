@@ -424,6 +424,6 @@ for qnum,q in enumerate(manip_queries):
     if args.html:
         journal_data_name = os.path.join(output_directory,'%s_journalResults.csv' % output_prefix)
         journal_df = pd.read_csv(journal_data_name,sep="|",na_filter=False,header=0)
-        visual_report_generator = html_generator(task,scored_df,a_df,journal_df,ref_dir,sys_dir,os.path.join(output_directory,output_prefix),query=q,overwrite=True,usejpeg2000=args.jpeg2000)
+        visual_report_generator = html_generator(task,scored_df,a_df,journal_df,index_df,ref_dir,sys_dir,os.path.join(output_directory,output_prefix),query=q,overwrite=True,usejpeg2000=args.jpeg2000)
         visual_report_generator.gen_report(perimage_params)
 

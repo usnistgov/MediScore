@@ -32,7 +32,7 @@ from collections import OrderedDict
 from decimal import Decimal
 from numpngw import write_apng
 from string import Template
-lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
+lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../../lib')
 sys.path.append(lib_path)
 import masks
 from detMetrics import Metrics as dmets
@@ -619,22 +619,6 @@ class localization_perimage_runner():
                 pppnspx = loc_row[self.probe_oopx_field]
 
             wts,bns,sns,pns = self.get_no_scores(rImg,probe_id,self.erodeKernSize,self.dilateKernSize,self.distractionKernSize,self.kern,sImg,pppnspx,printbuffer)
-#            wts,bns,sns = rImg.aggregateNoScore(erodeKernSize,dilateKernSize,distractionKernSize,kern)
-            #save the no-score zones separately for potential future use for 
-            save_params = [16,0]
-            cv2.imwrite(os.path.join(output_dir,'{}_bns.png'.format(probe_id)),255*bns,save_params)
-            cv2.imwrite(os.path.join(output_dir,'{}_sns.png'.format(probe_id)),255*sns,save_params)
-            cv2.imwrite(os.path.join(output_dir,'{}_pns.png'.format(probe_id)),255*pns,save_params)
-            #save erode and dilate of images for extensive recordkeeping.
-            emat = masks.dilate(rImg.bwmat,self.kern,self.erodeKernSize)
-            dmat = masks.erode(rImg.bwmat,self.kern,self.dilateKernSize)
-            cv2.imwrite(os.path.join(output_dir,'{}_erode.png'.format(probe_id)),emat,save_params)
-            cv2.imwrite(os.path.join(output_dir,'{}_dilate.png'.format(probe_id)),dmat,save_params)
-
-            rbin_name = os.path.join(output_dir,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
-            rImg.save_color_ns(rbin_name,bns,sns,pns)
-            #TODO: save rImg full and rImg partial
-
             #do a 3-channel combine with bns and sns for their colors before saving
             if wts.sum() == 0:
                 printbuffer.append("Warning: No-score region covers all of {} {}. Skipping it.".format(self.probe_id_field,probe_id))
@@ -990,6 +974,7 @@ class localization_perimage_runner():
 
     def compute_pixel_probe_ROC(self,roc_values):
         aucs = {}
+        roc_values.to_csv(os.path.join(self.out_root,"thresMets_pixelprobe.csv"),sep="|",index=False)
         for pfx in ['Pixel','Probe']:
             tpr_name = ''.join([pfx,'TPR'])
             fpr_name = ''.join([pfx,'FPR'])
