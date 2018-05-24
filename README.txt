@@ -436,6 +436,9 @@ HISTORY
       - Added "ERROR" message to ProbeStatus error reporting.
     * Localization Scorer
       - Refining localization scorer printout operations.
+  May 23, 2018 - MediScore Version *.*.*
+    * Localization Scorer
+      - updated and refined main for the html report module. Plotting works properly if the html_module is run as its own main.
 
 CONTACT
 -------
