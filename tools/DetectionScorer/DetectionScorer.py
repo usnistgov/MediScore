@@ -1,5 +1,5 @@
 """
-* Date: 10/20/2016
+* Date: 5/25/2018
 * Authors: Yooyoung Lee and Timothee Kheyrkhah
 
 * Description: this code calculates performance measures (for points, AUC, and EER)
@@ -41,83 +41,73 @@ def load_csv(fname, mysep='|', mydtype=None):
         print("ERROR: There was an error opening the file: {}".format(fname))
         exit(1)
 
+def save_csv(df_list, outRoot, query_mode, report_tag):
+    try:
+        for i, df in enumerate(df_list):
+            fname = outRoot + '_' + query_mode + '_query_' + str(i) + report_tag
+            df.to_csv(fname, index=False, sep='|')
+    except IOError:
+        print("ERROR: There was an error saving the csv file: {}".format(fname))
+        exit(1)
 
 def is_optout(df, sys_response='tr'):
+    v_print("Removing optout trials ...\n")
     if "IsOptOut" in df.columns:
         new_df = df.query(" IsOptOut==['N', 'Localization'] ")
     elif "ProbeStatus" in df.columns:
-        print("Ouput the metadata table...\n")
         new_df = index_m_df.query(
             " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
-
     return new_df
-
 
 def overlap_cols(mySys, myRef):
     no_overlap = [c for c in mySys.columns if c not in myRef.columns]
     overlap = [c for c in mySys.columns if c in myRef.columns]
     return no_overlap, overlap
 
-# Loading the JT files
-
-
-def is_exist_jt_meta(path, ref_fname, jt_tag_name):
-    # Loading the JTjoin and JTmask file
-    myFname = os.path.join(path, str(ref_fname.split('.')[:-1]).strip("['']") + jt_tag_name)
-    v_print("JT meta file name {}".format(myFname))
-    return myFname
-
-    # check existence of the JTjoin and JTmask csv files
-    if os.path.isfile(myFname):
-        return myFname
-    else:
-        v_print(
-            "Either JT meta csv file do not exist and merging process with the reference file will be skipped")
-
+# Loading the specified file
+def define_file_name(path, ref_fname, tag_name):
+    my_fname = os.path.join(path, str(ref_fname.split('.')[:-1]).strip("['']") + tag_name)
+    v_print("Specified JT file: {}".format(my_fname))
+    return my_fname
 
 def JT_merge(ref_dir, ref_fname, mainDF):
-    join_fname = is_exist_jt_meta(ref_dir, ref_fname, '-probejournaljoin.csv')
-    mask_fname = is_exist_jt_meta(ref_dir, ref_fname, '-journalmask.csv')
+    join_fname = define_file_name(ref_dir, ref_fname, '-probejournaljoin.csv')
+    mask_fname = define_file_name(ref_dir, ref_fname, '-journalmask.csv')
     if os.path.isfile(join_fname) and os.path.isfile(mask_fname):
-        v_print("Merging the JournalJoin and JournalMask csv file with the reference files ...\n")
         joinDF = pd.read_csv(join_fname, sep='|', low_memory=False)
         maskDF = pd.read_csv(mask_fname, sep='|', low_memory=False)
         jt_no_overlap, jt_overlap = overlap_cols(joinDF, maskDF)
-        v_print("jt_overlap {}".format(jt_overlap))
-        # merge the JournalJoinTable and the JournalMaskTable (this section should be inner join)
+        v_print("JT overlap columns: {}".format(jt_overlap))
+        v_print("Merging (left join) the JournalJoin and JournalMask csv files with the reference file ...\n")
         jt_meta = pd.merge(joinDF, maskDF, how='left', on=jt_overlap)
-        # merge the dataframes above
         meta_no_overlap, meta_overlap = overlap_cols(mainDF, jt_meta)
-        v_print("meta_overlap {}".format(meta_overlap))
+        v_print("JT and main_df overlap columns: {}".format(meta_overlap))
         new_df = pd.merge(mainDF, jt_meta, how='left', on=meta_overlap)
-        v_print("main cols {}\n meta cols {}\n, new df {}".format(
+        v_print("Main cols num: {}\n Meta cols num: {}\n, Merged cols num: {}".format(
             mainDF.shape, jt_meta.shape, new_df.shape))
         return new_df
     else:
-        v_print("JT meta csv file do not exist and merging process with the reference file will be skipped")
+        v_print("JT meta files do not exist, therefore, merging process will be skipped")
         return mainDF
 
 
 def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
-
     # Loading the reference file
-    v_print("Ref file name {}".format(os.path.join(refDir, inRef)))
+    v_print("Ref file name: {}".format(os.path.join(refDir, inRef)))
     myRefDir = os.path.dirname(os.path.join(refDir, inRef))
     myRef = load_csv(os.path.join(refDir, inRef))
-
     # Loading the index file
-    v_print("Index file name {} {}".format(refDir, inIndex))
+    v_print("Index file name: {}".format(os.path.join(refDir, inIndex)))
     myIndex = load_csv(os.path.join(refDir, inIndex))
-
-    # Loading system output for SSD and DSD due to different columns between SSD and DSD
-    v_print("Sys file Name {}".format(os.path.join(sysDir, inSys)))
+    # Loading system output
+    v_print("Sys file name: {}".format(os.path.join(sysDir, inSys)))
     mySys = load_csv(os.path.join(sysDir, inSys), mydtype=sys_dtype)
 
     sys_ref_no_overlap, sys_ref_overlap = overlap_cols(mySys, myRef)
-    v_print("sys_ref_no_overlap {} \n, sys_ref_overlap {}".format(
+    v_print("sys_ref_no_overlap: {} \n, sys_ref_overlap: {}".format(
         sys_ref_no_overlap, sys_ref_overlap))
     index_ref_no_overlap, index_ref_overlap = overlap_cols(myIndex, myRef)
-    v_print("index_ref_no_overlap {}\n, index_ref_overlap {}".format(
+    v_print("index_ref_no_overlap: {}\n, index_ref_overlap: {}".format(
         index_ref_no_overlap, index_ref_overlap))
 
     # merge the reference and system output for SSD/DSD reports
@@ -127,24 +117,19 @@ def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta
     # convert to the str type to the float type for computations
     m_df['ConfidenceScore'] = m_df['ConfidenceScore'].astype(np.float)
 
-    # merge the reference and index csv only
+    # merge the reference and index csv (intersection only due to the partial index trials)
     index_m_df = pd.merge(m_df, myIndex, how='inner', on=index_ref_overlap)
-    v_print("index_m_df_columns {}".format(index_m_df.columns))
+    v_print("index_m_df_columns: {}".format(index_m_df.columns))
 
-    # save subset of metadata for analysis purpose (according to Jon's requirement)
+    # save subset of metadata for analysis purpose
     if outSubMeta:
+        v_print("Saving the sub_meta csv file...")
         sub_pm_df = index_m_df[index_ref_overlap +
                                index_ref_no_overlap + ["IsTarget"] + sys_ref_no_overlap]
         v_print("sub_pm_df columns: {}".format(sub_pm_df.columns))
         sub_pm_df.to_csv(outRoot + '_subset_meta.csv', index=False, sep='|')
 
     return index_m_df, sys_ref_overlap
-
-
-def save_csv(df_list, outRoot, query_mode, tag_str):
-    for i, df in enumerate(df_list):
-        df.to_csv(outRoot + '_' + query_mode + '_query_' +
-                  str(i) + tag_str, index=False, sep='|')
 
 
 def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap):
@@ -155,7 +140,7 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
         v_print("Merging the JournalJoin and JournalMask for the {} task\n".format(task))
         m_df = JT_merge(refDir, inRef, df)
 
-    v_print("Creating partitions...\n")
+    v_print("Creating partitions for queries ...\n")
     selection = f.Partition(m_df, query_str, query_mode, fpr_stop=farStop, isCI=ci,
                             ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap)
     DM_List = selection.part_dm_list
@@ -166,14 +151,10 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
     v_print("Number of CSV partitions generated = {}\n".format(len(DF_List)))
 
     if outMeta:  # save all metadata for analysis purpose
+        v_print("Saving all the meta info csv file ...")
         save_csv(DF_List, outRoot, query_mode, '_allmeta.csv')
 
     table_df = selection.render_table()
-
-    if isinstance(table_df, list):
-        v_print("Number of table DataFrame generated = {}\n".format(len(table_df)))
-
-    save_csv(table_df, outRoot, query_mode, '_report.csv')
 
     return DM_List, table_df, selection
 
@@ -183,17 +164,16 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
     m_df = df.copy()
 
     if outMeta:  # save all metadata for analysis purpose
+        v_print("Saving all the meta info csv file ...")
         v_print("Merging the JournalJoin and JournalMask for the {} task\n, But do not score with this data".format(task))
         meta_df = JT_merge(refDir, inRef, m_df)
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
-        m_df.to_csv(outRoot + '_allmeta_scored.csv', index=False, sep='|')
+        m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
     DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
                        isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
-
     DM_List = [DM]
     table_df = DM.render_table()
-    table_df.to_csv(outRoot + '_all_report.csv', index=False, sep='|')
 
     return DM_List, table_df
 
@@ -287,9 +267,7 @@ def query_plot_options(DM_List, opts_list, plot_opts, selection, optOut, noNum):
     return opts_list, plot_opts
 
 ########### Command line interface ########################################################
-
-
-def command():
+def command_interface():
     def is_file_specified(x):
         if x == '':
             raise argparse.ArgumentTypeError("{0} not provided".format(x))
@@ -321,24 +299,21 @@ def command():
     parser = argparse.ArgumentParser(description='NIST detection scorer.')
     # Task Type Options
     parser.add_argument('-t', '--task', default='manipulation',
-                        # add provenanceFiltering and provenance in future
                         choices=['manipulation', 'splice', 'eventverification', 'camera'],
-                        help='Define the target manipulation task type for evaluation:[manipulation],[splice], [eventverification], and [camera] (default: %(default)s)', metavar='character')
+                        help='Define the target task for evaluation(default: %(default)s)', metavar='character')
     # Input Options
     parser.add_argument('--refDir', default='.',
                         help='Specify the reference and index data path: [e.g., ../NC2016_Test] (default: %(default)s)', metavar='character')
     parser.add_argument('-tv', '--tsv', default='',
-                        help='Specify the reference TSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.tsv]', metavar='character')
-
+                        help='Specify the reference TSV file that contains the ground-truth and metadata info [e.g., results.tsv]', metavar='character')
     parser.add_argument('-r', '--inRef', default='', type=is_file_specified,
-                        help='Specify the reference CSV file (under the refDir folder) that contains the ground-truth and metadata information: [e.g., reference/manipulation/reference.csv]', metavar='character')
-    # type=lambda x: is_file(parser, x))# Mandatory
+                        help='Specify the reference CSV file that contains the ground-truth and metadata info [e.g., references/ref.csv]', metavar='character')
     parser.add_argument('-x', '--inIndex', default='', type=is_file_specified,
                         help='Specify the index CSV file: [e.g., indexes/index.csv] (default: %(default)s)', metavar='character')
     parser.add_argument('--sysDir', default='.',
                         help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)', metavar='character')  # Optional
     parser.add_argument('-s', '--inSys', default='', type=is_file_specified,
-                        help='Specify the CSV file of the system performance result formatted according to the specification: [e.g., ~/expid/system_output.csv] (default: %(default)s)', metavar='character')
+                        help='Specify a CSV file of the system output formatted according to the specification: [e.g., expid/system_output.csv] (default: %(default)s)', metavar='character')
     # Metric Options
     parser.add_argument('--farStop', type=restricted_float, default=0.1,
                         help='Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) FAR 10%)', metavar='float')
@@ -351,46 +326,46 @@ def command():
                         help="Define the lower and upper exclusions for d-prime calculation", metavar='float')
     # Output Options
     parser.add_argument('-o', '--outRoot', default='.',
-                        help='Specify the report output path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)', metavar='character')
+                        help='Specify the report path and the file name prefix for saving the plot(s) and table (s). For example, if you specify "--outRoot test/NIST_001", you will find the plot "NIST_001_det.png" and the table "NIST_001_report.csv" in the "test" folder: [e.g., temp/xx_sys] (default: %(default)s)', metavar='character')
     parser.add_argument('--outMeta', action='store_true',
-                        help="Save the CSV file with the system scores with metadata")
+                        help="Save a CSV file with the system output with metadata")
     parser.add_argument('--outSubMeta', action='store_true',
-                        help="Save the CSV file with the system scores with minimal metadata")
+                        help="Save a CSV file with the system output with minimal metadata")
     parser.add_argument('--dump', action='store_true',
                         help="Save the dump files (formatted as a binary) that contains a list of FAR, FPR, TPR, threshold, AUC, and EER values. The purpose of the dump files is to load the point values for further analysis without calculating the values again.")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Print output with procedure messages on the command-line if this option is specified.")
     # Plot Options
     parser.add_argument('--plotTitle', default='Performance',
-                        help="Define the plot title (default: %(default)s)", metavar='character')
+                        help="Define a plot title (default: %(default)s)", metavar='character')
     parser.add_argument('--plotSubtitle', default='',
-                        help="Define the plot subtitle (default: %(default)s)", metavar='character')
+                        help="Define a plot subtitle (default: %(default)s)", metavar='character')
     parser.add_argument('--plotType', default='', choices=['roc', 'det'],
-                        help="Define the plot type:[roc] and [det] (default: %(default)s)", metavar='character')
+                        help="Define a plot type:[roc] and [det] (default: %(default)s)", metavar='character')
     parser.add_argument('--display', action='store_true',
-                        help="Display a window with the plot (s) on the command-line if this option is specified.")
+                        help="Display a window with the plot(s) on the command-line if this option is specified.")
     parser.add_argument('--multiFigs', action='store_true',
-                        help="Generate plots (with only one curve) per a partition ")
+                        help="Generate plots(with only one curve) per a partition ")
     parser.add_argument('--noNum', action='store_true',
                         help="Do not print the number of target trials and non-target trials on the legend of the plot")
     # Custom Plot Options
     parser.add_argument('--configPlot', default='',
-                        help="Load a JSON file that allows the user to customize the plot (e.g. change the title font size) by augmenting the json files located in the 'plotJsonFiles' folder.")
+                        help="Load a JSON file that allows user to customize the plot (e.g. change the title font size) by augmenting the json files located in the 'plotJsonFiles' folder.")
     # Performance Evaluation by Query Options
     factor_group = parser.add_mutually_exclusive_group()
 
     factor_group.add_argument('-q', '--query', nargs='*',
-                              help="Evaluate algorithm performance on a partitioned dataset (or subset) using multiple queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
+                              help="Evaluate system performance on a partitioned dataset (or subset) using multiple queries. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
     factor_group.add_argument('-qp', '--queryPartition',
-                              help="Evaluate algorithm performance on a partitioned dataset (or subset) using one query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves. (syntax retriction: '==[]','<','<=')", metavar='character')
+                              help="Evaluate system performance on a partitioned dataset (or subset) using one query. Depending on the number (M) of partitions provided by the cartesian product on query conditions, this option generates a single report table (CSV) that contains M partition results and one plot that contains M curves. (syntax retriction: '==[]','<','<=')", metavar='character')
     factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
                               help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
     parser.add_argument('--optOut', action='store_true',
-                        help="Evaluate algorithm performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
+                        help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
 
     args = parser.parse_args()
 
-    print("Namespace :\n{}\n".format(args))
+    #print("Namespace :\n{}\n".format(args))
     # Verbosity option
     if args.verbose:
         def _v_print(*args):
@@ -411,7 +386,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         class ArgsList():
             def __init__(self):
-                print("initiating ...")
+                print("Debugging mode: initiating ...")
                 # Inputs
                 self.task = "manipulation"
                 self.refDir = "../../data/test_suite/detectionScorerTests/reference"
@@ -463,7 +438,7 @@ if __name__ == '__main__':
         v_print = _v_print
 
     else:
-        args = command()
+        args = command_interface()
 
     # the performers' result directory
     if '/' not in args.outRoot:
@@ -494,13 +469,19 @@ if __name__ == '__main__':
 
     sys_response = 'all'  # to distinguish use of the optout
     query_mode = ""
+    tag_state = '_all'
 
     if args.optOut:
         sys_response = 'tr'
         index_m_df = is_optout(index_m_df, sys_response)
 
+    # TSV input mode
+    if args.tsv:
+        print("Place TSV metrics here ...")
+        DM_List, table_df = None, None
+
     # Query Mode
-    if args.query or args.queryPartition or args.queryManipulation:
+    elif args.query or args.queryPartition or args.queryManipulation:
         if args.query:
             query_mode = 'q'
             query_str = args.query
@@ -511,7 +492,9 @@ if __name__ == '__main__':
             query_mode = 'qm'
             query_str = args.queryManipulation
 
-        v_print("Query_str: {}\nQuery_mode: {}".format(query_str, query_mode))
+        tag_state = '_' + query_mode + '_query'
+
+        v_print("Query_mode: {}, Query_str: {}".format(query_mode,query_str))
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
                                                       args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap)
         # Render plots with the options
@@ -520,10 +503,6 @@ if __name__ == '__main__':
         opts_list, plot_opts = query_plot_options(
             DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
 
-    # TSV input mode
-    elif args.tsv:
-        print("Place TSV metrics here ...")
-        DM_List, table_df = None, None
     # No Query mode
     else:
         DM_List, table_df = no_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
@@ -532,22 +511,23 @@ if __name__ == '__main__':
         opts_list, plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
                                             args.plotTitle, args.plotSubtitle, args.optOut)
 
-    v_print("Rendering csv tables...\n")
+    v_print("Rendering/saving csv tables...\n")
     if isinstance(table_df, list):
         print("\nReport tables:\n")
         for i, table in enumerate(table_df):
             print("\nPartition {}:".format(i))
             print(table)
+            table.to_csv(args.outRoot + tag_state + '_' + str(i) + '_report.csv', index=False, sep='|')
     else:
         print("Report table:\n{}".format(table_df))
+        table_df.to_csv(args.outRoot + tag_state + '_report.csv', index=False, sep='|')
 
     if args.dump:
         v_print("Dumping metric objects ...\n")
         for i, DM in enumerate(DM_List):
             DM.write(root_path + '/' + file_suffix + '_query_' + str(i) + '.dm')
 
-    v_print("Rendering plots...\n")
-    print(plot_opts)
+    v_print("Rendering/saving plots...\n")
     # Creation of the object setRender (~DetMetricSet)
     configRender = p.setRender(DM_List, opts_list, plot_opts)
     # Creation of the Renderer
@@ -559,8 +539,6 @@ if __name__ == '__main__':
     # save multiple figures if multi_fig == True
     if isinstance(myfigure, list):
         for i, fig in enumerate(myfigure):
-            fig.savefig(args.outRoot + '_' + plot_opts['plot_type'] +
-                        '_' + str(i) + '.pdf', bbox_inches='tight')
+            fig.savefig(args.outRoot + tag_state + '_' + str(i)  + '_' + plot_opts['plot_type'] + '.pdf', bbox_inches='tight')
     else:
-        myfigure.savefig(args.outRoot + '_' +
-                         plot_opts['plot_type'] + '_all.pdf', bbox_inches='tight')
+        myfigure.savefig(args.outRoot + tag_state + '_' + plot_opts['plot_type'] +'.pdf', bbox_inches='tight')

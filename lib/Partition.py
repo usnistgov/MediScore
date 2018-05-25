@@ -229,7 +229,7 @@ class Partition:
                         'AUC_CI_UPPER@FAR': dm.ci_upper,
                         'TRR': dm.trr,
                         'SYS_RESPONSE': dm.sys_res}
-                index = ['P:']
+                index = ['Q' + str(i)]
                 columns = ['QUERY', 'AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'AUC_CI_LOWER@FAR',
                            'AUC_CI_UPPER@FAR', 'TRR', 'SYS_RESPONSE']
                 df_list.append(pd.DataFrame(data, index, columns).round(6))
@@ -267,7 +267,7 @@ class Partition:
             columns = list(self.factors_order)
             columns.extend(['AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'AUC_CI_LOWER@FAR',
                             'AUC_CI_UPPER@FAR', 'TRR', 'SYS_RESPONSE'])
-            index = ['Partition_' + str(i) for i in range(self.n_partitions)]
+            index = ['P' + str(i) for i in range(self.n_partitions)]
             df = pd.DataFrame(data, index, columns).round(6)
             return df
 
