@@ -444,6 +444,7 @@ HISTORY
    May 24, 2018 - MediScore Version *.*.*
     * Detection:
       - Refactored the code for DetectionScorer and tested its test cases
+      - Fixed a bug (scoring on the reduced trials instead of the JT merged trials)
 
 CONTACT
 -------
