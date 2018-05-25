@@ -443,7 +443,7 @@ HISTORY
       - Refining HTML deselect option to not generate any images for probes. (A CSV containing the metrics at each relevant threshold will still be generated.)
    May 24, 2018 - MediScore Version *.*.*
     * Detection:
-      - Refactored DectectionScorer.
+      - Refactored the code for DetectionScorer and tested its test cases
 
 CONTACT
 -------
