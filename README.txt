@@ -441,6 +441,9 @@ HISTORY
       - Adding FailedValidation checks to video task.
     * Localization Scorer
       - Refining HTML deselect option to not generate any images for probes. (A CSV containing the metrics at each relevant threshold will still be generated.)
+  May 30, 2018 - MediScore Version *.*.*
+    * Validator:
+      - Adding --ignore_eof option to video task.
 
 CONTACT
 -------
