@@ -445,6 +445,9 @@ HISTORY
     * Detection:
       - Refactored the code for DetectionScorer and tested its test cases
       - Fixed a bug (scoring on the reduced trials instead of the JT merged trials)
+   June 1, 2018 - MediScore Version *.*.*
+       * Detection:
+         - added to delete the folders under compcheckfiles before running make check
 
 CONTACT
 -------

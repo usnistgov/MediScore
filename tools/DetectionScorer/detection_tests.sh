@@ -16,6 +16,9 @@ run_test() {
     checkfile_outdir_basename=`basename $checkfile_outdir`
     compcheck_outdir=${3-compcheckfiles}
     compcheckfile_outdir="$compcheck_outdir/$checkfile_outdir_basename"
+    if [ -d "$compcheckfile_outdir" ]; then
+        rm -Rf $compcheckfile_outdir
+    fi
 
     echo "** Running detection test case: '$test' **"
     $test "$compcheckfile_outdir" 1> $compcheckfile_outdir.comp.log 2>&1
