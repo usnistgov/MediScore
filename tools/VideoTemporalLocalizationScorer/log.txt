@@ -1,8 +1,8 @@
 ProbeFileID = 242abec7860e7398972896ab2870d92a
+global_range = [1, 1000]
 sys_intervals = []
 SNS = None
 ref_intervals = [[ 1 65]]
-global_range = [1, 1000]
 collars = [[ 1  6]
  [60 70]]
 confusion_vector = [-1  1 -1  0]
@@ -15,10 +15,10 @@ MCC = 0
 
 
 ProbeFileID = 2582c55863a6fccff1f2c1d18be3ece0
+global_range = [1, 1000]
 sys_intervals = [[200 270]]
 SNS = None
 ref_intervals = [[200 398]]
-global_range = [1, 1000]
 collars = [[195 205]
  [393 403]]
 confusion_vector = [ 0 -1  3  1 -1  0]
@@ -33,10 +33,10 @@ MCC = 0.547007017098
 
 
 ProbeFileID = 51c5b227194cde6af514c49f0fd1b823
+global_range = [1, 1000]
 sys_intervals = [[116 216]]
 SNS = None
 ref_intervals = [[ 67 266]]
-global_range = [1, 1000]
 collars = [[ 62  72]
  [261 271]]
 confusion_vector = [ 0 -1  1  3  1 -1  0]
@@ -52,10 +52,10 @@ MCC = 0.689585635082
 
 
 ProbeFileID = 7c29d2c8f4ff99dc12f1d38a62f82e8b
+global_range = [1, 1000]
 sys_intervals = [[100 200]]
 SNS = None
 ref_intervals = []
-global_range = [1, 1000]
 collars = []
 confusion_vector = [0 2 0]
 all_intervals = [[   1  100]
@@ -66,10 +66,10 @@ MCC = 0
 
 
 ProbeFileID = 80fe38b1d96e7cdce250206f779c3c85
+global_range = [1, 1000]
 sys_intervals = [[700 836]]
 SNS = None
 ref_intervals = [[  1 836]]
-global_range = [1, 1000]
 collars = [[  1   6]
  [831 841]]
 confusion_vector = [-1  1  3 -1  0]
@@ -83,10 +83,10 @@ MCC = 0.172041301808
 
 
 ProbeFileID = a6dbfc1791ff289f171fcd18eef6a1a4
+global_range = [1, 1000]
 sys_intervals = [[200 398]]
 SNS = None
 ref_intervals = [[200 398]]
-global_range = [1, 1000]
 collars = [[195 205]
  [393 403]]
 confusion_vector = [ 0 -1  3 -1  0]
@@ -100,10 +100,10 @@ MCC = 1.0
 
 
 ProbeFileID = c1359ef687670baa5de7f4aea7baa479
+global_range = [1, 1000]
 sys_intervals = [[  1 570]]
 SNS = None
 ref_intervals = [[  1 570]]
-global_range = [1, 1000]
 collars = [[  1   6]
  [565 575]]
 confusion_vector = [-1  3 -1  0]
@@ -116,10 +116,10 @@ MCC = 1.0
 
 
 ProbeFileID = c428154bfb6c8fb830ce8fd8dc66fbc4
+global_range = [1, 1000]
 sys_intervals = [[130 270]]
 SNS = None
 ref_intervals = [[ 1 96]]
-global_range = [1, 1000]
 collars = [[  1   6]
  [ 91 101]]
 confusion_vector = [-1  1 -1  0  2  0]
@@ -134,12 +134,12 @@ MCC = -0.125234045924
 
 
 ProbeFileID = dabab325af0298021cfdb8168b1455ff
+global_range = [1, 1000]
 sys_intervals = [[100 250]
  [450 700]]
 SNS = None
 ref_intervals = [[200 399]
  [400 600]]
-global_range = [1, 1000]
 collars = [[195 205]
  [394 404]
  [395 405]
@@ -161,10 +161,10 @@ MCC = 0.178655002755
 
 
 ProbeFileID = 2582c55863a6fccff1f2c1d18be3ece0
+global_range = [1, 1000]
 sys_intervals = [[200 270]]
 SNS = None
 ref_intervals = [[200 398]]
-global_range = [1, 1000]
 collars = [[195 205]
  [393 403]]
 confusion_vector = [ 0 -1  3  1 -1  0]
@@ -179,10 +179,10 @@ MCC = 0.547007017098
 
 
 ProbeFileID = 51c5b227194cde6af514c49f0fd1b823
+global_range = [1, 1000]
 sys_intervals = [[116 216]]
 SNS = None
 ref_intervals = [[ 67 266]]
-global_range = [1, 1000]
 collars = [[ 62  72]
  [261 271]]
 confusion_vector = [ 0 -1  1  3  1 -1  0]
@@ -198,10 +198,10 @@ MCC = 0.689585635082
 
 
 ProbeFileID = a6dbfc1791ff289f171fcd18eef6a1a4
+global_range = [1, 1000]
 sys_intervals = [[200 398]]
 SNS = None
 ref_intervals = [[200 398]]
-global_range = [1, 1000]
 collars = [[195 205]
  [393 403]]
 confusion_vector = [ 0 -1  3 -1  0]
@@ -215,12 +215,12 @@ MCC = 1.0
 
 
 ProbeFileID = dabab325af0298021cfdb8168b1455ff
+global_range = [1, 1000]
 sys_intervals = [[100 250]
  [450 700]]
 SNS = None
 ref_intervals = [[200 399]
  [400 600]]
-global_range = [1, 1000]
 collars = [[195 205]
  [394 404]
  [395 405]
