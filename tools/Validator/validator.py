@@ -119,11 +119,8 @@ class validator:
                     print(msg)
 #            self.printbuffer.atomprint(print_lock)
             return 1
-
-        try:
-            self.outputRewrite = params.outputRewrite
-        except:
-            self.outputRewrite = False
+        
+        self.init_other_variables(params)
 
         #option to do a namecheck
         self.doNameCheck = params.doNameCheck
@@ -156,10 +153,6 @@ class validator:
 #        printq("Your index file appears to be a pipe-separated csv, for now. Hope it isn't separated by commas.")
         self.printbuffer.put("Index file is a pipe-separated csv.")
 
-        try:
-            self.video = params.video
-        except:
-            self.video = False
         self.optOut = params.optOut
         if self.contentCheck(params.identify,params.neglectMask,params.ref,params.indexFilter) == 1:
             if self.verbose:
@@ -177,6 +170,21 @@ class validator:
 #        self.printbuffer.atomprint(print_lock)
         return 0
 
+    def init_other_variables(self,params):
+        try:
+            self.outputRewrite = params.outputRewrite
+        except:
+            self.outputRewrite = False
+
+        try:
+            self.video = params.video
+        except:
+            self.video = False
+
+        try:
+            self.ignore_eof = params.ignore_eof
+        except:
+            self.ignore_eof = False
 
 class SSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -456,7 +464,7 @@ class SSD_Validator(validator):
             oopixval = str(sysrow['ProbeOptOutPixelValue'])
             #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
             isProbeOOdigit = True
-            if (oopixval != ''):
+            if oopixval != '':
                 isProbeOOdigit = is_integer(oopixval)
             if not ((oopixval == '') or isProbeOOdigit):
                 sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval)
@@ -597,10 +605,13 @@ class SSD_Validator(validator):
                     min_frame_number=1
                 elif mode=='Time':
                     min_frame_number=0
-                if (interval[0] < min_frame_number) or (interval[1] > max_frame_number):
+                if (interval[0] < min_frame_number) or ((interval[1] > max_frame_number) and not self.ignore_eof):
                     errmsg = "ERROR: Interval {} is out of bounds. The max interval for this video is {}.".format(interval,[min_frame_number,max_frame_number])
                     msg.append(errmsg)
                     intervalflag = 1
+                elif (interval[1] > max_frame_number) and self.ignore_eof:
+                    errmsg = "Warning: Interval {} is out of bounds. The max interval for this video is {}.".format(interval,[min_frame_number,max_frame_number])
+                    msg.append(errmsg)
         
                 if intervalflag == 0:
                     #each of the intervals in each list of intervals must be disjoint (except for endpoints)
@@ -1167,6 +1178,8 @@ if __name__ == '__main__':
         help="neglect mask dimensionality validation.")
     parser.add_argument('--ncid',type=str,default="NC17",\
         help="the NCID to validate against.")
+    parser.add_argument('--ignore_eof',action='store_true',
+        help="Ignore EOF of video if performer's frames go out of bounds. Has no effect on image validation.")
     parser.add_argument('--output_revised_system',type=str,default=None,
         help="Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]")
 
@@ -1196,7 +1209,7 @@ if __name__ == '__main__':
             print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
             exit(1)
 
-    myval_params = validation_params(ncid=args.ncid,video=args.valtype=='SSD-video',outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors)
+    myval_params = validation_params(ncid=args.ncid,video=args.valtype=='SSD-video',outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof)
     if args.valtype in ['SSD','SSD-video']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
         exit(ssd_validation.fullCheck(myval_params))
