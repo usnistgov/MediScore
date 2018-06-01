@@ -41,6 +41,35 @@ class IntervalCompute():
         ts_intervals[-1] = timestamps[-1]
         ts_intervals = ts_intervals.reshape(timestamps.size-1,2)
         return ts_intervals
+
+    @staticmethod
+    def truncate(interval_array, FrameCount):
+        """Function that cut a list of interval at a specific value v
+        :param interval_array: np.array([[x0, x1], ...])
+        :FrameCount: value to truncate
+        :returns: a truncated copy of the interval_array
+        :Example:
+        >>> truncate(np.array([[10,20],[30,40]]),25)
+        array([[10, 20]])
+        >>> truncate(np.array([[10,20],[30,40]]),30)
+        array([[10, 20]])
+        >>> truncate(np.array([[10,20],[30,40]]),35)
+        array([[10, 20], [30, 35]])
+        >>> truncate(np.array([[10,20],[30,40]]),40)
+        array([[10, 20], [30, 40]])
+        >>> truncate(np.array([[10,20],[30,40]]),50)
+        array([[10, 20], [30, 40]])
+        """
+        i = interval_array.copy()
+        mask_oversize = np.transpose(np.nonzero(interval_array >= FrameCount))
+        if mask_oversize.size:
+            # If there is an overlap
+            if mask_oversize[0,1] == 1:
+                i[mask_oversize[0,0],mask_oversize[0,1]] = FrameCount
+                i = i[:mask_oversize[0,0]+1]
+            else:
+                i = i[:mask_oversize[0,0]]
+        return i
         
     @staticmethod
     def compute_intervals_union(Intervals_list):
