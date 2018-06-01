@@ -44,6 +44,7 @@ class VTLScorer():
                  collars=None,
                  log=True,
                  path_log="./log.txt",
+                 truncate = None,
                  no_opt_out = None,
                  no_video_opt_out = None):
 
@@ -63,6 +64,7 @@ class VTLScorer():
         self.collars = collars
         self.add_collars = collars is not None
         
+        self.truncate = truncate,
         self.no_opt_out = no_opt_out
         self.no_video_opt_out = no_video_opt_out
         
@@ -113,6 +115,12 @@ class VTLScorer():
             self.writelog("ProbeFileID = {}".format(ProbeFileID))
             collars = None
 
+            # We get the total number of frame
+            assert (ProbeFileID in self.df_index.ProbeFileID.values), "ProbeFileID ({}) is missing in the index file ({})".format(ProbeFileID, self.path_index)
+            FrameCount = self.df_index.query("ProbeFileID == '{}'".format(ProbeFileID)).FrameCount.values[0]
+            global_range = [1, FrameCount]
+            self.writelog("global_range = {}".format(global_range))
+
             # We first get the system intervals
             assert (ProbeFileID in df_sys.ProbeFileID.values), "ProbeFileID ({}) is missing in the system output file".format(ProbeFileID)
             # System probe info
@@ -123,6 +131,8 @@ class VTLScorer():
                 SysVideoFramesSeries_list = [interval_list_string_fast_parsing(x,datatype=int) for x in SysVideoFramesSeries.values if x != "[]"]
                 if SysVideoFramesSeries_list:
                     sys_intervals = IC.compute_intervals_union(SysVideoFramesSeries_list)
+                    if self.truncate:
+                        sys_intervals = IC.truncate(sys_intervals, FrameCount)
                 else:
                     sys_intervals = np.array([[]])
                 self.writelog("sys_intervals = {}".format(sys_intervals))
@@ -133,6 +143,8 @@ class VTLScorer():
                 SysVideoFramesOptOutSeries_list = [interval_list_string_fast_parsing(x,datatype=int) for x in SysVideoFramesOptOutSeries.values if x != "[]"]
                 if SysVideoFramesOptOutSeries_list and not self.no_video_opt_out:
                     SNS = IC.compute_intervals_union(SysVideoFramesOptOutSeries_list)
+                    if self.truncate:
+                        SNS = IC.truncate(SNS, FrameCount)
                 else:
                     SNS = None
                 self.writelog("SNS = {}".format(SNS))
@@ -152,11 +164,7 @@ class VTLScorer():
                 ref_intervals = np.array([[]])
             self.writelog("ref_intervals = {}".format(ref_intervals))
 
-            # We get the total number of frame
-            assert (ProbeFileID in self.df_index.ProbeFileID.values), "ProbeFileID ({}) is missing in the index file ({})".format(ProbeFileID, self.path_index)
-            FrameCount = self.df_index.query("ProbeFileID == '{}'".format(ProbeFileID)).FrameCount.values[0]
-            global_range = [1, FrameCount]
-            self.writelog("global_range = {}".format(global_range))
+            
 
             if self.add_collars:
                 collars = IC.compute_collars(ref_intervals, self.collars, crop_to_range = global_range)
@@ -201,6 +209,7 @@ if __name__ == '__main__':
                 self.query = ["*"]
                 self.no_opt_out = False
                 self.no_video_opt_out = False
+                self.truncate = True
                 self.dump_dataframe = False
                 self.dump_dataframe_file_name = "./df_scores_probes.pkl"
                 self.output_path = "./scores/"
@@ -217,6 +226,7 @@ if __name__ == '__main__':
         parser.add_argument('-s', '--path_sysout', help='path to the system output file')
         parser.add_argument('-c', '--collars', help='collar value to add to each side of the reference intervals', default=None, type=int)
         parser.add_argument('-q', '--query', nargs="+", help="""give a sequence of criteria over the probe selection. Each query should be between double quotes. "*" select all""",default='*')
+        parser.add_argument('--truncate', help="Truncate any system intervals that goes beyond the video reference framecount (to the framecount value)", action='store_true')
         parser.add_argument('--no_opt_out', help="Score all the probes without taking in account the OptOut flag", action='store_true')
         parser.add_argument('--no_video_opt_out', help="Score without taking in account the VideoFrameOptOutSegments field", action='store_true')
         parser.add_argument('-d', '--dump_dataframe', help='path to the file where the dataframe will be dumped',action='store_true')
@@ -233,6 +243,7 @@ if __name__ == '__main__':
                        parameters.path_probejournaljoin, 
                        collars = parameters.collars,
                        log = parameters.log,
+                       truncate = parameters.truncate,
                        no_opt_out = parameters.no_opt_out,
                        no_video_opt_out = parameters.no_video_opt_out)
 
