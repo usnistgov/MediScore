@@ -43,7 +43,9 @@ class VTLScorer():
                  delimiter = "|", 
                  collars=None,
                  log=True,
-                 path_log="./log.txt"):
+                 path_log="./log.txt",
+                 no_opt_out = None,
+                 no_video_opt_out = None):
 
         self.delimiter = "|"
         self.path_ref = path_ref
@@ -60,6 +62,9 @@ class VTLScorer():
         self.global_interval = global_interval
         self.collars = collars
         self.add_collars = collars is not None
+        
+        self.no_opt_out = no_opt_out
+        self.no_video_opt_out = no_video_opt_out
         
         self.Scorer = VideoScoring()
         self.path_log = path_log
@@ -113,7 +118,7 @@ class VTLScorer():
             # System probe info
             sys_probe = df_sys.query("ProbeFileID == '{}'".format(ProbeFileID))
 
-            if sys_probe.ProbeStatus.values == "Processed":
+            if sys_probe.ProbeStatus.values == "Processed" or self.no_opt_out:
                 SysVideoFramesSeries = sys_probe.VideoFrameSegments
                 SysVideoFramesSeries_list = [interval_list_string_fast_parsing(x,datatype=int) for x in SysVideoFramesSeries.values if x != "[]"]
                 if SysVideoFramesSeries_list:
@@ -126,7 +131,7 @@ class VTLScorer():
                 # We get any OptOut video region
                 SysVideoFramesOptOutSeries = sys_probe.VideoFrameOptOutSegments
                 SysVideoFramesOptOutSeries_list = [interval_list_string_fast_parsing(x,datatype=int) for x in SysVideoFramesOptOutSeries.values if x != "[]"]
-                if SysVideoFramesOptOutSeries_list:
+                if SysVideoFramesOptOutSeries_list and not self.no_video_opt_out:
                     SNS = IC.compute_intervals_union(SysVideoFramesOptOutSeries_list)
                 else:
                     SNS = None
@@ -163,6 +168,7 @@ class VTLScorer():
                                                                                                       global_range, 
                                                                                                       collars=collars,
                                                                                                       SNS=SNS)
+                 
             self.writelog("confusion_vector = {}".format(confusion_vector))
             self.writelog("all_intervals = {}".format(all_intervals))
             Counts = self.Scorer.count_confusion_value(all_intervals, confusion_vector)
@@ -171,6 +177,8 @@ class VTLScorer():
                         
             probes_selection_scores_df.loc[ProbeFileID] = MCC
             self.writelog("\n")
+            
+            
         return probes_selection_scores_df
     
 
@@ -181,17 +189,22 @@ if __name__ == '__main__':
         
         class Parameters():
             def __init__(self):
-                self.path_data = "/Users/tnk12/Documents/MEDIFOR/Scoring/Data/Reference/Ref2/"
-                self.path_ref = self.path_data + "MFC18_Dev1-manipulation-video-ref.csv"
-                self.path_index = self.path_data + "MFC18_Dev1-manipulation-video-index_2.csv"
-                self.path_journalmask = self.path_data + "MFC18_Dev1-manipulation-video-ref-journalmask.csv"
-                self.path_probejournaljoin = self.path_data + "MFC18_Dev1-manipulation-video-ref-probejournaljoin.csv"
+                # self.path_data = "/Users/tnk12/Documents/MEDIFOR/Scoring/Data/Reference/Ref2/"
+                # self.path_data = "C:\\Users\\tim-k\\Documents\\Dev\\VTLS\\videoTemporalLocalizationScorerTests\\"
+                self.path_data = "/Users/tnk12/Documents/MEDIFOR/MediScoreV2/data/test_suite/videoTemporalLocalizationScorerTests/"
+                self.path_sysout = self.path_data + "test_case_1_system_output.csv"
+                self.path_ref = self.path_data + "test_case_1_videotemploc-ref.csv"
+                self.path_index = self.path_data + "test_case_1_videotemploc-index.csv"
+                self.path_journalmask = self.path_data + "test_case_1_videotemploc-ref-journalmask.csv"
+                self.path_probejournaljoin = self.path_data + "test_case_1_videotemploc-ref-probejournaljoin.csv"
                 self.collars = 5
                 self.query = ["*"]
+                self.no_opt_out = False
+                self.no_video_opt_out = False
                 self.dump_dataframe = False
                 self.dump_dataframe_file_name = "./df_scores_probes.pkl"
                 self.output_path = "./scores/"
-                self.log = "True"
+                self.log = True
                 
         parameters = Parameters()
         
@@ -204,6 +217,8 @@ if __name__ == '__main__':
         parser.add_argument('-s', '--path_sysout', help='path to the system output file')
         parser.add_argument('-c', '--collars', help='collar value to add to each side of the reference intervals', default=None, type=int)
         parser.add_argument('-q', '--query', nargs="+", help="""give a sequence of criteria over the probe selection. Each query should be between double quotes. "*" select all""",default='*')
+        parser.add_argument('--no_opt_out', help="Score all the probes without taking in account the OptOut flag", action='store_true')
+        parser.add_argument('--no_video_opt_out', help="Score without taking in account the VideoFrameOptOutSegments field", action='store_true')
         parser.add_argument('-d', '--dump_dataframe', help='path to the file where the dataframe will be dumped',action='store_true')
         parser.add_argument('-o', '--output_path', help='path to the folder where the scores will be dumped',default="./scores_output/")
         parser.add_argument('-l', '--log', help='enable a log output', action='store_true')
@@ -217,7 +232,9 @@ if __name__ == '__main__':
                        parameters.path_journalmask, 
                        parameters.path_probejournaljoin, 
                        collars = parameters.collars,
-                       log = parameters.log)
+                       log = parameters.log,
+                       no_opt_out = parameters.no_opt_out,
+                       no_video_opt_out = parameters.no_video_opt_out)
 
     # print("Scoring probes...")
     Results = Scorer.score_probes(parameters.path_sysout, query=parameters.query)
@@ -253,6 +270,7 @@ if __name__ == '__main__':
     query_table_join['query'] = parameters.query
     query_table_join.to_csv(os.path.join(parameters.output_path, "query_table_join.csv"), index_label = ['id'], sep="|") 
 
+    Scorer.log_file.close()
     print("Done.")
     
     
