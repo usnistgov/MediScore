@@ -451,6 +451,10 @@ HISTORY
  June 1, 2018 - MediScore Version *.*.*
     * Detection:
       - added to delete the folders under compcheckfiles before running make check
+ June 7, 2018 - MediScore Version *.*.*
+    * Localization Visualizer
+      - Newly added to the MediScore package
+      - Localization visualizer makes use of a slightly modified lib/masks.py, but relevant changes do not affect the Mask Scorer's scored output.
 
 CONTACT
 -------
