@@ -1,7 +1,7 @@
 import sys
 import os
 import pandas as pd
-from skimage.transform import resize
+#from skimage.transform import resize
 import cv2
 import argparse
 libdir=os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
