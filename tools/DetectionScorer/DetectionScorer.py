@@ -505,6 +505,7 @@ if __name__ == '__main__':
 
     # No Query mode
     else:
+        #print(index_m_df.columns)
         DM_List, table_df = no_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
                                           args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response)
         # Render plots with the options
