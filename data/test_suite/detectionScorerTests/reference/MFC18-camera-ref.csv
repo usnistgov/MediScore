@@ -1,0 +1,7 @@
+TaskID|ProbeFileID|ProbeFileName|TrainCamID|IsTarget|IsManipulated|ProbeMaskFileName|ProbeBitPlaneMaskFileName|BaseFileName|ProbeBrowserFileName|JournalName|JournalSource|HPDeviceID
+camera|F1|probe/F1.mp4|ES-D5100_primary_multimedia|N|Y|||world/W1.mp4|F1.mp4|F1||ES-D5100
+camera|F2|probe/F2.mts|ES-D5100_primary_multimedia|N|N|||world/W2.mts|F2.mts|F2||ES-D5100
+camera|F3|probe/F3.mov|ES-D5100_primary_multimedia|Y|Y|||world/W3.mov|F3.mov|F3||ES-D5100
+camera|F4|probe/F4.mp4|PAR-1579_primary_multimedia|N|N|||world/W4.mp4|F4.mp4|F4||PAR-1579
+camera|F5|probe/F5.mp4|MK-NEX5T_primary_multimedia|N|Y|||world/W5.mp4|F5.mp4|F5||MK-NEX5T
+camera|F6|probe/F6.mp4|MK-NEX5T_primary_multimedia|Y|Y|||world/W6.mp4|F6.mp4|F6||MK-NEX5T
