@@ -344,6 +344,15 @@ class TestValidator(ut.TestCase):
                                                                                                                 nm_string))//256
         self.assertEqual(myval,0)
         os.system('rm vvb.log')
+
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vvb2.log".format(NCID,
+                                                                                                                validatorRoot + 'validvidtest_nc17/validvidtest_nc17.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index{}.csv'.format(versfx),
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,0)
+        os.system('rm vvb2.log')
         print("BASIC FUNCTIONALITY validated.")
         
         print("\nBeginning system output content validation for video.")
