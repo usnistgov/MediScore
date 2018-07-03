@@ -459,6 +459,10 @@ HISTORY
     * DetectionScorer
       - Added a test case for Camera Detection task
       - Updated the DetectionScorerReadMe file
+    * Validator:
+      - Updated to be backwards-compatible with NC2017 video submissions.
+
+
 CONTACT
 -------
 

@@ -275,17 +275,6 @@ class SSD_Validator(validator):
 
         sysHeads = sysfile.columns.values.tolist()
         allClear = True
-#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
-        if self.video:
-            truelist = ['ProbeFileID','ConfidenceScore','ProbeStatus','VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']
-        testMask = True
-        if self.doNameCheck:
-            if self.condition in ["VidOnly","VidMeta"]:
-                truelist = ["ProbeFileID","ConfidenceScore"]
-                testMask = False 
-        self.testMask = testMask
-
         #either IsOptOut or ProbeStatus must be in the file header
         optOut = 0
         if not (("IsOptOut" in sysHeads) or ("ProbeStatus" in sysHeads)):
@@ -304,6 +293,20 @@ class SSD_Validator(validator):
                     return 1
                 optOut = 2
         self.optOutNum = optOut
+
+#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
+        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        if self.video:
+            if optOut == 1:
+                truelist = ['ProbeFileID','ConfidenceScore','IsOptOut']
+            elif optOut == 2:
+                truelist = ['ProbeFileID','ConfidenceScore','ProbeStatus','VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']
+        testMask = True
+        if self.doNameCheck:
+            if self.condition in ["VidOnly","VidMeta"]:
+                truelist = ["ProbeFileID","ConfidenceScore"]
+                testMask = False 
+        self.testMask = testMask
 
         #check for ProbeOptOutPixelValue
         self.pixOptOut = False
@@ -491,6 +494,8 @@ class SSD_Validator(validator):
                     return sysrow
 
             if self.video:
+                if self.optOutNum == 1:
+                    return sysrow
                 msgs = []
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
                     if 'FrameCount' not in list(self.idxfile):
@@ -597,6 +602,7 @@ class SSD_Validator(validator):
                     msg.append(errmsg)
                     intervalflag = 1
                     continue
+                #TODO: check frame datatype for int and float respectively.
                 if interval[0] > interval[1]:
                     errmsg = "ERROR: Interval {} must be formatted as a valid interval [a,b], where a <= b".foramt(interval)
                     msg.append(errmsg)
