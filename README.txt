@@ -461,6 +461,9 @@ HISTORY
       - Updated the DetectionScorerReadMe file
     * Validator:
       - Updated to be backwards-compatible with NC2017 video submissions.
+ July 9, 2018 - MediScore Version *.*.*
+    * Validator:
+      - Now supports event verification validation.
 
 
 CONTACT
