@@ -1,0 +1,10 @@
+ProbeFileID|EventName|ConfidenceScore|ProbeStatus
+fcf3eb1b35736c2536c27af2bc544769|Chinese_New_Year_London_2014|0.1|Processed
+fcf3eb1b35736c2536c27af2bc544769|Hurricane_Sandy|0.2|NonProcessed
+fcf3eb1b35736c2536c27af2bc544769|Hurricane_Ike|0.3|Processed
+fcf3eb1b35736c2536c27af2bc544769|Chicago_Blizzard_2011|0.4|OptOut
+fcf3eb1b35736c2536c27af2bc544769|Huricane_Katrina|0.5|Processed
+fcf3eb1b35736c2536c27af2bc544769|Hurricane_Harvey|0.6|NonProcessed
+fcf3eb1b35736c2536c27af2bc544769|berlin_air_show|0.7|Processed
+fcf3eb1b35736c2536c27af2bc544769|hurricane_matthew|0.8|OptOut
+fcf3eb1b35736c2536c27af2bc544769|oshkosh2011|0.9|Processed

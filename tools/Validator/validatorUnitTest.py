@@ -57,6 +57,7 @@ nm_string = ''
 if neglectMask:
     nm_string = '-nm '
 
+validatorRoot = '../../data/test_suite/validatorTests/'
 
 ##want to take in a command and return the printed output to a string
 #def print_capture(command):
@@ -424,7 +425,54 @@ class TestValidator(ut.TestCase):
         self.assertTrue("is out of bounds." in errstr)
         print("CASE V4 validated.")
         os.system('rm vv4.log')
+
+    def testEventVerification(self):
+        validatorRoot = '../../data/test_suite/validatorTests/'
+        print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")
+        logname = 'vev.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-event -s {} -x {} -p {} {}{}> {}".format('ValTest',
+                                                                                                                validatorRoot + 'valid_ev/valid_ev.csv',
+                                                                                                                validatorRoot + 'evref/indexes/ValTest-eventverification-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,0)
+        os.system('rm {}'.format(logname))
+        print("BASIC FUNCTIONALITY validated.")
         
+        print("\nBeginning system output content validation for event verification.")
+        print("\nCASE EV0: Validating incorrect event for probe.")
+        logname = 'vev0.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-event -s {} -x {} -p {} {}{}> {}".format('ValTest',
+                                                                                                                validatorRoot + 'invalid_ev_event/invalid_ev_event.csv',
+                                                                                                                validatorRoot + 'evref/indexes/ValTest-eventverification-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture(logname)
+        self.assertTrue("ERROR:" in errstr)
+        self.assertTrue("does not exist in the index file" in errstr)
+        os.system('rm {}'.format(logname))
+        print("CASE EV0 validated.")
+
+        print("\nCASE EV1: Validating incorrect ProbeStatus....")
+        logname = 'vev1.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-event -s {} -x {} -p {} {}{}> {}".format('ValTest',
+                                                                                                                validatorRoot + 'invalid_ev_ps/invalid_ev_ps.csv',
+                                                                                                                validatorRoot + 'evref/indexes/ValTest-eventverification-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture(logname)
+        self.assertTrue("ERROR: Probe status" in errstr)
+        self.assertTrue("is not recognized" in errstr)
+        os.system('rm {}'.format(logname))
+        print("CASE EV1 validated.")
         
     def testDSDName(self):
         import StringIO

@@ -177,9 +177,9 @@ class validator:
             self.outputRewrite = False
 
         try:
-            self.video = params.video
+            self.task = params.task
         except:
-            self.video = False
+            self.task = None
 
         try:
             self.ignore_eof = params.ignore_eof
@@ -251,132 +251,112 @@ class SSD_Validator(validator):
                  'ProbeFileName':str,
                  'ProbeWidth':np.int64,
                  'ProbeHeight':np.int64}
+        
         idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
         sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
         idxmini = 0
         self.identify = identify
         self.indexFilter = indexFilter
 
-        if reffname is not 0:
-            #filter idxfile based on ProbeFileID's in reffile
-            reffile = pd.read_csv(reffname,sep='|',na_filter=False)
-            gt_ids = reffile.query("IsTarget=='Y'")['ProbeFileID'].tolist()
-            idxmini = idxfile.query("ProbeFileID=={}".format(gt_ids))
+        pk_field = 'ProbeFileID'
+        pk_field_list = ['ProbeFileID']
+        min_sys_cols = 3
+        targetquery = "IsTarget=='Y'"
+        if self.task == 'camera':
+            min_sys_cols = 6
+        elif self.task == 'eventverification':
+            min_sys_cols = 4
     
-        dupFlag = 0
-        xrowFlag = 0
         scoreFlag = 0
         maskFlag = 0
         matchFlag = 0
         
-        if sysfile.shape[1] < 3:
-            self.printbuffer.put("ERROR: The number of columns of the system output file must be at least 3. Please check to see if '|' is used to separate your columns.")
+        if sysfile.shape[1] < min_sys_cols:
+            print("ERROR: The number of columns of the system output file must be at least {}. Please check to see if '|' is used to separate your columns.".format(min_sys_cols))
             return 1
 
         sysHeads = sysfile.columns.values.tolist()
-        allClear = True
         #either IsOptOut or ProbeStatus must be in the file header
         optOut = 0
+
+        allClear = True
         if not (("IsOptOut" in sysHeads) or ("ProbeStatus" in sysHeads)):
-            self.printbuffer.put("ERROR: Either 'IsOptOut' or 'ProbeStatus' must be in the column headers.")
+            print("ERROR: Either 'IsOptOut' or 'ProbeStatus' must be in the column headers.")
             allClear = False
         else:
             if ("IsOptOut" in sysHeads) and ("ProbeStatus" in sysHeads):
-                self.printbuffer.put("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
-
-#            if self.optOut:
+                print("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
             if "IsOptOut" in sysHeads:
                 optOut = 1
             elif "ProbeStatus" in sysHeads:
-                if not (("ProbeOptOutPixelValue" in sysHeads) or self.video):
-                    self.printbuffer.put("ERROR: The required column ProbeOptOutPixelValue is absent.")
+                if not (("ProbeOptOutPixelValue" in sysHeads) or (self.task in ['manipulation-video','eventverification'])):
+                    print("ERROR: The required column ProbeOptOutPixelValue is absent.")
                     return 1
                 optOut = 2
         self.optOutNum = optOut
 
-#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
-        if self.video:
-            if optOut == 1:
-                truelist = ['ProbeFileID','ConfidenceScore','IsOptOut']
-            elif optOut == 2:
-                truelist = ['ProbeFileID','ConfidenceScore','ProbeStatus','VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']
-        testMask = True
-        if self.doNameCheck:
-            if self.condition in ["VidOnly","VidMeta"]:
-                truelist = ["ProbeFileID","ConfidenceScore"]
-                testMask = False 
-        self.testMask = testMask
-
-        #check for ProbeOptOutPixelValue
-        self.pixOptOut = False
-        if 'ProbeOptOutPixelValue' in sysHeads:
-            self.pixOptOut = True
-
-        for i in xrange(len(truelist)):
-            headcheck = truelist[i] in sysHeads
-            allClear = allClear and headcheck
-            if not headcheck:
-#                headlist = []
-#                properhl = []
-#                for i in range(0,len(truelist)):
-#                    if sysHeads[i] != truelist[i]:
-#                        headlist.append(sysHeads[i])
-#                        properhl.append(truelist[i]) 
-#                printq("ERROR: Your header(s) " + ', '.join(headlist) + " should be " + ', '.join(properhl) + " respectively.",True)
-                self.printbuffer.put("ERROR: The required column {} is absent.".format(truelist[i]))
-
-        if not allClear:
+        self.testMask = self.task != 'manipulation-video'
+        if not (self.checkHeads(sysHeads,optOut) and allClear):
             return 1
 
-#        if "IsOptOut" in sysHeads:
-#            optOut=True
-#        self.optOut = optOut
+        #define primatives here according to task, in particular, camera and eventverification.
+        if self.task == 'camera':
+            targetquery = "(IsTarget=='Y') & (IsManipulation=='Y')"
+            sysfile['TrainCamID'] = sysfile['TrainCamID'].astype(str)
+            sysfile['ProbeCamID'] = sysfile['ProbeFileID'] + ":" + sysfile['TrainCamID']
+            idxfile['ProbeCamID'] = idxfile['ProbeFileID'] + ":" + idxfile['TrainCamID']
+            pk_field = 'ProbeCamID'
+            pk_field_list = ['ProbeFileID','TrainCamID']
+        elif self.task == 'eventverification':
+            sysfile['EventName'] = sysfile['EventName'].astype(str)
+            sysfile['ProbeEventID'] = sysfile['ProbeFileID'] + ":" + sysfile['EventName']
+            idxfile['ProbeEventID'] = idxfile['ProbeFileID'] + ":" + idxfile['EventName']
+            pk_field = 'ProbeEventID'
+            pk_field_list = ['ProbeFileID','EventName']
 
+        if reffname is not 0:
+            #filter idxfile based on ProbeFileID's in reffile
+            reffile = pd.read_csv(reffname,sep='|',na_filter=False)
+            #set up dual-ID's for the relevant task
+            if self.task == 'camera':
+                reffile['ProbeCamID'] = reffile['ProbeFileID'] + ":" + reffile['TrainCamID']
+            elif self.task == 'eventverification':
+                reffile['ProbeEventID'] = reffile['ProbeFileID'] + ":" + reffile['EventName']
+            gt_ids = reffile.query(targetquery)[pk_field].tolist()
+            idxmini = idxfile.query("{}=={}".format(pk_field,gt_ids))
         #switch to video validation
-        if self.condition in ["VidOnly","VidMeta"] or self.video:
+        if self.condition in ["VidOnly","VidMeta"] or (self.task in ['manipulation-video','eventverification']):
             neglectMask = True
             #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error?
         self.neglectMask = neglectMask
 
-        if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
-            rowlist = xrange(sysfile.shape[0])
-            self.printbuffer.put(" ".join(["ERROR: Your system output contains duplicate rows for ProbeFileID's:",
-                    ' ,'.join(list(map(str,sysfile['ProbeFileID'][sysfile.duplicated()]))),"at row(s):",
-                    ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))),"after the header. I recommended you delete these row(s)."]))
-            dupFlag = 1
-        
-        if sysfile.shape[0] != idxfile.shape[0]:
-            self.printbuffer.put("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0]+1,idxfile.shape[0]+1))
-            xrowFlag = 1
-        
-        if not ((dupFlag == 0) and (xrowFlag == 0)):
+        if not (self.rowCheck(sysfile,idxfile,pk_field,pk_field_list) == 0):
             self.printbuffer.put("The contents of your file are not valid.")
             return 1
         
+        #NOTE: typesetting
         sysfile['ProbeFileID'] = sysfile['ProbeFileID'].astype(str)
 
         try:
             sysfile['ConfidenceScore'] = sysfile['ConfidenceScore'].astype(np.float64)
         except ValueError:
-            confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)]['ProbeFileID']
-            self.printbuffer.put("ERROR: The Confidence Scores for probes {} are not numeric.".format(confprobes))
+            confprobes = sysfile[~sysfile['ConfidenceScore'].map(is_finite_number)][pk_field_list]
+            identifier = 'probes'
+            if len(pk_field_list) == 2:
+                identifier = 'pairs'
+            print("ERROR: The Confidence Scores for {} {} are not numeric.".format(identifier,confprobes))
             scoreFlag = 1
 
-        if testMask and not self.video:
+        if self.testMask and (self.task not in ['manipulation-video','eventverification']):
             sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
+        #NOTE: typesetting ends here
 
-#        idxfile['ProbeFileID'] = idxfile['ProbeFileID'].astype(str) 
-#        idxfile['ProbeHeight'] = idxfile['ProbeHeight'].astype(np.float64) 
-#        idxfile['ProbeWidth'] = idxfile['ProbeWidth'].astype(np.float64) 
-
-        sysPath = os.path.dirname(self.sysname)
-
-        sysProbes = sysfile['ProbeFileID'].unique()
-        idxProbes = idxfile['ProbeFileID'].unique()
+        #setting variables based on primary ID.
+        sysProbes = sysfile[pk_field].unique()
+        idxProbes = idxfile[pk_field].unique()
         iminiProbes = 0
         if idxmini is not 0:
-            iminiProbes = idxmini['ProbeFileID'].unique()
+            iminiProbes = idxmini[pk_field].unique()
 
         self.sysProbes = sysProbes
         self.idxProbes = idxProbes
@@ -384,13 +364,12 @@ class SSD_Validator(validator):
 
         for probeID in idxProbes:
             if not (probeID in sysProbes):
-                self.printbuffer.put("ERROR: {} seems to have been missed by the system file.".format(probeID))
+                self.printbuffer.put("ERROR: Expected probe {} in system file. Only found in index file.".format(probeID))
                 matchFlag = 1
-                continue
 
         self.sysfile = sysfile
         self.idxfile = idxfile
-        self.sysPath = sysPath
+        self.sysPath = os.path.dirname(self.sysname)
 
         self.sysfile['maskFlag'] = 0
         self.sysfile['matchFlag'] = 0
@@ -407,16 +386,54 @@ class SSD_Validator(validator):
             output_rewrite_name = self.outputRewrite
         if self.outputRewrite:
             sysfile = sysfile[sysHeads]
-            sysfile.to_csv(os.path.join(sysPath,output_rewrite_name),sep="|",index=False)
+            sysfile.to_csv(os.path.join(self.sysPath,output_rewrite_name),sep="|",index=False)
         
         #final validation
-        flagSum = maskFlag + dupFlag + xrowFlag + scoreFlag + matchFlag
+        flagSum = maskFlag + scoreFlag + matchFlag
         if flagSum == 0:
             self.printbuffer.put("The contents of your file have passed validation.")
             return 0
         else:
             self.printbuffer.put("The contents of your file are not valid.")
             return 1
+
+    def checkHeads(self,sysHeads,optOutMode):
+#        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
+        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        if self.task == 'manipulation-video':
+            if optOutMode == 1:
+                truelist = ['ProbeFileID','ConfidenceScore','IsOptOut']
+            elif optOutMode == 2:
+                truelist = ['ProbeFileID','ConfidenceScore','ProbeStatus','VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']
+        elif self.task == 'camera':
+            truelist = ["ProbeFileID","TrainCamID","OutputProbeMaskFileName","ConfidenceScore","ProbeStatus","ProbeOptOutPixelValue"]
+        elif self.task == 'eventverification':
+            truelist = ["ProbeFileID","EventName","ConfidenceScore","ProbeStatus"]
+        #check for ProbeOptOutPixelValue
+        self.pixOptOut = 'ProbeOptOutPixelValue' in sysHeads
+
+        headflag = True
+        for i in xrange(len(truelist)):
+            headcheck = truelist[i] in sysHeads
+            if not headcheck:
+                print("ERROR: The required column {} is absent.".format(truelist[i]))
+                headflag = False
+        return headflag
+
+    def rowCheck(self,sysfile,idxfile,pk_field,pk_field_list):
+        rowFlag = 0
+        if sysfile.shape[0] != sysfile.drop_duplicates().shape[0]:
+            rowlist = xrange(sysfile.shape[0])
+            print(" ".join(["ERROR: Your system output contains duplicate rows for {}:".format(pk_field_list),
+                  ' ,'.join(list(map(str,sysfile[pk_field][sysfile.duplicated()]))),"at row(s):",
+                  ' ,'.join(list(map(str,[i for i in rowlist if sysfile.duplicated()[i]]))),"after the header. I recommended you delete these row(s)."]))
+            rowFlag = 1
+        
+        if sysfile.shape[0] != idxfile.shape[0]:
+            # +1 for header row
+            print("ERROR: The number of rows in your system output ({}) does not match the number of rows in the index file ({}).".format(sysfile.shape[0]+1,idxfile.shape[0]+1))
+            rowFlag = 1
+        return rowFlag
 
     def checkProbes(self,maskData,processors):
         maxprocs = multiprocessing.cpu_count() - 2
@@ -448,7 +465,12 @@ class SSD_Validator(validator):
 
     #attach the flag to each row and send the row back
     def checkOneProbe(self,sysrow):
-        probeFileID = sysrow['ProbeFileID']
+        pk_field = 'ProbeFileID'
+        if self.task == 'camera':
+            pk_field = 'ProbeCamID'
+        elif self.task == 'eventverification':
+            pk_field = 'ProbeEventID'
+        probeFileID = sysrow[pk_field]
         sysrow['maskFlag'] = 0
         sysrow['matchFlag'] = 0
         if not ((probeFileID in self.idxProbes) or self.indexFilter):
@@ -463,7 +485,7 @@ class SSD_Validator(validator):
 #                printq("The contents of your file are not valid!",True)
 #                return 1
 
-        if self.pixOptOut and not self.video:
+        if self.pixOptOut and (self.task != 'manipulation-video'):
             oopixval = str(sysrow['ProbeOptOutPixelValue'])
             #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
             isProbeOOdigit = True
@@ -474,7 +496,7 @@ class SSD_Validator(validator):
                 sysrow['matchFlag'] = 1
 
         #check mask validation
-        if self.testMask or self.video:
+        if self.testMask or (self.task == 'manipulation-video'):
             #if IsOptOut or ProbeStatus is present
             #check if IsOptOut is 'Y' or 'Detection'. Likewise for ProbeStatus as relevant
             if self.optOutNum == 1:
@@ -487,13 +509,15 @@ class SSD_Validator(validator):
                     return sysrow
             elif self.optOutNum == 2:
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
+                if self.task == 'eventverification':
+                    all_statuses = ['Processed','NonProcessed','OptOut','FailedValidation']
                 if not sysrow['ProbeStatus'] in all_statuses:
                     sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
                 if sysrow['ProbeStatus'] == 'FailedValidation':
                     return sysrow
 
-            if self.video:
+            if self.task == 'manipulation-video':
                 if self.optOutNum == 1:
                     return sysrow
                 msgs = []
@@ -525,7 +549,9 @@ class SSD_Validator(validator):
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
                 sysrow['Message']=" ".join([sysrow['Message'],"The mask for file {} appears to be absent. Skipping it.".format(probeFileID)])
                 return sysrow
-            mskflag,msg = self.maskCheck(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify)
+            mskflag = 0
+            msg = ""
+            mskflag,msg = self.maskCheck(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify,pk_field)
             sysrow['Message'] = "\n".join([sysrow['Message'],msg])
             if self.outputRewrite:
                 if mskflag >= 2:
@@ -538,7 +564,7 @@ class SSD_Validator(validator):
             sysrow['maskFlag'] = sysrow['maskFlag'] | mskflag 
         return sysrow
 
-    def maskCheck(self,maskname,fileid,indexfile,identify):
+    def maskCheck(self,maskname,fileid,indexfile,identify,pk_field):
         #check to see if index file input image files are consistent with system output
         flag = 0
         msg=["Validating {} for file {}...".format(maskname,fileid)]
@@ -550,8 +576,8 @@ class SSD_Validator(validator):
         if not os.path.isfile(maskname):
             msg.append("ERROR: Expected mask image {}. Please check the name of the mask image.".format(maskname))
             return 1,"\n".join(msg)
-        baseHeight = list(map(int,indexfile['ProbeHeight'][indexfile['ProbeFileID'] == fileid]))[0] 
-        baseWidth = list(map(int,indexfile['ProbeWidth'][indexfile['ProbeFileID'] == fileid]))[0]
+        baseHeight = list(map(int,indexfile['ProbeHeight'][indexfile[pk_field] == fileid]))[0] 
+        baseWidth = list(map(int,indexfile['ProbeWidth'][indexfile[pk_field] == fileid]))[0]
     
         #subprocess with imagemagick identify for speed
         if identify:
@@ -574,10 +600,10 @@ class SSD_Validator(validator):
             flag = 1
     
         if (baseHeight != dims[0]) or (baseWidth != dims[1]):
-            msg.append("ERROR: Expected dimensions {},{} for output mask {} for ProbeFileID {}. Got {},{}.".format(baseHeight,baseWidth,maskname,fileid,dims[0],dims[1]))
+            msg.append("ERROR: Expected dimensions {},{} for output mask {} for {} {}. Got {},{}.".format(baseHeight,baseWidth,maskname,pk_field,fileid,dims[0],dims[1]))
             #Add 2 to flag to let scorer know to reset the row
             if self.outputRewrite:
-                msg.append("Rewriting probe status for ProbeFileID {} to 'FailedValidation'...".format(fileid))
+                msg.append("Rewriting probe status for {} {} to 'FailedValidation'...".format(pk_field,fileid))
                 flag = flag + 2
             else: 
                 flag = 1
@@ -1167,6 +1193,7 @@ if __name__ == '__main__':
         help='required system output file',metavar='character')
     parser.add_argument('-r','--inRef',type=str,default=0,\
         help='optional reference file for filtration',metavar='character')
+    #TODO: deprecate valtype in the future
     parser.add_argument('-vt','--valtype',type=str,default=None,\
         help='required validator type. Pick one of SSD, DSD, or SSD-video.',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
@@ -1215,8 +1242,20 @@ if __name__ == '__main__':
             print("ImageMagick does not appear to be installed or in working order. Please reinstall. Rerun without -id.")
             exit(1)
 
-    myval_params = validation_params(ncid=args.ncid,video=args.valtype=='SSD-video',outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof)
-    if args.valtype in ['SSD','SSD-video']:
+    #valtype to task
+    valtype_to_task = {'SSD':'manipulation-image',
+                       'SSD-video':'manipulation-video',
+                       'SSD-event':'eventverification',
+                       'SSD-camera':'camera',
+                       'DSD':'splice'}
+    try:
+        task = valtype_to_task[args.valtype]
+    except:
+        print("ERROR: Expected one of {} for validation type. Got {}.".format(valtype_to_task.keys(),args.valtype))
+        exit(1)
+
+    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof)
+    if args.valtype in ['SSD','SSD-video','SSD-event','SSD-camera']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
         exit(ssd_validation.fullCheck(myval_params))
 #         exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
@@ -1225,5 +1264,5 @@ if __name__ == '__main__':
         exit(dsd_validation.fullCheck(myval_params))
 #         exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     else:
-        print("Validation type must be 'SSD', 'SSD-video', or 'DSD'.")
+        print("Validation type must be one of: {}.".format(valtype_to_task.keys()))
         exit(1)
