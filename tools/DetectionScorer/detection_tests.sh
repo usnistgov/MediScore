@@ -224,6 +224,17 @@ test_c2_13() {
                -qm "Purpose==['remove'] or Operation==['PasteSampled']" --outMeta
 }
 
+test_c2_14() {
+    echo "  * Testing system output test case for Camera Detecton *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t camera \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "MFC2018-camera-index.csv" \
+        				       -r "MFC2018-camera-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_MFC2018_Camera_MultiMedia_p-me_1/D_MFC2018_Camera_MutiMedia_p-me_1.csv"
+}
+
 
 test_c3_1() {
     echo "  * Testing with the manipulation case with full index *  "

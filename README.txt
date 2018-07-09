@@ -456,8 +456,12 @@ HISTORY
       - Newly added to the MediScore package
       - Localization visualizer makes use of a slightly modified lib/masks.py, but relevant changes do not affect the Mask Scorer's scored output.
  June 25, 2018 - MediScore Version *.*.*
+    * DetectionScorer
+      - Added a test case for Camera Detection task
+      - Updated the DetectionScorerReadMe file
     * Validator:
       - Updated to be backwards-compatible with NC2017 video submissions.
+
 
 CONTACT
 -------
