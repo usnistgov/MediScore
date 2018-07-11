@@ -473,6 +473,67 @@ class TestValidator(ut.TestCase):
         self.assertTrue("is not recognized" in errstr)
         os.system('rm {}'.format(logname))
         print("CASE EV1 validated.")
+
+    def testCamera(self):
+        print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")
+        logname = 'vc.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} -p {} {}{}> {}".format('MFC18',
+                                                                                                                validatorRoot + 'valid_cam/valid_cam.csv',
+                                                                                                                validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,0)
+        os.system('rm {}'.format(logname))
+        print("BASIC FUNCTIONALITY validated.")
+        print("\nBeginning system output content validation for camera.")
+        print("\nCASE C0: Validating incorrect TrainCamID.")
+        logname = 'vc0.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} -p {} {}{}> {}".format('MFC18',
+                                                                                                                validatorRoot + 'invalid_camid/invalid_camid.csv',
+                                                                                                                validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture(logname)
+        self.assertTrue("ERROR: Expected" in errstr)
+        self.assertTrue("in system file. Only found in index file." in errstr)
+        os.system('rm {}'.format(logname))
+        print("CASE C0 validated.")
+        
+        print("\nCASE C1: Validating incorrect mask dimensions.")
+        logname = 'vc1.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} --output_revised_system revised_cam.csv -p {} {}{}> {}".format('MFC18',
+                                                                                                                validatorRoot + 'invalid_mask/invalid_mask.csv',
+                                                                                                                validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+        self.assertEqual(myval,1)
+        errstr = msgcapture(logname)
+        self.assertTrue("ERROR: Expected dimensions" in errstr)
+        os.system('rm {}'.format(logname))
+        print("CASE C1 validated.")
+        
+        print("\nCASE C2: Validating incorrect mask dimensions for a Failed Validation.")
+        logname = 'vc2.log'
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} -p {} {}{}> {}".format('MFC18',
+                                                                                                                validatorRoot + 'invalid_mask/revised_cam.csv',
+                                                                                                                validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string,
+                                                                                                                logname))//256
+#        self.assertEqual(myval,1)
+        errstr = msgcapture(logname)
+        self.assertTrue("Warning: Probe" in errstr)
+        self.assertTrue("has failed validation due to incorrect mask dimensions, but is excused in this system output." in errstr)
+        os.system('rm {}'.format(logname))
+        print("CASE C2 validated.")
         
     def testDSDName(self):
         import StringIO

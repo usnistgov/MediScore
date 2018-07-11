@@ -515,6 +515,7 @@ class SSD_Validator(validator):
                     sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
                 if sysrow['ProbeStatus'] == 'FailedValidation':
+                    sysrow['Message'] = " ".join([sysrow['Message'],"Warning: Probe {} has failed validation due to incorrect mask dimensions, but is excused in this system output."])
                     return sysrow
 
             if self.task == 'manipulation-video':
