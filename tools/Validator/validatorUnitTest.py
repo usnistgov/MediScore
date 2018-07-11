@@ -507,7 +507,7 @@ class TestValidator(ut.TestCase):
         print("\nCASE C1: Validating incorrect mask dimensions.")
         logname = 'vc1.log'
         myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} --output_revised_system revised_cam.csv -p {} {}{}> {}".format('MFC18',
-                                                                                                                validatorRoot + 'invalid_mask/invalid_mask.csv',
+                                                                                                                validatorRoot + 'invalid_cam_mask/invalid_cam_mask.csv',
                                                                                                                 validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
                                                                                                                 procs,
                                                                                                                 identify_string,
@@ -522,7 +522,7 @@ class TestValidator(ut.TestCase):
         print("\nCASE C2: Validating incorrect mask dimensions for a Failed Validation.")
         logname = 'vc2.log'
         myval = os.system("python2 validator.py --ncid {} -vt SSD-camera -s {} -x {} -p {} {}{}> {}".format('MFC18',
-                                                                                                                validatorRoot + 'invalid_mask/revised_cam.csv',
+                                                                                                                validatorRoot + 'invalid_cam_mask/revised_cam.csv',
                                                                                                                 validatorRoot + 'cref/indexes/MFC18-camera-index.csv',
                                                                                                                 procs,
                                                                                                                 identify_string,
