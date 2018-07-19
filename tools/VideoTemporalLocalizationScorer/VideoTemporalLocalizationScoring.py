@@ -12,6 +12,10 @@ import pandas as pd
 from intervalcompute import IntervalCompute as IC
 from TemporalVideoScoring import VideoScoring
 from ast import literal_eval
+from report import create_html
+
+from bokeh.resources import CDN
+from bokeh.embed import file_html
 
 def interval_list_string_python_parsing(s):
     """Convert a string [[x0,x1], [x2,x3]] in a numpy array using the python parser engine
@@ -46,7 +50,10 @@ class VTLScorer():
                  path_log="./log.txt",
                  truncate = None,
                  no_opt_out = None,
-                 no_video_opt_out = None):
+                 no_video_opt_out = None,
+                 output_path = '.',
+                 graph_path = 'plots/',
+                 gen_timeline = None):
 
         self.delimiter = "|"
         self.path_ref = path_ref
@@ -67,6 +74,9 @@ class VTLScorer():
         self.truncate = truncate,
         self.no_opt_out = no_opt_out
         self.no_video_opt_out = no_video_opt_out
+        self.output_path = output_path
+        self.graph_path = os.path.join(output_path,graph_path)
+        self.gen_timeline = gen_timeline
         
         self.Scorer = VideoScoring()
         self.path_log = path_log
@@ -76,6 +86,8 @@ class VTLScorer():
             self.writelog = lambda line: self.log_file.write(line + "\n")
         else:   
             self.writelog = lambda *a: None
+
+        self.current_query_idx = 0
     
     def score_probes(self, path_system_output, query=None, compute_mean=False):
         Results = None
@@ -100,6 +112,7 @@ class VTLScorer():
                     df_probe_journal_merge_selection = self.df_ref_probe_journal_index_merge
 
                 queries_df_list.append(self.compute_probes_MCC(df_probe_journal_merge_selection, df_system_output))
+                self.current_query_idx += 1
 
             # Results = pd.concat(queries_df_list, keys=query, names=['query'])
             Results = pd.concat(queries_df_list, keys=np.arange(len(query)), names=['query'])
@@ -109,7 +122,10 @@ class VTLScorer():
     def compute_probes_MCC(self, df_ref, df_sys):
                     
         probes_selection = df_ref.ProbeFileID.drop_duplicates()
-        probes_selection_scores_df = pd.DataFrame(np.zeros(len(probes_selection)), index=probes_selection, columns=["MCC"])
+        if self.gen_timeline:
+            probes_selection_scores_df = pd.DataFrame(np.zeros((len(probes_selection),2)), index=probes_selection, columns=["MCC","Timeline"])
+        else:
+            probes_selection_scores_df = pd.DataFrame(np.zeros(len(probes_selection)), index=probes_selection, columns=["MCC"])
 
         for ProbeFileID in probes_selection:
             self.writelog("ProbeFileID = {}".format(ProbeFileID))
@@ -176,14 +192,30 @@ class VTLScorer():
                                                                                                       global_range, 
                                                                                                       collars=collars,
                                                                                                       SNS=SNS)
+
+            if collars is not None or SNS is not None:
+                confusion_vector_data = confusion_vector
+                confusion_vector, confusion_vector_not_masked = confusion_vector
                  
             self.writelog("confusion_vector = {}".format(confusion_vector))
             self.writelog("all_intervals = {}".format(all_intervals))
             Counts = self.Scorer.count_confusion_value(all_intervals, confusion_vector)
             MCC = self.Scorer.compute_MCC(*[Counts[v] for v in ["TP", "TN", "FP", "FN"]])
             self.writelog("Counts = {}\nMCC = {}".format(Counts, MCC))
-                        
-            probes_selection_scores_df.loc[ProbeFileID] = MCC
+            
+            if self.gen_timeline:
+                confusion_data = [all_intervals, confusion_vector_data, self.Scorer.confusion_mapping]
+                p = IC.display_confusion_bokeh_2(ref_intervals, sys_intervals, global_range, 
+                                                 show_graph=False, 
+                                                 confusion_data = confusion_data, 
+                                                 c_mode = 2)
+
+                html_file_path = os.path.join(self.graph_path, "timeline_{}_{}.html".format(ProbeFileID, self.current_query_idx))
+                with open(html_file_path, 'w') as f:
+                    f.write(file_html(p, CDN, "Generated HTML Report"))
+                probes_selection_scores_df.loc[ProbeFileID] = MCC, "TimelinePlot@file://{}".format(os.path.abspath(html_file_path))
+            else:
+                probes_selection_scores_df.loc[ProbeFileID] = MCC
             self.writelog("\n")
             
             
@@ -232,9 +264,13 @@ if __name__ == '__main__':
         parser.add_argument('-d', '--dump_dataframe', help='path to the file where the dataframe will be dumped',action='store_true')
         parser.add_argument('-o', '--output_path', help='path to the folder where the scores will be dumped',default="./scores_output/")
         parser.add_argument('-l', '--log', help='enable a log output', action='store_true')
+        parser.add_argument('-R', '--html-report', help='Generate the html table for the probes scores',action='store_true')
+        parser.add_argument('-T', '--timeline-report', help='Generate the html graph for each probe',action='store_true')
         parser.add_argument('--dump_dataframe_file_name', help='name of the dumped dataframe', default='df_scores_probes.pkl')
 
         parameters = parser.parse_args()
+
+
 
     # print("Scorer initialialisation..")
     Scorer = VTLScorer(parameters.path_ref, 
@@ -245,14 +281,25 @@ if __name__ == '__main__':
                        log = parameters.log,
                        truncate = parameters.truncate,
                        no_opt_out = parameters.no_opt_out,
-                       no_video_opt_out = parameters.no_video_opt_out)
-
-    # print("Scoring probes...")
-    Results = Scorer.score_probes(parameters.path_sysout, query=parameters.query)
-    # print("query = {}".format(parameters.query))
+                       no_video_opt_out = parameters.no_video_opt_out,
+                       output_path = parameters.output_path,
+                       graph_path = "plots",
+                       gen_timeline = parameters.timeline_report)
 
     if not os.path.exists(parameters.output_path):
         os.makedirs(parameters.output_path)
+
+    if parameters.timeline_report:
+        plot_path = os.path.join(parameters.output_path, "plots")
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+
+    # print("Scoring probes...")
+    Results = Scorer.score_probes(parameters.path_sysout, query=parameters.query)
+    if parameters.log:
+        Scorer.log_file.close()
+
+    # print("query = {}".format(parameters.query))
 
     if parameters.dump_dataframe:
         Results.to_pickle(os.path.join(parameters.output_path, parameters.dump_dataframe_file_name))
@@ -261,9 +308,8 @@ if __name__ == '__main__':
     f_format = lambda x: round(x, 12)
 
     Results["MCC"] = Results["MCC"].apply(f_format)
-    Results.to_csv(os.path.join(parameters.output_path, "scores_probes.csv"), 
-                   sep="|")
-
+    # Results.to_csv(os.path.join(parameters.output_path, "scores_probes.csv"), columns=["MCC"], sep="|")
+    Results.to_csv(os.path.join(parameters.output_path, "scores_probes.csv"), columns=None, sep="|")
     nb_of_query = len(parameters.query)
     #Computing the average per query
     Results_overall = pd.DataFrame(np.zeros(nb_of_query), columns=["MCC"])
@@ -281,7 +327,23 @@ if __name__ == '__main__':
     query_table_join['query'] = parameters.query
     query_table_join.to_csv(os.path.join(parameters.output_path, "query_table_join.csv"), index_label = ['id'], sep="|") 
 
-    Scorer.log_file.close()
+    if parameters.html_report:
+
+        Results_noMultiIndex = Results.reset_index(level=list(range(Results.index.nlevels)), inplace=False)
+        Results_html = create_html(parameters.output_path, 
+                                   Results_noMultiIndex, 
+                                   parameters.output_path,
+                                   "./templates/", 
+                                   sortable_set=set(Results_noMultiIndex.columns), link_formatter_set=set(["Timeline"]),
+                                   base_template="base.html", slickGrid_path = "../SlickGrid")
+
+        with open(os.path.join(parameters.output_path,"scores_probes.html"),"w") as f:
+            f.write(Results_html)
+            f.write("\n")
+
+ 
+
+    
     print("Done.")
     
     

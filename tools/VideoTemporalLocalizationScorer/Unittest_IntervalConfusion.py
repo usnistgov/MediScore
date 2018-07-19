@@ -75,8 +75,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[5,12], [16, 23]])
         sys_intervals = np.array([[10,18]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([0,-1,1,3,-1,2,-1,3,1,-1,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([0,-1,1,3,-1,2,-1,3,1,-1,0]), cv_m))
         
     def test_8(self):
         """test_6 with collars"""
@@ -85,8 +85,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[5,12], [16, 23]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv_m))
     
     def test_9(self):
         """test_8 with a zero collars length, should raise an exception """
@@ -111,8 +111,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[5,12], [23, 16]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv_m))
     
     def test_12(self):
         """test_8 with intervals shuffled and boundaries inverted  """
@@ -121,8 +121,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[23, 16], [5,12]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([0,2,-1,3,1,3,-1,2,0]), cv_m))
     
     def test_13(self):
         """System output has overlap between its own intervals, the union should be performed"""
@@ -131,8 +131,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[5,16], [12, 20]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([0,2,-1,3,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([0,2,-1,3,-1,2,0]), cv_m))
         
     def test_14(self):
         """System output has some interval of zero length, we delete them"""
@@ -141,8 +141,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[5,12], [14,14], [17, 20]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
-        self.assertTrue(np.array_equal(np.array([ 0,2,-1,3,1,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals)
+        self.assertTrue(np.array_equal(np.array([ 0,2,-1,3,1,-1,2,0]), cv_m))
         
     def test_15(self):
         """Adding two system no-score zones"""
@@ -152,8 +152,8 @@ class ConfusionTest(unittest.TestCase):
         ref_intervals = np.array([[10,18]])
         sys_intervals = np.array([[5,12], [17, 20]])
         collars_intervals = IC.compute_collars(ref_intervals, collar, crop_to_range = global_interval)
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals, SNS=SNS)
-        self.assertTrue(np.array_equal(np.array([0,-2,-1,3,1,-2,1,-1,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,collars=collars_intervals, SNS=SNS)
+        self.assertTrue(np.array_equal(np.array([0,-2,-1,3,1,-2,1,-1,2,0]), cv_m))
         
     def test_16(self):
         """Empty ref intervals case scenario. No collars or SNS"""
@@ -161,8 +161,8 @@ class ConfusionTest(unittest.TestCase):
         SNS = np.array([[4,9], [13,16]])
         ref_intervals = np.array([[]])
         sys_intervals = np.array([[5,12], [17, 20]])
-        cv,all_intervals,_ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,SNS=SNS)
-        self.assertTrue(np.array_equal(np.array([0,-2,2,0,-2,0,2,0]), cv))
+        (cv_m, cv), all_intervals, _ = self.Scorer.compute_confusion_map(ref_intervals, sys_intervals, global_interval,SNS=SNS)
+        self.assertTrue(np.array_equal(np.array([0,-2,2,0,-2,0,2,0]), cv_m))
 
         
 if __name__ == '__main__':

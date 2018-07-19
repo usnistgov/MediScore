@@ -1,0 +1,49 @@
+<div id="container"></div>
+
+<script src="{{slickgrid_path}}/lib/jquery-1.11.2.min.js"></script>
+<script src="{{slickgrid_path}}/lib/jquery.event.drag-2.3.0.js"></script>
+<script src="{{slickgrid_path}}/slick.core.js"></script>
+<script src="{{slickgrid_path}}/slick.grid.js"></script>
+{% if add_formatting_function %}
+<script>
+  function basename(str, sep) {
+    return str.substr(str.lastIndexOf(sep) + 1);
+  };
+  function strip_extension(str) {
+    return str.substr(0,str.lastIndexOf('.'));
+  };
+</script>
+{% endif %}
+<script src="{{ data_file }}"></script>
+
+<script>
+  
+  var grid;
+  {{ column_description }}
+  {% if add_multi_sorting %}
+  var options = {enableCellNavigation: true, enableColumnReorder: false, multiColumnSort: true};
+  {% else %}
+  var options = {enableCellNavigation: true, enableColumnReorder: false, multiColumnSort: false};
+  {% endif %}
+  grid = new Slick.Grid("{{ container_id }}", data, columns, options);
+  {% if add_multi_sorting %}
+  grid.onSort.subscribe(function (e, args) {
+      var cols = args.sortCols;
+
+      data.sort(function (dataRow1, dataRow2) {
+        for (var i = 0, l = cols.length; i < l; i++) {
+          var field = cols[i].sortCol.field;
+          var sign = cols[i].sortAsc ? 1 : -1;
+          var value1 = dataRow1[field], value2 = dataRow2[field];
+          var result = (value1 == value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
+          if (result != 0) {
+            return result;
+          }
+        }
+        return 0;
+      });
+      grid.invalidate();
+      grid.render();
+  });
+  {% endif %}
+</script>
