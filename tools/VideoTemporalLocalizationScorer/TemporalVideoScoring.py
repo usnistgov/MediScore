@@ -19,14 +19,20 @@ class VideoScoring():
         self.green = (128/255,1,0)
         self.blue = (0,0,1)
         self.yellow = (1,1,0)
+        self.red_hex = "#FF0000"
+        self.green_hex = "#80FF00"
+        self.blue_hex = "#0000FF"
+        self.yellow_hex = "#FFFF00"
+        self.white_hex = "#FFFFFF"
+        self.black_hex = "#000000"
         self.max_range = max_range
         
-        self.confusion_mapping = {0 : ["TN", (1,1,1)], 
-                                  1 : ["FN",self.blue], 
-                                  2 : ["FP", self.red], 
-                                  3 : ["TP", self.green], 
-                                 -1 : ["X", self.yellow],
-                                 -2 : ["Y", (0,0,0)]}
+        self.confusion_mapping = {0 : ["TN", self.white_hex], 
+                                  1 : ["FN",self.blue_hex], 
+                                  2 : ["FP", self.red_hex], 
+                                  3 : ["TP", self.green_hex], 
+                                 -1 : ["X", self.yellow_hex],
+                                 -2 : ["Y", self.black_hex]}
         
         self.collars = None
         self.ref_intervals = None
@@ -57,28 +63,24 @@ class VideoScoring():
         confusion_vector, all_intervals, all_interval_in_seq_array, weights = IC.aggregate_intervals(intervals_sequence, 
                                                                                                   global_interval, 
                                                                                                   print_results=verbose)
+        
         if collars is not None or SNS is not None: 
-            # In the case of no-score zone, we compress the intervals containing consecutive and identical values
-            compression = True
+ 
             # To put negative values in the confusion vector (np.uint64), we need to cast it in signed
-            confusion_vector = confusion_vector.astype(np.int64)
-        else:
-            # No need of compression if there is no no-score zones
-            compression = False
+            confusion_vector_masked = confusion_vector.astype(np.int64, copy=True)
 
-        # Apply overrided value for no-scores zones
-        if collars is not None:
-            collars_mask = all_interval_in_seq_array[2].astype(bool)
-            confusion_vector[collars_mask] = -1
-            
-        if SNS is not None:
-            SNS_idx = 3 if collars is not None else 2
-            SNS_mask = all_interval_in_seq_array[SNS_idx].astype(bool)
-            confusion_vector[SNS_mask] = -2
-            
-        if compression:
-            # Compressing the results
-            confusion_vector_compressed, sizes_compression = zip(*[(k, len(list(g))) for k, g in groupby(confusion_vector)])
+            # Apply overrided value for no-scores zones
+            if collars is not None:
+                collars_mask = all_interval_in_seq_array[2].astype(bool)
+                confusion_vector_masked[collars_mask] = -1
+                
+            if SNS is not None:
+                SNS_idx = 3 if collars is not None else 2
+                SNS_mask = all_interval_in_seq_array[SNS_idx].astype(bool)
+                confusion_vector_masked[SNS_mask] = -2
+
+            # In the case of no-score zone, we compress the intervals containing consecutive and identical values
+            confusion_vector_compressed, sizes_compression = zip(*[(k, len(list(g))) for k, g in groupby(confusion_vector_masked)])
             
             sizes_cs = np.cumsum(sizes_compression)
             start_indexes_compressions = sizes_cs - sizes_compression
@@ -93,8 +95,8 @@ class VideoScoring():
                     all_intervals_compressed.append(all_intervals[start])
 
             all_interval_in_seq_array_compressed = all_interval_in_seq_array[:,start_indexes_compressions]
-            return np.array(confusion_vector_compressed), np.array(all_intervals_compressed), all_interval_in_seq_array_compressed
-       
+            return (np.array(confusion_vector_compressed), confusion_vector), np.array(all_intervals_compressed), all_interval_in_seq_array_compressed
+
         return confusion_vector, all_intervals, all_interval_in_seq_array
     
     def count_confusion_value(self, all_intervals, confusion_vector, confusion_mapping=None, mapping = True):
