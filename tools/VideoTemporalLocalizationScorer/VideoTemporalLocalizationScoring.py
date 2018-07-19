@@ -9,6 +9,7 @@ import os
 import argparse
 import numpy as np
 import pandas as pd
+from shutil import copytree
 from intervalcompute import IntervalCompute as IC
 from TemporalVideoScoring import VideoScoring
 from ast import literal_eval
@@ -204,7 +205,11 @@ class VTLScorer():
             self.writelog("Counts = {}\nMCC = {}".format(Counts, MCC))
             
             if self.gen_timeline:
-                confusion_data = [all_intervals, confusion_vector_data, self.Scorer.confusion_mapping]
+                if collars is not None or SNS is not None:
+                    confusion_data = [all_intervals, confusion_vector_data, self.Scorer.confusion_mapping]
+                else:
+                    confusion_data = [all_intervals, (confusion_vector, None), self.Scorer.confusion_mapping]
+
                 p = IC.display_confusion_bokeh_2(ref_intervals, sys_intervals, global_range, 
                                                  show_graph=False, 
                                                  confusion_data = confusion_data, 
@@ -270,7 +275,7 @@ if __name__ == '__main__':
 
         parameters = parser.parse_args()
 
-
+    script_location = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     # print("Scorer initialialisation..")
     Scorer = VTLScorer(parameters.path_ref, 
@@ -288,6 +293,8 @@ if __name__ == '__main__':
 
     if not os.path.exists(parameters.output_path):
         os.makedirs(parameters.output_path)
+    abs_output_path = os.path.abspath(parameters.output_path)
+
 
     if parameters.timeline_report:
         plot_path = os.path.join(parameters.output_path, "plots")
@@ -328,22 +335,22 @@ if __name__ == '__main__':
     query_table_join.to_csv(os.path.join(parameters.output_path, "query_table_join.csv"), index_label = ['id'], sep="|") 
 
     if parameters.html_report:
+        # We copy the SlickGrid package
+        slickGrid_output_path = os.path.join(parameters.output_path, "SlickGrid")
+        if not os.path.exists(slickGrid_output_path):
+            copytree(os.path.join(script_location,"SlickGrid/"), slickGrid_output_path)
 
         Results_noMultiIndex = Results.reset_index(level=list(range(Results.index.nlevels)), inplace=False)
         Results_html = create_html(parameters.output_path, 
                                    Results_noMultiIndex, 
                                    parameters.output_path,
-                                   "./templates/", 
+                                   os.path.join(script_location,"templates/"),
                                    sortable_set=set(Results_noMultiIndex.columns), link_formatter_set=set(["Timeline"]),
-                                   base_template="base.html", slickGrid_path = "../SlickGrid")
+                                   base_template="base.html", slickGrid_path = "./SlickGrid")
 
         with open(os.path.join(parameters.output_path,"scores_probes.html"),"w") as f:
             f.write(Results_html)
             f.write("\n")
-
- 
-
     
-    print("Done.")
-    
+    print("Done.")   
     
