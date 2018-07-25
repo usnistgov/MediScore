@@ -76,7 +76,7 @@ class VTLScorer():
         self.no_opt_out = no_opt_out
         self.no_video_opt_out = no_video_opt_out
         self.output_path = output_path
-        self.graph_path = os.path.join(output_path,graph_path)
+        self.graph_path = graph_path
         self.gen_timeline = gen_timeline
         
         self.Scorer = VideoScoring()
@@ -216,9 +216,9 @@ class VTLScorer():
                                                  c_mode = 2)
 
                 html_file_path = os.path.join(self.graph_path, "timeline_{}_{}.html".format(ProbeFileID, self.current_query_idx))
-                with open(html_file_path, 'w') as f:
+                with open(os.path.join(self.output_path, html_file_path), 'w') as f:
                     f.write(file_html(p, CDN, "Generated HTML Report"))
-                probes_selection_scores_df.loc[ProbeFileID] = MCC, "TimelinePlot@file://{}".format(os.path.abspath(html_file_path))
+                probes_selection_scores_df.loc[ProbeFileID] = MCC, "TimelinePlot@{}".format(html_file_path)
             else:
                 probes_selection_scores_df.loc[ProbeFileID] = MCC
             self.writelog("\n")
