@@ -11769,7 +11769,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of two distinctive detection tasks, namely 1) Manipulation Detection, 2) Splice Detection, and 3) EventRepurpose Detection. The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image.  The Event Repurpose task is to determine if a probe is from a claimed event. Please refer the detailed information in the document "Nimble Challenge 2017 Evaluation Data and Tool" </p>   
+<p>The purpose of this script is to evaluate the accuracy of the image tampering detection algorithms in multimedia forensics. The script currently supports an evaluation of the following distinctive detection tasks, namely 1) Manipulation, 2) Splice, 3) Event Verification, and 4) Camera detections. The Manipulation detection task is to detect whether or not a probe image has been manipulated. The Splice detection task is to detect if a region of the other source (donor) image has been spliced into a probe image.  The Event Verification task is to determine if a probe is from a claimed event. Lastly, the Camera detection is to detect if a probe is from a claimed camera fingerprint given a pool of the camera device ID. Please refer the detailed information in the document "Media Forensics Challenge 2018 Evaluation Plan" </p>   
 <p>The script calculates performance measures of AUC (Area Under Curve) and EER (Equal Error Rate)
 based on a system's output (e.g., confidence scores) for the tasks described above. The output is a report table (CSV) that includes the measures of AUC, EER, and AUC_CI (confidence interval for AUC), and a graphical plot (PDF) that supports either ROC (receiver operating characteristic) or DET (detection error tradeoff) for algorithm performance results. In addition, this script allows the user to evaluate their algorithm performance on either subsets or partitions of the data set based on the specified queries.</p>
 </div>
@@ -11821,7 +11821,7 @@ python DetectionScorer.py [OPTIONS] -r inRef -x inIndex -s inSys
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>-t --task [manipulation, splice, eventrepurpose]</p>
+<p>-t --task [manipulation, splice, eventverification, camera]</p>
 <ul>
 <li>Define the target manipulation task type for evaluation (default = manipulation). This is a value of the "TaskID" column in the index file. </li>
 </ul>

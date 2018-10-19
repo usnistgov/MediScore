@@ -1,6 +1,7 @@
 import os
 import pydot
 import cv2
+import rawpy
 
 from ProvenanceMetrics import *
 
@@ -8,6 +9,11 @@ def generate_thumbnail(input_fn, output_fn, height = 64):
     # Resize to fixed height while preserving aspect ratio
     if not os.path.isfile(output_fn):
         input_img = cv2.imread(input_fn)
+
+        # If unable to load with cv2, try rawpy
+        if input_img is None:
+            with rawpy.imread(input_fn) as raw:
+                input_img = raw.postprocess()
 
         scale = float(height) / input_img.shape[0]
         out_dims = (int(input_img.shape[1] * scale), height)
@@ -53,22 +59,22 @@ def render_provenance_graph_from_mapping(probe_node, node_mapping, edge_mapping,
     thumb_dir = os.path.join(os.path.dirname(output_fn), "thumbs")
     if thumb_cache_dir is not None:
         thumb_dir = thumb_cache_dir
-        
+
     if not os.path.isdir(thumb_dir):
         os.makedirs(thumb_dir)
-    
+
     def _generate_label(node_id):
         node_name = os.path.basename(node_id)
         basename, ext = os.path.splitext(node_name)
 
         if ref_dir is not None:
             img_path = os.path.join(ref_dir, node_id)
-            
+
             if os.path.isfile(img_path):
                 # Generate thumbnail
                 output_thumb_fn = os.path.join(thumb_dir, "{}_thumb{}".format(basename, ".jpg"))
                 generate_thumbnail(img_path, output_thumb_fn)
-                
+
                 return "<<TABLE border=\"0\" cellborder=\"0\"><TR><TD><IMG src=\"{}\"/></TD></TR><TR><TD>{}</TD></TR></TABLE>>".format(output_thumb_fn, node_name)
 
         return node_name
@@ -76,12 +82,12 @@ def render_provenance_graph_from_mapping(probe_node, node_mapping, edge_mapping,
     def _generate_penwidth(node_id):
         node_name = os.path.basename(node_id)
         basename, ext = os.path.splitext(node_name)
-        
+
         return "5" if basename == probe_node else "1"
-        
+
     def generate_node_properties(node_id, color="black"):
         return { "color": color, "label": _generate_label(node_id), "penwidth": _generate_penwidth(node_id) }
-    
+
     nodes = ([ (n, generate_node_properties(n, correct_color)) for n, r, s in filter(corr_selector, node_mapping) ] +
              [ (n, generate_node_properties(n, fa_color)) for n, r, s in filter(fa_selector, node_mapping) ] +
              [ (n, generate_node_properties(n, missing_color)) for n, r, s in filter(miss_selector, node_mapping) ])

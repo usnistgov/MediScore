@@ -204,6 +204,8 @@ class mask(object):
             if isinstance(self,refmask) or isinstance(self,refmask_color):
                 masktype = 'Reference'
             print("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
+        else:
+            self.is_multi_layer = self.matrix.ndim == 3
         self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
 
     def get_dims(self):
@@ -310,6 +312,21 @@ class mask(object):
         cv2.imwrite(colorPNGname,rbinmat3,params)
         return rbinmat3
 
+    def getUniqueValues(self):
+        """
+        * Description: stacks values in matrix to return unique values
+        """
+        if self.is_multi_layer:
+            singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
+            const_factor = 1
+            for l in range(self.matrix.shape[2]):
+                const_factor = 1 << 8*l
+                singlematrix = singlematrix + const_factor*self.matrix[:,:,l]
+            unique_px = np.unique(singlematrix)
+        else:
+            unique_px = np.unique(self.matrix)
+        return unique_px
+
     def overlay(self,imgName,alpha=0.7):
         """
         * Description: overlays the mask on top of the grayscale image. If you want a color mask,
@@ -322,9 +339,9 @@ class mask(object):
         """
         mymat = self.matrix
         gImg = cv2.imread(imgName,0)
-        gImg = np.dstack(gImg,gImg,gImg)
-        if len(self.matrix.shape)==2:
-            mymat = np.dstack([mymat,mymat,mymat])
+        gImg = np.dstack((gImg,gImg,gImg))
+        if not self.is_multi_layer:
+            mymat = np.dstack((mymat,mymat,mymat))
 
         overmat = cv2.addWeighted(mymat,alpha,gImg,1-alpha,0)
         return overmat
@@ -542,21 +559,6 @@ class refmask(mask):
 #            self.purposes = purposes
         else:
             self.journalData = 0
-
-    def getUniqueValues(self):
-        """
-        * Description: stacks values in matrix to return unique values
-        """
-        if self.is_multi_layer:
-            singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
-            const_factor = 1
-            for l in range(self.matrix.shape[2]):
-                const_factor = 1 << 8*l
-                singlematrix = singlematrix + const_factor*self.matrix[:,:,l]
-            unique_px = np.unique(singlematrix)
-        else:
-            unique_px = np.unique(self.matrix)
-        return unique_px
 
     def regionIsPresent(self):
         """

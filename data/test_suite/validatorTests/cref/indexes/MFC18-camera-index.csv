@@ -1,0 +1,5 @@
+TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight|ProbeFileSize|TrainCamID
+camera|75124de734fb7a0d302c57524bbd8c29|probe/75124de734fb7a0d302c57524bbd8c29.jpg|5312|2988|6400.0|PAR-1476_primary_image
+camera|b5c7a2027c306ac992fe875cc565f4c3|probe/b5c7a2027c306ac992fe875cc565f4c3.jpg|5312|2988|3400.0|PAR-1476_primary_image
+camera|2e57c044dae9b2af5787ce189cc6ae74|probe/2e57c044dae9b2af5787ce189cc6ae74.jpg|5312|2988|1756361.0|PAR-1476_primary_image
+camera|245c842854ddf6de3f926402c253110e|probe/222c20ef3ad3ef912c583d24fb61b38f.nef|7380|4928|71951229.0|PAR-1476_primary_image

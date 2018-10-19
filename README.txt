@@ -436,9 +436,38 @@ HISTORY
       - Added "ERROR" message to ProbeStatus error reporting.
     * Localization Scorer
       - Refining localization scorer printout operations.
+  May 15, 2018 - MediScore Version *.*.*
+    * Validator:
+      - Adding FailedValidation checks to video task.
+    * Localization Scorer
+      - Refining HTML deselect option to not generate any images for probes. (A CSV containing the metrics at each relevant threshold will still be generated.)
   May 23, 2018 - MediScore Version *.*.*
     * Localization Scorer
       - updated and refined main for the html report module. Plotting works properly if the html_module is run as its own main.
+  May 24, 2018 - MediScore Version *.*.*
+    * Detection:
+      - Refactored the code for DetectionScorer and tested its test cases
+      - Fixed a bug (scoring on the reduced trials instead of the JT merged trials)
+  May 30, 2018 - MediScore Version *.*.*
+    * Validator:
+      - Adding --ignore_eof option to video task.
+  June 1, 2018 - MediScore Version *.*.*
+    * Detection:
+      - added to delete the folders under compcheckfiles before running make check
+  June 7, 2018 - MediScore Version *.*.*
+    * Localization Visualizer
+      - Newly added to the MediScore package
+      - Localization visualizer makes use of a slightly modified lib/masks.py, but relevant changes do not affect the Mask Scorer's scored output.
+  June 25, 2018 - MediScore Version *.*.*
+    * DetectionScorer
+      - Added a test case for Camera Detection task
+      - Updated the DetectionScorerReadMe file
+    * Validator:
+      - Updated to be backwards-compatible with NC2017 video submissions.
+  July 11, 2018 - MediScore Version *.*.*
+    * Validator:
+      - Now supports event verification and camera validation tasks.
+
 
 CONTACT
 -------

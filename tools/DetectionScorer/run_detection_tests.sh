@@ -28,7 +28,7 @@ run_test test_c2_8 "$testsuite_directory/checkfiles/test_c2_8"
 run_test test_c2_9 "$testsuite_directory/checkfiles/test_c2_9"
 
 echo
-echo "CASE 2.3: VALIDATING SYSTEM OUTPUT TESTCASEs for EventVerification"
+echo "CASE 2.3: VALIDATING SYSTEM OUTPUT TESTCASEs for Event Verification"
 echo
 run_test test_c2_10 "$testsuite_directory/checkfiles/test_c2_10"
 
@@ -38,6 +38,11 @@ echo
 run_test test_c2_11 "$testsuite_directory/checkfiles/test_c2_11"
 run_test test_c2_12 "$testsuite_directory/checkfiles/test_c2_12"
 run_test test_c2_13 "$testsuite_directory/checkfiles/test_c2_13"
+
+echo
+echo "CASE 2.5: VALIDATING SYSTEM OUTPUT TESTCASEs for Camera Detection"
+echo
+run_test test_c2_14 "$testsuite_directory/checkfiles/test_c2_14"
 
 echo
 echo "CASE 3: VALIDATING FULL INDEX and SUBSET INDEX FILEs"

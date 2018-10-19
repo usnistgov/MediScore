@@ -1,0 +1,7 @@
+ProbeFileID|TrainCamID|ConfidenceScore|OutputProbeMaskFileName|ProbeStatus|ProbeOptOutPixelValue
+F1|ES-D5100_primary_multimedia|0.034|mask/F18-mask.png|Y|
+F2|ES-D5100_primary_multimedia|0.021|mask/F166-mask.png|Y|
+F3|ES-D5100_primary_multimedia|0.021|mask/F165-mask.png|Y|
+F4|PAR-1579_primary_multimedia|0.016|mask/F86-mask.png|Y|
+F5|MK-NEX5T_primary_multimedia|0.016|mask/F87-mask.png|Y|
+F6|MK-NEX5T_primary_multimedia|0.016|mask/F88-mask.png|Y|

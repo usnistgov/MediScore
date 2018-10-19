@@ -1,0 +1,16 @@
+JournalName|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument|AutoDesignName|PlugInName|PlugInArguments
+73fd30709c9ae80feb2c0a5e95174695|ritchies-03_Blur_Car|ritchies-04_levels_Car|Levels|0 48 255|||||{}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-02_SpliceRes_Car|ritchies-03_Blur_Car|Blur|0 255 114|||||{'Blur Type': 'Gaussian', 'Laundering': 'no'}
+73fd30709c9ae80feb2c0a5e95174695|cc284f3be435c50d380a8cf26b098256|ritchies-01|OutputPng|0 255 54|||||{'Image Rotated': 'no'}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-05_splicebuilding|ritchies-06_flipbuildingH|TransformFlip|0 247 250|||||{'flip direction': 'horizontal'}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-07_distortbuilding|ritchies-08_levelsbuilding|Levels|0 255 0|||||{}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-06_flipbuildingH|ritchies-07_distortbuilding|TransformDistort|0 255 78|||||
+73fd30709c9ae80feb2c0a5e95174695|ritchies-01|ritchies-02_SpliceRes_Car|PasteSplice|102 255 0|add|large man-made object|||{'donor cropped': 'yes', 'donor rotated': 'no', 'purpose': 'add', 'donor resized': 'yes', 'subject': 'large man-made object'}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-04_levels_Car|ritchies-05_splicebuilding|PasteSplice|132 255 0|add|large man-made object|||{'donor cropped': 'yes', 'donor rotated': 'no', 'purpose': 'add', 'donor resized': 'no', 'subject': 'large man-made object'}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-09_maskbuilding|ritchies-09_maskbuilding_01|AntiForensicExifQuantizationTable|0 255 216||||CompressAs|{'donor': 'cc284f3be435c50d380a8cf26b098256', 'rotate': 'no'}
+73fd30709c9ae80feb2c0a5e95174695|ritchies-08_levelsbuilding|ritchies-09_maskbuilding|SelectRemove|0 24 255|||||
+e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8-Blur04|e9feea77e87ed310347e44eaa16377a8-Blur04_05|OutputCopy|255 156 0|||SaveAsPNG|OutputCopy|
+e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8-01|e9feea77e87ed310347e44eaa16377a8-ContentAwareFill02|ContentAwareFill|0 162 255|remove||||{'tolerance': 0.0001, 'purpose': 'remove'}
+e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8-Sharpen03|e9feea77e87ed310347e44eaa16377a8-Blur04|Blur|255 0 168|||||{'Blur Type': 'Gaussian', 'Laundering': 'no'}
+e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8-ContentAwareFill02|e9feea77e87ed310347e44eaa16377a8-Sharpen03|Sharpening|255 0 6|||||{}
+e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8|e9feea77e87ed310347e44eaa16377a8-01|OutputPng|84 255 0|||||{'Image Rotated': 'no'}

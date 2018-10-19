@@ -10,6 +10,10 @@ from functools import reduce
 from itertools import cycle
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from bokeh.io import output_notebook
+from bokeh.plotting import figure, show, output_file, ColumnDataSource
+from bokeh.models import Range1d, HoverTool, Legend
+from bokeh.models.tickers import FixedTicker
 
 class IntervalCompute():
     
@@ -41,6 +45,35 @@ class IntervalCompute():
         ts_intervals[-1] = timestamps[-1]
         ts_intervals = ts_intervals.reshape(timestamps.size-1,2)
         return ts_intervals
+
+    @staticmethod
+    def truncate(interval_array, FrameCount):
+        """Function that cut a list of interval at a specific value v
+        :param interval_array: np.array([[x0, x1], ...])
+        :FrameCount: value to truncate
+        :returns: a truncated copy of the interval_array
+        :Example:
+        >>> truncate(np.array([[10,20],[30,40]]),25)
+        array([[10, 20]])
+        >>> truncate(np.array([[10,20],[30,40]]),30)
+        array([[10, 20]])
+        >>> truncate(np.array([[10,20],[30,40]]),35)
+        array([[10, 20], [30, 35]])
+        >>> truncate(np.array([[10,20],[30,40]]),40)
+        array([[10, 20], [30, 40]])
+        >>> truncate(np.array([[10,20],[30,40]]),50)
+        array([[10, 20], [30, 40]])
+        """
+        i = interval_array.copy()
+        mask_oversize = np.transpose(np.nonzero(interval_array >= FrameCount))
+        if mask_oversize.size:
+            # If there is an overlap
+            if mask_oversize[0,1] == 1:
+                i[mask_oversize[0,0],mask_oversize[0,1]] = FrameCount
+                i = i[:mask_oversize[0,0]+1]
+            else:
+                i = i[:mask_oversize[0,0]]
+        return i
         
     @staticmethod
     def compute_intervals_union(Intervals_list):
@@ -402,8 +435,8 @@ class IntervalCompute():
                                 colors = [["#9933FF"], ["#FF00FF"]], plot_size = [900,250]):
 
         from bokeh.io import output_notebook
-        from bokeh.plotting import figure, show, output_file
-        from bokeh.models import Range1d
+        from bokeh.plotting import figure, show, output_file, ColumnDataSource
+        from bokeh.models import Range1d, HoverTool, Legend
         from bokeh.models.tickers import FixedTicker
         output_notebook()
 
@@ -437,3 +470,126 @@ class IntervalCompute():
         p.background_fill_color = (234,234,234)
         p.border_fill_color = (255,255,255)
         show(p)
+
+    @staticmethod
+    def broken_barh_2(fig, intervals, y_position, height, color, tag, options={}):
+        nb_interval = intervals.shape[0]
+        half_heigth = height/2
+
+        source_dict = {"bottom": [y_position - half_heigth for i in range(nb_interval)],
+                       "top":[y_position + half_heigth for i in range(nb_interval)],
+                       "left": intervals[:,0],
+                       "right": intervals[:,1],
+                       "fill_color": nb_interval * [color],
+                       "interval":intervals.tolist(),
+                       "length":np.diff(intervals)[:,0].tolist(),
+                       "type":nb_interval * [tag]}
+
+        source = ColumnDataSource(data=source_dict)
+        r = fig.quad(bottom="bottom", top="top", left="left", right="right", fill_color="fill_color", 
+                     source=source, **options)
+        return r
+
+    @staticmethod
+    def display_confusion_bokeh_2(ref_intervals, sys_intervals, global_range, show_graph=True, confusion_data=None, c_mode = 1,
+                            colors = [["#9933FF"], ["#FF00FF"]]):
+        
+        y_range_size = 3
+        y_positions = np.array(6 * [0]) #Allocating positions
+
+        intervals_list = [ref_intervals, sys_intervals]
+        interval_range = global_range[1] - global_range[0]
+        x_range = Range1d(-(interval_range*0.05), interval_range*1.05)
+        legend_it = []
+        tags_list = ["Reference", "System"]
+        labels = ["Reference","System_Output"]
+        
+        if confusion_data is not None:
+            y_range_size = 4
+            con_intervals, (confusion_vector, cv_2), confusion_mapping = confusion_data
+            if -1 in confusion_vector:
+                y_range_size += 1
+                labels.append("Collars")
+            if -2 in confusion_vector:
+                y_range_size += 1
+                labels.append("No-Score Zone")
+            if c_mode == 1:
+                labels.append("Confusion")
+            elif c_mode == 2:
+                labels.append("Masked Confusion")
+            elif c_mode == 3:
+                y_range_size += 1            
+                labels.extend(["Confusion","Masked Confusion"])
+                
+        y_positions[:y_range_size-1] = range(y_range_size - 1, 0, -1)
+        y_positions = y_positions[:y_range_size-1]
+        y_range = Range1d(0, y_range_size)
+        height = 0.6
+        default_options = {"line_color":"black", "line_width":1}
+        
+        hover = HoverTool(tooltips=[("type", "@type"),
+                                    ("interval", "[@interval]"),
+                                    ("length","@length")])
+        
+        p = figure(x_range=x_range, y_range=y_range, 
+                   plot_width=900, plot_height=250,
+                   title="Confusion Visualisation",title_location='above',
+                   tools = "pan,wheel_zoom,xwheel_pan,box_zoom,reset,save",
+                   toolbar_location="above")
+        p.add_tools(hover)
+        
+        # Display reference and system interval
+        for intervals, y_pos, col, tag in zip(intervals_list, y_positions, colors, tags_list):
+            if intervals.size != 0:
+                IntervalCompute.broken_barh_2(p, intervals, y_pos, height, col, tag, options=default_options)
+            
+        if confusion_data is not None:
+            # Display collars and SNS
+            for code, name in zip([-1,-2], ["Collars", "No-Score Zone"]):
+                if name in labels:
+                    label_index = labels.index(name)
+                    y = y_positions[label_index]
+                    tag, color = confusion_mapping[code]
+                    intervals = con_intervals[confusion_vector == code]
+                    r = IntervalCompute.broken_barh_2(p, intervals, y, height, color, name, options=default_options)
+                
+            if c_mode in [1,3]:
+                # Computation of the non masked confusion vector
+                interval_param_list = [ref_intervals, sys_intervals]
+                intervals_sequence = [IntervalCompute.compute_intervals_union([i]) for i in interval_param_list if i is not None]
+                # We remove all None and 0-length sub-intervals
+                interval_filter = lambda x: x.size != 0
+                intervals_sequence = [i[~(i[:,0] == i[:,1])] if interval_filter(i) else i for i in intervals_sequence]
+                
+                cv_not_masked, all_intervals, _ , weights = IntervalCompute.aggregate_intervals(intervals_sequence, global_range, 
+                                                                                                          print_results=False)
+                label_index = labels.index("Confusion")
+                y = y_positions[label_index]
+                for code in [0,1,2,3]:
+                    tag, color = confusion_mapping[code]
+                    intervals = all_intervals[cv_not_masked == code]
+                    r = IntervalCompute.broken_barh_2(p, intervals, y, height, color, tag, options=default_options)
+                    if c_mode == 1:
+                        legend_it.append([tag, [r]])
+                    
+            if c_mode in [2,3]:
+                label_index = labels.index("Masked Confusion")
+                y = y_positions[label_index]
+                for code in np.unique(confusion_vector):
+                    tag, color = confusion_mapping[code]
+                    intervals = con_intervals[confusion_vector == code]
+                    r = IntervalCompute.broken_barh_2(p, intervals, y, height, color, tag, options=default_options)
+                    legend_it.append([tag, [r]])
+                    
+        p.xgrid.grid_line_color = None
+        p.xaxis.axis_label = "Frames"
+        p.yaxis.ticker = FixedTicker(ticks=y_positions[::-1])
+        p.yaxis.major_label_overrides = {str(i):label for i,label in zip(y_positions, labels)}
+        p.background_fill_color = (234,234,234)
+        p.border_fill_color = (255,255,255)
+        legend = Legend(items=legend_it, location=(10, 10))
+        p.add_layout(legend, 'right')
+        p.legend.orientation = "vertical"
+        if show_graph:
+            show(p)
+        return p

@@ -382,7 +382,8 @@ class maskMetricRunner:
                 return maskRow
             index_row = index_row.iloc[0]
 
-            if refMaskName in [None,'',np.nan]:
+            iswhiteref = refMaskName in [None,'',np.nan]
+            if iswhiteref:
                 myprintbuffer.append("Empty reference {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
                 if not self.usejpeg2000:
@@ -395,14 +396,22 @@ class maskMetricRunner:
                     glymur.Jp2k(refMaskName,whitemask)
 #                continue
 
-            if sysMaskName in [None,'',np.nan]:
+            iswhitesys = sysMaskName in [None,'',np.nan]
+            if iswhitesys:
                 myprintbuffer.append("Empty system {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
                 whitemask = 255*np.ones((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
-                cv2.imwrite(os.path.join(subOutRoot,'whitemask.png'),whitemask)
+                sysMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask.png'))
+                cv2.imwrite(sysMaskName,whitemask)
 #                continue
 
             rImg,sImg = self.readMasks(refMaskName,sysMaskName,manipFileID,subOutRoot,myprintbuffer)
+
+            #clean up if not html
+            if iswhiteref and not self.html:
+                os.system('rm {}'.format(refMaskName))
+            if iswhitesys and not self.html:
+                os.system('rm {}'.format(sysMaskName))
 
             if (rImg is 0) and (sImg is 0):
                 #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
@@ -448,7 +457,8 @@ class maskMetricRunner:
                 exit(1)
             wts = cv2.bitwise_and(wts,pns)
             rbin_name = os.path.join(subOutRoot,'-'.join([rImg.name.split('/')[-1][:-4],'bin.png']))
-            rImg.save_color_ns(rbin_name,bns,sns,pns)
+            if self.html:
+                rImg.save_color_ns(rbin_name,bns,sns,pns)
 
             #if wts allows for nothing to be scored, (i.e. no GT pos), print warning message, but score as usual
             if (cv2.bitwise_and(wts,rImg.bwmat)).sum() == 0:
@@ -501,7 +511,8 @@ class maskMetricRunner:
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
-                sImg.save(optbin_name)
+                if self.html:
+                    sImg.save(optbin_name)
                 metrics = thresMets.iloc[0]
                 mets = metrics[['NMM','MCC','BWL1']].to_dict()
                 mets['GWL1'] = np.nan
@@ -529,7 +540,8 @@ class maskMetricRunner:
             else:
                 sImg.binarize(threshold) 
                 optbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                sImg.save(optbin_name,th=threshold)
+                if self.html:
+                    sImg.save(optbin_name,th=threshold)
     
                 metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                 mets = metrics[['NMM','MCC','BWL1']].to_dict()
@@ -555,7 +567,7 @@ class maskMetricRunner:
                 maskRow['AUC'] = myauc
                 maskRow['EER'] = myeer
         
-                if genROC:
+                if genROC and self.html:
                     mydets = detPackage(tpr,
                                         fpr,
                                         1,
@@ -615,14 +627,14 @@ class maskMetricRunner:
             thresMets.to_csv(os.path.join(subOutRoot,'thresMets.csv'),sep="|",index=False)
             manipFileName = maskRow['%sFileName' % mymode]
             maniImgName = os.path.join(self.refDir,manipFileName)
-            colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,manipFileID,maniImgName,subOutRoot,self.colordict)
 
             myprintbuffer.append("Metrics computed.")
             maskRow['Scored'] = 'Y'
 
             #generate the HTML report
             #TODO: ideally want the HTML report to be in a separate module
-            if html:
+            if self.html:
+                colordirs = self.aggregateColorMask(rImg,sImg,bns,sns,pns,kern,erodeKernSize,manipFileID,maniImgName,subOutRoot,self.colordict)
                 baseFileName = maskRow['BaseFileName']
                 myprintbuffer.append("Generating aggregate color mask for HTML report...")
                 colMaskName=colordirs['mask']
@@ -782,7 +794,8 @@ class maskMetricRunner:
                     if self.mode == 2:
                         plot_name = '_'.join([roc_pfx.lower(),'average_roc_donor'])
                         plot_title = ' '.join(['Donor',roc_pfx,'Average ROC'])
-                myroc = plotROC(mydets,plot_name,plot_title,self.outputRoot)
+                if self.html:
+                    myroc = plotROC(mydets,plot_name,plot_title,self.outputRoot)
             else:
                 aucs[''.join([roc_pfx,'AverageAUC'])] = np.nan
         return aucs

@@ -1,0 +1,5 @@
+ProbeFileID|TrainCamID|OutputProbeMaskFileName|ConfidenceScore|ProbeStatus|ProbeOptOutPixelValue
+75124de734fb7a0d302c57524bbd8c29|PAR-1476_primary_image|mask/75124de734fb7a0d302c57524bbd8c29-mask.png|0.1|Processed|
+b5c7a2027c306ac992fe875cc565f4c3|PAR-1476_primary_image||0.2|OptOutLocalization|127
+2e57c044dae9b2af5787ce189cc6ae74|PAR-1476_primary_image|mask/2e57c044dae9b2af5787ce189cc6ae74-mask.png|0.3|Processed|230
+245c842854ddf6de3f926402c253110e|PAR-1476_primary_image||0.4|NonProcessed|30

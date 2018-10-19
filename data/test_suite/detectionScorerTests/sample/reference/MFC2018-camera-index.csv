@@ -1,0 +1,7 @@
+TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight|ProbeFileSize|TrainCamID
+camera|F1|probe/F1|3120|4160|500|ES-D5100_primary_multimedia
+camera|F2|probe/F2|1600|1200|100|ES-D5100_primary_multimedia
+camera|F3|probe/F3|4000|3000|600|ES-D5100_primary_multimedia
+camera|F4|probe/F4|1600|1200|300|PAR-1579_primary_multimedia
+camera|F5|probe/F5|1600|1200|20|MK-NEX5T_primary_multimedia
+camera|F6|probe/F6|4912|3264|700|MK-NEX5T_primary_multimedia

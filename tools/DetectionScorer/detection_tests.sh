@@ -16,6 +16,9 @@ run_test() {
     checkfile_outdir_basename=`basename $checkfile_outdir`
     compcheck_outdir=${3-compcheckfiles}
     compcheckfile_outdir="$compcheck_outdir/$checkfile_outdir_basename"
+    if [ -d "$compcheckfile_outdir" ]; then
+        rm -Rf $compcheckfile_outdir
+    fi
 
     echo "** Running detection test case: '$test' **"
     $test "$compcheckfile_outdir" 1> $compcheckfile_outdir.comp.log 2>&1
@@ -219,6 +222,17 @@ test_c2_13() {
                        --sysDir "$testsuite_directory/sample/" \
 				       -s "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv" \
                -qm "Purpose==['remove'] or Operation==['PasteSampled']" --outMeta
+}
+
+test_c2_14() {
+    echo "  * Testing system output test case for Camera Detecton *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t camera \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "MFC2018-camera-index.csv" \
+        				       -r "MFC2018-camera-ref.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_MFC2018_Camera_MultiMedia_p-me_1/D_MFC2018_Camera_MutiMedia_p-me_1.csv"
 }
 
 
