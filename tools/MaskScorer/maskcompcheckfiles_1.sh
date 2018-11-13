@@ -1,12 +1,12 @@
 #!/bin/bash
 procs=2
-source test_init.sh
 
 echo
 echo "CASE 1: VALIDATING SCORING OF TARGET REGIONS"
 echo
 
 mypython=python2
+source test_init.sh
 
 #$mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_all -html
 $mypython MaskScorer.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation/NC2017-manipulation-ref.csv -x indexes/NC2017-manipulation-index.csv -s ../../data/test_suite/maskScorerTests/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1.csv -oR ../../data/test_suite/maskScorerTests/target_all/B_NC2017_Unittest_Manipulation_ImgOnly_c-me2_1 --nspx 200 -p $procs -html --speedup --precision 12

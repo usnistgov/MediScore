@@ -426,6 +426,8 @@ class TestValidator(ut.TestCase):
         print("CASE V4 validated.")
         os.system('rm vv4.log')
 
+        #TODO: test spatial localization here
+
     def testEventVerification(self):
         validatorRoot = '../../data/test_suite/validatorTests/'
         print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")

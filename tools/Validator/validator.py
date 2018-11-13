@@ -49,8 +49,17 @@ from abc import ABCMeta, abstractmethod
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../lib')
 sys.path.append(lib_path)
 #from printbuffer import printbuffer
-
+from videocheck import video_length_check,video_dim_check,video_mask_check
 #print_lock = multiprocessing.Lock() #for printout
+
+#NOTE: OpenCV 3+ versions will not have cv2.cv.
+try:
+    vid_frame_feature = cv2.cv.CV_CAP_PROP_FRAME_COUNT
+except AttributeError:
+    try:
+        vid_frame_feature = cv2.CAP_PROP_FRAME_COUNT
+    except:
+        vid_frame_feature = 7
 
 @contextlib.contextmanager
 def stdout_redirect(where):
@@ -252,8 +261,20 @@ class SSD_Validator(validator):
                  'ProbeWidth':np.int64,
                  'ProbeHeight':np.int64}
         
-        idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False)
-        sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False)
+        colFlag = 0
+        with open(self.sysname) as sysfile:
+            n_cols = -1
+            for i,l in enumerate(sysfile):
+                if i == 0:
+                    n_cols = len(l.rstrip().replace("\"","").split("|"))
+                    continue
+                n_cols_l = len(l.rstrip().replace("\"","").split("|"))
+                if n_cols != n_cols_l:
+                    print("ERROR: Inconsistent columns. Expected {} columns from header. Got {} at line {}.".format(n_cols,n_cols_l,i))
+                    colFlag = 1	       
+
+        idxfile = pd.read_csv(self.idxname,sep='|',dtype=index_dtype,na_filter=False,index_col=False)
+        sysfile = pd.read_csv(self.sysname,sep='|',na_filter=False,index_col=False)
         idxmini = 0
         self.identify = identify
         self.indexFilter = indexFilter
@@ -316,7 +337,7 @@ class SSD_Validator(validator):
 
         if reffname is not 0:
             #filter idxfile based on ProbeFileID's in reffile
-            reffile = pd.read_csv(reffname,sep='|',na_filter=False)
+            reffile = pd.read_csv(reffname,sep='|',na_filter=False,index_col=False)
             #set up dual-ID's for the relevant task
             if self.task == 'camera':
                 reffile['ProbeCamID'] = reffile['ProbeFileID'] + ":" + reffile['TrainCamID']
@@ -325,7 +346,7 @@ class SSD_Validator(validator):
             gt_ids = reffile.query(targetquery)[pk_field].tolist()
             idxmini = idxfile.query("{}=={}".format(pk_field,gt_ids))
         #switch to video validation
-        if self.condition in ["VidOnly","VidMeta"] or (self.task in ['manipulation-video','eventverification']):
+        if self.condition in ["VidOnly","VidMeta"] or (self.task in ['eventverification']):
             neglectMask = True
             #TODO: if OutputProbeMaskFileName in sysHeads and nonempty, throw an error?
         self.neglectMask = neglectMask
@@ -389,7 +410,7 @@ class SSD_Validator(validator):
             sysfile.to_csv(os.path.join(self.sysPath,output_rewrite_name),sep="|",index=False)
         
         #final validation
-        flagSum = maskFlag + scoreFlag + matchFlag
+        flagSum = maskFlag + scoreFlag + matchFlag + colFlag
         if flagSum == 0:
             self.printbuffer.put("The contents of your file have passed validation.")
             return 0
@@ -522,25 +543,27 @@ class SSD_Validator(validator):
                 if self.optOutNum == 1:
                     return sysrow
                 msgs = []
+                #TODO: delegate interval check to a package function
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
                     if 'FrameCount' not in list(self.idxfile):
                         probeFileName=self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].ProbeFileName.iloc[0]
                         refroot = os.path.abspath(os.path.join(os.path.dirname(self.idxname),'..'))
                         cap = cv2.VideoCapture(os.path.join(refroot,probeFileName))
-                        #NOTE: OpenCV 3+ versions will not have cv2.cv.
-                        try:
-                            vid_frame_feature = cv2.cv.CV_CAP_PROP_FRAME_COUNT
-                        except AttributeError:
-                            try:
-                                vid_frame_feature = cv2.CAP_PROP_FRAME_COUNT
-                            except:
-                                vid_frame_feature = 7
                         maxFrame = int(cap.get(vid_frame_feature))
                     else:
                         maxFrame = self.idxfile[self.idxfile.ProbeFileID.isin([probeFileID])].FrameCount.iloc[0]
                     mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame,col,probeFileID) #NOTE: 'Frame' evaluation until we have time evaluations
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
+                #check video spatial content from "VideoMaskFileName" if the column exists in the system output
+                if "VideoMaskFileName" in sysrow.index:
+                    videoOutputMaskFileName = os.path.join(self.sysPath,sysrow["VideoMaskFileName"]) if sysrow["VideoMaskFileName"] != '' else ''
+                    baseHeight = list(map(int,self.idxfile['ProbeHeight'][self.idxfile[pk_field] == probeFileID]))[0] 
+                    baseWidth = list(map(int,self.idxfile['ProbeWidth'][self.idxfile[pk_field] == probeFileID]))[0]
+                    dim_flag,dim_msg = video_dim_check(videoOutputMaskFileName,baseWidth,baseHeight)
+                    msk_ct_flag,ct_msg = video_mask_check(videoOutputMaskFileName)
+                    sysrow['maskFlag'] = sysrow['maskFlag'] | msk_ct_flag
+                    msgs.append(ct_msg)
                 sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
                 return sysrow
             if self.neglectMask:
@@ -814,13 +837,14 @@ class DSD_Validator(validator):
         sysPath = os.path.dirname(self.sysname)
         testMask = True
         optOut = 0
+        n_cols = -1
         with open(self.sysname) as sysfile:
             for idx,l in enumerate(sysfile):
                 self.printbuffer.put("Process {} ".format(idx) + l)
-
                 if idx == 0:
                     #parse headers
                     s_headnames = l.rstrip().split('|')
+                    n_cols = len(s_headnames)
                     #header checking
                     if len(s_headnames) < 5:
                         #check number of headers
@@ -875,6 +899,11 @@ class DSD_Validator(validator):
                 probeID = l_content[s_heads['ProbeFileID']]
                 donorID = l_content[s_heads['DonorFileID']]
                 key = ":".join([probeID,donorID])
+
+                n_cols_l = len(l_content)
+                if n_cols_l != n_cols:
+                    print("ERROR: Inconsistent columns. Expected {} columns from header. Got {} at line {}.".format(n_cols,n_cols_l,idx))
+                    colFlag = 1
 
                 #try catch the key lookup
                 keyPresent=True

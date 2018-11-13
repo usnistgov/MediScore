@@ -234,12 +234,12 @@ class Partition:
                          .replace('<',' < ')\
                          .replace('>',' > ')
 
-    #TODO: add compute_metrics
     def compute_metrics(self,dm,metrics):
         data = {}
         metsplus = []
         for m in metrics:
-            data[m] = dm[m].mean(skipna=True) #average this
+            data[m] = pd.to_numeric(dm[m]).mean(skipna=True)
+            dm[m] = dm[m].astype(np.float64)
             metsplus.append(m)
             stdname = 'stddev_%s' % m
             metsplus.append(stdname)
@@ -305,7 +305,7 @@ class Partition:
             data = dict()
             # Looking for the values of each fields
             for m in metrics:
-                data[m] = []
+                data[m] = ['']
 
 #            data = {'auc': [],'fpr_stop': [],'eer': [],'auc_ci_lower': [], 'auc_ci_upper': []}
             n_emptydf = 0
@@ -316,6 +316,10 @@ class Partition:
                 if len(dm) == 0:
                     #skip where dm is empty
                     n_emptydf = n_emptydf + 1
+                    for m in metrics:
+                        if m not in metsplus:
+                            metsplus.append(m)
+                            metsplus.append("stddev_%s" % m)
                     continue
 
                 data,metsplus = self.compute_metrics(dm,metrics)
@@ -337,7 +341,7 @@ class Partition:
             columns.extend(self.factors_order)
             columns.extend(metsplus)
 #            columns.extend(['auc','fpr_stop','eer','auc_ci_lower', 'auc_ci_upper'])
-            index = ['Partition_'+str(i) for i in range(self.n_partitions-n_emptydf)]
+            index = ['Partition_{}'.format(i) for i in range(self.n_partitions-n_emptydf)]
 
             df = pd.DataFrame(data,index,columns)
             return [df]

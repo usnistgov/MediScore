@@ -160,7 +160,7 @@ class TestImageMethods(ut.TestCase):
         jData = pd.DataFrame({'Color':['255 0 0','0 255 0'],'Purpose':['remove','remove'],'Evaluated':['Y','Y']})
 
         cv2.imwrite('testImgC.png',testimg,params)
-        mytest=masks.refmask_color('testImgC.png',jData=jData,mode=0) #red,green
+        mytest=masks.refmask_color('testImgC.png',jData=jData,evalcol="Evaluated") #red,green
         
         #generate masks
         baseNoScore = mytest.boundaryNoScoreRegion(3,5,'box')['wimg']

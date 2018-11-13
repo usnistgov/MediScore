@@ -37,6 +37,119 @@ def rm(filepath):
 plt_width = 540 #custom value for plot sizes
 debug_off=False
 
+class probe_page():
+    def __init__(self,
+               probeFileID,
+               refmaskname,
+               sysmaskname,
+               outdir,
+               mode,
+               usejpeg2000):
+        self.probeFileID = probeFileID
+        self.refmaskname = refmaskname
+        self.sysmaskname = sysmaskname
+        self.outdir = outdir
+        self.usejpeg2000 = usejpeg2000 
+        self.mode = mode
+
+        self.probe_ID_field = 'ProbeFileID'
+        self.probe_file_field = 'ProbeFileName'
+        self.probe_w_field = 'ProbeWidth'
+        self.probe_h_field = 'ProbeHeight'
+        self.probe_mask_file_field = 'ProbeMaskFileName'
+        if self.usejpeg2000:
+            self.probe_mask_file_field = 'ProbeBitPlaneMaskFileName'
+        self.output_probe_mask_file_field = 'OutputProbeMaskFileName'
+        self.modestr = 'Probe'
+        self.evalcol = 'Evaluated'
+        self.thres_pfx = ''
+        if mode == 0:
+            self.scored_col = 'Scored'
+        elif mode == 1:
+            self.probe_mask_file_field = 'BinaryProbeMaskFileName'
+            self.scored_col = 'ProbeScored'
+            self.thres_pfx = 'p'
+            self.evalcol = 'ProbeEvaluated'
+        elif mode == 2:
+            self.scored_col = 'DonorScored'
+            self.probe_ID_field = 'DonorFileID'
+            self.probe_file_field = 'DonorFileName'
+            self.probe_w_field = 'DonorWidth'
+            self.probe_h_field = 'DonorHeight'
+            self.probe_mask_file_field = 'DonorMaskFileName'
+            self.output_probe_mask_file_field = 'OutputDonorMaskFileName'
+            self.modestr = 'Donor'
+            self.thres_pfx = 'd'
+            self.evalcol = 'DonorEvaluated'
+
+    #TODO: write functions for page object
+    def get_masks(self,
+                  probe_mask_file_name,
+                  output_probe_mask_file_name):
+        """
+        * Description: returns the reference and system output mask objects.
+                       output_dir is required to output blank masks where relevant.
+        """
+        refpath = os.path.join(self.refdir,probe_mask_file_name)
+        index_row = self.index_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id))
+        if len(index_row) == 0:
+            return 2,2
+        index_row = index_row.iloc[0]
+        height = index_row[self.probe_h_field]
+        width = index_row[self.probe_w_field]
+
+        if probe_mask_file_name in [np.nan,'',None]:
+            outpfx = os.path.join(output_dir,'whitemask_ref')
+            refpath = self.gen_white_mask(outpfx,height,width,self.usejpeg2000 and (self.mode == 0))
+
+        journalkeys = self.gen_journal_keys()
+        jData = self.journal_df.query("{}=='{}' and Color!=''".format(self.probe_ID_field,probe_file_id))[journalkeys]
+        if self.usejpeg2000 and self.mode == 0:
+            rImg = refmask(refpath)
+        else:
+            rImg = refmask_color(refpath)
+        rImg.insert_journal_data(jData,evalcol=self.evalcol)
+
+        #system output mask
+        syspath = os.path.join(self.sysdir,output_probe_mask_file_name)
+        if output_probe_mask_file_name in [np.nan,'',None]:
+            outpfx = os.path.join(output_dir,'whitemask')
+            syspath = self.gen_white_mask(outpfx,height,width)
+        sImg = mask(syspath)
+
+        return rImg,sImg
+
+    def gen_no_scores(self,
+                      rImg,
+                      sImg,
+                      eks=15,
+                      dks=11,
+                      ntdks=15,
+                      kernel='box'):
+        mywts,bwts,swts = rImg.aggregateNoScore(eks,dks,ntdks,kernel,self.mode)
+
+        pwts = sImg.pixelNoScore(no_score_pixel)
+        sys_base = os.path.basename(sImg.name)[:-4]
+        color_weight_name = '-'.join([sys_base,'weights.png'])
+        color_weight_path = os.path.join(output_dir,color_weight_name)
+        
+        mywts = cv2.bitwise_and(cv2.bitwise_and(bwts,swts),pwts)
+        dims = bwts.shape
+        colwts = 255*np.ones((dims[0],dims[1],3),dtype=np.uint8)
+        colwts[bwts==0] = colordict['yellow']
+        colwts[swts==0] = colordict['pink']
+        colwts[pwts==0] = colordict['purple']
+
+        cv2.imwrite(color_weight_path,colwts)
+        #return the weights
+        return mywts,bwts,swts,pwts
+
+    def output_to_page(self):
+        return 0
+
+    def gen_page(self):
+        return 0
+
 class html_generator():
     def __init__(self,
                  task,
@@ -64,7 +177,7 @@ class html_generator():
         self.query = query
         self.mode = 0
         self.overwrite = overwrite
-        self.usejpeg2000 = usejpeg2000
+        self.usejpeg2000 = usejpeg2000 and (task != 'splice')
         self.cache_dir=cache_dir #NOTE: for now
 
     def init_params(self,mode):
@@ -81,10 +194,12 @@ class html_generator():
         self.thres_pfx = ''
         if mode == 0:
             self.scored_col = 'Scored'
+            self.evalcol = 'Evaluated'
         elif mode == 1:
             self.probe_mask_file_field = 'BinaryProbeMaskFileName'
             self.scored_col = 'ProbeScored'
             self.thres_pfx = 'p'
+            self.evalcol = 'ProbeEvaluated'
         elif mode == 2:
             self.scored_col = 'DonorScored'
             self.probe_ID_field = 'DonorFileID'
@@ -95,16 +210,16 @@ class html_generator():
             self.output_probe_mask_file_field = 'OutputDonorMaskFileName'
             self.modestr = 'Donor'
             self.thres_pfx = 'd'
+            self.evalcol = 'DonorEvaluated'
 
-    def gen_report(self,params):
-        processors = params.processors
-        self.kernel = params.kernel
-        self.eks = params.eks
-        self.dks = params.dks
-        self.ntdks = params.ntdks
-        self.nspx = params.nspx
-        self.pppns = params.pppns
-
+    #TODO: spell out the parameters
+    def gen_report(self,eks=15,dks=11,ntdks=15,nspx=-1,pppns=False,kernel='box',processors=1):
+        self.kernel = kernel
+        self.eks = eks
+        self.dks = dks
+        self.ntdks = ntdks
+        self.nspx = nspx
+        self.pppns = pppns
         manager = multiprocessing.Manager()
         self.msg_queue = manager.Queue()
         #dictionary of colors corresponding to confusion measures
@@ -112,7 +227,7 @@ class html_generator():
         self.hexs = self.nums2hex(self.cols.values())
 
         if self.perimage_df.shape[0] > 0:
-            if self.task == 'manipulation':
+            if self.task in ['manipulation','camera']:
                 self.init_params(0)
                 self.gen_perimage(processors)
             elif self.task == 'splice':
@@ -204,7 +319,7 @@ class html_generator():
         html_out = html_out.round(metriclist)
 
         #insert graphs here
-        if self.task == 'manipulation':
+        if self.task in ['manipulation','camera']:
             myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc.pdf\" alt=\"mask_average_roc\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc.pdf\" alt=\"pixel_average_roc\" width=\"540\" height=\"540\"></td></tr><tr><th>Mask Average ROC</th><th>Pixel Average ROC</th></tr></tbody></table><br/>\n")
         elif self.task == 'splice':
             myf.write("<br/><table><tbody><tr><td><embed src=\"mask_average_roc_probe.pdf\" alt=\"mask_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td><td><embed src=\"pixel_average_roc_probe.pdf\" alt=\"pixel_average_roc_probe\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Probe Average ROC</th><th>Probe Pixel Average ROC</th></tr><tr><td><embed src=\"mask_average_roc_donor.pdf\" alt=\"mask_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'</td><td><embed src=\"pixel_average_roc_donor.pdf\" alt=\"pixel_average_roc_donor\" width=\"540\" height=\"540\" type='application/pdf'></td></tr><tr><th>Donor Average ROC</th><th>Donor Pixel Average ROC</th></tr></tbody></table><br/>\n")
@@ -227,7 +342,7 @@ class html_generator():
             print("Warning: too many processors for rows in the data. Defaulting to rows in data ({}).".format(nrow))
             processors = nrow
         if processors > maxprocs:
-            print("Warning: the machine does not have that many processors available. Defaulting to max ({}).".format(maxprocs))
+            print("Warning: the machine does not have {} processors available. Defaulting to max ({}).".format(processors,maxprocs))
             processors = maxprocs
 
         self.genROCs(self.perimage_df)
@@ -254,11 +369,14 @@ class html_generator():
     def apply_gen_imgs(self,df):
         return df.apply(self.gen_one_img_page,axis=1,reduce=False)
 
+    #TODO: offload some of these functions to the probe_page object
     def get_ref_and_sys(self,probe_mask_file_name,probe_file_id,output_probe_mask_file_name,output_dir):
         """
         * Description: returns the reference and system output mask objects.
                        output_dir is required to output blank masks where relevant.
         """
+        #TODO: should only give ref and sys
+
         refpath = os.path.join(self.refdir,probe_mask_file_name)
         index_row = self.index_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id))
         if len(index_row) == 0:
@@ -274,9 +392,10 @@ class html_generator():
         journalkeys = self.gen_journal_keys()
         jData = self.journal_df.query("{}=='{}' and Color!=''".format(self.probe_ID_field,probe_file_id))[journalkeys]
         if self.usejpeg2000 and self.mode == 0:
-            rImg = refmask(refpath,jData=jData,mode=self.mode)
+            rImg = refmask(refpath)
         else:
-            rImg = refmask_color(refpath,jData=jData,mode=self.mode)
+            rImg = refmask_color(refpath)
+        rImg.insert_journal_data(jData,evalcol=self.evalcol)
 
         #system output mask
         syspath = os.path.join(self.sysdir,output_probe_mask_file_name)
@@ -299,7 +418,7 @@ class html_generator():
         return whitepath
 
     def get_color_ns(self,rImg,sImg,no_score_pixel,output_dir):
-        mywts,bwts,swts = rImg.aggregateNoScore(self.eks,self.dks,self.ntdks,self.kernel)
+        mywts,bwts,swts = rImg.aggregateNoScore(self.eks,self.dks,self.ntdks,self.kernel,self.mode)
 
         pwts = sImg.pixelNoScore(no_score_pixel)
         sys_base = os.path.basename(sImg.name)[:-4]
@@ -352,6 +471,7 @@ class html_generator():
                 if not acolor_in_cache:
                     write_apng(r_path_new,ref_mask,delay=600,use_palette=False)
 
+    #TODO: Use with probe_page obj
     def gen_one_img_page(self,pi_row):
         #don't generate page for an image that wasn't scored
         if pi_row[self.scored_col] == 'N':
@@ -371,7 +491,7 @@ class html_generator():
 
         rImg,sImg = self.get_ref_and_sys(probe_mask_file_name,probe_file_id,output_probe_mask_file_name,output_dir)
         if rImg is 2:
-            printbuffer.append("The probe '{}' is not in the index file. Skipping HTML generation.")
+            printbuffer.append("The probe '{}' is not in the index file. Skipping HTML generation.".format(probe_file_id))
             self.msg_queue.put("\n".join(printbuffer))
             return pi_row
         refpath = rImg.name
@@ -387,6 +507,9 @@ class html_generator():
                 pass
         printbuffer.append("Saving weights image...")
         mywts,bwts,swts,pwts = self.get_color_ns(rImg,sImg,no_score_pixel,output_dir)
+        rImg.binarize(254)
+        rbin_name = os.path.join(output_dir,'-'.join([refpath.split('/')[-1][:-4],'bin.png']))
+        rImg.save_color_ns(rbin_name,bwts,swts,pwts)
 
 #        display_width = min(dims[1],640) #limit on width of images for readability of the report
 
@@ -476,28 +599,31 @@ class html_generator():
         print("Creating link for reference mask %s..." % refpath)
         self.gen_ref_mask_link(rImg,probe_file_id,output_dir)
 
+        syspfx = ''
+        if is_number(self.average_df['%sActualThreshold' % self.thres_pfx].iloc[0]):
+            syspfx = 'Actual '
+
+        sbin_name = os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
+        sys_threshold = pi_row['%sOptimumThreshold' % self.thres_pfx]
+        if is_number(pi_row['%sActualThreshold' % self.thres_pfx]):
+            sbin_name = os.path.join(output_dir,'{}-actual_bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
+            sys_threshold = pi_row['%sActualThreshold' % self.thres_pfx]
+
+        sImg.save(sbin_name,th=sys_threshold)
+
         #generate aggregate image
         colMaskName,aggImgName = self.aggregate_color_masks(probe_file_id,
                                                             probe_file_name,
                                                             refpath,
                                                             sImg.name,
+                                                            rbin_name,
+                                                            sbin_name,
                                                             output_dir,
                                                             bwts,
                                                             swts,
                                                             pwts)
         pi_row['%sColMaskFileName' % self.thres_pfx] = colMaskName
         pi_row['%sAggMaskFileName' % self.thres_pfx] = aggImgName
-
-        syspfx = ''
-        if is_number(self.average_df['%sActualThreshold' % self.thres_pfx].iloc[0]):
-            syspfx = 'Actual '
-
-        rbin_name = os.path.join(output_dir,'-'.join([refpath.split('/')[-1][:-4],'bin.png']))
-        sbin_name = os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
-        sys_threshold = pi_row['%sOptimumThreshold' % self.thres_pfx]
-        if is_number(pi_row['%sActualThreshold' % self.thres_pfx]):
-            sbin_name = os.path.join(output_dir,'{}-actual_bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
-            sys_threshold = pi_row['%sActualThreshold' % self.thres_pfx]
 
         printbuffer.append("Writing HTML...")
         htmlstr = htmlstr.substitute({'probeName': pi_row[self.probe_file_field],
@@ -548,7 +674,7 @@ class html_generator():
     def genPixMaskROC(self):
         tmetname = os.path.join(self.outroot,'thresMets_pixelprobe.csv')
         try:
-            roc_values = pd.read_csv(tmetname,sep="|",header=0)
+            roc_values = pd.read_csv(tmetname,sep="|",header=0,index_col=False)
         except:
             return 0
 
@@ -627,19 +753,19 @@ class html_generator():
                           sample_mets['TP'] + sample_mets['FN'],
                           sample_mets['FP'] + sample_mets['TN'])
         
-        plotROC(dets,'roc.pdf','ROC of {} {}'.format(self.modestr,dfrow[self.probe_ID_field]),outdir)
+        plotROC(dets,'roc','ROC of {} {}'.format(self.modestr,dfrow[self.probe_ID_field]),outdir)
 
         return dfrow
 
     #TODO: split this into gen_color_mask() and gen_aggregate_mask()
     #TODO: take in the rImg 
-    def aggregate_color_masks(self,probe_file_id,probe_file_name,ref_mask_name,sys_mask_name,output_dir,bns,sns,pns):
+    def aggregate_color_masks(self,probe_file_id,probe_file_name,ref_mask_name,sys_mask_name,ref_bin_name,sys_bin_name,output_dir,bns,sns,pns):
         #can simply get the eroded image from this image
-        rmat = cv2.imread(os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(ref_mask_name)[:-4])),1)
+        rmat = cv2.imread(ref_bin_name,1)
         rmat_sum = rmat[:,:,0] + rmat[:,:,1] + rmat[:,:,2] #only possible colors are white, yellow, pink, purple, and black. A basic sum yields no ambiguity.
         eData = np.uint8(rmat_sum)
 
-        smat = cv2.imread(os.path.join(output_dir,'{}-bin.png'.format(os.path.basename(sys_mask_name)[:-4])),0)
+        smat = mask(sys_bin_name,0).matrix
         _,b_sImg = cv2.threshold(smat,0,1,cv2.THRESH_BINARY_INV)
         _,b_eImg = cv2.threshold(eData,0,2,cv2.THRESH_BINARY_INV)
         _,b_bnsImg = cv2.threshold(bns,0,4,cv2.THRESH_BINARY_INV)
@@ -676,9 +802,11 @@ class html_generator():
 
         #TODO: remove and take in the rImg
         if self.usejpeg2000 and (self.mode == 0):
-            ref_mask = refmask(ref_mask_name,jData=self.journal_df.query("ProbeFileID=='{}'".format(probe_file_id)))
+            ref_mask = refmask(ref_mask_name)
+            ref_mask.insert_journal_data(jData=self.journal_df.query("ProbeFileID=='{}'".format(probe_file_id)))
         else:
-            ref_mask = refmask_color(ref_mask_name,jData=self.journal_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id)),mode=self.mode)
+            ref_mask = refmask_color(ref_mask_name)
+            ref_mask.insert_journal_data(jData=self.journal_df.query("{}=='{}'".format(self.probe_ID_field,probe_file_id)),evalcol=self.evalcol)
         ref_mask.binarize(254)
         refbw = ref_mask.bwmat
 
@@ -730,14 +858,8 @@ class html_generator():
         return color_agg_path,composite_path
 
     def gen_journal_keys(self):
-        evalcol='Evaluated'
-        if self.mode == 1:
-            evalcol='ProbeEvaluated'
-        elif self.mode == 2:
-            evalcol='DonorEvaluated'
-
         journal_headers = self.journal_df.columns.values.tolist()
-        journalkeys = ['Operation','Purpose','Color',evalcol]
+        journalkeys = ['Operation','Purpose','Color',self.evalcol]
         if self.usejpeg2000:
             journalkeys.insert(0,'BitPlane')
         if 'Sequence' in journal_headers:
@@ -1069,16 +1191,11 @@ if __name__ == '__main__':
                               cache_dir=None
     )
 
-    class params:
-        def __init__(self,**kwds):
-            self.__dict__.update(kwds)
-
-    loc_params = params(kernel = args.kernel,
-                        eks = args.eks,
-                        dks = args.dks,
-                        ntdks = args.ntdks,
-                        nspx = args.nspx,
-                        pppns = args.perProbePixelNoScore,
-                        processors = args.processors)
-    html_gen.gen_report(loc_params)
+    html_gen.gen_report(eks=args.eks,
+                        dks=args.dks,
+                        ntdks=args.ntdks,
+                        nspx=args.nspx,
+                        pppns=args.perProbePixelNoScore,
+                        kernel=args.kernel,
+                        processors=args.processors)
     print("All HTML reports generated.")

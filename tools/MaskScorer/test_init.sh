@@ -3,6 +3,8 @@
 clean=TRUE
 mypython='python2 -OO'
 
+#TODO: define a test file
+
 check_file(){
     ref_file=$1
     sys_file=$2

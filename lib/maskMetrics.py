@@ -43,6 +43,8 @@ metriccall={'MCC':'matthews',
             'NMM':'NimbleMaskMetric',
             'BWL1':'binaryWeightedL1'}
 
+#TODO: generalize to any binary system
+
 class maskMetrics:
     """
     This class evaluates the metrics for the reference and system output masks.
@@ -98,7 +100,13 @@ class maskMetrics:
         *     dictionary of the NMM, MCC, BWL1, and the confusion measures.
         """
 
-        conf = self.confusion_measures(ref,sys,w,systh)
+        r = ref.bwmat
+#.astype(int)
+        if systh == -10:
+            systh = 254
+
+#        s = sys.bwmat.astype(int)
+        conf = self.confusion_measures(ref.bwmat,sys.matrix <= systh,w)
 
         mcc = self.matthews(conf)
         nmm = self.NimbleMaskMetric(conf)
@@ -166,7 +174,7 @@ class maskMetrics:
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def confusion_measures(self,ref,sys,w,th):
+    def confusion_measures(self,r,s,w):
         """
         * Metric: confusion_measures
         * Description: this function calculates the values in the confusion matrix (TP, TN, FP, FN)
@@ -176,17 +184,9 @@ class maskMetrics:
         *     ref: the reference mask object
         *     sys: the system output mask object
         *     w: the weight matrix
-        *     th: the threshold for binarization
         * Output:
         *     dictionary of the TP, TN, FP, and FN areas, and total score region N
         """
-        r = ref.bwmat
-#.astype(int)
-        if th == -10:
-            th = 254
-
-#        s = sys.bwmat.astype(int)
-        s = sys.matrix <= th
 #        x = (r+s)/255.
         mywts = w==1
 #        rpos = cv2.bitwise_and(r==0,mywts)
@@ -203,39 +203,33 @@ class maskMetrics:
 
         return {'TP':tp,'TN':tn,'FP':fp,'FN':fn,'N':n}
 
-    def confusion_mets_apply_iter(self,thresrow):
+    @staticmethod
+    def confusion_mets_apply_iter(thresrow,weighted_vals,weighted_val_counts,ref_const):
         t = thresrow['Threshold']
-        wtd_vals = self.wtd_vals
-        c_wtd_vals = self.c_wtd_vals
-        ref_const = self.ref_const
 
-        tp_idx = wtd_vals <= t
-        tn_idx = (wtd_vals > (t + ref_const*255))
-        fp_idx = (wtd_vals <= (t + ref_const*255)) & (wtd_vals >= ref_const*255)
-        fn_idx = (wtd_vals <= 255) & (wtd_vals > t)
+        tp_idx = weighted_vals <= t
+        tn_idx = (weighted_vals > (t + ref_const*255))
+        fp_idx = (weighted_vals <= (t + ref_const*255)) & (weighted_vals >= ref_const*255)
+        fn_idx = (weighted_vals <= 255) & (weighted_vals > t)
         
-        thresrow['TP'] = c_wtd_vals[tp_idx].sum()
-        thresrow['TN'] = c_wtd_vals[tn_idx].sum()
-        thresrow['FP'] = c_wtd_vals[fp_idx].sum()
-        thresrow['FN'] = c_wtd_vals[fn_idx].sum()
+        thresrow['TP'] = weighted_val_counts[tp_idx].sum()
+        thresrow['TN'] = weighted_val_counts[tn_idx].sum()
+        thresrow['FP'] = weighted_val_counts[fp_idx].sum()
+        thresrow['FN'] = weighted_val_counts[fn_idx].sum()
 
         return thresrow
 
-    def confusion_mets_all_thresholds(self,ref,sys,w):
-        r = ref.bwmat
-        s = sys.matrix
+    #NOTE: both confusion_mets_all_thresholds and confusion_mets_apply_iter are customized to image and video
+    #      pixel values
+    @staticmethod
+    def confusion_mets_all_thresholds(r,s,w=1):
         ref_const = (1 << 8)
         w_const = (1 << 16)
 
         t_list = np.unique(s).tolist()
         t_list = [-1] + t_list
 #        thresMet_fields = ['Reference Mask','System Output Mask','Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','N']
-        thresMets = pd.DataFrame({'Reference Mask':ref.name,
-                                  'System Output Mask':sys.name,
-                                  'Threshold':t_list,
-                                  'NMM':-1.,
-                                  'MCC':0.,
-                                  'BWL1':1.,
+        thresMets = pd.DataFrame({'Threshold':t_list,
                                   'TP':0,
                                   'TN':0,
                                   'FP':0,
@@ -246,20 +240,17 @@ class maskMetrics:
         all_vals,c_all_vals = np.unique(full_composite,return_counts=True)
         c_wtd_vals = c_all_vals[all_vals < w_const]
         wtd_vals = all_vals[all_vals < w_const]
-        self.ref_const = ref_const
-        self.wtd_vals = wtd_vals
-        self.c_wtd_vals = c_wtd_vals
         thresMets['N'] = c_wtd_vals.sum()
-        thresMets = thresMets.apply(self.confusion_mets_apply_iter,axis=1) 
-
-        #want to vectorize computation of the metrics here
-        thresMets['MCC'] = thresMets.apply(self.matthews,axis=1)
-        thresMets['NMM'] = thresMets.apply(self.NimbleMaskMetric,axis=1)
-        thresMets['BWL1'] = thresMets.apply(self.binaryWeightedL1,axis=1)
+        thresMets = thresMets.apply(maskMetrics.confusion_mets_apply_iter,
+                                    weighted_vals=wtd_vals,
+                                    weighted_val_counts=c_wtd_vals,
+                                    ref_const=ref_const,
+                                    axis=1) 
 
         return thresMets
 
-    def NimbleMaskMetric(self,conf,c=-1):
+    @staticmethod
+    def NimbleMaskMetric(conf,c=-1):
         """
         * Metric: NMM
         * Description: this function calculates the system mask score
@@ -282,7 +273,8 @@ class maskMetrics:
         fp = conf['FP']
         return max(c,float(tp-fn-fp)/Rgt)
 
-    def matthews(self,conf):
+    @staticmethod
+    def matthews(conf):
         """
         * Metric: MCC (Matthews correlation coefficient)
         * Description: this function calculates the system mask score
@@ -338,7 +330,8 @@ class maskMetrics:
         #ham = sum([abs(rmat[i] - mask[i])/255. for i,val in np.ndenumerate(rmat)])/(rmat.shape[0]*rmat.shape[1]) #xor the r and s
         return ham
 
-    def binaryWeightedL1(self,conf):
+    @staticmethod
+    def binaryWeightedL1(conf):
         """
         * Metric: binary Weighted L1
         * Description: this function calculates the weighted L1 loss
@@ -502,7 +495,12 @@ class maskMetrics:
         #sys.binarize(0)
         self.myprintbuffer = myprintbuffer
 #        thresMets = thresMets.apply(self.assign_mets,axis=1,reduce=False)
-        thresMets = self.confusion_mets_all_thresholds(ref,sys,w)
+        thresMets = self.confusion_mets_all_thresholds(ref.bwmat,sys.matrix,w)
+        thresMets['Reference Mask'] = ref.name
+        thresMets['System Output Mask'] = sys.name 
+        thresMets['MCC'] = thresMets.apply(self.matthews,axis=1)
+        thresMets['NMM'] = thresMets.apply(self.NimbleMaskMetric,axis=1)
+        thresMets['BWL1'] = thresMets.apply(self.binaryWeightedL1,axis=1)
         thresMets['BNS'] = btotal
         thresMets['SNS'] = stotal
         thresMets['PNS'] = ptotal
@@ -513,12 +511,16 @@ class maskMetrics:
         #generate ROC dataframe for image, preferably from existing library.
         #TPR = TP/(TP + FN); FPR = FP/(FP + TN)
 
-        #no need for roc curve if any of the denominator is zero
-        nonNullRows = thresMets.query("(TP + FN > 0) or (FP + TN > 0)")
+        #no need for roc curve if any of the denominators is zero
+        nonNullRows = thresMets.query("(TP + FN > 0) and (FP + TN > 0)")
 
         #pick max threshold for max MCC
         columns = ['Threshold','NMM','MCC','BWL1','TP','TN','FP','FN','BNS','SNS','PNS','N']
 
+        if not self.ref.regionIsPresent():
+            thresMets.loc[:,columns] = np.nan
+
+        #set all pixels to np.nan if there exists no scoreable region in the reference mask matrix
         if nonNullRows.shape[0] > 0:
             tmax = thresMets['Threshold'].iloc[thresMets['MCC'].idxmax()]
             maxMets = thresMets.query("Threshold=={}".format(tmax))
@@ -562,41 +564,48 @@ class maskMetrics:
         if nullRocRows.shape[0] < thresMets.shape[0]:
 #                thresMets.set_value(nonNullRocRows.index,'TPR',nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN']))
 #                thresMets.set_value(nonNullRocRows.index,'FPR',nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN']))
-            thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP']/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
-            thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP']/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
+            thresMets.at[nonNullRocRows.index,'TPR'] = nonNullRocRows['TP'].astype(float)/(nonNullRocRows['TP'] + nonNullRocRows['FN'])
+            thresMets.at[nonNullRocRows.index,'FPR'] = nonNullRocRows['FP'].astype(float)/(nonNullRocRows['FP'] + nonNullRocRows['TN'])
 
         #set aside for numeric threshold. If threshold is nan, set everything to 0 or nan as appropriate, make the binarized system mask a whitemask2.png,
         #and pass to HTML accordingly
         myameas = {} #dictionary of actual metrics
         if np.isnan(threshold):
             metrics = thresMets.iloc[0]
-            all_metrics['GWL1'] = np.nan
-            all_metrics['AUC'] = np.nan
-            all_metrics['EER'] = np.nan
+            for m in ["GWL1","AUC","EER"]:
+                all_metrics[m] = np.nan
+                thresMets.loc[:,m] = np.nan
 
             if sbin >= -1:
                 all_metrics['ActualThreshold'] = sbin
 
+            pix_template = "Pixel{}"
             for mes in ['BNS','SNS','PNS','N']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(mes))
-                all_metrics[''.join(['Pixel',mes])] = metrics[mes]
+                all_metrics[pix_template.format(mes)] = metrics[mes]
 
+            opt_pix_template = "OptimumPixel{}"
+            act_pix_template = "ActualPixel{}"
             for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(mes))
-                all_metrics[''.join(['OptimumPixel',mes])] = metrics[mes]
+                all_metrics[opt_pix_template.format(mes)] = metrics[mes]
                 if sbin >= -1:
-                    all_metrics[''.join(['ActualPixel',mes])] = metrics[mes]
+                    all_metrics[act_pix_template.format(mes)] = metrics[mes]
 
+            opt_template = "Optimum{}"
+            act_template = "Actual{}"
             for met in ['NMM','MCC','BWL1']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(met))
-                all_metrics[''.join(['Optimum',met])] = metrics[met]
+                all_metrics[opt_template.format(met)] = metrics[met]
                 if sbin >= -1:
-                    all_metrics[''.join(['Actual',met])] = metrics[met]
+                    all_metrics[act_template.format(met)] = metrics[met]
         else:
+            #set all pixels to np.nan if there exists no scoreable region in the reference mask matrix
             metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
+
             mets = metrics[['NMM','MCC','BWL1']].to_dict()
             mymeas = metrics[['TP','TN','FP','FN','N','BNS','SNS','PNS']].to_dict()
             rocvalues = thresMets[['TPR','FPR']]
@@ -616,10 +625,11 @@ class maskMetrics:
             all_metrics['AUC'] = myauc
             all_metrics['EER'] = myeer
 
+            pix_template = "Pixel{}"
             for mes in ['BNS','SNS','PNS','N']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(mes))
-                all_metrics[''.join(['Pixel',mes])] = mymeas[mes]
+                all_metrics[pix_template.format(mes)] = mymeas[mes]
 
             if sbin >= -1:
                 #threshold table lookup
@@ -634,25 +644,32 @@ class maskMetrics:
 #                myameas = self.getMetrics(self.ref,self.sys,w,sbin,myprintbuffer)
                 all_metrics['ActualThreshold'] = sbin
 
+            opt_template = "Optimum{}"
+            act_template = "Actual{}"
             mets['GWL1'] = maskMetrics.grayscaleWeightedL1(self.ref,self.sys,w)
             all_metrics['GWL1'] = myround(mets['GWL1'],precision,round_modes)
             for met in ['NMM','MCC','BWL1']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(met))
 #                    print("Optimum{}: {}, strlen: {}".format(met,myround(mets[met],precision,truncate),len(str(myround(mets[met],precision,truncate))))) # debug flag
-                all_metrics['Optimum%s' % met] = myround(mets[met],precision,round_modes)
+                all_metrics[opt_template.format(met)] = myround(mets[met],precision,round_modes)
                 if sbin >= -1:
                     #record Actual metrics
-                    actual_met_name = 'Actual%s' % met
+                    actual_met_name = act_template.format(met)
                     actual_met = myround(myameas[met],precision,round_modes)
                     all_metrics[actual_met_name] = actual_met
-                    mets[actual_met_name] = actual_met
+#                    mets[actual_met_name] = actual_met
 
+            opt_pix_template = "OptimumPixel{}"
+            act_pix_template = "ActualPixel{}"
             for mes in ['TP','TN','FP','FN']:#,'BNS','SNS','PNS']:
                 if myprintbuffer is not 0:
                     myprintbuffer.append("Setting value for {}...".format(mes))
-                all_metrics[''.join(['OptimumPixel',mes])] = mymeas[mes]
+                all_metrics[opt_pix_template.format(mes)] = mymeas[mes]
                 if sbin >= -1:
-                    all_metrics[''.join(['ActualPixel',mes])] = myameas[mes]
+                    all_metrics[act_pix_template.format(mes)] = myameas[mes]
+
+        for m in ["GWL1","AUC","EER"]:
+            thresMets.loc[:,m] = all_metrics[m]
 
         return all_metrics,thresMets

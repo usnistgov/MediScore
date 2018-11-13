@@ -89,7 +89,8 @@ def getKern(kernopt,size):
         #45 degree line, or identity matrix
         kern=np.eye(size,dtype=np.uint8)
     else:
-        print("The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
+        print("ERROR: The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
+        return -1
     return kern
 
 #define erode and dilate functions here.
@@ -164,14 +165,13 @@ def count_bits(n):
             if npc & 1 > 0:
                 c += 1
             npc >>= 1
-
     return c
 
-class mask(object):
+class image(object):
     """
-    This class is used to read in and hold the system mask and its relevant parameters.
+    This class is used to read in and hold images.
     """
-    def __init__(self,n,readopt=0):
+    def __init__(self,n,readopt=1):
         """
         Constructor
 
@@ -203,10 +203,9 @@ class mask(object):
             masktype = 'System'
             if isinstance(self,refmask) or isinstance(self,refmask_color):
                 masktype = 'Reference'
-            print("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
+            raise IOError("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
         else:
-            self.is_multi_layer = self.matrix.ndim == 3
-        self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
+            self.shape = self.matrix.shape
 
     def get_dims(self):
         """
@@ -225,6 +224,23 @@ class mask(object):
         mycopy = copy.deepcopy(self)
         mycopy.name = self.name[-4:] + '-2.png'
         return mycopy
+
+class mask(image):
+    """
+    This class is used to read in and hold the system mask and its relevant parameters.
+    """
+    def __init__(self,n,readopt=0):
+        """
+        Constructor
+
+        Attributes:
+        - n: the name of the mask file
+        - readopt: the option to read in the reference mask file. Choose 1 to read in
+                   as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
+                   single-channel grayscale
+        """
+        super(mask,self).__init__(n,readopt)
+        self.bwmat = 0 #initialize bw matrix to zero. Substitute as necessary.
 
     def bw(self,thres):
         """
@@ -312,21 +328,6 @@ class mask(object):
         cv2.imwrite(colorPNGname,rbinmat3,params)
         return rbinmat3
 
-    def getUniqueValues(self):
-        """
-        * Description: stacks values in matrix to return unique values
-        """
-        if self.is_multi_layer:
-            singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
-            const_factor = 1
-            for l in range(self.matrix.shape[2]):
-                const_factor = 1 << 8*l
-                singlematrix = singlematrix + const_factor*self.matrix[:,:,l]
-            unique_px = np.unique(singlematrix)
-        else:
-            unique_px = np.unique(self.matrix)
-        return unique_px
-
     def overlay(self,imgName,alpha=0.7):
         """
         * Description: overlays the mask on top of the grayscale image. If you want a color mask,
@@ -339,9 +340,9 @@ class mask(object):
         """
         mymat = self.matrix
         gImg = cv2.imread(imgName,0)
-        gImg = np.dstack((gImg,gImg,gImg))
-        if not self.is_multi_layer:
-            mymat = np.dstack((mymat,mymat,mymat))
+        gImg = np.dstack(gImg,gImg,gImg)
+        if len(self.matrix.shape)==2:
+            mymat = np.dstack([mymat,mymat,mymat])
 
         overmat = cv2.addWeighted(mymat,alpha,gImg,1-alpha,0)
         return overmat
@@ -424,20 +425,19 @@ class mask(object):
         *     pns: pixel-based no-score region
         """
         dims = self.get_dims()
-        pns = np.ones((dims[0],dims[1])).astype(np.uint8)
         px = -1
         try:
             if pixelvalue == '':
-                return pns
+                return np.ones((dims[0],dims[1])).astype(np.uint8)
             else:
                 px = int(pixelvalue)
         except ValueError:
             print("The value {} cannot be converted to an integer. Please check your system output.".format(pixelvalue))
             return 1
-        pns[self.matrix==px] = 0
-        return pns
+        return (self.matrix != px).astype(np.uint8)
 
     #save mask to file
+    #TODO: should be in image object with less restrictions.
     def save(self,fname,compression=0,th=-1):
         """
         * Description: this function saves the image under a specified file name
@@ -452,9 +452,7 @@ class mask(object):
         if fname[-4:] != '.png':
             print("You should only save {} as a png. Remember to add on the prefix.".format(self.name))
             return 1
-        params=list()
-        params.append(png_compress_const)
-        params.append(compression)
+        params = [png_compress_const,compression]
         outmat = self.matrix
         if th >= 0:
             self.binarize(th)
@@ -468,7 +466,7 @@ class refmask(mask):
     It inherits from the (system output) mask above.
     """
 #    def __init__(self,n,readopt=1,cs=[],purposes='all'):
-    def __init__(self,n,readopt=1,jData=0,mode=0):
+    def __init__(self,n,readopt=1):
         """
         Constructor
 
@@ -477,7 +475,6 @@ class refmask(mask):
         - readopt: the option to read in the reference mask file. Choose 1 to read in
                    as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
                    single-channel grayscale
-        - jData: the journal data needed for the reference mask to select manipulated regions
         - mode: evaluation mode. 0 for manipulation, 1 for splice on probe, 2 for splice on donor.
         """
         super(refmask,self).__init__(n,readopt)
@@ -486,24 +483,12 @@ class refmask(mask):
 #        self.bitlist=0
         self.bitplanes=0
         self.is_multi_layer = self.matrix.ndim == 3
+        self.journalData = 0
         if not self.is_multi_layer:
             self.matrix = np.uint8(self.matrix)
 
+    def insert_journal_data(self,jData=0,evalcol="Evaluated"):
         if jData is not 0:
-#            self.colors = [[0,0,0]]
-#            self.purposes = ['add']
-#        else:
-#            if (mode == 2) or (mode == 1):
-#                #TODO: temporary measure until splice task supports individual tasks again
-#                self.colors = [[0,0,0]]
-#                self.purposes = ['add']
-#            else:
-            evalcol='Evaluated'
-            if mode==1:
-                evalcol='ProbeEvaluated'
-            elif mode==2:
-                evalcol='DonorEvaluated'
-
             #sort in sequence first
             self.journalData = jData.sort_values("Sequence",ascending=False)
 
@@ -519,7 +504,6 @@ class refmask(mask):
                 bitmask = np.zeros((n_layers,),dtype=np.uint8)
                 trial_bitlist = all_bitlist[:]
                 for b in trial_bitlist:
-#                    layer = int(math.log(b,2))//8
                     layer = (int(b) - 1)//8
                     if layer > n_layers - 1:
                         print("The bitplane {} at layer {} is not accessible from the {} layers in the reference mask {}. Skipping it.".format(b,layer,n_layers,n))
@@ -551,14 +535,41 @@ class refmask(mask):
                 self.bitplanes[i] = int(b)
 #                self.bitlist[i] = 1 << (int(b) - 1)
 
+            #TODO: update journal data by setting "N" to absent bits marked "Y" for annotation purposes.
+
 #            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
 #            purposes = list(jData['Purpose'])
 #            purposes_unique = []
 #            [purposes_unique.append(p) for p in purposes if p not in purposes_unique]
 #            self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
 #            self.purposes = purposes
+
+    def has_journal_data(self):
+        if 'journalData' in vars(self):
+            if self.journalData is not 0:
+                return True
+        return False
+
+    def journal_data_to_csv(self,fname,sep="|"):
+        if self.has_journal_data():
+            self.journalData.to_csv(fname,sep=sep,index=False)
         else:
-            self.journalData = 0
+            print("Warning: No journal data to output for mask {}.".format(self.name))
+
+    def getUniqueValues(self):
+        """
+        * Description: stacks values in matrix to return unique values
+        """
+        if self.is_multi_layer:
+            singlematrix = np.zeros(self.get_dims(),dtype=np.uint8)
+            const_factor = 1
+            for l in range(self.matrix.shape[2]):
+                const_factor = 1 << 8*l
+                singlematrix = singlematrix + const_factor*self.matrix[:,:,l]
+            unique_px = np.unique(singlematrix)
+        else:
+            unique_px = np.unique(self.matrix)
+        return unique_px
 
     def regionIsPresent(self):
         """
@@ -878,6 +889,7 @@ class refmask(mask):
 #            full_bitstack += c
 #        full_bitstack = np.uint64(full_bitstack) #type-safety
 
+        #get the region to be scored
         if self.is_multi_layer:
             n_layers = mymat.shape[2]
             layers = range(n_layers)
@@ -915,6 +927,7 @@ class refmask(mask):
         #edit for bit masks
         mybin = np.zeros((dims[0],dims[1]),dtype=bool)
 
+        #get the non-scored regions
         if self.is_multi_layer:
             full_notstack = np.zeros((n_layers,),dtype=np.uint8)
             for c in notcolors:
@@ -949,7 +962,7 @@ class refmask_color(mask):
     It inherits from the (system output) mask above.
     """
 #    def __init__(self,n,readopt=1,cs=[],purposes='all'):
-    def __init__(self,n,readopt=1,jData=0,mode=0):
+    def __init__(self,n,readopt=1):
         """
         Constructor
 
@@ -966,22 +979,24 @@ class refmask_color(mask):
         super(refmask_color,self).__init__(n,readopt)
         #store colors and corresponding type
         rmat = self.matrix
-        self.mode = mode
         if len(rmat.shape) == 3:
             self.aggmat = 65536*rmat[:,:,0] + 256*rmat[:,:,1] + rmat[:,:,2]
         else:
             self.aggmat = self.matrix
+        self.journalData = 0
+
+    def insert_journal_data(self,jData=0,evalcol="Evaluated"):
         if jData is 0:
             self.colors = [[0,0,0]]
             self.aggcolors = [0]
             self.purposes = ['add']
         else:
-            if (mode == 2) or (mode == 1):
-                #NOTE: temporary measure until splice task supports individual tasks again
-                self.colors = [[0,0,0]]
-                self.aggcolors = [0]
-                self.purposes = ['add']
-            else:
+            #sort in sequence first
+            self.journalData = jData
+            if "Sequence" in self.journalData.columns.values.tolist():
+                self.journalData = self.journalData.sort_values("Sequence",ascending=False)
+
+            if evalcol == "Evaluated":
                 filteredJournal = jData.query("Evaluated=='Y'")
                 colorlist = filteredJournal['Color'].tolist()
                 colorlist = list(filter(lambda a: a != '',colorlist))
@@ -992,6 +1007,35 @@ class refmask_color(mask):
                 self.colors = [[int(p) for p in c.split(' ')[::-1]] for c in colorlist]
                 self.aggcolors = [65536*c[0] + 256*c[1] + c[2] for c in self.colors]
                 self.purposes = purposes
+            else:
+                #NOTE: temporary measure until splice task supports individual tasks again
+                self.colors = [[0,0,0]]
+                self.aggcolors = [0]
+                self.purposes = ['add']
+            self.update_journal_data(evalcol) #TODO: only want to update for non-null queries
+
+    def has_journal_data(self):
+        if 'journalData' in vars(self):
+            if self.journalData is not 0:
+                return True
+        return False
+
+    #if color in the color list is not in self.matrix, 
+    def update_journal_data(self,evalcol):
+        if self.has_journal_data():
+            agg_uniq = np.unique(self.aggmat)
+            colorlist = self.journalData["Color"].tolist()
+            for agc in self.aggcolors:
+                if agc not in agg_uniq:
+                    color = "{} {} {}".format(agc % 256,(agc % 65536)//256,agc//65536)
+                    if color in colorlist:
+                        self.journalData.loc[self.journalData["Color"] == color,evalcol] = "N"
+
+    def journal_data_to_csv(self,fname,sep="|"):
+        if self.has_journal_data():
+            self.journalData.to_csv(fname,sep=sep,index=False)
+        else:
+            print("Warning: No journal data to output for mask {}.".format(self.name))
 
     def regionIsPresent(self):
         #return True if a scoreable region is present. False if otherwise.
@@ -1004,7 +1048,7 @@ class refmask_color(mask):
                 return True
         return False
 
-    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern):
+    def aggregateNoScore(self,erodeKernSize,dilateKernSize,distractionKernSize,kern,mode=0):
         """
         * Description: this function calculates and generates the aggregate no score zone of the mask
                        by performing a bitwise and (&) on the elements of the boundaryNoScoreRegion and the
@@ -1019,7 +1063,7 @@ class refmask_color(mask):
         wimg = baseNoScore
         distractionNoScore = np.ones(self.get_dims(),dtype=np.uint8)
 
-        if (self.purposes is not 'all') and (self.mode!=1): #case 1 treat other no-scores as white regions
+        if (self.purposes is not 'all') and (mode!=1): #case 1 treat other no-scores as white regions
             distractionNoScore = self.unselectedNoScoreRegion(erodeKernSize,distractionKernSize,kern)
             wimg = cv2.bitwise_and(baseNoScore,distractionNoScore)
 

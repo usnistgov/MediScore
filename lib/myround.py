@@ -11,7 +11,7 @@ Description: a function used to round numbers. A list of options may be provided
 def myround(n,precision,mode=[]):
     if isinstance(n,str):
         return n
-
+    
     if n is None:
         return np.nan
     elif np.isnan(n):

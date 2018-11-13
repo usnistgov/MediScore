@@ -109,13 +109,15 @@ def plotROC(mydets,plotname,plot_title,outdir):
     myroc = myRender.plot_curve()
 
     #save roc curve in the output. Automatically closes the plot.
-    #TODO: error with savefig. RuntimeError involving plots. Hack around it more elegantly.
+    count = 0
     while True:
+        #To deal with RuntimeError involving plots.
         try:
             myroc.savefig(os.path.join(outdir,'.'.join([plotname,'pdf'])), bbox_inches='tight')
             break
         except RuntimeError:
-            pass
+            count += 1
+            print("Attempt {} failed. Attempting to save figure again...".format(count))
 
     return myroc
 
@@ -328,7 +330,6 @@ class maskMetricRunner:
         task = self.task
         evalcol = self.evalcol
         verbose = self.verbose
-        html = self.html
         precision = self.precision
         erodeKernSize = self.erodeKernSize
         dilateKernSize = self.dilateKernSize
@@ -382,6 +383,7 @@ class maskMetricRunner:
                 return maskRow
             index_row = index_row.iloc[0]
 
+            whiteRefMaskName = ''
             iswhiteref = refMaskName in [None,'',np.nan]
             if iswhiteref:
                 myprintbuffer.append("Empty reference {} mask file.".format(mymode.lower()))
@@ -389,14 +391,16 @@ class maskMetricRunner:
                 if not self.usejpeg2000:
                     refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.png'))
                     whitemask = 255*np.ones((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
-                    cv2.imwrite(refMaskName,whitemask)
+                    cv2.imwrite(refMaskName,whitemask,[16,0])
                 else:
                     refMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask_ref.jp2'))
                     whitemask = np.zeros((index_row[probe_height_name],index_row[probe_width_name]),dtype=np.uint8)
                     glymur.Jp2k(refMaskName,whitemask)
 #                continue
+                whiteRefMaskName = refMaskName
 
-            iswhitesys = sysMaskName in [None,'',np.nan]
+            whiteSysMaskName = ''
+            iswhitesys = sysMaskName in [None,'',np.nan]:
             if iswhitesys:
                 myprintbuffer.append("Empty system {} mask file.".format(mymode.lower()))
                 #save white matrix as mask in question. Dependent on index file dimensions?
@@ -404,14 +408,14 @@ class maskMetricRunner:
                 sysMaskName = os.path.abspath(os.path.join(subOutRoot,'whitemask.png'))
                 cv2.imwrite(sysMaskName,whitemask)
 #                continue
+                whiteSysMaskName = sysMaskName
 
             rImg,sImg = self.readMasks(refMaskName,sysMaskName,manipFileID,subOutRoot,myprintbuffer)
 
-            #clean up if not html
             if iswhiteref and not self.html:
-                os.system('rm {}'.format(refMaskName))
+                os.system("rm {}".format(whiteRefMaskName))
             if iswhitesys and not self.html:
-                os.system('rm {}'.format(sysMaskName))
+                os.system("rm {}".format(whiteSysMaskName))
 
             if (rImg is 0) and (sImg is 0):
                 #no masks detected with score-able regions, so set to not scored. Use first if need to modify here.
@@ -437,7 +441,8 @@ class maskMetricRunner:
             sbin_name = ''
             if self.sbin >= -1:
                 sbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-actual_bin.png')
-                sImg.save(sbin_name,th=self.sbin)
+                if self.html:
+                    sImg.save(sbin_name,th=self.sbin)
 
             #save the image separately for html and further review. Use that in the html report
             myprintbuffer.append("Generating no-score zones...")
@@ -488,7 +493,7 @@ class maskMetricRunner:
             thresMets['TPR'] = 0.
             thresMets['FPR'] = 0.
 
-            genROC = True
+            genROC = False
             nullRocQuery = "(TP + FN == 0) or (FP + TN == 0)"
             nonNullRocQuery = "(TP + FN > 0) and (FP + TN > 0)"
             nullRocRows = thresMets.query(nullRocQuery)
@@ -511,8 +516,7 @@ class maskMetricRunner:
             if np.isnan(threshold):
                 sImg.bwmat = 255*np.ones(sImg.get_dims(),dtype=np.uint8)
                 optbin_name = os.path.join(subOutRoot,'whitemask2.png')
-                if self.html:
-                    sImg.save(optbin_name)
+                sImg.save(optbin_name)
                 metrics = thresMets.iloc[0]
                 mets = metrics[['NMM','MCC','BWL1']].to_dict()
                 mets['GWL1'] = np.nan
@@ -540,8 +544,7 @@ class maskMetricRunner:
             else:
                 sImg.binarize(threshold) 
                 optbin_name = os.path.join(subOutRoot,sImg.name.split('/')[-1][:-4] + '-bin.png')
-                if self.html:
-                    sImg.save(optbin_name,th=threshold)
+                sImg.save(optbin_name,th=threshold)
     
                 metrics = thresMets.query('Threshold=={}'.format(threshold)).iloc[0]
                 mets = metrics[['NMM','MCC','BWL1']].to_dict()
@@ -567,7 +570,7 @@ class maskMetricRunner:
                 maskRow['AUC'] = myauc
                 maskRow['EER'] = myeer
         
-                if genROC and self.html:
+                if genROC:
                     mydets = detPackage(tpr,
                                         fpr,
                                         1,
@@ -575,8 +578,9 @@ class maskMetricRunner:
                                         myauc,
                                         mymeas['TP'] + mymeas['FN'],
                                         mymeas['FP'] + mymeas['TN'])
-                
-                    myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
+                    
+                    if self.html:
+                        myroc = plotROC(mydets,'roc',' '.join(['ROC of',maskRow['ProbeFileID']]),subOutRoot)
     #            if len(thresMets) == 1:
     #                thresMets='' #to minimize redundancy
     
@@ -676,6 +680,47 @@ class maskMetricRunner:
                     print(e)
                 raise  #debug assistant
             return maskRow
+
+    def genROCs(self,scoredf,outroot,task,mode):
+        #generates the ROC for each row
+        scoredf.apply(self.genROC,axis=1,reduce=False,outroot=outroot,task=task,mode=mode)
+        return scoredf
+
+    def genROC(self,scorerow,outroot,task,mode):
+        #generate the directory
+        if mode == 2:
+            id_field = 'DonorFileID'
+            mymode = 'Donor'
+        else:
+            id_field = 'ProbeFileID'
+            mymode = 'Probe'
+        
+        subOutRoot = self.getSubOutRoot(outroot,task,mymode,scorerow)
+        file_id = scorerow[id_field]
+        if np.isnan(scorerow['OptimumThreshold']):
+            return scorerow
+
+        #get thresMets form dictionary of dataframes
+        try:
+            thresMets = self.thresscores[file_id]
+            tmets = thresMets.iloc[0]
+        except:
+            return scorerow
+
+        #get tpr,fpr from the whole dataframe
+        rocvalues = thresMets[['TPR','FPR']]
+        rocvalues = rocvalues.sort_values(by=['FPR','TPR'],ascending=[True,True]).reset_index(drop=True)
+
+        mydets = detPackage(rocvalues['TPR'],
+                            rocvalues['FPR'],
+                            1,
+                            0,
+                            scorerow['AUC'],
+                            tmets['TP'] + tmets['FN'],
+                            tmets['FP'] + tmets['TN'])
+    
+        plotROC(mydets,'roc',' '.join(['ROC of',file_id]),subOutRoot)
+        return scorerow
 
     def scoreMoreMasks(self,maskData):
         return maskData.apply(self.scoreOneMask,axis=1,reduce=False)
@@ -794,6 +839,7 @@ class maskMetricRunner:
                     if self.mode == 2:
                         plot_name = '_'.join([roc_pfx.lower(),'average_roc_donor'])
                         plot_title = ' '.join(['Donor',roc_pfx,'Average ROC'])
+
                 if self.html:
                     myroc = plotROC(mydets,plot_name,plot_title,self.outputRoot)
             else:
@@ -1002,7 +1048,6 @@ class maskMetricRunner:
         self.noScorePixel = noScorePixel
         self.kern = kern
         self.verbose = verbose
-        self.html = html
         self.precision = precision
         self.truncate = params.truncate
         self.outputRoot = outputRoot
@@ -1019,6 +1064,8 @@ class maskMetricRunner:
 #            if verbose: print("Scoring {} mask {} out of {}...".format(mymode.lower(),i+1,nrow))
 #            scoreMask(row)
 
+        if self.html:
+            self.genROCs(df,outputRoot,task,self.mode)
         #print all error output at very end and exit (1) if failed at any iteration of loop
         if len(self.errlist) > 1:
             exit(1)

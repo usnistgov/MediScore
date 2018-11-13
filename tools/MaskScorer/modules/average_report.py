@@ -29,11 +29,11 @@ def is_number(n):
 
 #TODO: turn this into an object
 
-def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outroot_and_pfx,optout=False,precision=16,round_modes=['sd']):
-    if task == 'manipulation':
+def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,query,outroot_and_pfx,optout=False,precision=16,round_modes=['sd']):
+    if task in ['manipulation','camera']:
         #TODO: expand to thresholds and the like?
-        primary_met_absent = 'OptimumMCC' not in metrics
         primary_met = 'OptimumMCC'
+        primary_met_absent = primary_met not in metrics
     elif task == 'splice':
         primary_met_absent = ('pOptimumMCC' not in metrics) or ('dOptimumMCC' not in metrics)
         primary_met = '(pOptimumMCC,dOptimumMCC)'
@@ -48,7 +48,7 @@ def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outr
     df_heads = score_df.columns.values.tolist()
     constant_mets = {}
     for m in constant_metrics:
-        constant_mets[m] = myround(score_df[m].iloc[0],precision,round_modes) if score_df.shape[0] > 0 else ''
+        constant_mets[m] = myround(score_df[m].iloc[0],precision,round_modes) if score_df.shape[0] > 0 else np.nan
 
     optout_mode = 0
     if optout:
@@ -56,17 +56,17 @@ def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outr
 
     if task == 'manipulation':
         scorequery = "Scored=='Y'"
-        lastcols = ['TRR','totalTrials','ScoreableTrials','totalOptIn','totalOptOut','optOutScoring']
+        lastcols = ['TRR','totalTrials','ScoreableTrials','totalTargets','ScoreableTargets','totalOptIn','totalOptOut','optOutScoring']
     elif task == 'splice':
         scorequery = "(ProbeScored=='Y') or (DonorScored=='Y')"
-        lastcols = ['pTRR','dTRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials']
+        lastcols = ['pTRR','dTRR','totalTrials','ScoreableProbeTrials','ScoreableDonorTrials',
+                    'totalTargets','ScoreableProbeTargets','ScoreableDonorTargets']
         oo_cols = ['totalProbeOptIn','totalProbeOptOut','totalDonorOptIn','totalDonorOptOut']
         lastcols.extend(oo_cols)
         lastcols.append('optOutScoring')
 
-    total_trials = score_df.shape[0]
+    #TODO: this here is target proportions. The total (target) probes with scores / total target probes.
     scoredonly_df = score_df.query(scorequery)
-    scoreable_trials = scoredonly_df.shape[0]
     #TODO: Should TRR be for only the average queried or should it be a metric for the perimage dataset?
     #TODO: Fix the implementation of the partitioner? Recompute TRR in there?
     my_partition = pt.Partition(task,scoredonly_df,query,factor_mode,metrics)
@@ -79,7 +79,7 @@ def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outr
             mets_and_stddev.append("stddev_%s" % m)
         all_cols = first_cols + mets_and_stddev + constant_metrics + lastcols
         empty_df = pd.DataFrame(columns=all_cols)
-        for m in constant_metrics:
+        for m in constant_mets:
             empty_df[m] = constant_mets[m]
         return empty_df
 
@@ -88,7 +88,7 @@ def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outr
         #a_df get the headers of temp_df and tack entries on one after the other
         a_df = pd.DataFrame(columns=df_list[0].columns)
         for i,temp_df in enumerate(df_list):
-            temp_df = postprocess_avg_report(task,temp_df,score_df,metrics,constant_mets,lastcols,optout,precision,round_modes)
+            temp_df = postprocess_avg_report(task,temp_df,score_df,sys_df,metrics,constant_mets,lastcols,optout,precision,round_modes)
             if temp_df is 0:
                 continue
             temp_df.to_csv(path_or_buf="{}_{}.csv".format(os.path.join(outroot,'_'.join([prefix,'mask_scores'])),i),sep="|",index=False)
@@ -96,22 +96,25 @@ def average_report(task,score_df,metrics,constant_metrics,factor_mode,query,outr
     else:
         #one data frame
         a_df = df_list[0]
-        a_df = postprocess_avg_report(task,a_df,score_df,metrics,constant_mets,lastcols,optout,precision,round_modes)
+        a_df = postprocess_avg_report(task,a_df,score_df,sys_df,metrics,constant_mets,lastcols,optout,precision,round_modes)
         if a_df is not 0:
             a_df.to_csv(path_or_buf=os.path.join(outroot,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
         
     return a_df
 
 #postprocessing with TRR and misc optOut information after averaging
-def postprocess_avg_report(task,a_df,score_df,metrics,constant_mets,lastcols,optout=False,precision=16,round_modes=['sd']):
+def postprocess_avg_report(task,a_df,score_df,sys_df,metrics,constant_mets,lastcols,optout=False,precision=16,round_modes=['sd']):
     if a_df is 0:
         return 0
 
     for m in constant_mets:
         a_df[m] = constant_mets[m]
 
-    total_trials = score_df.shape[0]
+    total_targets = score_df.shape[0]
+    a_df['totalTargets'] = total_targets
+    total_trials = sys_df.shape[0]
     a_df['totalTrials'] = total_trials
+    
     a_df_heads = a_df.columns.values.tolist()
     
     df_heads = score_df.columns.values.tolist()
@@ -128,7 +131,7 @@ def postprocess_avg_report(task,a_df,score_df,metrics,constant_mets,lastcols,opt
         pfx_set = ['']
     elif task == 'splice':
         pfx_set = ['p','d']
-        
+    
     for pfx in pfx_set:
         opt_t = '%sOptimumThreshold' % pfx
         max_t = '%sMaximumThreshold' % pfx
@@ -162,13 +165,15 @@ def postprocess_avg_report(task,a_df,score_df,metrics,constant_mets,lastcols,opt
         elif pfx == '':
             loctype = ''
 
-        n_optout = score_df.query("{}=={}".format(score_oo_cols,undesirables)).shape[0]
-        scoreable_trials = score_df.query("({}Scored=='Y') and ({}OptimumMCC!='')".format(loctype,pfx)).shape[0]
+        n_optout = sys_df.query("{}=={}".format(score_oo_cols,undesirables)).shape[0]
+        scoreable_targets = score_df.query("({}Scored=='Y') and ({}OptimumMCC!='')".format(loctype,pfx)).shape[0]
+        scoreable_trials = score_df.query("{} != {}".format(score_oo_cols,undesirables)).shape[0]
+        a_df['Scoreable%sTargets' % loctype] = scoreable_targets
         a_df['Scoreable%sTrials' % loctype] = scoreable_trials
-        a_df['%sTRR' % pfx] = float(scoreable_trials)/total_trials if total_trials > 0 else np.nan
+        a_df['%sTRR' % pfx] = float(scoreable_trials)/total_trials if total_targets > 0 else np.nan
         a_df['total%sOptOut' % loctype ] = n_optout
         a_df['total%sOptIn' % loctype ] = total_trials - n_optout
-    a_df = fields2ints(a_df,['totalTrials','Scoreable%sTrials' % loctype,'total%sOptOut' % loctype,'total%sOptIn' % loctype])
+        a_df = fields2ints(a_df,['totalTrials','Scoreable%sTrials' % loctype,'totalTargets','Scoreable%sTargets' % loctype,'total%sOptOut' % loctype,'total%sOptIn' % loctype])
 
     a_df['optOutScoring'] = 'Y' if optout else 'N'
 
@@ -188,4 +193,12 @@ def postprocess_avg_report(task,a_df,score_df,metrics,constant_mets,lastcols,opt
 if __name__ == '__main__':
     import argparse
     #TODO: then pass in the arguments
-    #TODO: reference and query arguments
+    #TODO: perimage df
+    #TODO: sys_df
+    #TODO: metrics to average over
+    #TODO: metrics to take constant (will not be checked.)
+    #TODO: three query options
+    #TODO: outRoot
+    #TODO: optout
+    #TODO: precision
+    
