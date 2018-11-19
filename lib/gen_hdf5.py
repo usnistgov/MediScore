@@ -14,9 +14,9 @@ from math import ceil
 vidprobe_sample_dir=".."
 ref_mask_fname = os.path.join(vidprobe_sample_dir,"0c5fc5f508229a3f47e589b18acefc25/duplicated_orange_dude_Final_added_colored_mask_0.0.hdf5")
 #"0c5fc5f508229a3f47e589b18acefc25/stabilized_duplicated_orange_dude_mask_0.0.hdf5"
-hdf5_lib_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),"lib")
-sys.path.append(hdf5_lib_dir)
-from masks import erode,dilate,getKern
+#hdf5_lib_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),"lib")
+#sys.path.append(hdf5_lib_dir)
+from masks import getKern
 from hdf5_lib import open_video
 from video_masks import video_mask
 
@@ -60,6 +60,7 @@ def gen_mask(fname,frame_shape,frame_count,path_to_mask="masks/masks",value=255,
     data = value*np.ones(new_mask_shape,dtype=np.uint8)
 
     f[group_name].create_dataset(dataset_name,data=data)
+
     f.close()
 
 def gen_sys_frame_no_score(sys_frame,pppns):

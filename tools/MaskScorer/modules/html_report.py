@@ -1,4 +1,4 @@
-import pandas as p
+import pandas as pd
 import numpy as np
 import cv2
 import sys
@@ -237,7 +237,11 @@ class html_generator():
                 self.gen_perimage(processors)
 
         #generate Pixel and Mask Average ROC's
-        self.genPixMaskROC()
+        tmetname = os.path.join(self.outroot,'thresMets_pixelprobe.csv')
+        if os.path.isfile(tmetname):
+            self.genPixMaskROC(tmetname)
+        else:
+            print("{} is not found. Skipping Pixel ROC and Probe ROC generation.".format(tmetname))
 
         self.gen_top_page()
 
@@ -562,8 +566,8 @@ class html_generator():
                 percstrings[m] = '{0:.3f}'.format(float(pi_row[m_name])/totalpx)
             conf_measures[m_name] = int(pi_row[m_name])
             if is_number(pi_row[am_name]):
-                conf_measures[am_name] = int(self.average_df[am_name])
-                conf_measures[max_m_name] = int(self.average_df[max_m_name])
+                conf_measures[am_name] = int(pi_row[am_name])
+                conf_measures[max_m_name] = int(pi_row[max_m_name])
         conf_measures['TotalPixels'] = totalpx
         
         conf_table = self.gen_confusion_table(conf_measures)
@@ -609,7 +613,7 @@ class html_generator():
             sbin_name = os.path.join(output_dir,'{}-actual_bin.png'.format(os.path.basename(output_probe_mask_file_name)[:-4]))
             sys_threshold = pi_row['%sActualThreshold' % self.thres_pfx]
 
-        sImg.save(sbin_name,th=sys_threshold)
+        sImg.save(sbin_name,th=int(sys_threshold))
 
         #generate aggregate image
         colMaskName,aggImgName = self.aggregate_color_masks(probe_file_id,
@@ -671,14 +675,9 @@ class html_generator():
         myhtml.close()
         return pi_row
     
-    def genPixMaskROC(self):
-        tmetname = os.path.join(self.outroot,'thresMets_pixelprobe.csv')
+    def genPixMaskROC(self,tmetname):
         try:
             roc_values = pd.read_csv(tmetname,sep="|",header=0,index_col=False)
-        except:
-            return 0
-
-        try:
             #generate both pixel and mask average ROC
             for pfx in ['Pixel','Probe']:
                 tpr_name = "%sTPR" % pfx
@@ -694,7 +693,7 @@ class html_generator():
                     tpr = p_roc[tpr_name]
 #                    myauc = dmets.compute_auc(fpr,tpr)
                     try:
-                        myauc = self.average_df['%s%sAverageAUC' % (self.thres_pfx,pfx)].iloc[0]
+                        myauc = self.average_df['{}{}AverageAUC'.format(self.thres_pfx,pfx)].iloc[0]
                     except:
                         return 0
  
@@ -737,9 +736,11 @@ class html_generator():
                 outdir = os.path.join(outdirtop,'donor')
         outdir = os.path.join(self.outroot,outdir)
         try:
-            #need to make suret there are rows present
+            #need to make sure there are rows present
             thresMets = pd.read_csv(os.path.join(outdir,threshold_mets_fname),sep="|",header=0,na_filter=False)
             sample_mets = thresMets.iloc[0]
+            auc_field = '%sAUC' % self.thres_pfx
+            dfrow[auc_field] = np.float64(dfrow[auc_field])
         except:
             return dfrow
 
@@ -749,7 +750,7 @@ class html_generator():
         dets = detPackage(rocvalues['TPR'],
                           rocvalues['FPR'],
                           1,0,
-                          dfrow['%sAUC' % self.thres_pfx],
+                          dfrow[auc_field],
                           sample_mets['TP'] + sample_mets['FN'],
                           sample_mets['FP'] + sample_mets['TN'])
         

@@ -320,7 +320,8 @@ if __name__ == '__main__':
             stack_df = stack_splice_perimage(score_df.drop("ProbeMaskFileName",axis=1),invariant_columns=invariant_columns,variant_columns=metric_columns)
             stack_df.to_csv("_".join([output_prefix,"perimage_outMeta.csv"]),sep="|",index=False)
 
-        score_df.to_csv("_".join([output_prefix,"mask_scores_perimage.csv"]),sep="|",index=False)
+        perimage_filename = "_".join([output_prefix,"mask_scores_perimage.csv"])
+        score_df.to_csv(perimage_filename,sep="|",index=False)
         scoring_module.output_journal_join_df("_".join([output_prefix,"journalResults.csv"]))
 
         #average run. Output has already been covered. #TODO: move output to here instead? Not realizable for args.query.
@@ -331,6 +332,16 @@ if __name__ == '__main__':
             #TODO: cache_directory most relevant here
             journal_data_name = '%s_journalResults.csv' % output_prefix
             journal_df = pd.read_csv(journal_data_name,sep="|",na_filter=False,header=0)
+#            os.system("python2 modules/html_report.py -t {} -pi {} -avg {}_mask_score.csv -j {} --refDir {} -x {} --sysDir {} -oR {} --overwrite".format(task,
+#                                                                                                                                                         perimage_filename,
+#                                                                                                                                                         output_prefix,
+#                                                                                                                                                         journal_data_name,
+#                                                                                                                                                         ref_dir,
+#                                                                                                                                                         args.inIndex,
+#                                                                                                                                                         sys_dir,
+#                                                                                                                                                         output_prefix
+#                                                                                                                                                         ))
+
             visual_report_generator = html_generator(task,score_df,a_df,journal_df,index_df,ref_dir,sys_dir,output_prefix,query=q,overwrite=True,usejpeg2000=args.jpeg2000)
             #expand the perimage params
             visual_report_generator.gen_report(eks=args.eks,
@@ -340,4 +351,4 @@ if __name__ == '__main__':
                                                pppns=args.perProbePixelNoScore,
                                                kernel=args.kernel,
                                                processors=args.processors)
-    
+

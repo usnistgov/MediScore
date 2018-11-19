@@ -97,8 +97,8 @@ def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,que
         #one data frame
         a_df = df_list[0]
         a_df = postprocess_avg_report(task,a_df,score_df,sys_df,metrics,constant_mets,lastcols,optout,precision,round_modes)
-        if a_df is not 0:
-            a_df.to_csv(path_or_buf=os.path.join(outroot,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
+    if a_df is not 0:
+        a_df.to_csv(path_or_buf=os.path.join(outroot,"_".join([prefix,"mask_score.csv"])),sep="|",index=False)
         
     return a_df
 
