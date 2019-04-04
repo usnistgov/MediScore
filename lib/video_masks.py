@@ -136,7 +136,10 @@ class frame(np.ndarray):
         """
         * Description: subdivide into a list of list of BitPlane's. Each list is also shifted back appropriately.
         """
-        n_layer = (max(bp_list) - 1)//dividing_value + 1
+        if len(bp_list) == 0:
+            n_layer = 1
+        else:
+            n_layer = (max(bp_list) - 1)//dividing_value + 1
         bp_l_list = []
         for l in range(n_layer):
             offset = dividing_value*l
@@ -254,13 +257,16 @@ class video(object):
                 max_start_frame = max(self.start_frames)
                 fullshape = self.fpointer["{}/masks".format(max_start_frame)].shape
                 self.shape = [fullshape[1],fullshape[2]]
-                if 'end_frame' in self.fpointer.attrs.items():
-                    self.framecount = self.fpointer.attrs.items()['end_frame']
+                if 'end_frame' in self.fpointer.attrs.keys():
+                    self.framecount = self.fpointer.attrs['end_frame']
                 else:
                     #infer the end frame if none given in the group attributes
                     self.framecount = int(max_start_frame) + fullshape[0] - 1
             self.is_multi_layer = len(self.get_frame(max_start_frame).shape) > 2
-            self.whiteframe = 255*np.ones(self.shape,dtype = np.uint8)
+            if self.is_multi_layer:
+                self.whiteframe = 255*np.ones(self.get_frame(max_start_frame).shape,dtype = np.uint8)
+            else:
+                self.whiteframe = 255*np.ones(self.shape,dtype = np.uint8)
         else:
             try:
                 self.fpointer = cv2.VideoCapture(n)
@@ -426,7 +432,11 @@ class video_mask(video):
 class video_ref_mask(video_mask):
     def __init__(self,n):
         super(video_ref_mask,self).__init__(n)
-        self.whiteframe = np.zeros(self.shape,dtype = np.uint8)
+        if self.is_multi_layer:
+            max_start_frame = max(self.start_frames)
+            self.whiteframe = np.zeros(self.get_frame(max_start_frame).shape,dtype = np.uint8)
+        else:
+            self.whiteframe = np.zeros(self.shape,dtype = np.uint8)
     
     def insert_journal_data(self,jData,evalcol="Evaluated"):
         self.journal_data = jData.sort_values("Sequence",ascending=False)
@@ -458,7 +468,11 @@ class video_ref_mask(video_mask):
             if sys is not None:
                 pns = (sys.get_frame(i) != nspx).astype(np.uint8)
             
-            for p in np.unique((f > 0).astype(np.uint8) & bns & sns & pns).tolist():
+            if len(f.shape) > 2:
+                fsum = np.sum(f,axis=2)
+            else:
+                fsum = f
+            for p in np.unique((fsum > 0).astype(np.uint8) & bns & sns & pns).tolist():
                 if p > 0:
                     frame_list.append(i)
                     continue

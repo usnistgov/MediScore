@@ -25,11 +25,11 @@ def read_csv(fname,sep="|"):
 def write_csv(fname,df,sep="|"):
     df.to_csv(fname,index=False,sep=sep)
 
-def add_attributes(h5name,probe_file_id):
+def add_attributes(h5name,probe_file_id,end_frame = None):
     h_ptr = h5py.File(h5name,'r+')
     max_block = max([int(n) for n in h_ptr.keys()])
     h_ptr.attrs['start_frame'] = 1
-    h_ptr.attrs["end_frame"] = max_block + h_ptr["{}/masks".format(max_block)].shape[0] - 1
+    h_ptr.attrs["end_frame"] = max_block + h_ptr["{}/masks".format(max_block)].shape[0] - 1 if end_frame is None else end_frame
 #    total_time = float(h_ptr.attrs['end_frame'] - h_ptr.attrs['start_frame'] + 1)/fix_frame_rate
 
     h_ptr.create_group("probe_ids")
@@ -113,12 +113,12 @@ if __name__ == '__main__':
                 #stamp the vid with a mobile disc
                 stamp_vid(tmp_name,0,end_frame - start_frame,path_to_mask="{}/masks".format(start_frame),value=stamp_value)
                 stamp_value = (stamp_value + 100) % 256
-                add_attributes(tmp_name,probe_file_id)
             ivls_in_mask += 1
 
         if ivls_in_mask == 0:
             continue
 
+        add_attributes(tmp_name,probe_file_id,framecount)
         #overrated, generate own mask and record the "manipulation" in jm and pjj on your own
         new_mask_name = os.path.join(sys_dir,vmask_file_name)
         print "Mask name: ",new_mask_name

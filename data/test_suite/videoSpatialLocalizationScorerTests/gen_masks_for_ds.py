@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import h5py
 import os
@@ -24,11 +25,12 @@ def read_csv(fname,sep="|"):
 def write_csv(fname,df,sep="|"):
     df.to_csv(fname,index=False,sep=sep)
 
-def add_attributes(h5name,probe_file_id):
+#TODO: add end_frame
+def add_attributes(h5name,probe_file_id,end_frame=None):
     h_ptr = h5py.File(h5name,'r+')
     max_block = max([int(n) for n in h_ptr.keys()])
     h_ptr.attrs['start_frame'] = 1
-    h_ptr.attrs["end_frame"] = max_block + h_ptr["{}/masks".format(max_block)].shape[0] - 1
+    h_ptr.attrs["end_frame"] = max_block + h_ptr["{}/masks".format(max_block)].shape[0] - 1 if end_frame is None else end_frame
     fix_frame_rate = 30
 #    total_time = float(h_ptr.attrs['end_frame'] - h_ptr.attrs['start_frame'] + 1)/fix_frame_rate
     h_ptr.attrs['time_stamps'] = [round(x*(1./fix_frame_rate),3) for x in range(h_ptr.attrs['end_frame'] + 1)]
@@ -41,14 +43,20 @@ def add_attributes(h5name,probe_file_id):
         h_ptr["probe_ids"].create_dataset(pid,data=[probe_bp_dict[pid]])
     h_ptr.close()
 
-def add_block(h5name,interval,frame_shape):
+def add_block(h5name,interval,frame_shape,n_layer=1):
     dataset_name = "{}/masks".format(interval[0])
     h_ptr = h5py.File(h5name,'r+')
     group = str(interval[0])
     h_ptr.create_group(group)
-    h_ptr[group].create_dataset('masks',data=np.zeros((interval[1] - interval[0] + 1,frame_shape[0],frame_shape[1]),dtype=np.uint8))
+    if n_layer == 1:
+        h_ptr[group].create_dataset('masks',data=np.zeros((interval[1] - interval[0] + 1,frame_shape[0],frame_shape[1]),dtype=np.uint8))
+    elif n_layer > 1:
+        h_ptr[group].create_dataset('masks',data=np.zeros((interval[1] - interval[0] + 1,frame_shape[0],frame_shape[1],n_layer),dtype=np.uint8))
+    else:
+        print("Error: Number of layers {} mus be a positive integer.".format(n_layer))
+        exit(1)
     h_ptr.close()
-    stamp_vid(h5name,0,interval[1] - interval[0],path_to_mask=dataset_name,value=1)
+#    stamp_vid(h5name,0,interval[1] - interval[0],path_to_mask=dataset_name,value=1)
 
 #TODO: merge existing block and relevant meta parameters
 def merge_blocks(h5name,interval):
@@ -63,6 +71,29 @@ def merge_blocks(h5name,interval):
     #TODO: 
     h_ptr.close()
     
+#merges sets of frames into one
+def merge_intervals(interval_list):
+    merged_interval_list = []
+    a_ivls = np.sort(np.array(interval_list),axis=0)
+    l = None
+    r = None
+    for i in a_ivls:
+        if l is None:
+            l = i[0]
+            r = i[1]
+            continue
+        if r >= i[0] - 1:
+            #case merge
+            if i[1] > r:
+                r = i[1]
+        else:
+            #case not merge
+            merged_interval_list.append([l,r])
+            l = i[0]
+            r = i[1]
+    merged_interval_list.append([l,r])
+    
+    return merged_interval_list
 
 if __name__ == '__main__':
     import argparse
@@ -87,39 +118,46 @@ if __name__ == '__main__':
     refidx = ref_targs.merge(idx)
 
     mask_out_dir = os.path.join(dataset_dir,'reference/manipulation-video/mask')
+
     for i,row in refidx.iterrows():
         framecount = row["FrameCount"]
         frame_shape = (row["ProbeWidth"] - args.shift_mask,row["ProbeHeight"] + args.shift_mask)
-        interval_list = jj.query("(ProbeFileID == '{}') and (BitPlane != '')".format(row["ProbeFileID"]))["VideoFrame"].tolist()
+        journal_data = jj.query("(ProbeFileID == '{}') and (BitPlane != '')".format(row["ProbeFileID"]))
+        interval_list = journal_data["VideoFrame"].tolist()
         print row["ProbeFileName"],frame_shape
 
         tmp_name = os.path.join(mask_out_dir,'tmp.hdf5')
         #stamp the vid for every VideoFrame interval after mask is generated
         ivls_in_mask = 0
-        for ivl in interval_list:
-            ll = ast.literal_eval(ivl)
+        #generate blocks depending on the merged frames, and then stamp vid
+        merged_vframes = merge_intervals([i2 for i in interval_list for i2 in ast.literal_eval(i)])
+        #gen mask
+        if not os.path.isfile(tmp_name):
+            sf = merged_vframes[0][0]
+            ef = merged_vframes[0][1]
+            
+            n_layers = (max([int(bp) for bp in journal_data["BitPlane"]])//8) + 1
+            gen_mask(tmp_name,frame_shape,ef - sf + 1,path_to_mask="{}/masks".format(sf),value=0,n_layer=n_layers)
+            add_attributes(tmp_name,row["ProbeFileID"],framecount)
+            if len(merged_vframes) > 1:
+                for i in range(1,len(merged_vframes)):
+                    add_block(tmp_name,i,frame_shape,n_layer=n_layers)
+
+        #stamp blocks based on the interval_list
+        for i,jd in journal_data.iterrows():
+            ll = ast.literal_eval(jd["VideoFrame"])
             if len(ll) == 0:
                 continue
-            print ll
+            bpval = 1 << ((int(jd["BitPlane"]) - 1) % 8)
             for l in ll:
-                start_frame = l[0] + args.shift_frames
-                end_frame = l[1] + args.shift_frames
-                if os.path.isfile(tmp_name):
-                    print("{} exists.".format(tmp_name))
-                    add_block(tmp_name,l,frame_shape) #TODO: merge blocks instead later
-                else:
-                    print("{} does not exist. Generating now.".format(tmp_name))
-                    #generate a new mask for this probe in masks directory in this_dir
-                    gen_mask(tmp_name,frame_shape,end_frame - start_frame + 1,path_to_mask="{}/masks".format(start_frame),value=0)
-                    #stamp the vid with a mobile disc
-                    stamp_vid(tmp_name,0,end_frame - start_frame,path_to_mask="{}/masks".format(start_frame),value=1)
-                    if args.add_layer:
-                        stamp_vid(tmp_name,(end_frame - start_frame)//2,end_frame - start_frame,path_to_mask="{}/masks".format(start_frame),value=2)
-                    add_attributes(tmp_name,row["ProbeFileID"])
-                ivls_in_mask += 1
+                start_frame = l[0]
+                end_frame = l[1]
+                block = max([i[0] for i in merged_vframes if i[0] <= start_frame])
+                stamp_vid(tmp_name,start_frame - block,end_frame - block, path_to_mask = "{}/masks".format(block),value=bpval,layer=(int(jd["BitPlane"]) - 1)//8, opaque = False)
 
-        if ivls_in_mask == 0:
-            continue
+                ivls_in_mask += 1
+            if ivls_in_mask == 0:
+                continue
 
         #overrated, generate own mask and record the "manipulation" in jm and pjj on your own
         new_mask_name = os.path.join(mask_out_dir,"{}.hdf5".format(get_md5(tmp_name)))

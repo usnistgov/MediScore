@@ -104,7 +104,7 @@ test_wrapper(){
 
 basic_test(){
     rm -rf test1
-    command=(python2 VideoSpatialLocalizationScorer.py -t manipulation\
+    command=(python2 $DIR/VideoSpatialLocalizationScorer.py -t manipulation\
                                           --refDir $TESTDIR\
                                           --sysDir $TESTDIR/p-vsltest_1\
                                           -r reference/manipulation-video/MFC18_Dev2-manipulation-video-ref.csv\
@@ -127,11 +127,11 @@ basic_test_wrapper(){
 #    sys_pfx=$TESTDIR/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1
 #    comp_sfx=manip
 #    test_wrapper maniptest "$ref_pfx" "$sys_pfx" "$comp_sfx" 1
+    rm -rf test1
 }
 
 basic_collar_test(){
-    rm -rf test1
-    command=(python2 VideoSpatialLocalizationScorer.py -t manipulation\
+    command=(python2 $DIR/VideoSpatialLocalizationScorer.py -t manipulation\
                                           --refDir $TESTDIR\
                                           --sysDir $TESTDIR/p-vsltest_1\
                                           -r reference/manipulation-video/MFC18_Dev2-manipulation-video-ref.csv\
@@ -156,5 +156,6 @@ basic_collar_test_wrapper(){
 #    sys_pfx=$TESTDIR/maniptest/B_NC2016_Unittest_Manipulation_ImgOnly_c-me2_1
 #    comp_sfx=manip
 #    test_wrapper maniptest "$ref_pfx" "$sys_pfx" "$comp_sfx" 1
+    rm -rf test1c
 }
 

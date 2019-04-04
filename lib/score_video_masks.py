@@ -180,9 +180,12 @@ def score_GWL1(ref,sys,truncate=False,pad=True,temporal_gt_only=False,eks=15,dks
     for f in range(framecount_ref):
         sysframe = sys.get_frame(f)
         refframe = ref.get_frame(f)
-        #TODO: a workaround, for now. Get from the frame intervals in the journal mask file instead of by frame.
+        #TODO: a workaround, for now. Get from the frame intervals in the journal mask file instead of by frame. The intent is to skip frames without GT.
         if temporal_gt_only and (np.sum(refframe) == 0):
             continue
+        if ref.has_journal_data():
+            refframe.insert_journal_data(ref.journal_data)
+        
         no_score,ns_counts = gen_frame_no_score(refframe,sysframe,eks,dks,ntdks,kern,pppns)
         
         #this is more fundamental. Account for no-score zones more elegantly
