@@ -5,7 +5,7 @@ import os
 import numbers
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../lib")
 sys.path.append(lib_path)
-import Partition_mask18 as pt
+import Partition_mask as pt
 from myround import myround
 
 nonelist = ['',None,np.nan]

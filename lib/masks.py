@@ -90,7 +90,6 @@ def getKern(kernopt,size):
         kern=np.eye(size,dtype=np.uint8)
     else:
         print("ERROR: The kernel '{}' is not recognized. Please enter a valid kernel from the following: ['box','disc','diamond','gaussian','line'].".format(kernopt))
-        return -1
     return kern
 
 #define erode and dilate functions here.
@@ -165,6 +164,7 @@ def count_bits(n):
             if npc & 1 > 0:
                 c += 1
             npc >>= 1
+
     return c
 
 class image(object):
@@ -203,9 +203,7 @@ class image(object):
             masktype = 'System'
             if isinstance(self,refmask) or isinstance(self,refmask_color):
                 masktype = 'Reference'
-            raise IOError("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
-        else:
-            self.shape = self.matrix.shape
+            print("ERROR: {} mask file {} is unreadable. Also check if it is present.".format(masktype,n))
 
     def get_dims(self):
         """
@@ -425,16 +423,18 @@ class mask(image):
         *     pns: pixel-based no-score region
         """
         dims = self.get_dims()
+        pns = np.ones((dims[0],dims[1])).astype(np.uint8)
         px = -1
         try:
             if pixelvalue == '':
-                return np.ones((dims[0],dims[1])).astype(np.uint8)
+                return pns
             else:
                 px = int(pixelvalue)
         except ValueError:
             print("The value {} cannot be converted to an integer. Please check your system output.".format(pixelvalue))
             return 1
-        return (self.matrix != px).astype(np.uint8)
+        pns[self.matrix==px] = 0
+        return pns
 
     #save mask to file
     #TODO: should be in image object with less restrictions.
@@ -452,7 +452,9 @@ class mask(image):
         if fname[-4:] != '.png':
             print("You should only save {} as a png. Remember to add on the prefix.".format(self.name))
             return 1
-        params = [png_compress_const,compression]
+        params=list()
+        params.append(png_compress_const)
+        params.append(compression)
         outmat = self.matrix
         if th >= 0:
             self.binarize(th)
@@ -466,7 +468,7 @@ class refmask(mask):
     It inherits from the (system output) mask above.
     """
 #    def __init__(self,n,readopt=1,cs=[],purposes='all'):
-    def __init__(self,n,readopt=1):
+    def __init__(self,n,readopt=1,jData=0,evalcol="Evaluated"):
         """
         Constructor
 
@@ -475,6 +477,7 @@ class refmask(mask):
         - readopt: the option to read in the reference mask file. Choose 1 to read in
                    as a 3-channel BGR (RGB with reverse indexing) image, 0 to read as a
                    single-channel grayscale
+        - jData: the journal data needed for the reference mask to select manipulated regions
         - mode: evaluation mode. 0 for manipulation, 1 for splice on probe, 2 for splice on donor.
         """
         super(refmask,self).__init__(n,readopt)
@@ -486,6 +489,9 @@ class refmask(mask):
         self.journalData = 0
         if not self.is_multi_layer:
             self.matrix = np.uint8(self.matrix)
+
+        #TODO: separate this from the init later
+        self.insert_journal_data(jData,evalcol)
 
     def insert_journal_data(self,jData=0,evalcol="Evaluated"):
         if jData is not 0:
@@ -504,6 +510,7 @@ class refmask(mask):
                 bitmask = np.zeros((n_layers,),dtype=np.uint8)
                 trial_bitlist = all_bitlist[:]
                 for b in trial_bitlist:
+#                    layer = int(math.log(b,2))//8
                     layer = (int(b) - 1)//8
                     if layer > n_layers - 1:
                         print("The bitplane {} at layer {} is not accessible from the {} layers in the reference mask {}. Skipping it.".format(b,layer,n_layers,n))
@@ -534,8 +541,6 @@ class refmask(mask):
             for i,b in enumerate(bitlist):
                 self.bitplanes[i] = int(b)
 #                self.bitlist[i] = 1 << (int(b) - 1)
-
-            #TODO: update journal data by setting "N" to absent bits marked "Y" for annotation purposes.
 
 #            self.bitlist = [ 1 << (int(b)-1) for b in bitlist ]
 #            purposes = list(jData['Purpose'])
@@ -889,7 +894,6 @@ class refmask(mask):
 #            full_bitstack += c
 #        full_bitstack = np.uint64(full_bitstack) #type-safety
 
-        #get the region to be scored
         if self.is_multi_layer:
             n_layers = mymat.shape[2]
             layers = range(n_layers)
@@ -927,7 +931,6 @@ class refmask(mask):
         #edit for bit masks
         mybin = np.zeros((dims[0],dims[1]),dtype=bool)
 
-        #get the non-scored regions
         if self.is_multi_layer:
             full_notstack = np.zeros((n_layers,),dtype=np.uint8)
             for c in notcolors:
@@ -962,7 +965,7 @@ class refmask_color(mask):
     It inherits from the (system output) mask above.
     """
 #    def __init__(self,n,readopt=1,cs=[],purposes='all'):
-    def __init__(self,n,readopt=1):
+    def __init__(self,n,readopt=1,jData=0,evalcol="Evaluated"):
         """
         Constructor
 
@@ -983,7 +986,8 @@ class refmask_color(mask):
             self.aggmat = 65536*rmat[:,:,0] + 256*rmat[:,:,1] + rmat[:,:,2]
         else:
             self.aggmat = self.matrix
-        self.journalData = 0
+        #TODO: separate this from the init later
+        self.insert_journal_data(jData,evalcol)
 
     def insert_journal_data(self,jData=0,evalcol="Evaluated"):
         if jData is 0:
@@ -991,11 +995,6 @@ class refmask_color(mask):
             self.aggcolors = [0]
             self.purposes = ['add']
         else:
-            #sort in sequence first
-            self.journalData = jData
-            if "Sequence" in self.journalData.columns.values.tolist():
-                self.journalData = self.journalData.sort_values("Sequence",ascending=False)
-
             if evalcol == "Evaluated":
                 filteredJournal = jData.query("Evaluated=='Y'")
                 colorlist = filteredJournal['Color'].tolist()
@@ -1012,24 +1011,12 @@ class refmask_color(mask):
                 self.colors = [[0,0,0]]
                 self.aggcolors = [0]
                 self.purposes = ['add']
-            self.update_journal_data(evalcol) #TODO: only want to update for non-null queries
 
     def has_journal_data(self):
         if 'journalData' in vars(self):
             if self.journalData is not 0:
                 return True
         return False
-
-    #if color in the color list is not in self.matrix, 
-    def update_journal_data(self,evalcol):
-        if self.has_journal_data():
-            agg_uniq = np.unique(self.aggmat)
-            colorlist = self.journalData["Color"].tolist()
-            for agc in self.aggcolors:
-                if agc not in agg_uniq:
-                    color = "{} {} {}".format(agc % 256,(agc % 65536)//256,agc//65536)
-                    if color in colorlist:
-                        self.journalData.loc[self.journalData["Color"] == color,evalcol] = "N"
 
     def journal_data_to_csv(self,fname,sep="|"):
         if self.has_journal_data():

@@ -1,0 +1,13 @@
+JournalName|StartNodeID|EndNodeID|Operation|Color|Purpose|OperationArgument|AutoDesignName|VideoTime|VideoFrame|AudioTime|AudioFrame
+39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_01|OutputAVI|0 126 255||||[]|[]|[]|[]
+39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_03|39e0b7b08b8e77f97df056e8a9a50df1_05|AntiForensicCopyExif|0 247 250||||[]|[]|[]|[]
+39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_01|39e0b7b08b8e77f97df056e8a9a50df1_02|PasteSampled|0 247 250||||[]|[[43,99]]|[]|[]
+39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_02|39e0b7b08b8e77f97df056e8a9a50df1_03|SelectCutFrames|244 253 0||||[[6266.66666667,6333.33333333]]|[[95,96]]|[]|[]
+45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|OutputAVI|0 255 6||||[]|[]|[]|[]
+45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|45a915c5d002d8469fef9b94b7626bd5_03|SelectCutFrames|244 253 0||||[[2002.0,2035.36666667]]|[[61,62]]|[]|[]
+45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_03|45a915c5d002d8469fef9b94b7626bd5_05|AntiForensicCopyExif|255 138 0||||[]|[]|[]|[]
+45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_03|45a915c5d002d8469fef9b94b7626bd5_10|TimeAlterationWarp|255 12 0||||[[2035.36870204,2268.93560227]]|[[62,67]]|[]|[]
+45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_10|45a915c5d002d8469fef9b94b7626bd5_17|AntiForensicCopyExif|255 0 240||||[]|[]|[]|[]
+15787326147|withShadow_fullComp_02|youtube-withShadow_fullComp.avi_36 - 320x180 (small)|SocialMedia|0 255 6||||[]|[]|[]|[]
+15787326147|15787326147|withShadow_fullComp|ObjectCGI|255 12 0||||[[0.0,60769.0416667]]|[[1,1456]]|[]|[]
+15787326147|withShadow_fullComp|withShadow_fullComp_02|AntiForensicCopyExif|255 0 240||||[]|[]|[]|[]

@@ -108,13 +108,14 @@ def gen_color_results(color_mask_name,ref,sys,th=None,eks=15,dks=11,ntdks=15,ker
             col_data[f,:,:] = color_code_frame(ref_frame.get_binary(),sys_frame,bns_frame=bns_frame,sns_frame=sns_frame,pns_frame=pns_frame)
     col_pointer.close()
 
-#TODO: generalize to multi-bitplane. Requires Video Mask object.
 # stamp select frames of a video with a certain shape of some size
 def stamp_vid(fname,start_frame,end_frame,path_to_mask="masks/masks",value=0,opaque=True,layer=0,stamp_relative_size=0.3,relative_padding=0.01,stamp_shape='disc',path_shape='box',start_position='lower_left'):
     f = h5py.File(fname,'r+')
     mask_shape = f[path_to_mask].shape
     dims = mask_shape[1:3]
     frame_count = mask_shape[0]
+    is_multi_layer = len(mask_shape) > 3
+
     assert start_frame <= end_frame, "Start frame {} needs to be upper-bounded by end frame {}.".format(start_frame,end_frame)
     assert start_frame >= 0, "Start frame {} needs to be nonnegative.".format(start_frame)
     assert end_frame < frame_count, "End frame {} needs to be bounded by the video frame count {}.".format(end_frame,frame_count)
@@ -123,6 +124,8 @@ def stamp_vid(fname,start_frame,end_frame,path_to_mask="masks/masks",value=0,opa
     assert stamp_relative_size + 2*relative_padding < 1, \
         "The stamp relative size {} should fit in the whole video with twice the relative padding {} (2*relative_padding).\
  Together they should be less than 1.".format(stamp_relative_size,2*relative_padding)
+    if is_multi_layer:
+        assert layer < mask_shape[3], "Layer {} as not accessible. There are only {} layers.".format(layer,mask_shape[3])
 
     padding = int(relative_padding*min(dims))
     stamp_size = int(stamp_relative_size*min(dims))
@@ -180,14 +183,20 @@ def stamp_vid(fname,start_frame,end_frame,path_to_mask="masks/masks",value=0,opa
                 side_traversal = 'lower_right'
             else:
                 coordinate = [coordinate[0] + pixels_per_frame ,coordinate[1]]
-        frame = f[path_to_mask][fnum,:,:]
+        if is_multi_layer:
+            frame = f[path_to_mask][fnum,:,:,layer]
+        else:
+            frame = f[path_to_mask][fnum,:,:]
         stamp = frame[coordinate[0]:coordinate[0] + stamp_size,coordinate[1]:coordinate[1] + stamp_size]
         if opaque:
             stamp[kernmat == 1] = value
         else:
             stamp += kernmat*value
         frame[coordinate[0]:coordinate[0] + stamp_size,coordinate[1]:coordinate[1] + stamp_size] = stamp
-        f[path_to_mask][fnum,:,:] = frame
+        if is_multi_layer:
+            f[path_to_mask][fnum,:,:,layer] = frame
+        else:
+            f[path_to_mask][fnum,:,:] = frame
 
     f.close()
 

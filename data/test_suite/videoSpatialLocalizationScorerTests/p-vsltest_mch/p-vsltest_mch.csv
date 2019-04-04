@@ -1,0 +1,6 @@
+ProbeFileID|ConfidenceScore|ProbeStatus|OutputProbeMaskFileName|VideoFrameSegments|AudioSampleSegments|VideoFrameOptOutSegments|ProbeOptOutPixelValue
+7c3c1c60c115f5352898b21b049a22e9|0.1|Processed|mask/7c3c1c60c115f5352898b21b049a22e9-mask.hdf5|[[1,20]]|[[10,30]]|[]|100
+a4a014d996406ebd0c0c7bcfd160f6c8|0.2|OptOutSpatial||[]|[]|[]|
+b4b87af1ea68b2b4218f9783c4ada380|0.3|OptOutLocalization||[]|[]|[]|
+d548bc4facfbfd63113546ed731eab4b|0.4|OptOutTemporal||[]|[]|[]|
+397eeb72e0cf71cc295f1e9ef7eb21b6|0.5|Processed|mask/397eeb72e0cf71cc295f1e9ef7eb21b6-mask.hdf5|[[20,40],[80,100]]|[[10,40]]|[[41,79]]|

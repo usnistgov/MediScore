@@ -57,11 +57,15 @@ class VideoScoring():
         
         # We remove all None and 0-length sub-intervals
         tmp_intervals_sequence = []
-        for i in intervals_sequence:
-            if i.size != 0:
-                a = i[i[:,0] != i[:,1]]
+        for k, inter in enumerate(intervals_sequence):
+            if inter.size != 0:
+                a = inter[inter[:,0] != inter[:,1]]
                 if a.size != 0:
                     tmp_intervals_sequence.append(a)
+            elif k == 1:
+                a = inter if inter.size == 0 else inter[inter[:,0] != inter[:,1]]
+                tmp_intervals_sequence.append(a)
+            
         intervals_sequence = tmp_intervals_sequence
 
         # Compute the overlap between all intervals sets

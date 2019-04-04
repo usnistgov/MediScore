@@ -7,6 +7,13 @@ import numpy as np
 import cv2
 from masks import erode,dilate,mask
 
+import sys
+import os
+vtl_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../tools/VideoTemporalLocalizationScorer")
+sys.path.append(vtl_dir)
+from TemporalVideoScoring import VideoScoring
+from intervalcompute import IntervalCompute as IC
+
 try:
     frame_pos_const = cv2.cv.CV_CAP_PROP_POS_FRAMES
     width_const = cv2.cv.CV_CAP_PROP_FRAME_WIDTH
@@ -38,19 +45,35 @@ def union_frames(framelist):
     for f in framelist:
         if (f == last_frame + 1) or (last_frame == -2):
             ivl.append(f)
-            last_frame = f
         elif (f > last_frame + 1) and (last_frame > -2):
             if len(ivl) == 1:
                 intervals.append([ivl[0],ivl[0]])
             else:
                 intervals.append([ivl[0],ivl[-1]])
             ivl = [f]
-            last_frame = f
+        last_frame = f
     if len(ivl) == 1:
         intervals.append([ivl[0],ivl[0]])
-    else:
+    elif len(ivl) > 1:
         intervals.append([ivl[0],ivl[-1]])
     return intervals
+
+#temporal localization metrics here
+def shift_intervals(interval_list,shift=0):
+    new_interval_list = []
+    for ivl in interval_list:
+        if len(ivl) == 0:
+            continue
+        new_interval_list.append([ivl[0]+shift,ivl[1]+shift])
+    return new_interval_list
+
+def contained_in_intervals(elt,interval_list):
+    for ivl in interval_list:
+        if len(ivl) == 0:
+            continue
+        if (elt >= ivl[0]) and (elt <= ivl[1]):
+            return True
+    return False
 
 class frame(np.ndarray):
     """
@@ -220,22 +243,22 @@ class video(object):
             #abstract to the segmented masks. 
 #            self.datasets = self.data.keys()
 #            if 'masks' in self.datasets:
-            if 'masks' in self.start_frames:
+            if 'masks' in self.fpointer.keys():
                 fullshape = self.fpointer['masks/masks'].shape
                 self.shape = [fullshape[1],fullshape[2]]
                 self.framecount = fullshape[0]
 #                self.datasets = 'masks'
-                max_start_frame = self.framecount - 1
+                max_start_frame = 1
             else:
 #                start_frame_list = [int(k) for k in self.data.keys()]
                 max_start_frame = max(self.start_frames)
                 fullshape = self.fpointer["{}/masks".format(max_start_frame)].shape
                 self.shape = [fullshape[1],fullshape[2]]
                 if 'end_frame' in self.fpointer.attrs.items():
-                    self.framecount = self.fpointer.attrs.items()['end_frame'] + 1
+                    self.framecount = self.fpointer.attrs.items()['end_frame']
                 else:
                     #infer the end frame if none given in the group attributes
-                    self.framecount = int(max_start_frame) + fullshape[0]
+                    self.framecount = int(max_start_frame) + fullshape[0] - 1
             self.is_multi_layer = len(self.get_frame(max_start_frame).shape) > 2
             self.whiteframe = 255*np.ones(self.shape,dtype = np.uint8)
         else:
@@ -296,7 +319,7 @@ class video(object):
         if self.ext != 'hdf5':
             return self.get_frame_vc(frame_number)
 
-        if 'masks' in self.start_frames:
+        if 'masks' in self.fpointer.keys():
             ds = self.fpointer['masks/masks']
             if frame_number >= self.framecount:
                 frame_mat = self.whiteframe.copy()
@@ -368,7 +391,7 @@ class video_mask(video):
                 if p > 0:
                     frame_list.append(i)
                     continue
-        return union_frames(frame_list)
+        return shift_intervals(union_frames(frame_list),1)
 
     def compute_sys_intervals(self,threshold):
         frame_list = []
@@ -378,7 +401,7 @@ class video_mask(video):
                 if p > 0:
                     frame_list.append(i)
                     continue
-        return union_frames(frame_list)
+        return shift_intervals(union_frames(frame_list),1)
 
     def get_all_thresholds(self):
         th_set = set()
@@ -386,11 +409,11 @@ class video_mask(video):
             pixels = set(np.unique(f))
             th_set = th_set.union(pixels)
 
-        th_set.union({-1,255})
+        th_set = th_set.union({-1,255})
         return list(th_set)
 
     def gen_threshold_mask(self,fname,th=-1):
-        path_to_mask = "0/masks"
+        path_to_mask = "1/masks"
         gen_mask(fname,self.shape,self.framecount,path_to_mask=path_to_mask)
         t_pointer,t_data = open_video(fname,path_to_mask=path_to_mask,mode='r+')
         for i,f in enumerate(self):
@@ -426,6 +449,7 @@ class video_ref_mask(video_mask):
         """
         frame_list = []
         has_journal = self.has_journal_data()
+        pns = 1
         for i,f in enumerate(self):
             if has_journal:
                 f.insert_journal_data(self.journal_data,self.evalcol)
@@ -438,8 +462,15 @@ class video_ref_mask(video_mask):
                 if p > 0:
                     frame_list.append(i)
                     continue
-        return union_frames(frame_list)
-    
+        return shift_intervals(union_frames(frame_list),1)
+
+    def compute_collars(self,ref_intervals,collars=None):
+        if not collars:
+            return []
+        
+        collars = IC.compute_collars(np.array(ref_intervals),collars,crop_to_range=np.array([1,self.framecount]))
+        return collars
+
     def get_bw_frame(self,frame_number):
         return self.get_frame(frame_number).get_binary()
 
@@ -455,10 +486,11 @@ class video_ref_mask(video_mask):
         ref_frame.insert_journal_data(self.journal_data,self.evalcol)
         return ref_frame.get_selective_no_score(eks=eks,ntdks=ntdks,kern=kern)
 
-    #TODO: determines whether or not the frame in question is a collared frame. I assume it's a temporal no-score zone? See Timothee.
-    def is_collared_frame(self,frame_number,collar_value):
-        #TODO: compute manipulated frame intervals, or otherwise retrieve them froum journal_data
-        return False
+    #determines whether or not the frame in question is a collared frame. 
+    def is_collared_frame(self,frame_number):
+        if 'collars' not in vars(self):
+            return False
+        return contained_in_intervals(frame_number,self.collars)
 
 #    #TODO: generate no score zanes for each frame and save that as an hdf5? This has the potential to be extremely data intensive.
 #    def gen_boundary_no_score(self,erode_kern_size,dilate_kern_size,kern):
