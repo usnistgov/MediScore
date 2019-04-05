@@ -98,6 +98,8 @@ def gen_average_fields(task):
         'ActualNMM','ActualMCC','ActualBWL1'
         ]
     avg_constant_metric_fields = ['MaximumThreshold','ActualThreshold']
+    if task == 'manipulation-video':
+        avg_metric_fields.append("TemporalMCC")
     if task == 'splice':
         avg_metric_fields = [ 'p%s' % m for m in avg_metric_fields ] + [ 'd%s' % m for m in avg_metric_fields ]
         avg_constant_metric_fields = [ 'p%s' % m for m in avg_constant_metric_fields ] + [ 'd%s' % m for m in avg_constant_metric_fields ]

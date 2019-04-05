@@ -244,7 +244,7 @@ if __name__ == '__main__':
     #initialize the scoring module
     scoring_module = perprobe_module(args.task,ref_df,pjj_df,journal_df,index_df,sys_df,ref_dir,sys_dir,args.rbin,args.sbin)
     out_pfx = os.path.basename(args.outRoot)
-    avg_metric_fields,avg_constant_metric_fields = gen_average_fields(task)
+    avg_metric_fields,avg_constant_metric_fields = gen_average_fields('{}-video'.format(task))
 
     for i,q in enumerate(args.queryManipulation):
         output_directory = out_dir
@@ -281,6 +281,7 @@ if __name__ == '__main__':
         score_df.to_csv("_".join([output_prefix,"pervideo.csv"]),sep="|",index=False)
 
         #average here with the relevant fields
+        #TODO: add temporal metrics to the average report
         a_df = average_report(task,score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'])
         a_df.to_csv("_".join([output_prefix,'.csv']),sep="|",index=False)
 
