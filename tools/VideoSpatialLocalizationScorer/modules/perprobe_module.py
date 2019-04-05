@@ -340,7 +340,7 @@ class perprobe_module(localization_perimage_runner):
                 ref_mask.close()
                 sys_mask.close()
                 blank_row = pd.Series(blank_metrics_defualts)
-                blank_row["ProbeFileID"] = probe_file_id
+                blank_row[probe_id_field] = probe_file_id
                 return blank_row
 
         scores.to_csv(os.path.join(log_dir,"thresMets.csv"),sep="|",index=False)
@@ -352,7 +352,7 @@ class perprobe_module(localization_perimage_runner):
             for i,x in maxrow.iteritems():
                 maxrow.loc[i] = np.nan
 
-        maxrow.loc['ProbeFileID'] = probe_file_id
+        maxrow.loc[probe_id_field] = probe_file_id
         ref_mask.close()
         sys_mask.close()
         if sys_mask_name == "":
