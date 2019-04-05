@@ -291,7 +291,7 @@ class perprobe_module(localization_perimage_runner):
 
         #also score temporal localization metrics by passing them into the video temporal localization scorer
         temporal_scores = 0
-        if probe_status != "OptOutTemporal":
+        if probe_status not in ["OptOutTemporal","OptOutLocalization","OptOutAll"]:
             temporal_scores = score_temporal_metrics(ref_mask,sys_mask,collars,truncate=truncate,eks=eks,dks=dks,ntdks=ntdks,kern=kernel)
             
             temporal_scores.rename(columns={"MCC":"TemporalMCC",
@@ -303,7 +303,7 @@ class perprobe_module(localization_perimage_runner):
 
         #TODO: if temporal_scoring_only, skip the below and return just the temporal metrics, with other metrics empty?
         #TODO: test this
-        if not (temporal_scoring_only or (probe_status == 'OptOutSpatial')):
+        if not (temporal_scoring_only or (probe_status in ['OptOutSpatial',"OptOutLocalization","OptOutAll"])):
             #pass them into the video scorer
             confusion_measures = get_confusion_measures(ref_mask,
                                                         sys_mask,
@@ -365,6 +365,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="Score the spatial localization regions of the video probes.")
     parser.add_argument('-t','--task',default="manipulation",help="The task to score. So far, only 'manipulation' is available. Default: 'manipulation'.")
+    
 
     args = parser.parse_args()
     print("Running perprobe_module.py...")
