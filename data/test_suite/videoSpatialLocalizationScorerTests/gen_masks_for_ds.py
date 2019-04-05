@@ -164,6 +164,6 @@ if __name__ == '__main__':
         print "Mask name: ",new_mask_name
         os.system("mv {} {}".format(tmp_name,new_mask_name))
         #update the ref
-        ref.loc[ref["ProbeFileID"] == row["ProbeFileID"],"ProbeBitPlaneMaskFileName"] = "reference/manipulation-video/mask/{}".format(os.path.basename(new_mask_name)) 
+        ref.loc[ref["ProbeFileID"] == row["ProbeFileID"],"HDF5MaskFileName"] = "reference/manipulation-video/mask/{}".format(os.path.basename(new_mask_name)) 
 
     write_csv(ref_name,ref)

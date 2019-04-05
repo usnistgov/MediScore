@@ -122,7 +122,7 @@ class perprobe_module(localization_perimage_runner):
         self.processors = processors
         if self.task == 'manipulation':
             self.probe_id_field = "ProbeFileID"
-            self.probe_mask_field = "ProbeBitPlaneMaskFileName"
+            self.probe_mask_field = "HDF5MaskFileName"
             self.sys_mask_field = "OutputProbeMaskFileName"
             self.evalcol = "Evaluated"
             self.sys_df["Scored"] = "Y"
