@@ -361,12 +361,48 @@ class perprobe_module(localization_perimage_runner):
 
 
 if __name__ == '__main__':
-    #TODO: add options just to generate the perprobe scores, but for one pair of masks.
+    #add options just to generate the perprobe scores, but for one pair of masks.
     import argparse
-    parser = argparse.ArgumentParser(description="Score the spatial localization regions of the video probes.")
+    parser = argparse.ArgumentParser(description="Score the spatial localization regions of a single video probe and a system mask.")
     parser.add_argument('-t','--task',default="manipulation",help="The task to score. So far, only 'manipulation' is available. Default: 'manipulation'.")
-    
+    parser.add_argument('--ref_mask',help="The reference mask to score.")
+    parser.add_argument('--sys_mask',default="",help="The system mask to score. Leave blank to score on a white mask.")
+    parser.add_argument('-r','--inRef',help="The reference file.")
+    parser.add_argument('-qm','--queryManipulation',default="",help="Filter the data by a given query before evaluation.")
+    parser.add_argument('-oR','--outRoot',default=None,help="Directory root plus prefix to save outputs. If not selected, will print out the results to stdout. Default: None.")
+    #TODO: add other options later.
 
     args = parser.parse_args()
+
+    def read_csv(csv_name,sep="|"):
+        return pd.read_csv(csv_name,header=0,sep=sep,index_col=False,na_filter=False)
+
+    #load reference files
+    ref_df = read_csv(args.inRef)
+    ref_pfx = args.inRef[:-4]
+    pjj_df_name = '-'.join([ref_pfx,'probejournaljoin.csv'])
+    pjj_df = read_csv(pjj_df_name)
+    journal_df_name = '-'.join([ref_pfx,'journalmask.csv'])
+    journal_df = read_csv(journal_df_name)
+
+    #find the ref mask and corresponding probe ID (s)
+    ref_df = ref_df.query("HDF5MaskFileName == 'reference/{}/mask/{}'".format(args.task,os.path.basename(args.ref_mask)))
+    #join journal data
+    jj_df = pjj_df.merge(journal_df)
+    #get journal data
+    jj_df = jj_df.merge(ref_df[["ProbeFileID","JournalName","HDF5MaskFileName"]])
+    jj_df["Evaluated"] = "Y"
+    #filter by queryManipulation
+    if args.queryManipulation != "":
+        jj_df["Evaluated"] = "N"
+        jj_df.loc[jj_df.query(args.queryManipulation).index,"Evaluated"] = "Y"
+
     print("Running perprobe_module.py...")
+    scores = perprobe_module.score_one_mask("Test_{}_{}".format(args.ref_mask,args.sys_mask),args.ref_mask,args.sys_mask,jj_df)
+    print("Scoring finished. Outputting scores.")
+
+    if args.outRoot:
+        scores.to_csv("{}_score.csv".format(args.outRoot))
+    else:
+        print(scores)
     
