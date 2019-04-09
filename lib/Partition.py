@@ -220,26 +220,30 @@ class Partition:
             for i, query in enumerate(self.part_query_list):
                 dm = self.part_dm_list[i]
                 data = {'QUERY': query,
+                        'TRR': dm.trr,
+                        'SYS_RESPONSE': dm.sys_res,
                         'AUC': dm.auc,
                         'EER': dm.eer,
                         'FAR_STOP': dm.fpr_stop,
                         'AUC@FAR': dm.auc_at_fpr,
                         'CDR@FAR': dm.tpr_at_fpr,
-                        'AUC_CI_LOWER@FAR': dm.ci_lower,
-                        'AUC_CI_UPPER@FAR': dm.ci_upper,
-                        'TRR': dm.trr,
-                        'SYS_RESPONSE': dm.sys_res}
+                        'CI_LEVEL': dm.ci_level,
+                        'AUC_CI_LOWER': dm.auc_ci_lower,
+                        'AUC_CI_UPPER': dm.auc_ci_upper,
+                        'AUC_CI_LOWER@FAR': dm.auc_at_fpr_ci_lower,
+                        'AUC_CI_UPPER@FAR': dm.auc_at_fpr_ci_upper,
+                        'CDR_CI_LOWER@FAR': dm.tpr_at_fpr_ci_lower,
+                        'CDR_CI_UPPER@FAR': dm.tpr_at_fpr_ci_upper
+                        }
                 index = ['Q' + str(i)]
-                columns = ['QUERY', 'AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'AUC_CI_LOWER@FAR',
-                           'AUC_CI_UPPER@FAR', 'TRR', 'SYS_RESPONSE']
+                columns = ['QUERY', 'TRR', 'SYS_RESPONSE', 'AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'CI_LEVEL','AUC_CI_LOWER','AUC_CI_UPPER', 'AUC_CI_LOWER@FAR','AUC_CI_UPPER@FAR', 'CDR_CI_LOWER@FAR', 'CDR_CI_UPPER@FAR']
                 df_list.append(pd.DataFrame(data, index, columns).round(6))
             return df_list
 
         elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
-            data = {'AUC': [], 'EER': [], 'FAR_STOP': [], 'AUC@FAR': [], 'CDR@FAR': [],
-                    'AUC_CI_LOWER@FAR': [], 'AUC_CI_UPPER@FAR': [], 'TRR': [], 'SYS_RESPONSE': []}
+            data = {'TRR': [], 'SYS_RESPONSE': [], 'AUC': [], 'EER': [], 'FAR_STOP': [], 'AUC@FAR': [], 'CDR@FAR': [], 'AUC_CI_LOWER': [],'AUC_CI_UPPER': [], 'AUC_CI_LOWER@FAR': [],'AUC_CI_UPPER@FAR': [], 'CDR_CI_LOWER@FAR': [], 'CDR_CI_UPPER@FAR': [] }
             for i, partition in enumerate(self.part_values_list):
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition, field)]
@@ -254,19 +258,23 @@ class Partition:
                         data[field].append(condition)
 
                 dm = self.part_dm_list[i]
+                data['TRR'].append(dm.trr)
+                data['SYS_RESPONSE'].append(dm.sys_res)
                 data['AUC'].append(dm.auc)
                 data['EER'].append(dm.eer)
                 data['FAR_STOP'].append(dm.fpr_stop)
                 data['AUC@FAR'].append(dm.auc_at_fpr)
                 data['CDR@FAR'].append(dm.tpr_at_fpr)
-                data['AUC_CI_LOWER@FAR'].append(dm.ci_lower)
-                data['AUC_CI_UPPER@FAR'].append(dm.ci_upper)
-                data['TRR'].append(dm.trr)
-                data['SYS_RESPONSE'].append(dm.sys_res)
+                data['CI_LEVEL'].append(dm.ci_level)
+                data['AUC_CI_LOWER'].append(dm.auc_ci_lower)
+                data['AUC_CI_UPPER'].append(dm.auc_ci_upper)
+                data['AUC_CI_LOWER@FAR'].append(dm.auc_at_fpr_ci_lower)
+                data['AUC_CI_UPPER@FAR'].append(dm.auc_at_fpr_ci_upper)
+                data['CDR_CI_LOWER@FAR'].append(dm.tpr_at_fpr_ci_lower)
+                data['CDR_CI_UPPER@FAR'].append(dm.tpr_at_fpr_ci_upper)
 
             columns = list(self.factors_order)
-            columns.extend(['AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'AUC_CI_LOWER@FAR',
-                            'AUC_CI_UPPER@FAR', 'TRR', 'SYS_RESPONSE'])
+            columns.extend(['TRR', 'SYS_RESPONSE', 'AUC', 'EER', 'FAR_STOP', 'AUC@FAR', 'CDR@FAR', 'CI_LEVEL','AUC_CI_LOWER','AUC_CI_UPPER', 'AUC_CI_LOWER@FAR','AUC_CI_UPPER@FAR', 'CDR_CI_LOWER@FAR', 'CDR_CI_UPPER@FAR'])
             index = ['P' + str(i) for i in range(self.n_partitions)]
             df = pd.DataFrame(data, index, columns).round(6)
             return df

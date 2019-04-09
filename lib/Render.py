@@ -79,8 +79,11 @@ class Render:
             # display the eer when there is only one curve
             if nb_dm_objects == 1:
                 DM = dm_list[0]
-                norm_fnrs_pos_ci = list(map(norm.ppf, DM.fnr + DM.ci_tpr))
-                norm_fnrs_neg_ci = list(map(norm.ppf, DM.fnr - DM.ci_tpr))
+                ##TODO: need to change this
+                #norm_fnrs_pos_ci = list(map(norm.ppf, DM.fnr + DM.tpr_at_fpr_ci_lower))
+                #norm_fnrs_neg_ci = list(map(norm.ppf, DM.fnr - DM.tpr_at_fpr_ci_upper))
+                norm_fnrs_pos_ci = list(map(norm.ppf, DM.fnr))
+                norm_fnrs_neg_ci = list(map(norm.ppf, DM.fnr))
                 norm_fpr = list(map(norm.ppf, DM.fpr))
                 plt.plot(norm_fpr, norm_fnrs_pos_ci, 'k--')
                 plt.plot(norm_fpr, norm_fnrs_neg_ci, 'k--')
@@ -135,8 +138,8 @@ class Render:
             # We display the confidence interval when there is only one curve
             if nb_dm_objects == 1:
                 DM = dm_list[0]
-                plt.plot(DM.fpr, DM.tpr + DM.ci_tpr, 'k--')
-                plt.plot(DM.fpr, DM.tpr - DM.ci_tpr, 'k--')
+                plt.plot(DM.fpr, DM.tpr + DM.tpr_at_fpr_ci_upper, 'k--')
+                plt.plot(DM.fpr, DM.tpr - DM.tpr_at_fpr_ci_lower, 'k--')
 
                 if isNoNumber:  # deleted at FAR=%.2f and DM.fpr_stop,
                     if isOptOut:

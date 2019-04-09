@@ -52,13 +52,16 @@ class detMetrics:
         #print ("fpr_stop test: {}".format(inter_point))
         #print ("tpr_at_fpr: {}".format(self.tpr_at_fpr))
 
-        self.ci_lower = 0
-        self.ci_upper = 0
-        self.ci_tpr = 0
+        self.ci_level = ciLevel
+        self.auc_ci_lower = 0
+        self.auc_ci_upper = 0
+        self.auc_at_fpr_ci_lower = 0
+        self.auc_at_fpr_ci_upper = 0
+        self.tpr_at_fpr_ci_lower = 0
+        self.tpr_at_fpr_ci_upper = 0
 
         if isCI:
-            self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(
-                score, gt, ciLevel, fpr_stop)
+            self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper = Metrics.compute_ci(score, gt, ciLevel, fpr_stop)
 
         self.fpr_stop = fpr_stop
         self.sys_res = sys_res
@@ -66,7 +69,7 @@ class detMetrics:
 
     def __repr__(self):
         """Print from interpretor"""
-        return "DetMetrics: eer({}), auc({}), ci_lower({}), ci_upper({}), ci_tpr({})".format(self.eer, self.auc, self.ci_lower, self.ci_upper, self.ci_tpr)
+        return "DetMetrics: eer({}), auc({}), ci_level({}), auc_ci_lower({}), auc_ci_upper({}), pauc_ci_lower({}), pauc_ci_upper({}),tpr_ci_lower({}), tpr_ci_upper({}),".format(self.eer, self.auc, self.ci_level, self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper)
 
     def write(self, file_name):
         """ Save the Dump files (formatted in a binary) that contains
@@ -83,8 +86,23 @@ class detMetrics:
         """
         from collections import OrderedDict
         from pandas import DataFrame
-        data = OrderedDict([('AUC', self.auc), ('EER', self.eer), ('FAR_STOP', self.fpr_stop), ('AUC@FAR', self.auc_at_fpr), ('CDR@FAR', self.tpr_at_fpr), (
-            'AUC_CI_LOWER@FAR', self.ci_lower), ('AUC_CI_UPPER@FAR', self.ci_upper), ('TRR', self.trr), ('SYS_RESPONSE', self.sys_res)])
+        data = OrderedDict([
+        ('TRR', self.trr),
+        ('SYS_RESPONSE', self.sys_res),
+        ('AUC', self.auc),
+        ('EER', self.eer),
+        ('FAR_STOP', self.fpr_stop),
+        ('AUC@FAR', self.auc_at_fpr),
+        ('CDR@FAR', self.tpr_at_fpr),
+        ('CI_LEVEL', self.ci_level),
+        ('AUC_CI_LOWER', self.auc_ci_lower),
+        ('AUC_CI_UPPER', self.auc_ci_upper),
+        ('AUC_CI_LOWER@FAR', self.auc_at_fpr_ci_lower),
+        ('AUC_CI_UPPER@FAR', self.auc_at_fpr_ci_upper),
+        ('CDR_CI_LOWER@FAR', self.tpr_at_fpr_ci_lower),
+        ('CDR_CI_UPPER@FAR', self.tpr_at_fpr_ci_upper)
+        ])
+
         my_table = DataFrame(data, index=['0'])
 
         return my_table.round(6)
@@ -101,8 +119,8 @@ class detMetrics:
         return self.auc
 
     def get_ci(self):
-        self.ci_lower, self.ci_upper, self.ci_tpr = Metrics.compute_ci(self)
-        return self.ci_lower, self.ci_upper, self.ci_tpr
+        self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper = Metrics.compute_ci(self)
+        return self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper
 
     def set_eer(self, eer):
         self.eer = eer
@@ -190,7 +208,8 @@ class Metrics:
         n_bootstraps = 500
         rng_seed = 77  # control reproducibility
         bootstrapped_auc = []
-#        bootstrapped_tpr = []
+        bootstrapped_pauc = []
+        bootstrapped_tpr = []
 
         rng = np.random.RandomState(rng_seed)
         indices = np.copy(score.index.values)
@@ -200,7 +219,12 @@ class Metrics:
             new_indices = rng.choice(indices, len(indices))
             fpr, tpr, fnr, thres, t_num, nt_num = Metrics.compute_points_sk(
                 score[new_indices].values, gt[new_indices])
-            auc = Metrics.compute_auc(fpr, tpr, fpr_stop)
+
+            auc = Metrics.compute_auc(fpr, tpr, 1)
+            pauc = Metrics.compute_auc(fpr, tpr, fpr_stop)
+            inter_points = Metrics.linear_interpolated_point(fpr, tpr, fpr_stop)
+            tpr_at_fpr = inter_points[0][1]
+
             # print("Bootstrap #{} FPR_stop {}, AUC: {:0.3f}".format(i + 1, fpr_stop, auc))
 
             #print("New indices {}".format(new_indices))
@@ -213,6 +237,8 @@ class Metrics:
             #auc = roc_auc_score(label, score[new_indices].values)
 
             bootstrapped_auc.append(auc)
+            bootstrapped_pauc.append(pauc)
+            bootstrapped_tpr.append(tpr_at_fpr)
             # TODO: need pdf and ecdf distribution at each FPR
             # see the paper: Nonparametic confidence intervals for receiver operating characteristic curves (2.4)
             #fpr, tpr, thres = roc_curve(label[indices], score[indices])
@@ -220,17 +246,22 @@ class Metrics:
             # print("Bootstrap #{} AUC: {:0.3f}".format(i + 1, auc))
 
         sorted_aucs = sorted(bootstrapped_auc)
+        sorted_paucs = sorted(bootstrapped_pauc)
+        sorted_tprs = sorted(bootstrapped_tpr)
         #print("sorted AUCS {}".format(sorted_aucs))
 
         # Computing the lower and upper bound of the 90% confidence interval (default)
         # You can change the bounds percentiles to 0.025 and 0.975 to get
         # a 95% confidence interval instead.
-        ci_lower = sorted_aucs[int(lower_bound * len(sorted_aucs))]
-        ci_upper = sorted_aucs[int(upper_bound * len(sorted_aucs))]
+        auc_ci_lower = sorted_aucs[int(lower_bound * len(sorted_aucs))]
+        auc_ci_upper = sorted_aucs[int(upper_bound * len(sorted_aucs))]
+        pauc_ci_lower = sorted_paucs[int(lower_bound * len(sorted_paucs))]
+        pauc_ci_upper = sorted_paucs[int(upper_bound * len(sorted_paucs))]
+        tpr_ci_lower = sorted_tprs[int(lower_bound * len(sorted_tprs))]
+        tpr_ci_upper = sorted_tprs[int(upper_bound * len(sorted_tprs))]
 
-        ci_tpr = 0  # TODO: after calculating CI for each TPR
         #print("Confidence interval for AUC: [{:0.5f} - {:0.5f}]".format(ci_lower, ci_upper))
-        return ci_lower, ci_upper, ci_tpr
+        return auc_ci_lower, auc_ci_upper, pauc_ci_lower, pauc_ci_upper, tpr_ci_lower, tpr_ci_upper
 
     # Calculate d-prime and beta
     @staticmethod

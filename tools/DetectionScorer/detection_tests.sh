@@ -50,6 +50,7 @@ test_c1_1() {
 				       -r "NC2016-manipulation-ref.csv" \
                        --sysDir "$testsuite_directory/baseline/" \
 				       -s "Base_NC2016_Manipulation_ImgOnly_p-dct_02.csv"
+
 }
 
 test_c1_2() {
@@ -313,6 +314,18 @@ test_c4_3() {
                        --sysDir "$testsuite_directory/sample/" \
 				       -s "D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv" \
                -qm "Operation==['FillContentAwareFill']"
+}
+
+test_c4_4() {
+    echo "  * Testing all data with ciLevel - Manipulation *  "
+    echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference" \
+                       -x "NC2017-manipulation-index-jt.csv" \
+        				       -r "NC2017-manipulation-ref-jt.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv" \
+                       --ciLevel .95 --ci
 }
 
 
