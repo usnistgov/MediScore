@@ -386,7 +386,7 @@ if __name__ == '__main__':
     journal_df = read_csv(journal_df_name)
 
     #find the ref mask and corresponding probe ID (s)
-    ref_df = ref_df.query("HDF5MaskFileName == 'reference/{}/mask/{}'".format(args.task,os.path.basename(args.ref_mask)))
+    ref_df = ref_df.query("HDF5MaskFileName == 'reference/manipulation-video/mask/{}'".format(os.path.basename(args.ref_mask)))
     #join journal data
     jj_df = pjj_df.merge(journal_df)
     #get journal data
