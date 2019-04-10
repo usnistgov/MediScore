@@ -138,23 +138,28 @@ class Render:
             # We display the confidence interval when there is only one curve
             if nb_dm_objects == 1:
                 DM = dm_list[0]
-                plt.plot(DM.fpr, DM.tpr + DM.tpr_at_fpr_ci_upper, 'k--')
-                plt.plot(DM.fpr, DM.tpr - DM.tpr_at_fpr_ci_lower, 'k--')
+                #TODO: This is just one point, we should change this for all the tpr CI points
+                #tpr_ci_upper = DM.tpr_at_fpr_ci_upper - DM.tpr_at_fpr
+                #tpr_ci_lower = DM.tpr_at_fpr - DM.tpr_at_fpr_ci_lower
+                tpr_ci_upper = 0
+                tpr_ci_lower = 0
+                plt.plot(DM.fpr, DM.tpr + tpr_ci_upper ,'k--')
+                plt.plot(DM.fpr, DM.tpr - tpr_ci_lower, 'k--')
 
                 if isNoNumber:  # deleted at FAR=%.2f and DM.fpr_stop,
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f\n(TRR: %.2f)" % (DM.auc, DM.trr), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f" % (DM.auc), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f (CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.auc_ci_lower, DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
                 else:
                     if isOptOut:
-                        plt.annotate("trAUC=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.trr, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                        plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper,DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f\n(T#: %d, NT#: %d) " % (DM.auc, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                        plt.annotate("AUC=%.2f\n(CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.auc_ci_lower,DM.auc_ci_upper, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
                                      size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 

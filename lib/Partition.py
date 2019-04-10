@@ -243,7 +243,7 @@ class Partition:
         elif self.factor_mode == 'qp':
             data = dict()
             # Looking for the values of each fields
-            data = {'TRR': [], 'SYS_RESPONSE': [], 'AUC': [], 'EER': [], 'FAR_STOP': [], 'AUC@FAR': [], 'CDR@FAR': [], 'AUC_CI_LOWER': [],'AUC_CI_UPPER': [], 'AUC_CI_LOWER@FAR': [],'AUC_CI_UPPER@FAR': [], 'CDR_CI_LOWER@FAR': [], 'CDR_CI_UPPER@FAR': [] }
+            data = {'TRR': [], 'SYS_RESPONSE': [], 'AUC': [], 'EER': [], 'FAR_STOP': [], 'AUC@FAR': [], 'CDR@FAR': [], 'AUC_CI_LOWER': [],'AUC_CI_UPPER': [], 'AUC_CI_LOWER@FAR': [],'AUC_CI_UPPER@FAR': [], 'CDR_CI_LOWER@FAR': [], 'CDR_CI_UPPER@FAR': []}
             for i, partition in enumerate(self.part_values_list):
                 for field in self.factors_order:
                     full_condition = partition[find_factor_list_pos(partition, field)]
