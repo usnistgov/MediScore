@@ -17,7 +17,7 @@ class Render:
         self.opts_list = setRender.opts_list
         self.plot_opts = setRender.plot_opts
 
-    def plot_curve(self, display=False, multi_fig=False, isOptOut=False, isNoNumber=False):
+    def plot_curve(self, display=False, multi_fig=False, isOptOut=False, isNoNumber=False, isCI=False):
         """ Return single figure or a list of figures depending on the multi_fig option
         display: to display the figure from command-line
         multi_fig: generate a single curve plot per partition
@@ -26,15 +26,15 @@ class Render:
         if multi_fig is True:
             fig_list = list()
             for i, dm in enumerate(self.DM_list):
-                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut, isNoNumber)
+                fig = self.plot_fig([dm], i, display, multi_fig, isOptOut, isNoNumber, isCI)
                 fig_list.append(fig)
             return fig_list
         else:
-            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut, isNoNumber)
+            fig = self.plot_fig(self.DM_list, 1, display, multi_fig, isOptOut, isNoNumber, isCI)
             return fig
 
     # TODO: add auc values to each legend
-    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False, isNoNumber=False):
+    def plot_fig(self, dm_list, fig_number, display=False, multi_fig=False, isOptOut=False, isNoNumber=False, isCI=False):
         """Generate plot with the specified options
         dm_list: a list of detection metrics for partitions
         fig_number: a number of plot figures
@@ -146,21 +146,36 @@ class Render:
                 plt.plot(DM.fpr, DM.tpr + tpr_ci_upper ,'k--')
                 plt.plot(DM.fpr, DM.tpr - tpr_ci_lower, 'k--')
 
-                if isNoNumber:  # deleted at FAR=%.2f and DM.fpr_stop,
-                    if isOptOut:
-                        plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
-                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
-                    else:
-                        plt.annotate("AUC=%.2f (CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.auc_ci_lower, DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
-                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                if isCI:
+                    if isNoNumber:
+                        if isOptOut:
+                            plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                        else:
+                            plt.annotate("AUC=%.2f (CI_L: %.2f, CI_U: %.2f)" % (DM.auc, DM.auc_ci_lower, DM.auc_ci_upper), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
-                else:
-                    if isOptOut:
-                        plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper,DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
-                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
                     else:
-                        plt.annotate("AUC=%.2f\n(CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.auc_ci_lower,DM.auc_ci_upper, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
-                                     size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                        if isOptOut:
+                            plt.annotate("trAUC=%.2f\n(TRR: %.2f, CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.trr, DM.auc_ci_lower,DM.auc_ci_upper,DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                        else:
+                            plt.annotate("AUC=%.2f\n(CI_L: %.2f, CI_U: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.auc_ci_lower,DM.auc_ci_upper, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                else:
+                    if isNoNumber:
+                        if isOptOut:
+                            plt.annotate("trAUC=%.2f\n(TRR: %.2f)" % (DM.auc, DM.trr), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                        else:
+                            plt.annotate("AUC=%.2f" % (DM.auc), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',
+                                         size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+
+                    else:
+                        if isOptOut:
+                            plt.annotate("trAUC=%.2f\n(TRR: %.2f, T#: %d, NT#: %d) " % (DM.auc, DM.trr, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data', size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
+                        else:
+                            plt.annotate("AUC=%.2f\n(T#: %d, NT#: %d) " % (DM.auc, DM.t_num, DM.nt_num), xy=(0.7, 0.2), xycoords='data', xytext=(0.7, 0.2), textcoords='data',size=10, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
 
 
 #                plt.annotate("d = %.2f" %(DM.d), xy=(DM.dpoint[0], DM.dpoint[1]), xycoords='data', xytext=(0.9,0.5), textcoords='data',
@@ -180,12 +195,6 @@ class Render:
                                  # http://matplotlib.org/examples/pylab_examples/annotation_demo2.html
                                  arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0"),
                                  size=8, va='center', ha='center', bbox=dict(boxstyle="round4", fc="w"))
-
-#                plt.annotate("a' = %.2f" %(DM.a),xy=(DM.apoint[0], DM.apoint[1]), xycoords='data',
-#                             xytext=(DM.apoint[0]+0.1, DM.apoint[1]+0.1), textcoords='data',
-#                             arrowprops=dict(arrowstyle="-|>", connectionstyle="arc3, rad=+0.1", fc="w"),
-# size=10, va='center', ha='center', bbox=dict(boxstyle="round4",
-# fc="w"),)
 
                 # TODO: how to add variable here for fpr_stop
 #                plt.annotate("PAUC = %.2f%% at FAR=" %(pauc*100), xy=(0.7,0.2), xycoords='data', xytext=(0.7,0.2), textcoords='data',

@@ -321,11 +321,12 @@ test_c4_4() {
     echo_and_run python2 DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
                        -t manipulation \
                        --refDir "$testsuite_directory/sample/reference" \
-                       -x "NC2017-manipulation-index-jt.csv" \
-        				       -r "NC2017-manipulation-ref-jt.csv" \
+                       -x "NC2016-manipulation-index.csv" \
+        			   -r "NC2016-manipulation-ref.csv" \
                        --sysDir "$testsuite_directory/sample/" \
-				       -s "D_NC2017_Manipulation_ImgOnly_c-me_3/D_NC2017_Manipulation_ImgOnly_c-me_3.csv" \
-                       --ciLevel .95 --ci
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_3/D_NC2016_Manipulation_ImgOnly_p-me_3.csv" \
+                       -qm "Operation==['PasteSplice']" \
+                       --ci --ciLevel .95
 }
 
 

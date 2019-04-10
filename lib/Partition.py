@@ -158,18 +158,6 @@ class Partition:
             new_df = sub_df.drop_duplicates(subset=self.overlap_cols)
             #print("sub_df data {}".format(sub_df))
             #print("sub_df data size {}".format(sub_df.shape))
-            #print("Removing duplicates ...\n")
-            # Removing duplicates in case the data were merged by the JTmask metadata,
-            # not for splice
-            # if self.task == 'manipulation':
-            #     new_df = sub_df.drop_duplicates('ProbeFileID')
-            # elif self.task == 'splice':
-            #     new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'DonorFileID'])
-            # elif self.task == 'eventverification':
-            #     new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'EventName'])
-            # elif self.task == 'camera':
-            #     new_df = sub_df.drop_duplicates(subset=['ProbeFileID', 'HDDeviceID'])
-
             #print("new_df data size {}".format(new_df.shape))
             df_list.append(new_df)
 
