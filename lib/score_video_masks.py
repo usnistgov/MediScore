@@ -200,8 +200,8 @@ def compute_metrics(df):
     df['BWL1'] = df.apply(mm.maskMetrics.binaryWeightedL1,axis=1)
     df_cols = df.columns.values.tolist()
     if not ({"TPR","FPR"} < set(df_cols)):
-        df["TPR"] = df["TP"].astype(float).divide(df["TP"] + df["FN"],fill_value=np.nan)
-        df["FPR"] = df["FP"].astype(float).divide(df["FP"] + df["TN"],fill_value=np.nan)
+        df["TPR"] = df["TP"].astype(float).divide(df["TP"] + df["FN"])
+        df["FPR"] = df["FP"].astype(float).divide(df["FP"] + df["TN"])
     df_copy = df.copy().reset_index(drop=True)
     df["AUC"] = dmets.compute_auc(df_copy["FPR"],df_copy["TPR"])
     df["EER"] = dmets.compute_eer(df_copy["FPR"],1 - df_copy["TPR"])

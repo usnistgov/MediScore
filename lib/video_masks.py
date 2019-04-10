@@ -122,12 +122,12 @@ class frame(np.ndarray):
 
     def get_bitplanes_layer(self,mat):
         #sum along a particular axis, np.unique that, and then disassemble
-        pix_vals = list(np.unique(mat))
+        pix_vals = [ np.uint8(b) for b in np.unique(mat).tolist()]
         pix_vals.remove(0)
         if len(pix_vals) == 0: return pix_vals
 
         max_bp = int(log(max(pix_vals),2)) + 1
-        all_bps = [ 1 << (b - 1) for b in range(1,max_bp + 1) ]
+        all_bps = [ np.uint8(1 << (b - 1)) for b in range(1,max_bp + 1) ]
         bp_list = [ int(log(b,2)) + 1 for p in pix_vals for b in all_bps if b & p > 0 ]
         bp_list = np.unique(bp_list).tolist()
         return bp_list
@@ -143,7 +143,7 @@ class frame(np.ndarray):
         bp_l_list = []
         for l in range(n_layer):
             offset = dividing_value*l
-            bp_l = [ b - offset for b in bp_list if ((b >= offset) and (b < offset + dividing_value)) ]
+            bp_l = [ b - offset for b in bp_list if ((b >= offset + 1) and (b <= offset + dividing_value)) ]
             bp_l_list.append(bp_l)
         return bp_l_list
 
@@ -159,10 +159,10 @@ class frame(np.ndarray):
 
     def bp_from_journal(self):
         if self.has_journal_data():
-            bp = list(set(self.journal_data.query("Evaluated == 'Y'")['BitPlane'].tolist()))
+            bp = list(set(self.journal_data.query("{} == 'Y'".format(self.evalcol))['BitPlane'].tolist()))
             if '' in bp: 
                 bp.remove('')
-            bp = [int(b) for b in bp]
+            bp = [np.uint8(b) for b in bp]
         else:
             bp = self.get_bitplanes()
         return bp
@@ -174,7 +174,7 @@ class frame(np.ndarray):
             bp_list = self.subdivide_bitplanes(bp)
             bns = np.zeros((self.shape[0],self.shape[1]),dtype=np.uint8)
             for l in range(n_layers):
-                bns = bns | self.get_boundary_no_score_1L(self[:,:,l],bp_list[l],eks=eks,dks=dks,kern=kern)
+                bns = bns | self.get_boundary_no_score_1L(self[:,:,l].astype(np.uint8),bp_list[l],eks=eks,dks=dks,kern=kern)
             return bns
         else:
             return self.get_boundary_no_score_1L(self,bp,eks=eks,dks=dks,kern=kern)
@@ -200,20 +200,23 @@ class frame(np.ndarray):
             emat = np.zeros((self.shape[0],self.shape[1]),dtype=np.uint8)
             for l in range(n_layers):
                 bv = video_ref_mask.bitplanes_to_bitvals(bp_list[l])
-                sns = sns & self.get_selective_no_score_pure(self[:,:,l].view(frame)[:],bp_list[l],ntdks=ntdks,kern=kern)
+                sns = sns & self.get_selective_no_score_pure(self[:,:,l].view(frame)[:].astype(np.uint8),bp_list[l],ntdks=ntdks,kern=kern)
                 #get the eroded reference
-                emat = emat | erode(((self[:,:,l] & sum(bv)) > 0).astype(np.uint8),kernel=kern,kernsize=eks)
+                _,materode = cv2.threshold(self[:,:,l].astype(np.uint8) & sum(bv),0,1,cv2.THRESH_BINARY)
+                emat = emat | erode(materode,kernel=kern,kernsize=eks)
         else:
             sns = self.get_selective_no_score_pure(self,bp,ntdks=ntdks,kern=kern)
             bv = video_ref_mask.bitplanes_to_bitvals(bp)
-            emat = erode(((self & sum(bv)) > 0).astype(np.uint8),kernel=kern,kernsize=eks)
+            emat = erode(((self.astype(np.uint8) & sum(bv)) > 0).astype(np.uint8),kernel=kern,kernsize=eks)
         #make the regional cut at the very end, after getting all the no-score zones
         sns = sns | emat
         return sns
 
+    #TODO: needs to refer to journal
     def get_selective_no_score_pure(self,mat,bp_to_eval,ntdks=0,kern='box'):
         frame_bp = mat.get_bitplanes()
-        bp_not_to_eval = [ b for b in frame_bp if b not in bp_to_eval ]
+        bp_not_to_eval = [ np.uint8(b) for b in frame_bp if b not in bp_to_eval ]
+        bp_not_to_eval = [ b for b in bp_not_to_eval if len(self.journal_data.query("({} == 'N') and (BitPlane == '{}')".format(self.evalcol,b))) > 0]
         if len(bp_not_to_eval) == 0:
             return np.ones((mat.shape[0],mat.shape[1]),dtype=np.uint8)
         bitvals_not_to_eval = video_ref_mask.bitplanes_to_bitvals(bp_not_to_eval)
