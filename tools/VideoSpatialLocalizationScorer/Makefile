@@ -13,6 +13,7 @@ check:
 #	(cd ../../lib; python2 score_video_masks.py)
 #	(cd ../../lib; python2 -m unittest maskTests)
 	(./run_integration_tests.sh)
+	(./finalcheck.sh)
 
 render_readmes_to_html:
 	(jupyter-nbconvert --to html MaskScorerReadMe.ipynb)

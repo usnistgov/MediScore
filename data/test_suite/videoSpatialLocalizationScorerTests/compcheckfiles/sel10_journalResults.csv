@@ -1,0 +1,16 @@
+ProbeFileID|JournalName|StartNodeID|EndNodeID|Sequence|BitPlane|Operation|Color|Purpose|OperationArgument|AutoDesignName|VideoTime|VideoFrame|AudioTime|AudioFrame|Evaluated
+397eeb72e0cf71cc295f1e9ef7eb21b6|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_01|5||OutputAVI|0 126 255||||[]|[]|[]|[]|N
+397eeb72e0cf71cc295f1e9ef7eb21b6|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_01|39e0b7b08b8e77f97df056e8a9a50df1_02|4|1|PasteSampled|0 247 250||||[[2000.0,3000.0]]|[[43,99]]|[]|[]|N
+397eeb72e0cf71cc295f1e9ef7eb21b6|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_02|39e0b7b08b8e77f97df056e8a9a50df1_03|3||SelectCutFrames|244 253 0||||[[6266.66666667,6333.33333333]]|[[95,96]]|[]|[]|N
+397eeb72e0cf71cc295f1e9ef7eb21b6|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_03|39e0b7b08b8e77f97df056e8a9a50df1_05|2||AntiForensicCopyExif|0 247 250||||[]|[]|[]|[]|N
+397eeb72e0cf71cc295f1e9ef7eb21b6|39e0b7b08b8e77f97df056e8a9a50df1|39e0b7b08b8e77f97df056e8a9a50df1_05|39e0b7b08b8e77f97df056e8a9a50df1_06|1|10|PasteImageSpliceToFrames|127 123 125|add|other||[[2800.0,3350.0]]|[[90,120]]|[]|[]|Y
+a4a014d996406ebd0c0c7bcfd160f6c8|15787326147|15787326147|withShadow_fullComp|3||ObjectCGI|255 12 0||||[[0.0,60769.0416667]]|[[1,1456]]|[]|[]|N
+a4a014d996406ebd0c0c7bcfd160f6c8|15787326147|withShadow_fullComp_02|youtube-withShadow_fullComp.avi_36 - 320x180 (small)|1||SocialMedia|0 255 6||||[]|[]|[]|[]|N
+a4a014d996406ebd0c0c7bcfd160f6c8|15787326147|withShadow_fullComp|withShadow_fullComp_02|2||AntiForensicCopyExif|255 0 240||||[]|[]|[]|[]|N
+b4b87af1ea68b2b4218f9783c4ada380|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|3||OutputAVI|0 255 6||||[]|[]|[]|[]|N
+d548bc4facfbfd63113546ed731eab4b|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|4||OutputAVI|0 255 6||||[]|[]|[]|[]|N
+b4b87af1ea68b2b4218f9783c4ada380|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|45a915c5d002d8469fef9b94b7626bd5_03|2||SelectCutFrames|244 253 0||||[[2002.0,2035.36666667]]|[[61,62]]|[]|[]|N
+d548bc4facfbfd63113546ed731eab4b|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_01|45a915c5d002d8469fef9b94b7626bd5_03|3||SelectCutFrames|244 253 0||||[[2002.0,2035.36666667]]|[[61,62]]|[]|[]|N
+b4b87af1ea68b2b4218f9783c4ada380|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_03|45a915c5d002d8469fef9b94b7626bd5_05|1||AntiForensicCopyExif|255 138 0||||[]|[]|[]|[]|N
+d548bc4facfbfd63113546ed731eab4b|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_10|45a915c5d002d8469fef9b94b7626bd5_17|1||AntiForensicCopyExif|255 0 240||||[]|[]|[]|[]|N
+d548bc4facfbfd63113546ed731eab4b|45a915c5d002d8469fef9b94b7626bd5|45a915c5d002d8469fef9b94b7626bd5_03|45a915c5d002d8469fef9b94b7626bd5_10|2||TimeAlterationWarp|255 12 0||||[[2035.36870204,2268.93560227]]|[[62,67]]|[]|[]|N

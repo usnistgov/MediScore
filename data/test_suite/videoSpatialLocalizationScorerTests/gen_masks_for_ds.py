@@ -105,7 +105,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dataset_dir = args.dataset
-    print dataset_dir #TODO: check
+    print(dataset_dir) #TODO: check
     idx = read_csv(os.path.join(dataset_dir,"indexes/MFC18_Dev2-manipulation-video-index.csv"))
     ref_name = os.path.join(dataset_dir,"reference/manipulation-video/MFC18_Dev2-manipulation-video-ref.csv")
     ref = read_csv(ref_name)
@@ -114,8 +114,8 @@ if __name__ == '__main__':
     jm = read_csv(os.path.join(dataset_dir,"reference/manipulation-video/MFC18_Dev2-manipulation-video-ref-journalmask.csv"))
     jj = pjj.merge(jm)
 
-    ref_targs = ref.query("(IsTarget == 'Y') and (VideoTaskDesignation in ['spatial','spatial-temporal'])")
-    refidx = ref_targs.merge(idx)
+    refidx = ref.merge(idx)
+    refidx = refidx.query("(IsTarget == 'Y') and (VideoTaskDesignation in ['spatial','spatial-temporal'])")
 
     mask_out_dir = os.path.join(dataset_dir,'reference/manipulation-video/mask')
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
         frame_shape = (row["ProbeWidth"] - args.shift_mask,row["ProbeHeight"] + args.shift_mask)
         journal_data = jj.query("(ProbeFileID == '{}') and (BitPlane != '')".format(row["ProbeFileID"]))
         interval_list = journal_data["VideoFrame"].tolist()
-        print row["ProbeFileName"],frame_shape
+        print(", ".join([row["ProbeFileName"],str(frame_shape)]))
 
         tmp_name = os.path.join(mask_out_dir,'tmp.hdf5')
         #stamp the vid for every VideoFrame interval after mask is generated
@@ -160,8 +160,9 @@ if __name__ == '__main__':
                 continue
 
         #overrated, generate own mask and record the "manipulation" in jm and pjj on your own
-        new_mask_name = os.path.join(mask_out_dir,"{}.hdf5".format(get_md5(tmp_name)))
-        print "Mask name: ",new_mask_name
+#        new_mask_name = os.path.join(mask_out_dir,"{}.hdf5".format(get_md5(tmp_name)))
+        new_mask_name = os.path.join(mask_out_dir,"{}-refmask.hdf5".format(row['ProbeFileID']))
+        print("Mask name: {}".format(new_mask_name))
         os.system("mv {} {}".format(tmp_name,new_mask_name))
         #update the ref
         ref.loc[ref["ProbeFileID"] == row["ProbeFileID"],"HDF5MaskFileName"] = "reference/manipulation-video/mask/{}".format(os.path.basename(new_mask_name)) 

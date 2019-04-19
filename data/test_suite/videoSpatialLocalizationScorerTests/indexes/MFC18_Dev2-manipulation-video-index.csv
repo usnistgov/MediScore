@@ -1,6 +1,6 @@
-TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight|ProbeFileSize|HPDeviceID|FrameCount|FrameRate
-manipulation|7c3c1c60c115f5352898b21b049a22e9|probe/7c3c1c60c115f5352898b21b049a22e9.mp4|720|480|848275|UNDEF|43|10.561938811713654
-manipulation|a4a014d996406ebd0c0c7bcfd160f6c8|probe/a4a014d996406ebd0c0c7bcfd160f6c8.3gp|320|180|1657906|UNDEF|1457|23.976023976023974
-manipulation|b4b87af1ea68b2b4218f9783c4ada380|probe/b4b87af1ea68b2b4218f9783c4ada380.mp4|2704|1524|1836186||149|29.97002997002997
-manipulation|d548bc4facfbfd63113546ed731eab4b|probe/d548bc4facfbfd63113546ed731eab4b.mp4|2704|1524|1915357||155|29.97002997002997
-manipulation|397eeb72e0cf71cc295f1e9ef7eb21b6|probe/397eeb72e0cf71cc295f1e9ef7eb21b6.mp4|480|640|1947704||141|15.0
+TaskID|ProbeFileID|ProbeFileName|ProbeWidth|ProbeHeight|ProbeFileSize|HPDeviceID|FrameCount|FrameRate|VideoTaskDesignation
+manipulation|7c3c1c60c115f5352898b21b049a22e9|probe/7c3c1c60c115f5352898b21b049a22e9.mp4|720|480|848275|UNDEF|43|10.561938811713654|spatial
+manipulation|a4a014d996406ebd0c0c7bcfd160f6c8|probe/a4a014d996406ebd0c0c7bcfd160f6c8.3gp|320|180|1657906|UNDEF|1457|23.976023976023974|temporal
+manipulation|b4b87af1ea68b2b4218f9783c4ada380|probe/b4b87af1ea68b2b4218f9783c4ada380.mp4|2704|1524|1836186||149|29.97002997002997|temporal
+manipulation|d548bc4facfbfd63113546ed731eab4b|probe/d548bc4facfbfd63113546ed731eab4b.mp4|2704|1524|1915357||155|29.97002997002997|detection
+manipulation|397eeb72e0cf71cc295f1e9ef7eb21b6|probe/397eeb72e0cf71cc295f1e9ef7eb21b6.mp4|480|640|1947704||141|15.0|spatial-temporal

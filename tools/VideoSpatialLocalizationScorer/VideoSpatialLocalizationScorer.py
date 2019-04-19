@@ -208,6 +208,13 @@ if __name__ == '__main__':
         command_parameters[a] = arg_dict[a]
 
     verbose = args.verbose
+    if verbose:
+        def printq(string):
+            print(string)
+    else:
+        printq = lambda *a:None
+
+    exit_status = 0
 
     #process query mode
     query_mode = ''
@@ -249,7 +256,8 @@ if __name__ == '__main__':
     for i,q in enumerate(args.queryManipulation):
         output_directory = out_dir
         if query_mode == 'qm':
-            output_directory = os.path.join(out_dir,"index_%d" % i)
+            if len(args.queryManipulation) > 1:
+                output_directory = os.path.join(out_dir,"index_%d" % i)
             printq("Running video spatial localization scorer with query: {}".format(q))
         output_prefix = os.path.join(output_directory,out_pfx)
         mkdir(output_directory)
@@ -258,7 +266,7 @@ if __name__ == '__main__':
         with open(os.path.join(output_directory,"parameters.json"),'w') as log_file:
             json.dump(command_parameters,log_file,indent=4)
             
-        score_df = scoring_module.score_all_masks(out_dir,
+        score_df,exit_status_run = scoring_module.score_all_masks(out_dir,
                                                   query=q,
                                                   query_mode = query_mode,
                                                   opt_out = args.optOut,
@@ -277,11 +285,13 @@ if __name__ == '__main__':
                                                   verbose=args.verbose,
                                                   processors=args.processors
                                                  )
+        exit_status |= exit_status_run
 
         score_df.to_csv("_".join([output_prefix,"pervideo.csv"]),sep="|",index=False)
+        scoring_module.journal_join_df.to_csv("_".join([output_prefix,"journalResults.csv"]),sep="|",index=False)
 
         #average here with the relevant fields
-        #TODO: add temporal metrics to the average report
         a_df = average_report(task,score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'])
-        a_df.to_csv("_".join([output_prefix,'.csv']),sep="|",index=False)
+#        a_df.to_csv("_".join([output_prefix,'.csv']),sep="|",index=False)
 
+exit(exit_status)

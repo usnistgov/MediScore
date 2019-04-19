@@ -67,6 +67,9 @@ def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,que
 
     #TODO: this here is target proportions. The total (target) probes with scores / total target probes.
     scoredonly_df = score_df.query(scorequery)
+    if scoredonly_df.shape[0] == 0:
+        return pd.DataFrame(columns=metrics + constant_metrics)
+
     #TODO: Should TRR be for only the average queried or should it be a metric for the perimage dataset?
     #TODO: Fix the implementation of the partitioner? Recompute TRR in there?
     my_partition = pt.Partition(task,scoredonly_df,query,factor_mode,metrics)

@@ -18,6 +18,8 @@ img_path = os.path.join(this_dir,'../../MaskScorer/modules')
 sys.path.append(img_path)
 from perimage_report import localization_perimage_runner
 
+debug_mode=False
+exit_status = 0
 
 def printerr(string,verbose=None,exitcode=1):
     if verbose is not 0:
@@ -39,6 +41,15 @@ base_metric_cols = ['OptimumThreshold','OptimumNMM','OptimumMCC','OptimumBWL1',
 
 blank_metrics_defaults = {"NMM":np.nan,"MCC":np.nan,"BWL1":np.nan,"TemporalMCC":np.nan,
                           "GWL1":np.nan,"AUC":np.nan,"EER":np.nan,
+                          "TP":np.nan,"TN":np.nan,"FP":np.nan,"FN":np.nan,"Threshold":np.nan,
+                          "N":np.nan,"BNS":np.nan,"SNS":np.nan,"PNS":np.nan,
+                          "TemporalFrameTP":np.nan,"TemporalFrameTN":np.nan,"TemporalFrameFP":np.nan,"TemporalFrameFN":np.nan,
+                          "ActualNMM":np.nan,"ActualMCC":np.nan,"ActualBWL1":np.nan,
+                          "ActualPixelTP":np.nan,"ActualPixelTN":np.nan,"ActualPixelFP":np.nan,"ActualPixelFN":np.nan,"ActualThreshold":np.nan,
+                          "Scored":"N"}
+
+min_metrics = {"NMM":-1,"MCC":0,"BWL1":1,"TemporalMCC":0,
+                          "GWL1":1,"AUC":0,"EER":1,
                           "TP":np.nan,"TN":np.nan,"FP":np.nan,"FN":np.nan,"Threshold":np.nan,
                           "N":np.nan,"BNS":np.nan,"SNS":np.nan,"PNS":np.nan,
                           "TemporalFrameTP":np.nan,"TemporalFrameTN":np.nan,"TemporalFrameFP":np.nan,"TemporalFrameFN":np.nan,
@@ -81,6 +92,7 @@ class perprobe_module(localization_perimage_runner):
 
         self.set_parameters(opt_out,verbose,processors)
         syscols = self.sys_df.columns.values.tolist()
+        self.ref_df = self.ref_df.merge(self.index_df)
         refcols = self.ref_df.columns.values.tolist()
         if "VideoTaskDesignation" in refcols:
             self.ref_df = self.ref_df.query("(IsTarget == 'Y') and ({} != '') and (VideoTaskDesignation in ['spatial','spatial-temporal'])".format(self.probe_mask_field)) #TODO: prone to change depending on implementation. Check later.
@@ -93,14 +105,15 @@ class perprobe_module(localization_perimage_runner):
             if temporal_scoring_only:
                 self.sys_df = self.sys_df.query("{} != 'OptOutTemporal'".format(self.opt_out_column[0]))
 
-        self.merged_df = self.ref_df.merge(self.index_df).merge(self.sys_df)
+#        self.merged_df = self.ref_df.merge(self.index_df).merge(self.sys_df)
+        self.merged_df = self.ref_df.merge(self.sys_df)
         self.journal_join_df = self.pjj_df.merge(self.jm_df)
         self.journal_join_df[self.evalcol] = "N" if query != "" else "Y" #NOTE: for convenience
 
         if query != "":
             #process the same way as with images
             try:
-                big_df = merged_df.merge(self.journal_join_df,how='left').query(query)
+                big_df = self.merged_df.merge(self.journal_join_df,how='left').query(query)
             except query_exception:
                 print("Error: The query '{}' doesn't seem to refer to a valid key. Please correct the query and try again.".format(query))
                 exit(1)
@@ -190,7 +203,7 @@ class perprobe_module(localization_perimage_runner):
 
         #score_df.apply(lambda r: self.thresscores[r[self.probe_id_field]].to_csv(os.path.join(os.path.join(out_root,r[self.probe_id_field]),"thresMets.csv"),sep="|",index=False),axis=1)
 
-        return score_df
+        return score_df,exit_status
 
     #one run of the mask scoring
     def score_probe_run(self,
@@ -211,7 +224,7 @@ class perprobe_module(localization_perimage_runner):
         #TODO: parallelize over processors
         journal_join_query = " and ".join([ "(%s == '{}')" % p for p in self.primary_fields ])
         score_df = self.merged_df.apply(lambda r: perprobe_module.score_one_mask(r[self.probe_id_field],
-                                                                                 os.path.join(self.ref_dir,r[self.probe_mask_field]),
+                                                                                 os.path.join(self.ref_dir,r[self.probe_mask_field]) if r[self.probe_mask_field] != '' else '',
                                                                                  os.path.join(self.sys_dir,r[self.sys_mask_field]) if r[self.sys_mask_field] != '' else '',
                                                                                  journal_join_df=self.journal_join_df.query(journal_join_query.format(*[r[p] for p in self.primary_fields])),
                                                                                  probe_id_field=self.probe_id_field,
@@ -268,96 +281,117 @@ class perprobe_module(localization_perimage_runner):
                        nspx=-1,
                        kernel='box',
                        log_dir='.'):
-        if not os.path.isdir(log_dir):
-            os.system("mkdir {}".format(log_dir))
-
-        #read reference and system videos
-        ref_mask = video_ref_mask(ref_mask_name)
-        ref_mask.insert_journal_data(journal_join_df)
-        if sys_mask_name != "":
-            sys_mask = video_mask(sys_mask_name)
-        else:
-            #make blank sys masks
-            white_mask_name = os.path.join(log_dir,'whitemask.hdf5')
-            gen_mask(white_mask_name,ref_mask.shape,ref_mask.framecount)
-            sys_mask = video_mask(white_mask_name)
-
-        #generate collars and opt out frame intervals. Shift them back by one.
-        ref_intervals = ref_mask.compute_ref_intervals(eks=eks,dks=dks,ntdks=ntdks,sys=sys_mask if sys_mask_name != "" else None,nspx=nspx,kern=kernel)
-#        ref_mask.collars = shift_intervals(ref_mask.compute_collars(shift_intervals(ref_intervals,shift=1),collars=collars),shift=-1)
-#        ref_mask.opt_out_frames = shift_intervals(opt_out_frames,shift=-1)
-        ref_mask.collars = ref_mask.compute_collars(ref_intervals,collars=collars)
-        ref_mask.opt_out_frames = opt_out_frames
-
-        #also score temporal localization metrics by passing them into the video temporal localization scorer
-        temporal_scores = 0
-        if probe_status not in ["OptOutTemporal","OptOutLocalization","OptOutAll"]:
-            temporal_scores = score_temporal_metrics(ref_mask,sys_mask,collars,truncate=truncate,eks=eks,dks=dks,ntdks=ntdks,kern=kernel)
-            
-            temporal_scores.rename(columns={"MCC":"TemporalMCC",
-                                            "TP":"TemporalFrameTP",
-                                            "TN":"TemporalFrameTN",
-                                            "FP":"TemporalFrameFP",
-                                            "FN":"TemporalFrameFN"
-                                            },inplace=True)
-
-        #TODO: if temporal_scoring_only, skip the below and return just the temporal metrics, with other metrics empty?
-        #TODO: test this
-        if not (temporal_scoring_only or (probe_status in ['OptOutSpatial',"OptOutLocalization","OptOutAll"])):
-            #pass them into the video scorer
-            confusion_measures = get_confusion_measures(ref_mask,
-                                                        sys_mask,
-                                                        truncate=truncate,
-                                                        temporal_gt_only=temporal_gt_only,
-                                                        eks=eks,
-                                                        dks=dks,
-                                                        ntdks=ntdks,
-                                                        pppns=nspx,
-                                                        kern=kernel
-                                                        )
+        
+        try:
+            if not os.path.isdir(log_dir):
+                os.system("mkdir {}".format(log_dir))
     
-            #get the metrics for each set of confusion measures
-            spatial_scores = compute_metrics(confusion_measures)
-    
-            #separate procedure to score GWL1 (not threshold dependent), AUC, and EER using det metrics
-            spatial_scores["GWL1"] = score_GWL1(ref_mask,
-                                                sys_mask,
-                                                truncate=truncate,
-                                                temporal_gt_only=temporal_gt_only,
-                                                eks=eks,
-                                                dks=dks,
-                                                ntdks=ntdks,
-                                                pppns=nspx,
-                                                kern=kernel
-                                                )
-            if temporal_scores is 0:
-                scores = spatial_scores
-            else: 
-                scores = pd.concat([spatial_scores,temporal_scores],axis=1)
-        else:
-            scores = temporal_scores
-            if scores is 0:
-                ref_mask.close()
-                sys_mask.close()
-                blank_row = pd.Series(blank_metrics_defualts)
+            #read reference and system videos
+            if ref_mask_name == "":
+                blank_row = pd.Series(blank_metrics_defaults)
                 blank_row[probe_id_field] = probe_file_id
                 return blank_row
-
-        scores.to_csv(os.path.join(log_dir,"thresMets.csv"),sep="|",index=False)
-
-        maxrow = localization_perimage_runner._localization_perimage_runner__get_row_metrics(scores,central_met,pd.Series(blank_metrics_defaults),sys_bin=sys_bin)
-        #return the row with the max central metric
-        #case no ground truth
-        if (maxrow['TP'] + maxrow['FN'] == 0) or (maxrow['TN'] + maxrow['FP'] == 0):
-            for i,x in maxrow.iteritems():
-                maxrow.loc[i] = np.nan
-
-        maxrow.loc[probe_id_field] = probe_file_id
-        ref_mask.close()
-        sys_mask.close()
-        if sys_mask_name == "":
-            os.system('rm {}'.format(white_mask_name))
-        return maxrow
+            
+            ref_mask = video_ref_mask(ref_mask_name)
+            ref_mask.insert_journal_data(journal_join_df)
+            if sys_mask_name != "":
+                sys_mask = video_mask(sys_mask_name)
+            else:
+                #make blank sys masks
+                white_mask_name = os.path.join(log_dir,'whitemask.hdf5')
+                gen_mask(white_mask_name,ref_mask.shape,ref_mask.framecount)
+                sys_mask = video_mask(white_mask_name)
+    
+            #generate collars and opt out frame intervals. Shift them back by one.
+            ref_intervals = ref_mask.compute_ref_intervals(eks=eks,dks=dks,ntdks=ntdks,sys=sys_mask if sys_mask_name != "" else None,nspx=nspx,kern=kernel)
+    #        ref_mask.collars = shift_intervals(ref_mask.compute_collars(shift_intervals(ref_intervals,shift=1),collars=collars),shift=-1)
+    #        ref_mask.opt_out_frames = shift_intervals(opt_out_frames,shift=-1)
+            ref_mask.collars = ref_mask.compute_collars(ref_intervals,collars=collars)
+            ref_mask.opt_out_frames = opt_out_frames
+    
+            #also score temporal localization metrics by passing them into the video temporal localization scorer
+            temporal_scores = 0
+            if probe_status not in ["OptOutTemporal","OptOutLocalization","OptOutAll"]:
+                temporal_scores = score_temporal_metrics(ref_mask,sys_mask,collars,truncate=truncate,eks=eks,dks=dks,ntdks=ntdks,kern=kernel)
+                
+                temporal_scores.rename(columns={"MCC":"TemporalMCC",
+                                                "TP":"TemporalFrameTP",
+                                                "TN":"TemporalFrameTN",
+                                                "FP":"TemporalFrameFP",
+                                                "FN":"TemporalFrameFN"
+                                                },inplace=True)
+    
+            #TODO: if temporal_scoring_only, skip the below and return just the temporal metrics, with other metrics empty?
+            #TODO: test this
+            if not (temporal_scoring_only or (probe_status in ['OptOutSpatial',"OptOutLocalization","OptOutAll"])):
+                #pass them into the video scorer
+                confusion_measures = get_confusion_measures(ref_mask,
+                                                            sys_mask,
+                                                            truncate=truncate,
+                                                            temporal_gt_only=temporal_gt_only,
+                                                            eks=eks,
+                                                            dks=dks,
+                                                            ntdks=ntdks,
+                                                            pppns=nspx,
+                                                            kern=kernel
+                                                            )
+        
+                #get the metrics for each set of confusion measures
+                spatial_scores = compute_metrics(confusion_measures)
+        
+                #separate procedure to score GWL1 (not threshold dependent), AUC, and EER using det metrics
+                spatial_scores["GWL1"] = score_GWL1(ref_mask,
+                                                    sys_mask,
+                                                    truncate=truncate,
+                                                    temporal_gt_only=temporal_gt_only,
+                                                    eks=eks,
+                                                    dks=dks,
+                                                    ntdks=ntdks,
+                                                    pppns=nspx,
+                                                    kern=kernel
+                                                    )
+                if temporal_scores is 0:
+                    scores = spatial_scores
+                else: 
+                    scores = pd.concat([spatial_scores,temporal_scores],axis=1)
+            else:
+                scores = temporal_scores
+                if scores is 0:
+                    ref_mask.close()
+                    sys_mask.close()
+                    blank_row = pd.Series(min_metrics)
+                    blank_row[probe_id_field] = probe_file_id
+                    return blank_row
+    
+            scores.to_csv(os.path.join(log_dir,"thresMets.csv"),sep="|",index=False)
+    
+            maxrow = localization_perimage_runner._localization_perimage_runner__get_row_metrics(scores,central_met,pd.Series(blank_metrics_defaults),sys_bin=sys_bin)
+            #return the row with the max central metric
+            #case no ground truth
+            if (maxrow['TP'] + maxrow['FN'] == 0) or (maxrow['TN'] + maxrow['FP'] == 0):
+                for i,x in maxrow.iteritems():
+                    maxrow.loc[i] = np.nan
+    
+            maxrow.loc[probe_id_field] = probe_file_id
+            ref_mask.close()
+            sys_mask.close()
+            if sys_mask_name == "":
+                os.system('rm {}'.format(white_mask_name))
+            return maxrow
+        except:
+            exc_type,exc_obj,exc_tb = sys.exc_info()
+#            log_ptr.write("Scoring run for {} {} encountered exception {} at line {}.".format(probe_id_field,probe_file_id,exc_type,exc_tb.tb_lineno))
+            print("Scoring run for {} {} encountered exception {} at line {}.".format(probe_id_field,probe_file_id,exc_type,exc_tb.tb_lineno))
+            global exit_status
+            exit_status = 1
+            if debug_mode:
+#                log_ptr.close()
+                raise
+#            log_ptr.close()
+            #an unprocessable system mask should yield all minimum scores
+            min_row = pd.Series(min_metrics)
+            min_row[probe_id_field] = probe_file_id
+            return min_row
 
 
 if __name__ == '__main__':
@@ -406,3 +440,5 @@ if __name__ == '__main__':
     else:
         print(scores)
     
+    exit(exit_status)
+

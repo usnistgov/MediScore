@@ -148,6 +148,13 @@ class max_metrics_scorer():
         
         #preprocess and then proceed to compute 
         probe_thres_mets_preprocess = self.preprocess_threshold_metrics()
+        if len(probe_thres_mets_preprocess.values()) == 0:
+            auc_cols = ['PixelAverageAUC','MaskAverageAUC']
+            all_cols = max_cols + auc_cols
+            for col in all_cols:
+                scoredf[col] = np.nan
+            return scoredf
+            
         probe_thres_mets_agg = pd.concat(probe_thres_mets_preprocess.values(),keys=probe_thres_mets_preprocess.keys(),names=[probe_id_field,'Threshold'])
         thres_mets_sum = probe_thres_mets_agg.sum(level=[1])
         thres_mets_sum['PixelTPR'] = thres_mets_sum['TP']/(thres_mets_sum['TP'] + thres_mets_sum['FN'])

@@ -136,10 +136,11 @@ class frame(np.ndarray):
         """
         * Description: subdivide into a list of list of BitPlane's. Each list is also shifted back appropriately.
         """
-        if len(bp_list) == 0:
-            n_layer = 1
-        else:
-            n_layer = (max(bp_list) - 1)//dividing_value + 1
+#        if len(bp_list) == 0:
+#            n_layer = 1
+#        else:
+#            n_layer = (max(bp_list) - 1)//dividing_value + 1
+        n_layer = self.shape[2] 
         bp_l_list = []
         for l in range(n_layer):
             offset = dividing_value*l
@@ -172,12 +173,19 @@ class frame(np.ndarray):
         if self.is_multi_layer:
             n_layers = self.shape[2]
             bp_list = self.subdivide_bitplanes(bp)
-            bns = np.zeros((self.shape[0],self.shape[1]),dtype=np.uint8)
+            #Get into single layer first, then dilate and erode.
+            ref1L = np.zeros((self.shape[0],self.shape[1]),dtype=np.uint8)
             for l in range(n_layers):
-                bns = bns | self.get_boundary_no_score_1L(self[:,:,l].astype(np.uint8),bp_list[l],eks=eks,dks=dks,kern=kern)
-            return bns
+                bp_final = sum([ 1 << (int(b) - 1) for b in bp_list[l]])
+                bit_mat = ((self[:,:,l].astype(np.uint8) & bp_final) > 0).astype(np.uint8)
+                ref1L = ref1L | bit_mat
         else:
-            return self.get_boundary_no_score_1L(self,bp,eks=eks,dks=dks,kern=kern)
+            bp_final = sum([ 1 << (int(b) - 1) for b in bp])
+            ref1L = (self.astype(np.uint8) & bp_final > 0).astype(np.uint8)
+
+        emat = erode(ref1L,kernel=kern,kernsize=eks)
+        dmat = dilate(ref1L,kernel=kern,kernsize=dks)
+        return ((dmat - emat) == 0).astype(np.uint8)
 
     def get_boundary_no_score_1L(self,mat,bitplanes,eks=0,dks=0,kern='box'):
         if self.has_journal_data():
@@ -198,25 +206,27 @@ class frame(np.ndarray):
             bp_list = self.subdivide_bitplanes(bp)
             sns = np.ones((self.shape[0],self.shape[1]),dtype=np.uint8)
             emat = np.zeros((self.shape[0],self.shape[1]),dtype=np.uint8)
+            #Get into single layer first, then dilate and erode.
             for l in range(n_layers):
                 bv = video_ref_mask.bitplanes_to_bitvals(bp_list[l])
-                sns = sns & self.get_selective_no_score_pure(self[:,:,l].view(frame)[:].astype(np.uint8),bp_list[l],ntdks=ntdks,kern=kern)
+                sns = sns & self.get_selective_no_score_pure(self[:,:,l].view(frame)[:].astype(np.uint8),bp_list[l],ntdks=ntdks,layer=l,kern=kern)
                 #get the eroded reference
                 _,materode = cv2.threshold(self[:,:,l].astype(np.uint8) & sum(bv),0,1,cv2.THRESH_BINARY)
                 emat = emat | erode(materode,kernel=kern,kernsize=eks)
         else:
             sns = self.get_selective_no_score_pure(self,bp,ntdks=ntdks,kern=kern)
             bv = video_ref_mask.bitplanes_to_bitvals(bp)
-            emat = erode(((self.astype(np.uint8) & sum(bv)) > 0).astype(np.uint8),kernel=kern,kernsize=eks)
+            _,materode = cv2.threshold(self.astype(np.uint8) & sum(bv),0,1,cv2.THRESH_BINARY)
+            emat = erode(materode,kernel=kern,kernsize=eks)
         #make the regional cut at the very end, after getting all the no-score zones
         sns = sns | emat
         return sns
 
-    #TODO: needs to refer to journal
-    def get_selective_no_score_pure(self,mat,bp_to_eval,ntdks=0,kern='box'):
+    def get_selective_no_score_pure(self,mat,bp_to_eval,ntdks=0,layer=0,kern='box'):
         frame_bp = mat.get_bitplanes()
-        bp_not_to_eval = [ np.uint8(b) for b in frame_bp if b not in bp_to_eval ]
-        bp_not_to_eval = [ b for b in bp_not_to_eval if len(self.journal_data.query("({} == 'N') and (BitPlane == '{}')".format(self.evalcol,b))) > 0]
+#        bp_not_to_eval = [ np.uint8(b) for b in frame_bp if b not in bp_to_eval ]
+        bp_not_to_eval = [ np.uint8(b) for b in frame_bp ]
+        bp_not_to_eval = [ b for b in bp_not_to_eval if len(self.journal_data.query("({} == 'N') and (BitPlane == '{}')".format(self.evalcol,b+8*layer))) > 0]
         if len(bp_not_to_eval) == 0:
             return np.ones((mat.shape[0],mat.shape[1]),dtype=np.uint8)
         bitvals_not_to_eval = video_ref_mask.bitplanes_to_bitvals(bp_not_to_eval)
@@ -320,7 +330,7 @@ class video(object):
         return ds_num
 
     def get_frame_vc(self,frame_number):
-        self.fpointer.set(frame_pos_const,frame_number)
+        self.fpointer.set(frame_pos_const,frame_number - 1)
         ret,frame = self.fpointer.read()
         return frame
 
@@ -333,7 +343,7 @@ class video(object):
             if frame_number >= self.framecount:
                 frame_mat = self.whiteframe.copy()
             else:
-                frame_mat = self.fpointer['masks/masks'][frame_number,:,:]
+                frame_mat = self.fpointer['masks/masks'][frame_number - 1,:,:]
         else:
             ds_num = self.get_dataset_number(frame_number)
             if ds_num is None:
@@ -479,7 +489,7 @@ class video_ref_mask(video_mask):
                 if p > 0:
                     frame_list.append(i)
                     continue
-        return shift_intervals(union_frames(frame_list),1)
+        return union_frames(frame_list)
 
     def compute_collars(self,ref_intervals,collars=None):
         if not collars:

@@ -46,6 +46,10 @@ def get_next_greatest_indices(ix1,ix2):
     return last_ix_1n2
 
 def update_dataframe_scores(df_to_update,df2):
+    df_ud_cols = df_to_update.columns.values.tolist()
+    df2_cols = df2.columns.values.tolist()
+    cols_in_both = [ c for c in df_ud_cols if c in df2_cols ]
+
     all_wo_this_ix = df_to_update.index.difference(df2.index)
     update_all_df = len(all_wo_this_ix) > 0
     if update_all_df:
@@ -63,10 +67,12 @@ def update_dataframe_scores(df_to_update,df2):
         this_wo_all = this_wo_all + this_wo_all_update
 
     if update_all_df:
-        df_to_update.loc[all_wo_this_ix] = all_wo_this
+        #ensure all columns are in the right order, otherwise the sum gets screwed up
+        df_to_update.loc[all_wo_this_ix,cols_in_both] = all_wo_this[cols_in_both]
     
     if update_this_df:
-        df2.loc[this_wo_all_ix] = this_wo_all
+        #ensure all columns are in the right order, otherwise the sum gets screwed up
+        df2.loc[this_wo_all_ix,cols_in_both] = this_wo_all[cols_in_both]
 
     #pandas add everything on both sides.
     df_to_update = df_to_update.add(df2,fill_value = 0)
@@ -122,7 +128,7 @@ def get_confusion_measures(ref,sys,truncate=False,pad=True,temporal_gt_only=Fals
     for f in range(framecount_ref):
         if pad and (framecount_ref > framecount_sys) and (f >= framecount_sys):
             if f == framecount_sys:
-                #NOTE: this message only needs to print once.
+                #this message only needs to print once.
                 print("Warning: Expected {} frames in system mask. Got {} frames. Padding empty frames to the end of the system to match reference.".format(framecount_ref,framecount_sys))
 #            print("Frame: {}".format(f))
             sysframe = sys.whiteframe.copy()
@@ -539,7 +545,7 @@ def multi_layer_bp_video_test():
 
     ref_mask_path = os.path.join(vidprobe_sample_dir,'sample_ref_mask.hdf5')
     
-    eks = 11
+    eks = 51
     dks=15
     ntdks=15
 
