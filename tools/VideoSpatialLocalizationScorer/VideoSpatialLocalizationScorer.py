@@ -100,10 +100,15 @@ class params:
         self.__dict__.update(kwds)
 
 if __name__ == '__main__':
-    arg_list = ['task','refDir','sysDir','inRef','inSys','inIndex','outRoot','outMeta','outAllmeta',
+#    arg_list = ['task','refDir','sysDir','inRef','inSys','inIndex','outRoot','outMeta','outAllmeta',
+#                'query','queryPartition','queryManipulation','optOut','eks','dks','ntdks','kernel',
+#                'rbin','sbin','nspx','perProbePixelNoScore',
+#                'verbose','processors','precision','truncate_figures','displayScoredOnly','indexFilter','speedup','debug_off',
+#                'truncate','temporal_gt_only','temporal_scoring_only','collars','log']
+    arg_list = ['task','refDir','sysDir','inRef','inSys','inIndex','outRoot',
                 'query','queryPartition','queryManipulation','optOut','eks','dks','ntdks','kernel',
                 'rbin','sbin','nspx','perProbePixelNoScore',
-                'verbose','processors','precision','truncate_figures','displayScoredOnly','indexFilter','speedup','debug_off',
+                'verbose','processors','precision',
                 'truncate','temporal_gt_only','temporal_scoring_only','collars','log']
     import argparse
     parser = argparse.ArgumentParser(description='Compute scores for the masks and generate a report.')

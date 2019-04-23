@@ -124,8 +124,8 @@ basic_test(){
                                           -s p-vsltest_1.csv\
                                           -x indexes/MFC18_Dev2-manipulation-video-index.csv\
                                           -oR test1/test1\
-                                          --outMeta\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -153,8 +153,8 @@ basic_test_noed(){
                                           -oR $DIR/test1noed/test1noed\
                                           --eks 0\
                                           --dks 0\
-                                          --outMeta\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -180,9 +180,9 @@ basic_collar_test(){
                                           -s p-vsltest_1.csv\
                                           -x indexes/MFC18_Dev2-manipulation-video-index.csv\
                                           -oR test1c/test1c\
-                                          --outMeta\
                                           --collars 3\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -210,9 +210,9 @@ basic_video_oo_test(){
                                           -oR test1oo/test1oo\
                                           --eks 0\
                                           --dks 0\
-                                          --outMeta\
                                           --video_opt_out\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -242,8 +242,8 @@ selective_test_1(){
                                           --dks 0\
                                           --ntdks 0\
                                           -qm "Operation == 'PasteSampled'"\
-                                          --outMeta\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -260,8 +260,8 @@ selective_test_10(){
                                           --dks 0\
                                           --ntdks 0\
                                           -qm "Operation == 'PasteImageSpliceToFrames'"\
-                                          --outMeta\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
@@ -300,8 +300,8 @@ err_test(){
                                           -s p-vsltest_dims.csv\
                                           -x indexes/MFC18_Dev2-manipulation-video-index.csv\
                                           -oR test_err/test_err\
-                                          --outMeta\
                                           --truncate)
+#                                          --outMeta\
     echo "${command[@]}"
     "${command[@]}"
 }
