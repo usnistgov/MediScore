@@ -3,7 +3,7 @@
 * File: VideoSpatialLocalizationScorer.py
 * Date: 10/31/2018
 * Written by Daniel Zhou, under the guidance of Jonathan G. Fiscus
-* Status: In Progress
+* Status: Complete
 
 * Description: This calculates performance scores for localizing mainpulated areas
                between reference masks and system output masks for videos.
@@ -121,8 +121,8 @@ if __name__ == '__main__':
         help='Task Index csv file name: [e.g., indexes/NC2016-manipulation-index.csv]',metavar='character')
     parser.add_argument('-oR','--outRoot',type=str,
         help="Directory root plus prefix to save outputs.",metavar='character')
-    parser.add_argument('--outMeta',action='store_true',help='Save the CSV file with the system scores with minimal metadata')
-    parser.add_argument('--outAllmeta',action='store_true',help='Save the CSV file with the system scores with all metadata')
+#    parser.add_argument('--outMeta',action='store_true',help='Save the CSV file with the system scores with minimal metadata')
+#    parser.add_argument('--outAllmeta',action='store_true',help='Save the CSV file with the system scores with all metadata')
     
     #added from DetectionScorer.py
     factor_group = parser.add_mutually_exclusive_group()
@@ -162,19 +162,19 @@ if __name__ == '__main__':
     #TODO: need a better number rounding control interface. Or just deprecate or remove --truncate_figures.
     parser.add_argument('--precision',type=int,default=16,
         help="The number of digits to round computed scores. Note that rounding is not absolute, but is by significant digits (e.g. a score of 0.003333333333333... will round to 0.0033333 for a precision of 5). (default = 16).",metavar='positive integer')
-    parser.add_argument('--truncate_figures',action='store_true',
-        help="Truncate rather than round the figures to the specified precision. If no number is specified for precision, the default 16 will be used.")
+#    parser.add_argument('--truncate_figures',action='store_true',
+#        help="Truncate rather than round the figures to the specified precision. If no number is specified for precision, the default 16 will be used.")
 
 #    parser.add_argument('-html',help="Output data to HTML files.",action="store_true")
-    parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
-    parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select smaller index files for the purpose of testing.")
-    parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
-    parser.add_argument('--debug_off',action='store_false',help="Continue running localization scorer on the next probe even when encountering errors. The errors will still be printed, but not raised.")
+#    parser.add_argument('--displayScoredOnly',action='store_true',help="Display only the data for which a localized score could be generated.")
+#    parser.add_argument('-xF','--indexFilter',action='store_true',help="Filter scoring to only files that are present in the index file. This option permits scoring to select smaller index files for the purpose of testing.")
+#    parser.add_argument('--speedup',action='store_true',help="Run mask evaluation with a sped-up evaluator.")
+#    parser.add_argument('--debug_off',action='store_false',help="Continue running localization scorer on the next probe even when encountering errors. The errors will still be printed, but not raised.")
 
     #options from the VideoTemporalLocalizationScorer
     parser.add_argument('--truncate', help="Truncate any system intervals that goes beyond the video reference framecount (to the framecount value)", action='store_true')
     parser.add_argument('--temporal_gt_only',help="Score only on frames where there is temporal localization manipulation.")
-    parser.add_argument('--temporal_scoring_only',help="Generate only the temporal localization metrics. ()")
+    parser.add_argument('--temporal_scoring_only',help="Generate only the temporal localization metrics, skipping the spatial localization metrics.")
 
     #TODO: to develop the options below
     parser.add_argument('-c', '--collars', help='collar value to add to each side of the reference intervals', default=None, type=int)
@@ -291,7 +291,7 @@ if __name__ == '__main__':
         scoring_module.journal_join_df.to_csv("_".join([output_prefix,"journalResults.csv"]),sep="|",index=False)
 
         #average here with the relevant fields
-        a_df = average_report(task,score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'])
+        a_df = average_report('manipulation-video',score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'],primary_met = ["SpatialTemporalOptimumMCC"])
 #        a_df.to_csv("_".join([output_prefix,'.csv']),sep="|",index=False)
 
 exit(exit_status)

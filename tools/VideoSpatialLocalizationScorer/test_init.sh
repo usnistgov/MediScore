@@ -27,6 +27,7 @@ check_file(){
         return 0
     else
         echo $comp_file_name
+        echo "FAILURE IN DIFF"
         cat $comp_file_name
         return 1
     fi

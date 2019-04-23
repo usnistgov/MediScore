@@ -200,6 +200,8 @@ class perprobe_module(localization_perimage_runner):
         score_df = pd.merge(score_df,self.merged_df)
 
         score_df = self.postprocess(score_df,base_metric_cols,precision=precision,verbose=verbose)
+        spatial_mets = { m:"SpatialTemporal{}".format(m) for m in base_metric_cols if "Temporal" not in m }
+        score_df.rename(columns=spatial_mets,inplace=True)
 
         #score_df.apply(lambda r: self.thresscores[r[self.probe_id_field]].to_csv(os.path.join(os.path.join(out_root,r[self.probe_id_field]),"thresMets.csv"),sep="|",index=False),axis=1)
 

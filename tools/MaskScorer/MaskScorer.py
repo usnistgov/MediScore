@@ -99,6 +99,8 @@ def gen_average_fields(task):
         ]
     avg_constant_metric_fields = ['MaximumThreshold','ActualThreshold']
     if task == 'manipulation-video':
+        avg_metric_fields = [ "SpatialTemporal{}".format(m) for m in avg_metric_fields ]
+        avg_constant_metric_fields = [ "SpatialTemporal{}".format(m) for m in avg_constant_metric_fields ]
         avg_metric_fields.append("TemporalMCC")
     if task == 'splice':
         avg_metric_fields = [ 'p%s' % m for m in avg_metric_fields ] + [ 'd%s' % m for m in avg_metric_fields ]
@@ -327,7 +329,7 @@ if __name__ == '__main__':
         scoring_module.output_journal_join_df("_".join([output_prefix,"journalResults.csv"]))
 
         #average run. Output has already been covered. #TODO: move output to here instead? Not realizable for args.query.
-        a_df = average_report(task,score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'])
+        a_df = average_report(task,score_df,sys_df,avg_metric_fields,avg_constant_metric_fields,query_mode,avg_queries,output_prefix,optout=args.optOut,precision=args.precision,round_modes=['sd'],primary_met = ["pOptimumMCC","dOptimumMCC"] if task == 'splice' else ["OptimumMCC"])
          
         #if applicable, HTML generation
         if args.html:

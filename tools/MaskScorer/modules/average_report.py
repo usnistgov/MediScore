@@ -29,17 +29,14 @@ def is_number(n):
 
 #TODO: turn this into an object
 
-def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,query,outroot_and_pfx,optout=False,precision=16,round_modes=['sd']):
-    if task in ['manipulation','camera']:
-        #TODO: expand to thresholds and the like?
-        primary_met = 'OptimumMCC'
-        primary_met_absent = primary_met not in metrics
-    elif task == 'splice':
-        primary_met_absent = ('pOptimumMCC' not in metrics) or ('dOptimumMCC' not in metrics)
-        primary_met = '(pOptimumMCC,dOptimumMCC)'
-
+def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,query,outroot_and_pfx,optout=False,precision=16,round_modes=['sd'],primary_met=["OptimumMCC"]):
+    primary_met_absent = False
+    for pm in primary_met:
+        if pm not in metrics:
+            print("Error: {} is not in the metrics provided.".format(pm))
+            primary_met_absent = True
+        
     if primary_met_absent:
-        print("Error: {} is not in the metrics provided.".format(primary_met))
         return 1
 
     outroot = os.path.dirname(outroot_and_pfx)
@@ -54,7 +51,7 @@ def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,que
     if optout:
         optout_mode = 1 if 'IsOptOut' in df_heads else 2
 
-    if task == 'manipulation':
+    if 'manipulation' in task:
         scorequery = "Scored=='Y'"
         lastcols = ['TRR','totalTrials','ScoreableTrials','totalTargets','ScoreableTargets','totalOptIn','totalOptOut','optOutScoring']
     elif task == 'splice':
@@ -65,6 +62,8 @@ def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,que
         lastcols.extend(oo_cols)
         lastcols.append('optOutScoring')
 
+    partition_task = task if 'manipulation' not in task else 'manipulation'
+
     #TODO: this here is target proportions. The total (target) probes with scores / total target probes.
     scoredonly_df = score_df.query(scorequery)
     if scoredonly_df.shape[0] == 0:
@@ -72,7 +71,7 @@ def average_report(task,score_df,sys_df,metrics,constant_metrics,factor_mode,que
 
     #TODO: Should TRR be for only the average queried or should it be a metric for the perimage dataset?
     #TODO: Fix the implementation of the partitioner? Recompute TRR in there?
-    my_partition = pt.Partition(task,scoredonly_df,query,factor_mode,metrics)
+    my_partition = pt.Partition(partition_task,scoredonly_df,query,factor_mode,metrics)
     df_list = my_partition.render_table(metrics)
     if len(df_list) == 0:
         first_cols = ['TaskID','Query']
@@ -130,8 +129,11 @@ def postprocess_avg_report(task,a_df,score_df,sys_df,metrics,constant_mets,lastc
         optout_mode = 2
     score_oo_cols = 'IsOptOut' if optout_mode == 1 else 'ProbeStatus'
     
+    #TODO: separate prefixes for metrics and other
     if task == 'manipulation':
         pfx_set = ['']
+    elif task == 'manipulation-video':
+        pfx_set = ["SpatialTemporal"]
     elif task == 'splice':
         pfx_set = ['p','d']
     
@@ -155,25 +157,28 @@ def postprocess_avg_report(task,a_df,score_df,sys_df,metrics,constant_mets,lastc
         if optout_mode == 1:
             undesirables = ['Y','Localization']
         elif optout_mode == 2:
-            if (pfx == 'p') or (pfx == ''):
-                undesirables = ['OptOutAll','OptOutLocalization']
-            elif pfx == 'd':
+            if pfx == 'd':
                 undesirables = ['OptOutLocalization']
                 score_oo_cols = 'DonorStatus'
+            else:
+                undesirables = ['OptOutAll','OptOutLocalization']
 
         if pfx == 'p':
             loctype = 'Probe'
+            trr_pfx = pfx
         elif pfx == 'd':
             loctype = 'Donor'
-        elif pfx == '':
+            trr_pfx = pfx
+        else:
             loctype = ''
+            trr_pfx = ''
 
         n_optout = sys_df.query("{}=={}".format(score_oo_cols,undesirables)).shape[0]
         scoreable_targets = score_df.query("({}Scored=='Y') and ({}OptimumMCC!='')".format(loctype,pfx)).shape[0]
         scoreable_trials = score_df.query("{} != {}".format(score_oo_cols,undesirables)).shape[0]
         a_df['Scoreable%sTargets' % loctype] = scoreable_targets
         a_df['Scoreable%sTrials' % loctype] = scoreable_trials
-        a_df['%sTRR' % pfx] = float(scoreable_trials)/total_trials if total_targets > 0 else np.nan
+        a_df['%sTRR' % trr_pfx] = float(scoreable_trials)/total_trials if total_targets > 0 else np.nan
         a_df['total%sOptOut' % loctype ] = n_optout
         a_df['total%sOptIn' % loctype ] = total_trials - n_optout
         a_df = fields2ints(a_df,['totalTrials','Scoreable%sTrials' % loctype,'totalTargets','Scoreable%sTargets' % loctype,'total%sOptOut' % loctype,'total%sOptIn' % loctype])
