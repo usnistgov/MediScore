@@ -314,6 +314,7 @@ err_test_wrapper(){
     if [[ "$clean" == "yes" ]]; then
         rm -rf $DIR/test_err
     fi
+    rm $TESTDIR/p-vsltest_dims/mask/*
     return $exitstatus
 }
 

@@ -16,5 +16,4 @@ check:
 	(./finalcheck.sh)
 
 render_readmes_to_html:
-	(jupyter-nbconvert --to html MaskScorerReadMe.ipynb)
-	(jupyter-nbconvert --to html modules/HTMLReadMe.ipynb)
+	(jupyter-nbconvert --to html VTSLScorerReadMe.ipynb)
