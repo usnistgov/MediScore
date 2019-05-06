@@ -438,7 +438,7 @@ if __name__ == '__main__':
     print("Scoring finished. Outputting scores.")
 
     if args.outRoot:
-        scores.to_csv("{}_score.csv".format(args.outRoot))
+        scores.to_csv("{}_score.csv".format(args.outRoot),header=True,sep="|")
     else:
         print(scores)
     
