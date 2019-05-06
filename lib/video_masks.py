@@ -123,7 +123,8 @@ class frame(np.ndarray):
     def get_bitplanes_layer(self,mat):
         #sum along a particular axis, np.unique that, and then disassemble
         pix_vals = [ np.uint8(b) for b in np.unique(mat).tolist()]
-        pix_vals.remove(0)
+        if 0 in pix_vals:
+            pix_vals.remove(0)
         if len(pix_vals) == 0: return pix_vals
 
         max_bp = int(log(max(pix_vals),2)) + 1
