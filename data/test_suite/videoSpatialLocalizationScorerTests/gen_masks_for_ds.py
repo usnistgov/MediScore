@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     for i,row in refidx.iterrows():
         framecount = row["FrameCount"]
-        frame_shape = (row["ProbeWidth"] - args.shift_mask,row["ProbeHeight"] + args.shift_mask)
+        frame_shape = (row["ProbeHeight"] + args.shift_mask,row["ProbeWidth"] - args.shift_mask)
         journal_data = jj.query("(ProbeFileID == '{}') and (BitPlane != '')".format(row["ProbeFileID"]))
         interval_list = journal_data["VideoFrame"].tolist()
         print(", ".join([row["ProbeFileName"],str(frame_shape)]))

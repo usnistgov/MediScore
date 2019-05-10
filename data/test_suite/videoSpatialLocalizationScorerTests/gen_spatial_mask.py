@@ -85,7 +85,7 @@ if __name__ == '__main__':
     mask_out_dir = os.path.join(sys_dir,'mask')
     for i,row in sys_idx.iterrows():
         framecount = row["FrameCount"]
-        frame_shape = (row["ProbeWidth"] - args.shift_frames,row["ProbeHeight"] + args.shift_frames)
+        frame_shape = (row["ProbeHeight"] + args.shift_frames,row["ProbeWidth"] - args.shift_frames)
         probe_file_id = row["ProbeFileID"]
         interval_list = row["VideoFrameSegments"]
         vmask_file_name = row["OutputProbeMaskFileName"]
