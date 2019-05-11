@@ -180,20 +180,13 @@ class validator:
         return 0
 
     def init_other_variables(self,params):
-        try:
-            self.outputRewrite = params.outputRewrite
-        except:
-            self.outputRewrite = False
+        param_list = vars(params)
+        for p in ["outputRewrite","task","ignore_eof","score_range_0_1"]:
+            if p in param_list:
+                setattr(self,p,getattr(params,p))
+            else:
+                setattr(self,p,False if p != 'task' else None)
 
-        try:
-            self.task = params.task
-        except:
-            self.task = None
-
-        try:
-            self.ignore_eof = params.ignore_eof
-        except:
-            self.ignore_eof = False
 
 class SSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -487,6 +480,7 @@ class SSD_Validator(validator):
     #attach the flag to each row and send the row back
     def checkOneProbe(self,sysrow):
         pk_field = 'ProbeFileID'
+        msgs = []
         if self.task == 'camera':
             pk_field = 'ProbeCamID'
         elif self.task == 'eventverification':
@@ -506,6 +500,17 @@ class SSD_Validator(validator):
 #                printq("The contents of your file are not valid!",True)
 #                return 1
 
+        if self.score_range_0_1:
+            confscore = sysrow["ConfidenceScore"]
+            if (confscore > 1) or (confscore < 0):
+                if self.outputRewrite:
+                    msgs.append("Warning: ConfidenceScore for {} is {}, not in [0,1]. Setting ConfidenceScore to 0.".format(probeFileID,confscore))
+                    sysrow["ConfidenceScore"] = 0
+                    sysrow["ProbeStatus"] = "FailedValidation"
+                else:
+                    msgs.append("ERROR: ConfidenceScore for {} is {}, not in [0,1].".format(probeFileID,confscore))
+                    sysrow['matchFlag'] = 1
+
         if self.pixOptOut and (self.task != 'manipulation-video'):
             oopixval = str(sysrow['ProbeOptOutPixelValue'])
             #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
@@ -513,7 +518,7 @@ class SSD_Validator(validator):
             if oopixval != '':
                 isProbeOOdigit = is_integer(oopixval)
             if not ((oopixval == '') or isProbeOOdigit):
-                sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval)
+                msgs.append("ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval))
                 sysrow['matchFlag'] = 1
 
         #check mask validation
@@ -524,25 +529,28 @@ class SSD_Validator(validator):
                 #throw error if not in set of allowed values
                 all_statuses = ['Y','Detection','Localization','N','FailedValidation']
                 if not sysrow['IsOptOut'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID'])])
+                    msgs.append("ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['IsOptOut'],sysrow['ProbeFileID']))
                     sysrow['matchFlag'] = 1
                 if sysrow['IsOptOut'] == 'FailedValidation':
+                    sysrow["Message"] = "\n".join(msgs)
                     return sysrow
             elif self.optOutNum == 2:
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
                 if self.task == 'eventverification':
                     all_statuses = ['Processed','NonProcessed','OptOut','FailedValidation']
+                if self.task == 'manipulation-video':
+                    all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization',"OptOutTemporal","OptOutSpatial",'FailedValidation']
                 if not sysrow['ProbeStatus'] in all_statuses:
-                    sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
+                    msgs.append("ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID']))
                     sysrow['matchFlag'] = 1
                 if sysrow['ProbeStatus'] == 'FailedValidation':
-                    sysrow['Message'] = " ".join([sysrow['Message'],"Warning: Probe {} has failed validation due to incorrect mask dimensions, but is excused in this system output."])
+                    msgs.append("Warning: Probe {} has failed validation due to incorrect mask dimensions, but is excused in this system output.".format(sysrow["ProbeFileID"]))
+                    sysrow["Message"] = "\n".join(msgs)
                     return sysrow
 
             if self.task == 'manipulation-video':
                 if self.optOutNum == 1:
                     return sysrow
-                msgs = []
                 #TODO: delegate interval check to a package function
                 for col in ['VideoFrameSegments','AudioSampleSegments','VideoFrameOptOutSegments']:
                     if 'FrameCount' not in list(self.idxfile):
@@ -555,28 +563,33 @@ class SSD_Validator(validator):
                     mymskflag,mymsg = self.vidIntervalsCheck(sysrow[col],'Frame',maxFrame,col,probeFileID) #NOTE: 'Frame' evaluation until we have time evaluations
                     sysrow['maskFlag'] = sysrow['maskFlag'] | mymskflag
                     msgs.append(mymsg)
-                #check video spatial content from "VideoMaskFileName" if the column exists in the system output
-                if "VideoMaskFileName" in sysrow.index:
-                    videoOutputMaskFileName = os.path.join(self.sysPath,sysrow["VideoMaskFileName"]) if sysrow["VideoMaskFileName"] != '' else ''
+                #check video spatial content from "OutputProbeMaskFileName" if the column exists in the system output
+                if "OutputProbeMaskFileName" in sysrow.index:
+                    videoOutputMaskFileName = os.path.join(self.sysPath,sysrow["OutputProbeMaskFileName"]) if sysrow["OutputProbeMaskFileName"] != '' else ''
                     baseHeight = list(map(int,self.idxfile['ProbeHeight'][self.idxfile[pk_field] == probeFileID]))[0] 
                     baseWidth = list(map(int,self.idxfile['ProbeWidth'][self.idxfile[pk_field] == probeFileID]))[0]
-                    dim_flag,dim_msg = video_dim_check(videoOutputMaskFileName,baseWidth,baseHeight)
-                    msk_ct_flag,ct_msg = video_mask_check(videoOutputMaskFileName)
-                    sysrow['maskFlag'] = sysrow['maskFlag'] | msk_ct_flag
-                    msgs.append(ct_msg)
-                sysrow['Message'] = "\n".join([sysrow['Message']] + msgs)
+                    if videoOutputMaskFileName != '':
+                        dim_flag,dim_msg = video_dim_check(videoOutputMaskFileName,baseWidth,baseHeight)
+                        sysrow['maskFlag'] = sysrow['maskFlag'] | dim_flag
+                        msgs.append(dim_msg)
+                        msk_ct_flag,ct_msg = video_mask_check(videoOutputMaskFileName)
+                        sysrow['maskFlag'] = sysrow['maskFlag'] | msk_ct_flag
+                        msgs.append(ct_msg)
+                sysrow['Message'] = "\n".join(msgs)
                 return sysrow
             if self.neglectMask:
+                sysrow['Message'] = "\n".join(msgs)
                 return sysrow
 
             probeOutputMaskFileName = sysrow['OutputProbeMaskFileName']
             if probeOutputMaskFileName in [None,'',np.nan,'nan']:
-                sysrow['Message']=" ".join([sysrow['Message'],"The mask for file {} appears to be absent. Skipping it.".format(probeFileID)])
+                msgs.append("The mask for file {} appears to be absent. Skipping it.".format(probeFileID))
+                sysrow["Message"] = "\n".join(msgs)
                 return sysrow
             mskflag = 0
             msg = ""
             mskflag,msg = self.maskCheck(os.path.join(self.sysPath,probeOutputMaskFileName),probeFileID,self.idxfile,self.identify,pk_field)
-            sysrow['Message'] = "\n".join([sysrow['Message'],msg])
+            msgs.append(msg)
             if self.outputRewrite:
                 if mskflag >= 2:
                     if self.optOutNum == 1:
@@ -584,8 +597,12 @@ class SSD_Validator(validator):
                     elif self.optOutNum == 2:
                         oo_col = 'ProbeStatus'
                     sysrow[oo_col] = 'FailedValidation'
+                    if self.score_range_0_1:
+                        msgs.append("Warning: Mask {} for probe {} has failed validation. ConfidenceScore will be set to 0.")
+                        sysrow["ConfidenceScore"] = 0
             
             sysrow['maskFlag'] = sysrow['maskFlag'] | mskflag 
+        sysrow["Message"] = "\n".join(msgs)
         return sysrow
 
     def maskCheck(self,maskname,fileid,indexfile,identify,pk_field):
@@ -940,6 +957,21 @@ class DSD_Validator(validator):
                         self.printbuffer.put("ERROR: ProbeOptOutPixelValue for probe-donor pair ({}) is {} and DonorOptOutPixelValue is {}. Please check if either is not blank ('') or an integer.".format(key.replace(":",","),oopixvalp,oopixvald))
                         scoreFlag = 1
 
+                if self.score_range_0_1:
+                    confscore = float(l_content[s_heads["ConfidenceScore"]])
+                    if (confscore < 0) or (confscore > 1):
+                        if self.outputRewrite:
+                            self.printbuffer.put("Warning: ConfidenceScore for probe-donor pair ({}) is {}, not in [0,1]. Setting ConfidenceScore to 0.".format(key.replace(":",","),confscore))
+                            l_content[s_heads["ConfidenceScore"]] = 0
+                            if optOut == 1:
+                                l_content[s_heads["IsOptOut"]] = "FailedValidation"
+                            elif optOut == 2:
+                                for s in ["ProbeStatus","DonorStatus"]:
+                                    l_content[s_heads[s]] = "FailedValidation"
+                        else:
+                            self.printbuffer.put("ERROR: ConfidenceScore for probe-donor pair ({}) is {}, not in [0,1].".format(key.replace(":",","),confscore))
+                            scoreFlag = 1
+
                 if testMask:
                     if neglectMask:
                         continue
@@ -996,11 +1028,22 @@ class DSD_Validator(validator):
                         if optOut == 1:
                             if maskCheckFlag >= 2:
                                 l_content[s_heads['IsOptOut']] = 'FailedValidation'
+                                if self.score_range_0_1:
+                                    if maskCheckFlag >= 4:
+                                        self.printbuffer.put("Warning: Donor mask {} for probe-donor pair ({}) has failed validation. ConfidenceScore will be set to 0.".format(donorOutputMaskFileName,key.replace(":",",")))
+                                        maskCheckFlag = maskCheckFlag - 4
+                                    if maskCheckFlag >= 2:
+                                        self.printbuffer.put("Warning: Probe mask {} for probe-donor pair ({}) has failed validation. ConfidenceScore will be set to 0.".format(probeOutputMaskFileName,key.replace(":",",")))
+                                    l_content[s_heads['ConfidenceScore']] = 0
                         if optOut == 2:
                             if maskCheckFlag >= 4:
+                                self.printbuffer.put("Warning: Donor mask {} for probe-donor pair ({}) has failed validation. ConfidenceScore will be set to 0.".format(donorOutputMaskFileName,key.replace(":",",")))
                                 l_content[s_heads['DonorStatus']] = 'FailedValidation'
+                                l_content[s_heads['ConfidenceScore']] = 0
                                 maskCheckFlag = maskCheckFlag - 4
                             if maskCheckFlag >= 2:
+                                self.printbuffer.put("Warning: Probe mask {} for probe-donor pair ({}) has failed validation. ConfidenceScore will be set to 0.".format(probeOutputMaskFileName,key.replace(":",",")))
+                                l_content[s_heads['ConfidenceScore']] = 0
                                 l_content[s_heads['ProbeStatus']] = 'FailedValidation'
 
                         newline = []
@@ -1244,7 +1287,9 @@ if __name__ == '__main__':
     parser.add_argument('--ignore_eof',action='store_true',
         help="Ignore EOF of video if performer's frames go out of bounds. Has no effect on image validation.")
     parser.add_argument('--output_revised_system',type=str,default=None,
-        help="Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]")
+        help="Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be treated as probes with white masks in image localization scoring. [default=None]")
+    parser.add_argument('--score_range_0_1',action='store_true',
+        help="Mandate the range of the ConfidenceScore to be in [0,1].")
 
     if len(sys.argv) < 2:
         parser.print_help()
@@ -1284,7 +1329,7 @@ if __name__ == '__main__':
         print("ERROR: Expected one of {} for validation type. Got {}.".format(valtype_to_task.keys(),args.valtype))
         exit(1)
 
-    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof)
+    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof,score_range_0_1=args.score_range_0_1)
     if args.valtype in ['SSD','SSD-video','SSD-event','SSD-camera']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
         exit(ssd_validation.fullCheck(myval_params))

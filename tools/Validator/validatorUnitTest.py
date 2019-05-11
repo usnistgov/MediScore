@@ -108,6 +108,11 @@ class TestValidator(ut.TestCase):
         self.assertEqual(myval,0)
         os.system('rm vmb1.log')
 
+        #score range [0,1]
+        myval = os.system("python2 validator.py -vt SSD -s {} -x {} -p {} --score_range_0_1 {}{}> vmb01.log".format(validatorRoot + 'foo/foo.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256
+        self.assertEqual(myval,1)
+        os.system('rm vmb01.log')
+
         #no mask
         myval = os.system("python2 validator.py -vt SSD -s {} -x {} -p {} {}{}> vmb2.log".format(validatorRoot + 'nomask/nomask.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-index.csv',procs,identify_string,nm_string))//256
         self.assertEqual(myval,0)
@@ -337,7 +342,7 @@ class TestValidator(ut.TestCase):
         if ver == 'd1v1':
             versfx = '_d1v1'
         print("BASIC FUNCTIONALITY validation of SSD video validator beginning...")
-        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vvb.log".format(NCID,
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} --score_range_0_1 {}{}> vvb.log".format(NCID,
                                                                                                                 validatorRoot + 'validvidtest/validvidtest.csv',
                                                                                                                 validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index{}.csv'.format(versfx),
                                                                                                                 procs,
@@ -426,7 +431,28 @@ class TestValidator(ut.TestCase):
         print("CASE V4 validated.")
         os.system('rm vv4.log')
 
-        #TODO: test spatial localization here
+    #TODO: test spatial localization here
+    def testSpatialVideoContent(self):
+        validatorRoot = '../../data/test_suite/videoSpatialLocalizationScorerTests/'
+        print("\nBeginning system output content validation for video spatial localization-capable output..")
+        print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")
+        validatorRoot = '../../data/test_suite/videoSpatialLocalizationScorerTests'
+        testdir = "p-vsltest_1"
+        log_name = "vslb.log"
+        sys_out = os.path.join(os.path.join(validatorRoot,testdir),".".join([testdir,'csv']))
+
+        os.system("python2 {}/gen_spatial_mask.py -s {} -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv".format(validatorRoot,sys_out,validatorRoot))
+        myval = os.system("python2 validator.py --ncid MFC18 -vt SSD-video -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv -s {} > {}".format(validatorRoot,sys_out,log_name))
+        self.assertEqual(myval,0)
+        os.system("rm {}/{}/mask/*".format(validatorRoot,testdir))
+        
+        print("BASIC FUNCTIONALITY validated.")
+
+        #TODO: add other tests here
+        print("\nCASE VS1: Validating failed validation for video spatial localization...")
+        
+        print("\nCASE VS1 validated.")
+
 
     def testEventVerification(self):
         validatorRoot = '../../data/test_suite/validatorTests/'
@@ -557,8 +583,12 @@ class TestValidator(ut.TestCase):
         self.assertEqual(myval,0)
         os.system('rm vsb.log')
 
+        myval = os.system("python2 validator.py -nc --ncid {} -vt DSD -s {} -x {} -p {} --score_range_0_1 {}{}> vsb01.log".format(NCID,validatorRoot + 'lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1/lorem_NC2016_UnitTest_Splice_ImgOnly_p-baseline_1.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256
+        self.assertEqual(myval,1)
+        os.system('rm vsb01.log')
+
         #add validation for namecheck
-        myval = os.system("python2 validator.py -vt DSD -s {} -x {} -p {} {}{}> vsb1.log".format(validatorRoot + 'lorem/lorem.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
+        myval = os.system("python2 validator.py -vt DSD -s {} -x {} -p {} --score_range_0_1 {}{}> vsb1.log".format(validatorRoot + 'lorem/lorem.csv',validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-splice-index.csv',procs,identify_string,nm_string))//256 
         self.assertEqual(myval,0)
         os.system('rm vsb1.log')
         print("BASIC FUNCTIONALITY validated.")

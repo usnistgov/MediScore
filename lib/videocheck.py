@@ -6,7 +6,7 @@ import cv2
 import ast
 
 from count_colors_f import bp_sets_from_mask
-from video_masks import video,video_ref_mask
+from video_masks import video,video_mask,video_ref_mask
 
 try:
     pos_avi_ratio_const = cv2.cv.CV_CAP_PROP_POS_AVI_RATIO
@@ -276,23 +276,24 @@ def video_mask_interval_check(vfilename,journal_data):
 
 #checks if the mask is grayscale
 def video_mask_check(vmaskname):
-    vfile = video_mask(vfilename)
+    vfile = video_mask(vmaskname)
     status = 0
     colorlist = set()
+    msgs = []
     for i,f in enumerate(vfile):
         if len(f.shape) > 2:
             if f.shape[2] > 1:
-                print("Error: {}'s frame at frame {} needs to be 2-dimensional. The number of layers is {}.".format(vmaskname,i+1,f.shape[2]))
+                msgs.append("Error: {}'s frame at frame {} needs to be 2-dimensional. The number of layers is {}.".format(vmaskname,i+1,f.shape[2]))
                 status = 1
         pxlist = np.unique(f)
         colorlist = colorlist.union(set(pxlist))
         
     for c in colorlist:
         if not ((c >= 0) and (c <= 255)):
-            print("Error: the pixel value {} was found in mask {}. It should be in the interval [0,255].".format(c,vmaskname))
-            return 1
+            msgs.append("Error: the pixel value {} was found in mask {}. It should be in the interval [0,255].".format(c,vmaskname))
+            return 1,"\n".join(msgs)
 
-    return status
+    return status,"\n".join(msgs)
 
 #Does the BitPlane check.
 def video_mask_bitplane_check(vfilename,journal_data):
