@@ -52,7 +52,7 @@ run_test() {
     fi
 }
 
-TESTDIR=../../data/test_suite/videoSpatialLocalizationScorerTests
+TESTDIR=$(realpath ../../data/test_suite/videoSpatialLocalizationScorerTests)
 procs=4
 
 sfx_list_1=(
@@ -109,6 +109,7 @@ test_wrapper(){
 gen_masks(){
     mkdir -p $TESTDIR/reference/manipulation-video/mask
     python2 $TESTDIR/gen_masks_for_ds.py -ds $TESTDIR
+    mkdir -p $TESTDIR/p-vsltest_1/mask
     python2 $TESTDIR/gen_spatial_mask.py -s $TESTDIR/p-vsltest_1/p-vsltest_1.csv -x $TESTDIR/indexes/MFC18_Dev2-manipulation-video-index.csv
 }
 
