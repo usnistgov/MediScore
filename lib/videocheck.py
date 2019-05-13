@@ -232,7 +232,7 @@ def video_framecount_check(vfilename,framecount):
     return flag,"\n".join(msg)
 
 #check the video's spatial (frame) dimensions
-def video_dim_check(vfilename,width,height):
+def video_dim_check(vfilename,width,height,revise_system=False):
     vfile = video(vfilename)
     if os.path.basename(vfilename).split('.')[-1] == 'hdf5':
         vid_w = vfile.shape[1]
@@ -242,7 +242,9 @@ def video_dim_check(vfilename,width,height):
         vid_h = vfile.shape[1]
     vfile.close()
     if not ((vid_w == width) and (vid_h == height)):
-        return 1,"Error: Dimensional mismatch for video {}. Expected dimensions {}. Got {}.".format(vfile.name,(width,height),(vid_w,vid_h))
+        status = 2 if revise_system else 1
+        msgtype = "Warning" if revise_system else "Error"
+        return status,"{}: Dimensional mismatch for video {}. Expected dimensions {}. Got {}.".format(msgtype,vfile.name,(width,height),(vid_w,vid_h))
     return 0,""
 
 #checks that the manipulations in the mask correspond to their temporal (spatial localizable) intervals.
@@ -275,7 +277,7 @@ def video_mask_interval_check(vfilename,journal_data):
     return flag,"\n".join(msg)
 
 #checks if the mask is grayscale
-def video_mask_check(vmaskname):
+def video_mask_check(vmaskname,revise_system=False):
     vfile = video_mask(vmaskname)
     status = 0
     colorlist = set()

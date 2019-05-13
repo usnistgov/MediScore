@@ -433,7 +433,6 @@ class TestValidator(ut.TestCase):
 
     #TODO: test spatial localization here
     def testSpatialVideoContent(self):
-        validatorRoot = '../../data/test_suite/videoSpatialLocalizationScorerTests/'
         print("\nBeginning system output content validation for video spatial localization-capable output..")
         print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")
         validatorRoot = '../../data/test_suite/videoSpatialLocalizationScorerTests'
@@ -450,6 +449,14 @@ class TestValidator(ut.TestCase):
 
         #TODO: add other tests here
         print("\nCASE VS1: Validating failed validation for video spatial localization...")
+        log_name = "vsl1.log"
+        os.system("python2 {}/gen_spatial_mask.py -s {} -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv --shift_frames 4".format(validatorRoot,sys_out,validatorRoot))
+        myval = os.system("python2 validator.py --ncid MFC18 -vt SSD-video -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv -s {} --output_revised_system revised_vstl.csv > {}".format(validatorRoot,sys_out,log_name))//256
+        self.assertEqual(myval,1)
+        sys_out_mod = os.path.join(os.path.join(validatorRoot,testdir),'revised_vstl.csv')
+        myval = os.system("python2 validator.py --ncid MFC18 -vt SSD-video -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv -s {} > {}".format(validatorRoot,sys_out_mod,log_name))
+        self.assertEqual(myval,0)
+        os.system("rm {}/{}/mask/*".format(validatorRoot,testdir))
         
         print("\nCASE VS1 validated.")
 

@@ -569,9 +569,19 @@ class SSD_Validator(validator):
                     baseHeight = list(map(int,self.idxfile['ProbeHeight'][self.idxfile[pk_field] == probeFileID]))[0] 
                     baseWidth = list(map(int,self.idxfile['ProbeWidth'][self.idxfile[pk_field] == probeFileID]))[0]
                     if videoOutputMaskFileName != '':
-                        dim_flag,dim_msg = video_dim_check(videoOutputMaskFileName,baseWidth,baseHeight)
+                        dim_flag,dim_msg = video_dim_check(videoOutputMaskFileName,baseWidth,baseHeight,self.outputRewrite)
                         sysrow['maskFlag'] = sysrow['maskFlag'] | dim_flag
                         msgs.append(dim_msg)
+                        if self.outputRewrite:
+                            if dim_flag >= 2:
+                                if self.optOutNum == 1:
+                                    oo_col = 'IsOptOut'
+                                elif self.optOutNum == 2:
+                                    oo_col = 'ProbeStatus'
+                                sysrow[oo_col] = 'FailedValidation'
+                                if self.score_range_0_1:
+                                    msgs.append("Warning: Mask {} for probe {} has failed validation. ConfidenceScore will be set to 0.".format(videoOutputMaskFileName,probeFileID))
+                                    sysrow["ConfidenceScore"] = 0
                         msk_ct_flag,ct_msg = video_mask_check(videoOutputMaskFileName)
                         sysrow['maskFlag'] = sysrow['maskFlag'] | msk_ct_flag
                         msgs.append(ct_msg)
@@ -598,7 +608,7 @@ class SSD_Validator(validator):
                         oo_col = 'ProbeStatus'
                     sysrow[oo_col] = 'FailedValidation'
                     if self.score_range_0_1:
-                        msgs.append("Warning: Mask {} for probe {} has failed validation. ConfidenceScore will be set to 0.")
+                        msgs.append("Warning: Mask {} for probe {} has failed validation. ConfidenceScore will be set to 0.".format(probeOutputMaskFileName,probeFileID))
                         sysrow["ConfidenceScore"] = 0
             
             sysrow['maskFlag'] = sysrow['maskFlag'] | mskflag 
