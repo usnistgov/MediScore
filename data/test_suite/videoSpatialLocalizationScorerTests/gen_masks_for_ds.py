@@ -104,7 +104,7 @@ if __name__ == '__main__':
     parser.add_argument("--add_layer",action='store_true',help="Add a layer to the generated mask.")
     args = parser.parse_args()
 
-    dataset_dir = args.dataset
+    dataset_dir = os.path.abspath(args.dataset)
     print(dataset_dir) #TODO: check
     idx = read_csv(os.path.join(dataset_dir,"indexes/MFC18_Dev2-manipulation-video-index.csv"))
     ref_name = os.path.join(dataset_dir,"reference/manipulation-video/MFC18_Dev2-manipulation-video-ref.csv")

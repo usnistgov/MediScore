@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     sys_name = args.inSys
     sys = read_csv(sys_name)
-    sys_dir = os.path.dirname(sys_name)
+    sys_dir = os.path.abspath(os.path.dirname(sys_name))
 
     idx_name = args.inIndex
     idx = read_csv(idx_name)
