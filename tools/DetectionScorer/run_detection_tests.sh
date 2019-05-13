@@ -59,7 +59,8 @@ echo
 run_test test_c4_1 "$testsuite_directory/checkfiles/test_c4_1"
 run_test test_c4_2 "$testsuite_directory/checkfiles/test_c4_2"
 run_test test_c4_3 "$testsuite_directory/checkfiles/test_c4_3"
-run_test test_c4_4 "$testsuite_directory/checkfiles/test_c4_4"
+
+
 
 echo
 echo "CASE 5: VALIDATING ALL THE EXAMPLES FROM THE DETECTIONSCORER README DOCUMENT"

@@ -535,7 +535,7 @@ if __name__ == '__main__':
     myRender = p.Render(configRender)
     # Plotting
     myfigure = myRender.plot_curve(
-        args.display, multi_fig=args.multiFigs, isOptOut=args.optOut, isNoNumber=args.noNum, isCI=args.ci)
+        args.display, multi_fig=args.multiFigs, isOptOut=args.optOut, isNoNumber=args.noNum)
 
     # save multiple figures if multi_fig == True
     if isinstance(myfigure, list):
