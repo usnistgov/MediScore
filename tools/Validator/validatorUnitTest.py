@@ -440,6 +440,7 @@ class TestValidator(ut.TestCase):
         log_name = "vslb.log"
         sys_out = os.path.join(os.path.join(validatorRoot,testdir),".".join([testdir,'csv']))
 
+        os.system("mkdir -p {}/mask".format(os.path.dirname(sys_out)))
         os.system("python2 {}/gen_spatial_mask.py -s {} -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv".format(validatorRoot,sys_out,validatorRoot))
         myval = os.system("python2 validator.py --ncid MFC18 -vt SSD-video -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv -s {} > {}".format(validatorRoot,sys_out,log_name))
         self.assertEqual(myval,0)
