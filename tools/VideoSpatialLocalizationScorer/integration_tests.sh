@@ -304,7 +304,7 @@ selective_tests_wrapper(){
 err_test(){
     #gen err mask for different system, then run basic test with those masks
     chmod 777 $TESTDIR/p-vsltest_dims
-    mkdir -p $TISTDIR/p-vsltest_dims/mask
+    mkdir -p $TESTDIR/p-vsltest_dims/mask
     python2 $TESTDIR/gen_spatial_mask.py -s $TESTDIR/p-vsltest_dims/p-vsltest_dims.csv -x $TESTDIR/indexes/MFC18_Dev2-manipulation-video-index.csv --shift_frames 8
     command=(python2 $DIR/VideoSpatialLocalizationScorer.py -t manipulation\
                                           --refDir $TESTDIR\
