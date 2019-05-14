@@ -435,11 +435,12 @@ class TestValidator(ut.TestCase):
     def testSpatialVideoContent(self):
         print("\nBeginning system output content validation for video spatial localization-capable output..")
         print("BASIC FUNCTIONALITY validation of SSD-event validator beginning...")
-        validatorRoot = '../../data/test_suite/videoSpatialLocalizationScorerTests'
+        validatorRoot = os.path.abspath('../../data/test_suite/videoSpatialLocalizationScorerTests')
         testdir = "p-vsltest_1"
         log_name = "vslb.log"
         sys_out = os.path.join(os.path.join(validatorRoot,testdir),".".join([testdir,'csv']))
 
+        os.chmod(os.path.join(validatorRoot,testdir),0o777)
         os.system("mkdir -p {}/mask".format(os.path.dirname(sys_out)))
         os.system("python2 {}/gen_spatial_mask.py -s {} -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv".format(validatorRoot,sys_out,validatorRoot))
         myval = os.system("python2 validator.py --ncid MFC18 -vt SSD-video -x {}/indexes/MFC18_Dev2-manipulation-video-index.csv -s {} > {}".format(validatorRoot,sys_out,log_name))
