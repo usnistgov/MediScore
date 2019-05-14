@@ -11751,7 +11751,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Mask-Scorer">Mask Scorer<a class="anchor-link" href="#Mask-Scorer">&#182;</a></h1>
+<h1 id="Video-Spatial-Temporal-Localization-Scorer">Video Spatial-Temporal Localization Scorer<a class="anchor-link" href="#Video-Spatial-Temporal-Localization-Scorer">&#182;</a></h1>
 </div>
 </div>
 </div>
@@ -11762,8 +11762,9 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Table-of-Contents">Table of Contents<a class="anchor-link" href="#Table-of-Contents">&#182;</a></h2><p>0. <a href="#Synopsis">Synopsis</a></p>
 <p>1. <a href="#Description">Description</a></p>
-<p>2. <a href="#Readmasks">Reading the Masks</a></p>
-<p>3. <a href="#Binmasks">Binarizing the Reference Mask</a></p>
+<p>2. <a href="#Sysmasks">Spatial-Temporal System Masks</a></p>
+<p>3. <a href="#Refmasks">Reference Masks</a></p>
+<p>3.1. <a href="#Binmasks">Binarizing the Reference Mask</a></p>
 <p>4. <a href="#noscorezone">Generating No-Score Zones</a></p>
 <p>5. <a href="#metrics">Metrics</a></p>
 <p>5.1 <a href="#metricsthresholding">System Mask Thresholding</a></p>
@@ -11816,7 +11817,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The video spatial localization scorer calculates performance scores that measure the accuracy of the system output masks to their corresponding reference masks. This scorer's function is analogous to that of the image localization scorer (under tools/MaskScorer), but is applied to detecting manipulated pixels in videos.</p>
+<p>The video spatial-temporal localization (VSTL) scorer calculates performance scores that measure the accuracy of the system output masks to their corresponding reference masks. This scorer's function is analogous to that of the image localization scorer (under tools/MaskScorer), but is applied to detecting manipulated pixels in videos.</p>
 <p>The script produces output files in the form of pipe-separated ("|") CSV files, one containing scores at the trial level (*-pervideo.csv), another containing an average of the metrics in the first CSV (*-mask_score.csv), and a third containing a list of manipulations that were evaluated or skipped over (*-journalResults.csv).</p>
 <p>The mask scorer takes the following steps to score a mask:</p>
 <ol>
@@ -11835,8 +11836,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="2.-Reading-the-Masks">2. Reading the Masks<a name="Readmasks" /><a class="anchor-link" href="#2.-Reading-the-Masks">&#182;</a></h2><p>The system mask is read in as an HDF5 file. Each block in the system mask is a three-dimensional integer matrix with entries ranging from 0 to 255, denoting whether or not a particular pixel is manipulated (0 meaning it is, 255 meaning it is not), and is indexed by their first frames (with starting frame 1). The dimensions of each block is according to the following convention: (total_frames,height,width). Thus each block in the HDF5 system mask denotes a range of frames where the performer's algorithm detects localizable manipulations. The validator will fail the mask if it does not conform to the desired specifications.</p>
-<p>The reference mask is read in as an HDF5 mask containing blocks indexed according to the same convention as the system output mask. A fourth dimension might be added that adds layers with additional manipulations for the same block, leading to the following indexing scheme for each block in the reference mask: (total_frames,height,width,layer).</p>
+<h2 id="2.-Spatial-Temporal-System-Masks">2. Spatial-Temporal System Masks<a name="Sysmasks" /><a class="anchor-link" href="#2.-Spatial-Temporal-System-Masks">&#182;</a></h2><p>The system mask is read in as an HDF5 file. Each file contains a set of blocks indexed according to their first frames (with the convention that frame 1 is the starting frame). Each block, representing a contiguous set of manipulated frames, is a three-dimensional integer matrix with entries ranging from 0 to 255, the values of which denote whether or not a particular pixel is manipulated (0 meaning it is, 255 meaning it is not). The dimensions of each block is according to the following convention: (total_frames,height,width).</p>
+<p>Thus each block in the HDF5 system mask denotes a range of frames where the performer's algorithm detects localizable manipulations. The validator will fail the mask if it does not conform to the desired specifications.</p>
 
 </div>
 </div>
@@ -11846,7 +11847,17 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="3.-Binarizing-the-Reference-Mask">3. Binarizing the Reference Mask<a name="Binmasks" /><a class="anchor-link" href="#3.-Binarizing-the-Reference-Mask">&#182;</a></h2><p>In order to score the system output mask against the reference mask, the reference mask needs to be converted to a single-channel mask. The video spatial localization scorer handles this by selecting the set of Bit Planes that correspond to manipulations for the probe and using this as the ground truth positives.</p>
+<h2 id="3.-Reference-Masks">3. Reference Masks<a name="Refmasks" /><a class="anchor-link" href="#3.-Reference-Masks">&#182;</a></h2><p>The reference mask is read in as an HDF5 mask containing blocks indexed according to the same convention as the system output mask. A fourth dimension might be added that adds layers with additional manipulations for the same block, leading to the following indexing scheme for each block in the reference mask: (total_frames,height,width,layer).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="3.1.-Binarizing-the-Reference-Mask">3.1. Binarizing the Reference Mask<a name="Binmasks" /><a class="anchor-link" href="#3.1.-Binarizing-the-Reference-Mask">&#182;</a></h3><p>In order to score the system output mask against the reference mask, the reference mask needs to be converted to a single-channel mask. The video spatial localization scorer handles this by selecting the set of Bit Planes that correspond to manipulations for the probe and using this as the ground truth positives.</p>
 <p>If selective scoring is utilized (via the -qm option), only regions that match the query will be scored against. Regions listed in the journal as explicitly non-matching will be treated as no-score regions, which will be discussed below. Other regions that are not listed in the journal are ignored, whether due to later manipulations recorded in the same journals that do not apply to the probe in question or due to otherwise faulty data.</p>
 
 </div>
@@ -11858,7 +11869,7 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="4.-Generating-No-Score-Zones">4. Generating No-Score Zones<a name="noscorezone" /><a class="anchor-link" href="#4.-Generating-No-Score-Zones">&#182;</a></h2><p>The following information is identical to that provided in the image localization scorer under tools/MaskScorer.</p>
-<p>No-score zones are automatically established for three reasons: to grant an amount of flexibility to the performer, to exclude manipulated regions that are not of interest, and to exclude regions that the performer does not deem of interest. Each subset of the no-score zone is denoted by a specified type of no-score zone based on these motivations: the boundary no-score zone, selective no-score zone, and pixel no-score zone respectively.</p>
+<p>No-score zones are automatically generated to grant an amount of flexibility to the performer, to exclude manipulated regions that are not of interest, and to exclude regions that the performer does not deem of interest. Each subset of the no-score zone is denoted by a specified type of no-score zone based on these motivations: the boundary no-score zone, selective no-score zone, and pixel no-score zone respectively.</p>
 <p>To ease the demand in identifying the region manipulated, the boundary around each region is eroded and dilated, with the difference serving as the boundary no-score zone.</p>
 <p>If selective scoring is utilized (via the -qm option), the mask scorer also generates the distraction no-score zone by dilating the positive pixels of the irrelevant regions in the reference mask. This number need not be the same as the dilation parameter used to generate the boundary no-score zone and may be adjusted via option --ntdks.</p>
 <p>An additional system-generated no-score zone may be used by the performer. The performer specifies a particular pixel value to treat as a no-score zone via option --nspx, and all pixels with the same value in the system mask serves as the no-score zone.</p>
@@ -11999,7 +12010,7 @@ TPR_{probe}(\theta) = \frac{1}{|probes|}\sum_{probes}\frac{TP_{\theta}}{TP_{\the
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="7.2-Input-Options">7.2 Input Options<a name="optionsinputs" /><a class="anchor-link" href="#7.2-Input-Options">&#182;</a></h3><p>All CSV files passed to the Mask Scorer must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the CSV should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this in the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
+<h3 id="7.2-Input-Options">7.2 Input Options<a name="optionsinputs" /><a class="anchor-link" href="#7.2-Input-Options">&#182;</a></h3><p>All CSV files passed to the Mask Scorer must contain headers and must have their columns separated by pipe characters ('|'). Fields and values in the CSV should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this in the csv: foo||bar). Additional specifications for the index and system output files can be found in the ValidatorNotebook.html file under the Validator directory.</p>
 <p>All of the options here are identical in function to their image localization scorer counterparts.</p>
 
 </div>
