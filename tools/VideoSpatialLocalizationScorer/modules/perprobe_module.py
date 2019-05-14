@@ -229,6 +229,7 @@ class perprobe_module(localization_perimage_runner):
                                                                                  os.path.join(self.ref_dir,r[self.probe_mask_field]) if r[self.probe_mask_field] != '' else '',
                                                                                  os.path.join(self.sys_dir,r[self.sys_mask_field]) if r[self.sys_mask_field] != '' else '',
                                                                                  journal_join_df=self.journal_join_df.query(journal_join_query.format(*[r[p] for p in self.primary_fields])),
+                                                                                 framecount=r["FrameCount"],
                                                                                  probe_id_field=self.probe_id_field,
                                                                                  probe_status=r["ProbeStatus"] if opt_out else "Processed",
                                                                                  central_met=self.central_met,
@@ -268,6 +269,7 @@ class perprobe_module(localization_perimage_runner):
                        ref_mask_name,
                        sys_mask_name,
                        journal_join_df,
+                       framecount=0,
                        probe_id_field="ProbeFileID",
                        probe_status="Processed",
                        central_met="MCC",
@@ -293,9 +295,12 @@ class perprobe_module(localization_perimage_runner):
                 blank_row = pd.Series(blank_metrics_defaults)
                 blank_row[probe_id_field] = probe_file_id
                 return blank_row
-            
+
+            #insert framecount in case the mask does not have it or computing it is not feasible 
             ref_mask = video_ref_mask(ref_mask_name)
             ref_mask.insert_journal_data(journal_join_df)
+            if framecount > 0:
+                ref_mask.framecount = framecount
             if sys_mask_name != "":
                 sys_mask = video_mask(sys_mask_name)
             else:

@@ -1,5 +1,5 @@
 File: README.txt
-Date: April 5, 2018
+Date: May 13, 2019
 MediScore Version: 1.3.2
 
 This directory contains MediScore, the NIST Medifor scoring and
@@ -33,18 +33,18 @@ INSTALLATION
 
 2) Required packages:
   Prior to running the Scorer, the following packages need to be installed :
-  - opencv        (tested in versions 2.4.13 and 3.4.0)
-  - numpy         (tested in versions 1.14.0)
-  - pandas        (tested in version 0.21.1) - make sure to use the latest version.
-  - matplotlib    (tested in version 1.5.1)
+  - opencv        (tested in versions 2.4.13 and 3.4.0.14)
+  - numpy         (tested in versions 1.14.2)
+  - pandas        (tested in version 0.22.0)
+  - matplotlib    (tested in version 2.0.0)
   - scipy         (tested in version 0.18.0)
-  - scikit-learn  (tested in version 0.17.1)
+  - scikit-video  (tested in version 1.1.11)
+  - scikit-learn  (tested in version 0.18.1)
   - rawpy         (tested in version 0.9.0)
   - numpngw       (tested in version 0.0.6)
   - Glymur        (tested in version 0.8.12)
-  - bokeh         (tested in version 0.12.13)
-  - jsonschema    (tested in version 2.5.1)
-  - configparser  (tested in version 3.5.0)
+  - bokeh         (tested in version 0.13.0)
+  - jsonschema    (tested in version 2.6.0)
   Most of these packages can be installed by running basic_install.sh on your machine.
 
   Optional :
