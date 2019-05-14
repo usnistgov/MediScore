@@ -1277,8 +1277,10 @@ if __name__ == '__main__':
     parser.add_argument('-r','--inRef',type=str,default=0,\
         help='optional reference file for filtration',metavar='character')
     #TODO: deprecate valtype
+#    parser.add_argument('-t','--task',type=str,default=None,\
+#        help="The task to validate. Pick one of the following: manipulation-image, manipulation-video, eventverification, camera, splice.",metavar="character")
     parser.add_argument('-vt','--valtype',type=str,default=None,\
-        help='required validator type. Pick one of the following: SSD (single-source detection, a.k.a. manipulation), SSD-video, SSD-event, SSD-camera, DSD (splice).',metavar='character')
+        help='Required validator type. Pick one of the following: SSD (single-source detection, a.k.a. manipulation-image), SSD-video, SSD-event, SSD-camera, DSD (splice).',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
         help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
