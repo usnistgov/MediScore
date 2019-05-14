@@ -1,6 +1,6 @@
 File: README.txt
 Date: May 13, 2019
-MediScore Version: 1.3.2
+MediScore Version: 1.3.3
 
 This directory contains MediScore, the NIST Medifor scoring and
 evaluation toolkit. MediScore contains the source, documentation, and
