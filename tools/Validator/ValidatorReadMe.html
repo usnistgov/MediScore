@@ -11769,11 +11769,11 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>This script validates the content of the system output files for the manipulation and splice detection and localization tasks, relative to the index file as specified in the MFC18 Evaluation Plan, as well as the basic format and features of the mask files (i.e. same dimensions as the original image as described in the index file and single-channel grayscale).</p>
-<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it). For tasks that can be evaluated with image localization, this directory should also include a <b>mask</b> directory containing the system output masks.</p>
+<p>This script validates the content of the system output files for the Media Forensics Challenge 2019 (MFC19) Evaluation tasks.</p>
+<p>The name of the system output should match the name of the directory it is in (with '.csv' appended to it). For tasks that can be evaluated with image or video localization, this directory should also include a <b>mask</b> directory containing the system output masks.</p>
 <p>All csv files passed to the Validator must contain headers and must have their rows separated by pipe characters ('|'). Fields and values in the csv should <i>not</i> be enclosed in quotes ( ' or " ) if possible (e.g. entries 'foo', an empty field, and 'bar', in that order, should look like this on the csv: foo||bar, although this won't be checked).</p>
 <p>Both the index and system output files must have their columns in the specified order described under Input Options and no other column. The index and system output files must have the same number of rows; further, the system output must not have duplicate rows.</p>
-<p>All masks for the validator will be checked for conformity to the dimensions specified in the index file and for png format. However, mask fields with blank entries can be skipped over (for the DSD validator, either Probe or Donor mask file name being blank will cause that row to be skipped) and will be treated as blank white masks of the correct dimension in when the output is scored.</p>
+<p>All masks for the validator will be checked for conformity to the dimensions specified in the index file and for png format. However, mask fields with blank entries can be skipped over and will be treated as blank white masks of the correct dimension in when the output is scored.</p>
 
 </div>
 </div>
@@ -11849,7 +11849,8 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>-vt --valtype</p>
 <ul>
-<li>Specify the validation type for the relevant task:<ul>
+<li><p>Specify the validation type for the relevant task:</p>
+<ul>
 <li>Single-Source Detection (i.e. 'SSD'): manipulation-image</li>
 <li>Double-Source Detection (i.e. 'DSD'): splice</li>
 <li>'SSD-video': manipulation-video</li>
@@ -11857,19 +11858,8 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 <li>'SSD-camera': camera</li>
 </ul>
 </li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>--output_revised_system</p>
-<ul>
-<li>Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]</li>
+<li><p>There are plans to deprecate this option in the future for a --task option for consistency across MediScore code.</p>
+</li>
 </ul>
 
 </div>
@@ -11993,9 +11983,70 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 <ul>
 <li>Use ImageMagick's <code>identify</code> command to get dimensions of the masks for accelerated image processing. OpenCV reading is used by default.</li>
 </ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>-p --processors</p>
 <ul>
 <li>The number of processors to use for validation. Choosing too many processors will force the program to default to the number of rows. This option will take effect for SSD or SSD-video validation only (i.e. selecting this for DSD will have no effect). (default = 1)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-xF --indexFilter</p>
+<ul>
+<li>Filter validation only to files that are present in the index file. This option permits validation on a subset of the dataset by modifying the index file.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--ignore_eof</p>
+<ul>
+<li>Ignore EOF of video if the performer's annotated frames go out of bounds of the actual video frame. Has no effect on validation of image tasks.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--output_revised_system</p>
+<ul>
+<li>Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--score_range_0_1</p>
+<ul>
+<li>Mandate the range of the ConfidenceScore to be in [0,1].</li>
 </ul>
 
 </div>

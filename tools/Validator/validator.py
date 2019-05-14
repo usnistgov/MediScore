@@ -1269,16 +1269,16 @@ class validation_params:
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Validate the file and data format of the Single-Source Detection (SSD) or Double-Source Detection (DSD) files.')
+    parser = argparse.ArgumentParser(description='Validate the file and data format of the tasks for the MFC19 Evaluation..')
     parser.add_argument('-x','--inIndex',type=str,default=None,\
         help='required index file',metavar='character')
     parser.add_argument('-s','--inSys',type=str,default=None,\
         help='required system output file',metavar='character')
     parser.add_argument('-r','--inRef',type=str,default=0,\
         help='optional reference file for filtration',metavar='character')
-    #TODO: deprecate valtype in the future
+    #TODO: deprecate valtype
     parser.add_argument('-vt','--valtype',type=str,default=None,\
-        help='required validator type. Pick one of SSD, DSD, or SSD-video.',metavar='character')
+        help='required validator type. Pick one of the following: SSD (single-source detection, a.k.a. manipulation), SSD-video, SSD-event, SSD-camera, DSD (splice).',metavar='character')
     parser.add_argument('-nc','--nameCheck',action="store_true",\
         help='Check the format of the name of the file in question to make sure it matches up with the evaluation plan.')
     parser.add_argument('-id','--identify',action="store_true",\
