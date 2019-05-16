@@ -511,6 +511,8 @@ class SSD_Validator(validator):
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
                 if self.task == 'eventverification':
                     all_statuses = ['Processed','NonProcessed','OptOut','FailedValidation']
+                if self.task == 'manipulation-video':
+                    all_statuses.extend(["OptOutTemporal","OptOutSpatial"])
                 if not sysrow['ProbeStatus'] in all_statuses:
                     sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
