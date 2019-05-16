@@ -54,7 +54,7 @@ class VideoScoring():
         # Creation of the intervals_sequence
         interval_param_list = [ref_intervals, sys_intervals, collars, SNS]
         intervals_sequence = [IC.compute_intervals_union([i]) for i in interval_param_list if i is not None]
-        print("interval sequence before = {}".format(intervals_sequence))
+        # print("interval sequence before = {}".format(intervals_sequence))
         # We remove all None and 0-length sub-intervals
         interval_filter = lambda x: x.size != 0
         filtered_intervals_sequence = []
@@ -69,7 +69,7 @@ class VideoScoring():
                 else:
                     filtered_intervals_sequence.append(filtered_sub_intervals)
 
-        print("interval sequence after = {}".format(filtered_intervals_sequence))
+        # print("interval sequence after = {}".format(filtered_intervals_sequence))
         # Compute the overlap between all intervals sets
         confusion_vector, all_intervals, all_interval_in_seq_array, weights = IC.aggregate_intervals(filtered_intervals_sequence, 
                                                                                                   global_interval, 
