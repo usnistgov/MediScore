@@ -71,7 +71,7 @@ class VideoScoring():
 
         print("interval sequence after = {}".format(filtered_intervals_sequence))
         # Compute the overlap between all intervals sets
-        confusion_vector, all_intervals, all_interval_in_seq_array, weights = IC.aggregate_intervals(intervals_sequence, 
+        confusion_vector, all_intervals, all_interval_in_seq_array, weights = IC.aggregate_intervals(filtered_intervals_sequence, 
                                                                                                   global_interval, 
                                                                                                   print_results=verbose)
         
