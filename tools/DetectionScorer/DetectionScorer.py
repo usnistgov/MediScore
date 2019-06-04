@@ -56,7 +56,7 @@ def is_optout(df, sys_response='tr'):
         new_df = df.query(" IsOptOut==['N', 'Localization'] ")
     elif "ProbeStatus" in df.columns:
         new_df = index_m_df.query(
-            " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
+            " ProbeStatus==['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation', 'OptOutTemporal','OptOutSpatial']")
     return new_df
 
 def overlap_cols(mySys, myRef):
@@ -361,7 +361,7 @@ def command_interface():
     factor_group.add_argument('-qm', '--queryManipulation', nargs='*',
                               help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
     parser.add_argument('--optOut', action='store_true',
-                        help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation']")
+                        help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation','OptOutTemporal','OptOutSpatial']")
 
     args = parser.parse_args()
 
