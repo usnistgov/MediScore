@@ -171,20 +171,9 @@ class validator:
         return 0
 
     def init_other_variables(self,params):
-        try:
-            self.outputRewrite = params.outputRewrite
-        except:
-            self.outputRewrite = False
-
-        try:
-            self.task = params.task
-        except:
-            self.task = None
-
-        try:
-            self.ignore_eof = params.ignore_eof
-        except:
-            self.ignore_eof = False
+        var_params = vars(params)
+        for v in ['outputRewrite','task','ignore_eof','ignore_overlap']:
+            setattr(self,v,getattr(params,v,False))
 
 class SSD_Validator(validator):
     def nameCheck(self,NCID):
@@ -511,6 +500,8 @@ class SSD_Validator(validator):
                 all_statuses = ['Processed','NonProcessed','OptOutAll','OptOutDetection','OptOutLocalization','FailedValidation']
                 if self.task == 'eventverification':
                     all_statuses = ['Processed','NonProcessed','OptOut','FailedValidation']
+                if self.task == 'manipulation-video':
+                    all_statuses.extend(["OptOutTemporal","OptOutSpatial"])
                 if not sysrow['ProbeStatus'] in all_statuses:
                     sysrow['Message'] = " ".join([sysrow['Message'],"ERROR: Probe status {} for probe {} is not recognized.".format(sysrow['ProbeStatus'],sysrow['ProbeFileID'])])
                     sysrow['matchFlag'] = 1
@@ -662,9 +653,11 @@ class SSD_Validator(validator):
                         else:
                             if ((interval[0] >= intvl[0]) and (interval[0] <= intvl[1])) or ((interval[1] <= intvl[1]) and (interval[1] >= intvl[0])):
                                 #coincides with at least an endpoint
-                                errmsg = "ERROR: Interval {} intersects with interval {}.".format(interval,intvl)
+                                msgtype = "Warning" if self.ignore_overlap else "ERROR"
+                                if not self.ignore_overlap:
+                                    intervalflag = 1
+                                errmsg = "{msgtype}: Interval {intvl1} intersects with interval {intvl2}.".format(msgtype=msgtype,intvl1=interval,intvl2=intvl)
                                 msg.append(errmsg)
-                                intervalflag = 1
                     cleared_interval_list.append(interval)
         except Exception,e:
 #            exc_type,exc_obj,exc_tb = sys.exc_info()
@@ -1214,6 +1207,8 @@ if __name__ == '__main__':
         help="the NCID to validate against.")
     parser.add_argument('--ignore_eof',action='store_true',
         help="Ignore EOF of video if performer's frames go out of bounds. Has no effect on image validation.")
+    parser.add_argument('--ignore_overlap',action='store_true',
+        help="Ignore overlap of video frames if performer's frames go out of bounds.")
     parser.add_argument('--output_revised_system',type=str,default=None,
         help="Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]")
 
@@ -1255,7 +1250,7 @@ if __name__ == '__main__':
         print("ERROR: Expected one of {} for validation type. Got {}.".format(valtype_to_task.keys(),args.valtype))
         exit(1)
 
-    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof)
+    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof,ignore_overlap=args.ignore_overlap)
     if args.valtype in ['SSD','SSD-video','SSD-event','SSD-camera']:
         ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
         exit(ssd_validation.fullCheck(myval_params))

@@ -397,8 +397,21 @@ class TestValidator(ut.TestCase):
         errstr = msgcapture('vv2.log')
         self.assertTrue("ERROR: Interval" in errstr)
         self.assertTrue("intersects with" in errstr)
-        print("CASE V2 validated.")
         os.system('rm vv2.log')
+        print("\nCASE V2.1: Validating the above with option to ignore intersecting intervals.")
+        myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} --ignore_overlap {}{}> vv21.log".format(NCID,
+                                                                                                                validatorRoot + 'selfcrossvidtest/selfcrossvidtest.csv',
+                                                                                                                validatorRoot + 'NC2016_Test0516_dfz/indexes/NC2016-manipulation-video-index{}.csv'.format(versfx),
+                                                                                                                procs,
+                                                                                                                identify_string,
+                                                                                                                nm_string))//256
+        self.assertEqual(myval,0)
+        errstr = msgcapture('vv21.log')
+        self.assertTrue("Warning: Interval" in errstr)
+        self.assertTrue("intersects with" in errstr)
+        os.system('rm vv21.log')
+
+        print("CASE V2 validated.")
 
         print("\nCASE V3: Validating collections of intervals that intersect. Checking behavior for a FailValidation column.")
         myval = os.system("python2 validator.py --ncid {} -vt SSD-video -s {} -x {} -p {} {}{}> vv3.log".format(NCID,

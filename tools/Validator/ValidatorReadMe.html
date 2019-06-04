@@ -11867,19 +11867,6 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>--output_revised_system</p>
-<ul>
-<li>Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <p>-nc --nameCheck</p>
 <ul>
 <li>Whether or not to check the naming format of the file according to the ENBF (Extended Backus-Naur Form) <TEAM><em>NC17</em><DATA><em><TASK></em><CONDITION><em><SYS></em><VERSION>. Selecting the option will run the name checker. Further information on the meaning of the ENBF is available in the evaluation plan.</li>
@@ -11993,9 +11980,70 @@ python2 validator.py -x ../../data/test_suite/maskScorerTests/indexes/MFC18-mani
 <ul>
 <li>Use ImageMagick's <code>identify</code> command to get dimensions of the masks for accelerated image processing. OpenCV reading is used by default.</li>
 </ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>-p --processors</p>
 <ul>
 <li>The number of processors to use for validation. Choosing too many processors will force the program to default to the number of rows. This option will take effect for SSD or SSD-video validation only (i.e. selecting this for DSD will have no effect). (default = 1)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-xF --indexFilter</p>
+<ul>
+<li>Filter validation only to files that are present in the index file. This option permits validation on a subset of the dataset by modifying the index file.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--ignore_eof</p>
+<ul>
+<li>Ignore EOF of video if the performer's annotated frames go out of bounds of the actual video frame for the manipulation-video task. Has no effect on validation of image tasks.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--ignore_overlap</p>
+<ul>
+<li>Ignore cases where the performer's annotated frames overlap with each other for the manipulation-video task. Has no effect on validation of image tasks.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>--output_revised_system</p>
+<ul>
+<li>Set probe status for images that fail dimensionality validation to 'FailedValidation' and output the new CSV to a specified file [e.g. 'my_revised_system.csv']. Submissions that only have 'FailedValidation' will be skipped in image localization scoring. [default=None]</li>
 </ul>
 
 </div>
