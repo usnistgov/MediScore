@@ -17,7 +17,9 @@ import numpy as np
 import os # os.system("pause") for windows command line
 import sys
 import json
+from ast import literal_eval
 
+#import matplotlib.pyplot as plt
 #from matplotlib.pyplot import cm
 from collections import OrderedDict
 from itertools import cycle
@@ -39,136 +41,155 @@ if __name__ == '__main__':
     # Command-line mode
     if not debug_mode_ide:
 
-        def is_file_specified(x):
-            if x == '':
-                raise argparse.ArgumentTypeError("{0} not provided".format(x))
-            return x
+        parser = argparse.ArgumentParser(description='NIST detection scorer.', formatter_class=argparse.RawTextHelpFormatter)
+ 
+        input_help = ("Supports the following inputs:\n- .txt file containing one file path per line\n- .dm file\n",
+                      "- a list of pair ['path/to/dm/file', **{any matplotlib.lines.Line2D properties}].\n",
+                      "Example:\n  [[{'path':'path/to/file_1.dm','label':'sys_1','show_label':True}, {'color':'red','linestyle':'solid'}],\n",
+                      "             [{'path':'path/to/file_2.dm','label':'sys_2','show_label':False}, {}]",
+                      "Note: Use an empty dict for default behavior.")
 
-        parser = argparse.ArgumentParser(description='NIST detection scorer.')
+        parser.add_argument('-i', '--input', required=True,metavar = "str",
+                            help=''.join(input_help))
 
-        parser.add_argument('-i','--input', type=is_file_specified,
-                            help='Input file type [.txt or .dm]',metavar='character')
+        parser.add_argument("--outputFolder", default='.',
+                            help="Path to the output folder. (default: %(default)s)",metavar='')
 
-        parser.add_argument('--outRoot',default='.',
-                            help='Report output file (plot and table) path along with the file suffix: [e.g., temp/xx_sys] (default: %(default)s)',metavar='character')
+        parser.add_argument("--outputFileNameSuffix", default='plot',
+                            help="Output file name suffix. (default: '%(default)s')",metavar='')
 
         # Plot Options
-        parser.add_argument('--plotType',default='roc', choices=['roc', 'det'],
-                            help="Plot option:[roc] and [det] (default: %(default)s)", metavar='character')
+        parser.add_argument("--plotOptionJsonFile", help="Path to a json file containing plot options", metavar='path')
 
-        parser.add_argument('--plotTitle',default='Performance',
-                            help="Define the plot title (default: %(default)s)", metavar='character')
+        parser.add_argument("--curveOptionJsonFile", help="Path to a json file containing a list of matplotlib.lines.Line2D dictionnaries properties (One per curve)", metavar='path')
 
-        parser.add_argument('--plotSubtitle',default='',
-                            help="Define the plot subtitle (default: %(default)s)", metavar='character')
+        parser.add_argument("--plotType", default="ROC", choices=["ROC", "DET"],
+                            help="Plot type (default: %(default)s)", metavar='')
 
-        parser.add_argument('--display', action='store_true',
-                            help="display plots")
+        parser.add_argument("--plotTitle",default="Performance",
+                            help="Define the plot title (default: '%(default)s')", metavar='')
 
-        parser.add_argument('--multiFigs', action='store_true',
-                            help="Generate plots (with only one curve) per a partition ")
+        parser.add_argument("--plotSubtitle",default='',
+                            help="Define the plot subtitle (default: '%(default)s')", metavar='')
 
-        parser.add_argument('-c','--curveOption', action='store_true',
-                            help="Generate a JSON file for defalut curve options ")
+        parser.add_argument("--display", action="store_true",
+                            help="Display plots")
 
-        parser.add_argument('--noNum', action='store_true',
+        parser.add_argument("--multiFigs", action="store_true",
+                            help="Generate plots (with only one curve) per a partition")
+
+        parser.add_argument('--noNum', action="store_true",
                             help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
-        parser.add_argument('-v', '--verbose', action='store_true',
+        parser.add_argument('-v', "--verbose", action="store_true",
                             help="Increase output verbosity")
 
         args = parser.parse_args()
+    
 
         if not args.display:
             import matplotlib
             matplotlib.use('Agg')
-        #import matplotlib.pyplot as plt
+  
+        # Input processing
+        custom_input_metadata = False
+
+        DM_list = list()
+        # Case 1: text file containing one path per line
+        if args.input.endswith('.txt'):
+            with open(args.input) as f:
+                fp_list = f.read().splitlines()
+
+            for dm_file_path in fp_list:
+                # We handle a potential label provided
+                if ':' in filename:
+                    dm_file_path, label = filename.rsplit(':', 1)
+
+                dm_obj = dm.load_dm_file(dm_file_path)
+                dm_obj.path = dm_file_path
+                dm_obj.label = label
+                dm_obj.show_label = True
+                DM_list.append(dm_obj)
+
+        # Case 2: One dm pickled file
+        elif args.input.endswith('.dm'):
+            dm_obj = dm.load_dm_file(args.input)
+            dm_obj.path = args.input
+            dm_obj.label = None
+            dm_obj.show_label = None
+            DM_list = [dm_obj]
+
+        # Case 3: String containing a list of input with their metadata
+        elif args.input.startswith('[[') and args.input.endswith(']]'):
+            custom_input_metadata = True
+            
+            try:
+                DM_list = list()
+                DM_opts_list = list()
+                input_list = literal_eval(args.input)
+                for dm_data, dm_opts in input_list:
+                    dm_file_path = dm_data['path']
+                    dm_obj = dm.load_dm_file(dm_file_path)
+                    dm_obj.path = dm_file_path
+                    dm_obj.label = dm_data['label']
+                    dm_obj.show_label = dm_data['show_label']
+                    DM_list.append(dm_obj)
+                    DM_opts_list.append(dm_opts)
+
+            except ValueError as e:
+                if not all([len(x) == 2 for x in input_list]):
+                    print("ValueError: Invalid input format. All sub-lists must be a pair of two dictionnaries.\n-> {}".format(str(e)))
+                else:
+                    print("ValueError: {}".format(str(e)))
+                sys.exit(1)
+
+            except SyntaxError as e:
+                print("SyntaxError: The input provided is invalid.\n-> {}".format(str(e)))
+                sys.exit(1)
 
         # Verbosity option
         if args.verbose:
-            def _v_print(*args):
+            def v_print(*args):
                 for arg in args:
                    print (arg),
                 print
         else:
-            _v_print = lambda *a: None      # do-nothing function
+            v_print = lambda *a: None      # do-nothing function
 
-        global v_print
-        v_print = _v_print
+        # Output result directory
+        if args.outputFolder != '.' and not os.path.exists(args.outputFolder):
+            os.makedirs(args.outputFolder)
 
-        f_list = list()
-        try:
+        # If no custom option file provided, we dump the generated default ones 
+        if not args.plotOptionJsonFile or not args.curveOptionJsonFile:
+            output_json_path = os.path.join(args.outputFolder, "plotJsonFiles")
+            if not os.path.exists(output_json_path):
+                os.makedirs(output_json_path)
 
-            fname = args.input
-            if fname.endswith('.txt'):
-                #check the file path for loading DM files
-#                if '/' not in fname:
-#                    file_path = '.'
-#                    file_name = fname
-#                else:
-#                    file_path, file_name = fname.rsplit('/', 1)
-
-                with open(fname) as f:
-                    f_list = f.read().splitlines()
-
-                DM_List = list()
-                for filename in f_list:
-                    if ':' in filename:
-                        first_fname, second_fname = filename.rsplit(':', 1)
-                        filename = first_fname
-
-                    if not os.path.isfile(filename):
-                        print("Filename: {} does not exist".format(filename))
-                    else:
-                        DM_List.append(dm.load_dm_file(filename))
-                    #DM_List = [dm.load_dm_file(file_path +'/'+filename) for filename in f_list]
-
-            elif fname.endswith('.dm'):
-                #f_list = [os.path.basename(fname)]
-                f_list = [fname]
-                DM_List = [dm.load_dm_file(fname)]
-
-        except IOError:
-            print("ERROR: There was an error opening the input file [allowed .txt and .dm only]")
-            exit(1)
-
-        # the performant result directory
-        if '/' not in args.outRoot:
-            root_path = '.'
-            file_suffix = args.outRoot
-        else:
-            root_path, file_suffix = args.outRoot.rsplit('/', 1)
-
-        if root_path != '.' and not os.path.exists(root_path):
-            os.makedirs(root_path)
-
-        # Generation automatic of a default plot_options json config file
-        p_json_path = "./plotJsonFiles"
-        if not os.path.exists(p_json_path):
-            os.makedirs(p_json_path)
-
-        dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-        if os.path.isfile(dict_plot_options_path_name):
-            # Loading of the plot_options json config file
-            plot_opts = p.load_plot_options(dict_plot_options_path_name)
-            args.plotType = plot_opts['plot_type']
-            plot_opts['title'] = args.plotTitle
-            plot_opts['subtitle'] = args.plotSubtitle
-            plot_opts['subtitle_fontsize'] = 11
-            #print("test plot title1 {}".format(plot_opts['title']))
-        else:
+        # Plot Options
+        if not args.plotOptionJsonFile:
+            v_print("Generating the default plot options...")
+            plot_options_json_path = os.path.join(output_json_path, "plot_options.json")
             # Generating the default_plot_options json config file
-            p.gen_default_plot_options(dict_plot_options_path_name, plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType.upper())
+            p.gen_default_plot_options(plot_options_json_path, plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType)
             # Loading of the plot_options json config file
-            plot_opts = p.load_plot_options(dict_plot_options_path_name)
+            plot_opts = p.load_plot_options(plot_options_json_path)
+            
+        else:
+            if os.path.isfile(args.plotOptionJsonFile):
+                # Loading of the plot_options json config file
+                plot_opts = p.load_plot_options(args.plotOptionJsonFile)
+        
+        # Curve options 
+        curve_options_json_path = os.path.join(output_json_path, "curve_options.json")
 
-        # Save the default curve options in JSON format
-        dict_curve_options_path_name = "./plotJsonFiles/curve_options.json"
+        if custom_input_metadata:
+            opts_list = DM_opts_list
+            with open(curve_options_json_path, 'w') as f:
+                f.write(json.dumps(opts_list))
 
-        # if JSON file does not exist or it triggers the defaultOption command,
-        # then generates the new JSON curve option file
-        if not os.path.isfile(dict_curve_options_path_name) or args.curveOption: #or args.default
-            v_print("Generating the default curve options ..")
+        elif not args.curveOptionJsonFile:
+            v_print("Generating the default curves options...")
 
             # Creation of defaults plot curve options dictionnary (line style opts)
             Curve_opt = OrderedDict([('color', 'red'),
@@ -185,11 +206,12 @@ if __name__ == '__main__':
             linestyles = ['solid','dashed','dashdot','dotted']
             markerstyles = ['.','+','x','d','*','s','p']
             # Give a random rainbow color to each curve
-            #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
+            #color = iter(cm.rainbow(np.linspace(0,1,len(DM_list)))) #YYL: error here
             color = cycle(colors)
             lty = cycle(linestyles)
             mkr = cycle(markerstyles)
-            for i in range(len(DM_List)):
+
+            for i in range(len(DM_list)):
                 new_curve_option = OrderedDict(Curve_opt)
                 col = next(color)
                 new_curve_option['color'] = col
@@ -198,48 +220,53 @@ if __name__ == '__main__':
                 new_curve_option['linestyle'] = next(lty)
                 opts_list.append(new_curve_option)
 
-            with open(dict_curve_options_path_name, 'w') as f:
-                f.write(json.dumps(opts_list).replace(',', ',\n'))
+            with open(curve_options_json_path, 'w') as f:
+                f.write(json.dumps(opts_list, indent=2, separators=(',', ':')))
+        else:
+            if os.path.isfile(args.curveOptionJsonFile):
+                opts_list = p.load_plot_options(curve_options_json_path)
 
-        # Loading of the curve_options json config file
-        opts_list = p.load_plot_options(dict_curve_options_path_name)
-
+        print(opts_list)
         # if the length of curve options is less than the length of the dm file list, then print ERROR
-        if len(opts_list) < len(DM_List):
-            print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_List)))
-            print("Please run with '--curveOption'")
+        if len(opts_list) < len(DM_list):
+            print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_list)))
             exit(1)
         else:
-            for curve_opts, fname, dm_list in zip(opts_list, f_list, DM_List):
-                #fname = os.path.basename(fname)
-                if ':' in fname:
-                    first_fname, second_fname = fname.rsplit(':', 1)
-                    fname = second_fname
-
+            optout = False
+            for curve_opts, dm_obj in zip(opts_list, DM_list):
+                
                 if plot_opts['plot_type'] == 'ROC':
-                    met_str = " (AUC: " + str(round(dm_list.auc,2))
+                    met_str = "AUC: {}".format(round(dm_obj.auc,2))
                 elif plot_opts['plot_type'] == 'DET':
-                    met_str = " (EER: " + str(round(dm_list.eer,2))
+                    met_str = "EER: {}".format(round(dm_obj.eer,2))
 
                 trr_str = ""
                 optout = False
-                if dm_list.sys_res == 'tr':
+                if dm_obj.sys_res == 'tr':
                     optout = True
-                    trr_str = ", TRR: " + str(dm_list.trr)
+                    trr_str = "TRR: {}".format(dm_obj.trr)
                     if plot_opts['plot_type'] == 'ROC':
                         #plot_opts['title'] = "trROC"
-                        met_str = " (trAUC: " + str(round(dm_list.auc,2))
+                        met_str = "trAUC: {}".format(round(dm_obj.auc,2))
                     elif plot_opts['plot_type'] == 'DET':
                         #plot_opts['title'] = "trDET"
-                        met_str = " (trEER: " + str(round(dm_list.eer,2))
+                        met_str = "trEER: {}".format(round(dm_obj.eer,2))
 
-                if args.noNum:
-                    curve_opts["label"] = fname + met_str + trr_str + ")"
-                else:
-                    curve_opts["label"] = fname + met_str + trr_str +", T#: "+ str(dm_list.t_num) + ", NT#: "+ str(dm_list.nt_num) +")"
-            #curve_opts["label"] = fname + " (AUC: " + str(round(d.auc,2)) + ", T#: "+ str(d.t_num) + ", NT#: "+ str(d.nt_num) + ")"
+                curve_opts["label"] = None
+                if dm_obj.show_label:
+                    curve_label = dm_obj.label if dm_obj.label else dm_obj.path
+                    measures_list = [_ for _ in [met_str, trr_str] if _ != ''] 
+
+                    if args.noNum:
+                        curve_opts["label"] = "{label} ({measures})".format(label=curve_label, measures=', '.join(measures_list))
+                    else:
+                        curve_opts["label"] = "{label} ({measures}, T#: {nb_target}, NT#: {nb_nontarget})".format(label=curve_label, 
+                                                                                                                  measures=', '.join(measures_list),
+                                                                                                                  nb_target=dm_obj.t_num, 
+                                                                                                                  nb_nontarget=dm_obj.nt_num)
+
             # Creation of the object setRender (~DetMetricSet)
-            configRender = p.setRender(DM_List, opts_list, plot_opts)
+            configRender = p.setRender(DM_list, opts_list, plot_opts)
             # Creation of the Renderer
             myRender = p.Render(configRender)
             # Plotting
@@ -248,131 +275,8 @@ if __name__ == '__main__':
             # save multiple figures if multi_fig == True
             if isinstance(myfigure,list):
                 for i,fig in enumerate(myfigure):
-                    fig.savefig(args.outRoot + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
+                    fig.savefig(args.outputFolder + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
             else:
-                myfigure.savefig(args.outRoot + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
-
-    # Debugging mode
-    else:
-
-        print('Starting debug mode ...\n')
-
-#        f = "testcases/NC16_001_query_0.dm" #"test.dm"
-#        f_list = ["testcases/NC16_001_query_0.dm", "testcases/NC16_001_query_0.dm"]
-        outRoot = './test/sys_01'
-        plotType = 'det'
-        display = True
-        multiFigs = False
-
-#        file = open('testcases/dm_list.txt', 'r')
-#        f_list = file.readlines()
-
-        fname = 'testcases/dm_list.txt'
-        #fname = "testcases/NC16_001_query_0.dm"
-
-        if fname.endswith('.txt'):
-            #check the file path for loading DM files
-            if '/' not in fname:
-                file_path = '.'
-                file_name = fname
-            else:
-                file_path, file_name = fname.rsplit('/', 1)
-
-            with open(fname) as f:
-                f_list = f.read().splitlines()
-
-            DM_List = [dm.load_dm_file(file_path +'/'+filename) for filename in f_list]
-        elif fname.endswith('.dm'):
-            f_list = [os.path.basename(fname)]
-            DM_List = [dm.load_dm_file(fname)]
-        else:
-            print("ERROR: the file format specified is allowed in this option")
-
-        #if f.endswith('.lst'):
-
-        ### Starting plot options
-        # Generation automatic of a default plot_options json config file
-        p_json_path = "./plotJsonFiles"
-        if not os.path.exists(p_json_path):
-            os.makedirs(p_json_path)
-
-        dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
-
-         # Generating the default_plot_options json config file
-        p.gen_default_plot_options(dict_plot_options_path_name, plotType.upper())
-
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        ### Ending plot option
-
-        # Save the default curve options at JSON format
-        dict_curve_options_path_name = "./plotJsonFiles/curve_options2.json"
-
-        default = False
-        if not os.path.exists(dict_curve_options_path_name) or default: #or args.defaultOption
-            print("Generating the default curve options")
-
-            # Creation of defaults curve options dictionnary (line style opts)
-            Curve_opt = OrderedDict([('color', 'red'),
-                                     ('linestyle', 'solid'),
-                                     ('marker', '.'),
-                                     ('markersize', 5),#8
-                                     ('markerfacecolor', 'red'),
-                                     ('antialiased', 'False')])
-
-            opts_list = list()
-            colors = ['red','blue','green','cyan','magenta','yellow','black','sienna','navy','grey','darkorange', 'c', 'peru','y','pink','purple', 'lime', 'magenta', 'olive', 'firebrick']
-            linestyles = ['solid','dashed','dashdot','dotted']
-            markers = ['.','1','s','8','p','*','+','x','D','h']
-            # Give a random rainbow color to each curve
-            #color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
-            color = cycle(colors)
-            lty = cycle(linestyles)
-            mkr = cycle(markers)
-            for i in range(len(DM_List)):
-                new_curve_option = OrderedDict(Curve_opt)
-                col = next(color)
-                new_curve_option['color'] = col
-                new_curve_option['markerfacecolor'] = col
-                new_curve_option['marker'] = mkr
-                new_curve_option['linestyle'] = next(lty)
-                new_curve_option["label"] = f_list[i]
-                opts_list.append(new_curve_option)
-
-    #        #TODO: How to add key to opts_list
-#            json_dict = dict()
-#            for i, curve_opts in enumerate(opts_list):
-#                json_dict[i]=curve_opts
-    #
-            with open(dict_curve_options_path_name, 'w') as f:
-                f.write(json.dumps(opts_list).replace(',', ',\n'))
-
-##        # Renaming the curves for the legend
-#        for curve_opts,query in zip(opts_list,selection.part_query_list):
-#            curve_opts["label"] = query
-
-        # Loading of the curve_options json config file
-        opts_list = p.load_plot_options(dict_curve_options_path_name)
-
-        # if the length of curve options is less than the length of the dm file list, then print ERROR
-        if len(opts_list) < len(DM_List):
-            print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_List)))
-            print("Please run with '--defaultOption'")
-            exit(1)
-        else:
-            for curve_opts, fname, d in zip(opts_list, f_list, DM_List):
-                curve_opts["label"] = fname + " (AUC: " + str(round(d.auc,2)) + ", T#: "+ str(d.t_num) + ", NT#: "+ str(d.nt_num) + ")"
-            # Creation of the object setRender (~DetMetricSet)
-            configRender = p.setRender(DM_List, opts_list, plot_opts)
-            # Creation of the Renderer
-            myRender = p.Render(configRender)
-            # Plotting
-            myfigure = myRender.plot_curve(display,multi_fig=multiFigs)
+                myfigure.savefig(args.outputFolder + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
 
 
-            # save multiple figures if multi_fig == True
-            if isinstance(myfigure,list):
-                for i,fig in enumerate(myfigure):
-                    fig.savefig(outRoot + '_' + plotType + '_' + str(i) + '.pdf')
-            else:
-                myfigure.savefig(outRoot + '_' + plotType + '_all.pdf')

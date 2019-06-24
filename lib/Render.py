@@ -212,7 +212,7 @@ class Render:
             plt.ylabel(self.plot_opts['ylabel'], fontsize=self.plot_opts['ylabel_fontsize'])
         plt.grid()
 
-        if self.opts_list[0]['label'] != None:
+        if any([curve_option.get("label",None) for curve_option in self.opts_list]):
             #            lgd = plt.legend(loc='lower right', prop={'size':8}, shadow=True, fontsize='medium', bbox_to_anchor=(0., -0.35, 1., .102))
             # Put a nicer background color on the legend.
             # legend.get_frame().set_facecolor('#00FFCC')
