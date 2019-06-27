@@ -272,11 +272,16 @@ if __name__ == '__main__':
             # Plotting
             myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut = optout, isNoNumber = args.noNum)
 
-            # save multiple figures if multi_fig == True
+            # Figure Output
+            fig_filename_tmplt = "{file_suffix}_{plot_type}_{plot_id}.pdf".format(file_suffix=args.outputFileNameSuffix,
+                                                                                  plot_type=args.plotType,
+                                                                                  plot_id="{plot_id}")
+
+            fig_path = os.path.normpath(os.path.join(args.outputFolder, fig_filename_tmplt))
+
+            # will save multiple figures if multi_fig == True
             if isinstance(myfigure,list):
                 for i,fig in enumerate(myfigure):
-                    fig.savefig(args.outputFolder + '_' + args.plotType + '_' + str(i) + '.pdf', bbox_inches='tight')
+                    fig.savefig(fig_path.format(plot_id=str(i)), bbox_inches='tight')
             else:
-                myfigure.savefig(args.outputFolder + '_' + args.plotType + '_all.pdf', bbox_inches='tight')
-
-
+                myfigure.savefig(fig_path.format(plot_id='all'), bbox_inches='tight')
