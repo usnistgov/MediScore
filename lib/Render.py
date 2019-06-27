@@ -229,12 +229,12 @@ class Render:
         return fig
 
 
-def gen_default_plot_options(path='./plotJsonFiles/plot_options.json', plot_title='Performance', plot_subtitle='', plot_type='ROC'):
+def gen_default_plot_options(plot_title='Performance', plot_subtitle='', plot_type='ROC'):
     """ This function generates JSON file to customize the plot.
         path: JSON file name along with the path
         plot_type: either DET or ROC"""
     from collections import OrderedDict
-    mon_dict = OrderedDict([
+    plot_opts = OrderedDict([
         ('title', plot_title),
         ('subtitle', plot_subtitle),
         ('plot_type', plot_type),
@@ -246,8 +246,42 @@ def gen_default_plot_options(path='./plotJsonFiles/plot_options.json', plot_titl
         ('xlabel_fontsize', 11),
         ('ylabel', "Miss Detection Rate [%]"),
         ('ylabel_fontsize', 11)])
-    with open(path, 'w') as f:
-        f.write(json.dumps(mon_dict).replace(',', ',\n'))
+    return plot_opts
+
+def gen_default_curve_options(number):
+    """ Creation of defaults plot curve options dictionnary (line style opts)
+    """
+    from itertools import cycle
+    from collections import OrderedDict
+    Curve_opt = OrderedDict([('color', 'red'),
+                             ('linestyle', 'solid'),
+                             ('marker', '.'),
+                             ('markersize', 5),
+                             ('markerfacecolor', 'red'),
+                             ('label',None),
+                             ('antialiased', 'False')])
+
+    # Creating the list of curves options dictionnaries (will be automatic)
+    opts_list = list()
+    colors = ['red','blue','green','cyan','magenta','yellow','black','sienna','navy','grey','darkorange', 'c', 'peru','y','pink','purple', 'lime', 'magenta', 'olive', 'firebrick']
+    linestyles = ['solid','dashed','dashdot','dotted']
+    markerstyles = ['.','+','x','d','*','s','p']
+    # Give a random rainbow color to each curve
+    #color = iter(cm.rainbow(np.linspace(0,1,number))) #YYL: error here
+    color = cycle(colors)
+    lty = cycle(linestyles)
+    mkr = cycle(markerstyles)
+
+    for i in range(number):
+        new_curve_option = OrderedDict(Curve_opt)
+        col = next(color)
+        new_curve_option['color'] = col
+        new_curve_option['marker'] = next(mkr)
+        new_curve_option['markerfacecolor'] = col
+        new_curve_option['linestyle'] = next(lty)
+        opts_list.append(new_curve_option)
+
+    return opts_list
 
 
 def load_plot_options(path="./plotJsonFiles/plot_options.json"):
