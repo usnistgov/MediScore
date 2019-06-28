@@ -152,6 +152,8 @@ def evaluate_input(args):
             # We handle a potential label provided
             if ':' in dm_file_path:
                 dm_file_path, label = dm_file_path.rsplit(':', 1)
+            else:
+                label = dm_file_path
 
             dm_obj = dm.load_dm_file(dm_file_path)
             dm_obj.path = dm_file_path
@@ -164,7 +166,7 @@ def evaluate_input(args):
         input_type = 2
         dm_obj = dm.load_dm_file(args.input)
         dm_obj.path = args.input
-        dm_obj.label = None
+        dm_obj.label = args.input
         dm_obj.show_label = None
         DM_list = [dm_obj]
 
