@@ -12,6 +12,7 @@ json files.
 import os 
 import sys
 import json
+import logging
 import argparse
 from ast import literal_eval
 
@@ -74,7 +75,65 @@ def create_parser():
     parser.add_argument('--dumpPlotParams', action="store_true",
                         help="Dump the parameters used for the plot and the curves as Jsons in the output directory")
 
+    parser.add_argument("--logtype", type=int, default=0, const=0, nargs='?', 
+                        choices=[0, 1, 2, 3], 
+                        help="Set the logging type")
+
+    parser.add_argument("--console_log_level", dest="consoleLogLevel", default="INFO", const="INFO", nargs='?', 
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 
+                        help="Set the console logging level")
+
+    parser.add_argument("--file_log_level", dest="fileLogLevel", default="DEBUG", const="DEBUG", nargs='?', 
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 
+                        help="Set the file logging level")
+
     return parser
+
+def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="INFO", file_loglevel="DEBUG"):
+    """Create a logger with the provided log level
+
+    Args:
+        logger_type (int): type of logging (1: console only, 2: file only, 3: both)
+        loglevel (str): one of the following string:'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+
+    """
+
+    try:
+        numeric_file_loglevel= getattr(logging, file_loglevel.upper())
+        numeric_console_loglevel = getattr(logging, console_loglevel.upper())
+    except AttributeError as e:
+        print("LoggingError: Invalid logLevel -> {}".format(e))
+        sys.exit(1)
+
+    logger = logging.getLogger('rootLogger')
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler which logs to stdout 
+    if logger_type in [1,3]:
+        consoleLogger = logging.StreamHandler(stream=sys.stdout)
+        consoleLogger.setLevel(numeric_console_loglevel)
+        consoleFormatter = logging.Formatter('{name:<10} - {levelname} - {message}', style='{')
+        consoleLogger.setFormatter(consoleFormatter)
+        logger.addHandler(consoleLogger)
+
+    # create file handler which logs to a file
+    if logger_type in [2,3]:
+        fileLogger = logging.FileHandler(filename,mode='w')
+        fileLogger.setLevel(numeric_file_loglevel)
+        fileFormatter = logging.Formatter('{asctime}|{name:<10}|{levelname:^9} - {message}', datefmt='%H:%M:%S', style='{')
+        fileLogger.setFormatter(fileFormatter)
+        logger.addHandler(fileLogger)
+    
+    # Silence the matplotlib logger
+    mpl_logger = logging.getLogger("matplotlib") 
+    mpl_logger.setLevel(logging.WARNING)
+
+    return logger
+
+def close_file_logger(logger):
+    for handler in logger.handlers:
+        if handler.__class__.__name__ == "FileHandler":
+            handler.close()
 
 def validate_plot_options(plot_options):
     """Validation of the custom dictionnary of general options for matplotlib's plot.
@@ -102,7 +161,8 @@ def validate_plot_options(plot_options):
         def __init__(self,msg):
             self.msg = msg
 
-    v_print("Validating global plot options...")
+    logger = logging.getLogger("rootLogger")
+    logger.info("Validating global plot options...")
     try:
         #1 check plot type
         plot_type = plot_options["plot_type"]
@@ -110,11 +170,13 @@ def validate_plot_options(plot_options):
             raise PlotOptionValidationError("invalid plot type '{}' (choose from 'ROC', 'DET')".format(plot_type))
 
     except PlotOptionValidationError as e:
-        print("PlotOptionValidationError: {}".format(e.msg))
+        logging.error("PlotOptionValidationError: {}".format(e.msg))
+        close_file_logger(logger)
         sys.exit(1)
 
     except KeyError as e:
-        print("PlotOptionValidationError: no '{}' provided".format(e.args[0]))
+        logging.error("PlotOptionValidationError: no '{}' provided".format(e.args[0]))
+        close_file_logger(logger)
         sys.exit(1)
 
 def evaluate_input(args):
@@ -139,10 +201,12 @@ def evaluate_input(args):
             - plot_opts (dict): dictionnary of plot options  
     """
 
+    logger = logging.getLogger('rootLogger')
     DM_list = list()
     opts_list = list()
     # Case 1: text file containing one path per line
     if args.input.endswith('.txt'):
+        logger.debug("Input of type 1 detected")
         input_type = 1
         with open(args.input) as f:
             fp_list = f.read().splitlines()
@@ -163,6 +227,7 @@ def evaluate_input(args):
 
     # Case 2: One dm pickled file
     elif args.input.endswith('.dm'):
+        logger.debug("Input of type 2 detected")
         input_type = 2
         dm_obj = dm.load_dm_file(args.input)
         dm_obj.path = args.input
@@ -172,8 +237,8 @@ def evaluate_input(args):
 
     # Case 3: String containing a list of input with their metadata
     elif args.input.startswith('[[') and args.input.endswith(']]'):
+        logger.debug("Input of type 3 detected")
         input_type = 3
-        
         try:
             input_list = literal_eval(args.input)
             for dm_data, dm_opts in input_list:
@@ -187,45 +252,53 @@ def evaluate_input(args):
 
         except ValueError as e:
             if not all([len(x) == 2 for x in input_list]):
-                print("ValueError: Invalid input format. All sub-lists must be a pair of two dictionnaries.\n-> {}".format(str(e)))
+                logger.error("ValueError: Invalid input format. All sub-lists must be a pair of two dictionnaries.\n-> {}".format(str(e)))
             else:
-                print("ValueError: {}".format(str(e)))
+                logger.error("ValueError: {}".format(str(e)))
+            close_file_logger(logger)
             sys.exit(1)
 
         except SyntaxError as e:
-            print("SyntaxError: The input provided is invalid.\n-> {}".format(str(e)))
+            logger.error("SyntaxError: The input provided is invalid.\n-> {}".format(str(e)))
+            close_file_logger(logger)
             sys.exit(1)
+
+    else:
+        logger.error("The input type does not match any of the following inputs:\n- .txt file containing one file path per line\n- .dm file\n- a list of pair [{'path':'path/to/dm_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n")
+        sys.exit(1)
 
     #*-* Options Processing *-*
 
     # General plot options
     if not args.plotOptionJsonFile:
-        v_print("Generating the default plot options...")
+        logger.info("Generating the default plot options...")
         plot_opts = p.gen_default_plot_options(plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType)
         
     else:
         try:
-            v_print("Loading of the plot options from the json config file...")
+            logger.info("Loading of the plot options from the json config file...")
             plot_opts = p.load_plot_options(args.plotOptionJsonFile)
             validate_plot_options(plot_opts)
         except FileNotFoundError as e:
-            print("FileNotFoundError: No such file or directory: '{}'".format(args.plotOptionJsonFile))
+            logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.plotOptionJsonFile))
+            close_file_logger(logger)
             sys.exit(1)
     
     # Curve options
     if not args.curveOptionJsonFile:
-        v_print("Generating the default curves options...")
+        logger.info("Generating the default curves options...")
         opts_list = p.gen_default_curve_options(len(DM_list))
         
     elif input_type != 3:
         try:
-            v_print("Loading of the curves options from the json config file...")
+            logger.info("Loading of the curves options from the json config file...")
             opts_list = p.load_plot_options(args.curveOptionJsonFile)
             if len(opts_list) < len(DM_list):
                 print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_list)))
                 sys.exit(1)
         except FileNotFoundError as e:
-            print("FileNotFoundError: No such file or directory: '{}'".format(args.curveOptionJsonFile))
+            logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.curveOptionJsonFile))
+            close_file_logger(logger)
             sys.exit(1)
 
     return DM_list, opts_list, plot_opts
@@ -243,6 +316,8 @@ def outputFigure(figure, outputFolder, outputFileNameSuffix, plotType):
         plotType (str): the type of plot (ROC or DET)
 
     """
+    logger = logging.getLogger("rootLogger")
+    logger.info("Figure output generation...")
     if outputFolder != '.' and not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
 
@@ -260,6 +335,8 @@ def outputFigure(figure, outputFolder, outputFileNameSuffix, plotType):
     else:
         figure.savefig(fig_path.format(plot_id='all'), bbox_inches='tight')
 
+    logger.info("Figure output generation... Done.")
+
 def dumpPlotOptions(outputFolder, opts_list, plot_opts):
     """This function dumps the options used for the plot and curves as json files.
     at the provided outputFolder. The two file have following names:
@@ -272,6 +349,7 @@ def dumpPlotOptions(outputFolder, opts_list, plot_opts):
         plot_opts (dict): dictionnary of plot options  
 
     """
+
     output_json_path = os.path.normpath(os.path.join(outputFolder, "plotJsonFiles"))
     if not os.path.exists(output_json_path):
         os.makedirs(output_json_path)
@@ -283,9 +361,14 @@ def dumpPlotOptions(outputFolder, opts_list, plot_opts):
 
 if __name__ == '__main__':
 
-    print("Starting DMRender...\n")
     parser = create_parser()
     args = parser.parse_args()
+    logger = create_logger(logger_type=args.logtype, 
+                           filename="./DMRender.log", 
+                           console_loglevel=args.consoleLogLevel, 
+                           file_loglevel=args.fileLogLevel)
+
+    logger.info("Starting DMRender...")
 
     # Verbosity option
     if args.verbose:
@@ -301,9 +384,9 @@ if __name__ == '__main__':
         import matplotlib
         matplotlib.use('Agg')
 
-    v_print("Evaluating parameters...")
+    logger.debug("Evaluating parameters...")
     DM_list, opts_list, plot_opts = evaluate_input(args)
-
+    logger.debug("Processing {} files".format(len(DM_list)))
     #*-* Label processing *-*
     #TODO: Move this code to a function once it as been cleaned 
     
@@ -344,7 +427,7 @@ if __name__ == '__main__':
                                                                                                           nb_nontarget=dm_obj.nt_num)
 
     #*-* Plotting *-*
-
+    logger.debug("Plotting...")
     # Creation of the object setRender (~DetMetricSet)
     configRender = p.setRender(DM_list, opts_list, plot_opts)
     # Creation of the Renderer
