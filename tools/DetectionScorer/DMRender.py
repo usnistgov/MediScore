@@ -1,39 +1,37 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 Date: 03/07/2017
 Authors: Yooyoung Lee and Timothee Kheyrkhah
 
-Description: this code loads DM files and renders plots.
-In addition, the code generates a JSON file that allows user
-to customize curves and points.
+Description: this script loads DM files and renders plots.
+In addition, the user can customize the plots through the command line interface or via 
+json files.
 
 """
 
-import argparse
-import numpy as np
-#import pandas as pd
-import os # os.system("pause") for windows command line
+import os 
 import sys
 import json
+import argparse
 from ast import literal_eval
 
-#import matplotlib.pyplot as plt
-#from matplotlib.pyplot import cm
-from collections import OrderedDict
-
-#lib_path = "../../lib"
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
+
 import Render as p
 import detMetrics as dm
 
 def create_parser():
+    """Command line interface creation with arguments definitions.
+
+    Returns:
+        argparse.ArgumentParser
+
+    """
     parser = argparse.ArgumentParser(description='NIST detection scorer.', formatter_class=argparse.RawTextHelpFormatter)
 
     input_help = ("Supports the following inputs:\n- .txt file containing one file path per line\n- .dm file\n",
-                  "- a list of pair ['path/to/dm/file', **{any matplotlib.lines.Line2D properties}].\n",
+                  "- a list of pair [{'path':'path/to/dm_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n",
                   "Example:\n  [[{'path':'path/to/file_1.dm','label':'sys_1','show_label':True}, {'color':'red','linestyle':'solid'}],\n",
                   "             [{'path':'path/to/file_2.dm','label':'sys_2','show_label':False}, {}]",
                   "Note: Use an empty dict for default behavior.")
@@ -79,32 +77,66 @@ def create_parser():
     return parser
 
 def validate_plot_options(plot_options):
+    """Validation of the custom dictionnary of general options for matplotlib's plot.
+    This function raises a custom exception in case of invalid or missing plot options
+    and catches in order to quit with a specific error message.
+
+    Args:
+        plot_options (dict): The dictionnary containing the general plot options
+
+    Note: The dictionnary should contain at most the following keys
+            'title', 'subtitle', 'plot_type', 
+            'title_fontsize', 'subtitle_fontsize', 
+            'xticks_size', 'yticks_size', 
+            'xlabel', 'xlabel_fontsize', 
+            'ylabel', 'ylabel_fontsize'
+        See the matplotlib documentation for a description of those parameters 
+        (except for the plot_type (choose from 'ROC', 'DET'))
+    """
 
     class PlotOptionValidationError(Exception):
-        """Exception raised for errors in the global plot option json file
+        """Custom Exception raised for errors in the global plot option json file
         Attributes:
-            message -- explanation of the error
+            msg (str): explanation message of the error
         """
-        def __init__(self,message):
-            self.message = message
+        def __init__(self,msg):
+            self.msg = msg
 
     v_print("Validating global plot options...")
     try:
+        #1 check plot type
         plot_type = plot_options["plot_type"]
         if plot_type not in ["ROC", "DET"]:
             raise PlotOptionValidationError("invalid plot type '{}' (choose from 'ROC', 'DET')".format(plot_type))
 
     except PlotOptionValidationError as e:
-        print("PlotOptionValidationError: {}".format(e.message))
+        print("PlotOptionValidationError: {}".format(e.msg))
         sys.exit(1)
 
     except KeyError as e:
         print("PlotOptionValidationError: no '{}' provided".format(e.args[0]))
         sys.exit(1)
 
-def parse_input(input):
-    """
+def evaluate_input(args):
+    """This function parse and evaluate the argument from command line interface,
+    it returns the list of DM files loaded with also potential custom plot and curves options provided.
+    The functions parse the input argument and the potential custom options arguments (plot and curves).
 
+    It first infers the type of input provided. The following 3 input type are supported:
+        - type 1: A .txt file containing a pass of .dm file per lines
+        - type 2: A single .dm path
+        - type 3: A custom list of pairs of dictionnaries (see the input help from the command line parser)
+
+    Then it loads custom (or defaults if not provided) plot and curves options per DM file.
+
+    Args:
+        args (argparse.Namespace): the result of the call of parse_args() on the ArgumentParser object
+
+    Returns:
+        Result (tuple): A tuple containing
+            - DM_list (list): list of DM objects
+            - opts_list (list): list of dictionnaries for the curves options
+            - plot_opts (dict): dictionnary of plot options  
     """
 
     DM_list = list()
@@ -161,7 +193,7 @@ def parse_input(input):
             print("SyntaxError: The input provided is invalid.\n-> {}".format(str(e)))
             sys.exit(1)
 
-    # Options Processing
+    #*-* Options Processing *-*
 
     # General plot options
     if not args.plotOptionJsonFile:
@@ -195,6 +227,57 @@ def parse_input(input):
 
     return DM_list, opts_list, plot_opts
 
+def outputFigure(figure, outputFolder, outputFileNameSuffix, plotType):
+    """Generate the plot file(s) as pdf at the provided destination
+    The filename created as the following format:
+        * for a single figure: {file_suffix}_{plot_type}_all.pdf
+        * for a list of figures: {file_suffix}_{plot_type}_{figure_number}.pdf
+
+    Args:
+        figure (matplotlib.pyplot.figure or a list of matplotlib.pyplot.figure): the figure to plot
+        outputFolder (str): path to the destination folder 
+        outputFileNameSuffix (str): string suffix that will be inserted at the beginning of the filename
+        plotType (str): the type of plot (ROC or DET)
+
+    """
+    if outputFolder != '.' and not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+
+    # Figure Output
+    fig_filename_tmplt = "{file_suffix}_{plot_type}_{plot_id}.pdf".format(file_suffix=outputFileNameSuffix,
+                                                                          plot_type=plotType,
+                                                                          plot_id="{plot_id}")
+    
+    fig_path = os.path.normpath(os.path.join(outputFolder, fig_filename_tmplt))
+
+    # This will save multiple figures if multi_fig == True
+    if isinstance(figure,list):
+        for i,fig in enumerate(figure):
+            fig.savefig(fig_path.format(plot_id=str(i)), bbox_inches='tight')
+    else:
+        figure.savefig(fig_path.format(plot_id='all'), bbox_inches='tight')
+
+def dumpPlotOptions(outputFolder, opts_list, plot_opts):
+    """This function dumps the options used for the plot and curves as json files.
+    at the provided outputFolder. The two file have following names:
+        - Global options plot: "plot_options.json"
+        - curves options:  "curve_options.json"
+
+    Args: 
+        outputFolder (str): path to the output folder
+        opts_list (list): list of dictionnaries for the curves options
+        plot_opts (dict): dictionnary of plot options  
+
+    """
+    output_json_path = os.path.normpath(os.path.join(outputFolder, "plotJsonFiles"))
+        if not os.path.exists(output_json_path):
+            os.makedirs(output_json_path)
+
+        for json_data, json_filename in zip([opts_list, plot_opts], ["curve_options.json", "plot_options.json"]):
+            with open(os.path.join(output_json_path, json_filename), 'w') as f:
+                f.write(json.dumps(json_data, indent=2, separators=(',', ':')))
+
+
 if __name__ == '__main__':
 
     parser = create_parser()
@@ -208,14 +291,18 @@ if __name__ == '__main__':
                print (arg),
             print
     else:
-        v_print = lambda *a: None      # do-nothing function
+        v_print = lambda *a: None  # do-nothing function
 
-    # If no plot displayed, we set the matplotlib backend
-    if not args.display:
+    # Backend option
+    if not args.display: # If no plot displayed, we set the matplotlib backend
         import matplotlib
         matplotlib.use('Agg')
 
-    DM_list, opts_list, plot_opts = parse_input(args.input)
+
+    DM_list, opts_list, plot_opts = evaluate_input(args)
+
+    #*-* Label processing *-*
+    #TODO: Move this code to a function once it as been cleaned 
     
     optout = False
     for curve_opts, dm_obj in zip(opts_list, DM_list):
@@ -253,6 +340,8 @@ if __name__ == '__main__':
                                                                                                           nb_target=dm_obj.t_num, 
                                                                                                           nb_nontarget=dm_obj.nt_num)
 
+    #*-* Plotting *-*
+
     # Creation of the object setRender (~DetMetricSet)
     configRender = p.setRender(DM_list, opts_list, plot_opts)
     # Creation of the Renderer
@@ -260,35 +349,14 @@ if __name__ == '__main__':
     # Plotting
     myfigure = myRender.plot_curve(args.display, multi_fig=args.multiFigs, isOptOut = optout, isNoNumber = args.noNum)
 
-
     # Output process
-
-    # Output result directory
-    if args.outputFolder != '.' and not os.path.exists(args.outputFolder):
-        os.makedirs(args.outputFolder)
-
-    # Figure Output
-    fig_filename_tmplt = "{file_suffix}_{plot_type}_{plot_id}.pdf".format(file_suffix=args.outputFileNameSuffix,
-                                                                          plot_type=args.plotType,
-                                                                          plot_id="{plot_id}")
+    outputFigure(myfigure, args.outputFolder, args.outputFileNameSuffix, args.plotType)
     
-    fig_path = os.path.normpath(os.path.join(args.outputFolder, fig_filename_tmplt))
-
-    # This will save multiple figures if multi_fig == True
-    if isinstance(myfigure,list):
-        for i,fig in enumerate(myfigure):
-            fig.savefig(fig_path.format(plot_id=str(i)), bbox_inches='tight')
-    else:
-        myfigure.savefig(fig_path.format(plot_id='all'), bbox_inches='tight')
-
     # If we need to dump the used plotting options
     if args.dumpPlotParams:
-        output_json_path = os.path.normpath(os.path.join(args.outputFolder, "plotJsonFiles"))
-        if not os.path.exists(output_json_path):
-            os.makedirs(output_json_path)
+        dumpPlotOptions(args.outputFolder, opts_list, plot_opts)
 
-        with open(os.path.join(output_json_path, "curve_options.json"), 'w') as f:
-            f.write(json.dumps(opts_list, indent=2, separators=(',', ':')))
 
-        with open(os.path.join(output_json_path, "plot_options.json"), 'w') as f:
-            f.write(json.dumps(plot_opts, indent=2, separators=(',', ':')))
+
+
+
