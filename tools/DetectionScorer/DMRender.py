@@ -148,9 +148,10 @@ def evaluate_input(args):
             fp_list = f.read().splitlines()
 
         for dm_file_path in fp_list:
+            label = None
             # We handle a potential label provided
-            if ':' in filename:
-                dm_file_path, label = filename.rsplit(':', 1)
+            if ':' in dm_file_path:
+                dm_file_path, label = dm_file_path.rsplit(':', 1)
 
             dm_obj = dm.load_dm_file(dm_file_path)
             dm_obj.path = dm_file_path
@@ -270,18 +271,18 @@ def dumpPlotOptions(outputFolder, opts_list, plot_opts):
 
     """
     output_json_path = os.path.normpath(os.path.join(outputFolder, "plotJsonFiles"))
-        if not os.path.exists(output_json_path):
-            os.makedirs(output_json_path)
+    if not os.path.exists(output_json_path):
+        os.makedirs(output_json_path)
 
-        for json_data, json_filename in zip([opts_list, plot_opts], ["curve_options.json", "plot_options.json"]):
-            with open(os.path.join(output_json_path, json_filename), 'w') as f:
-                f.write(json.dumps(json_data, indent=2, separators=(',', ':')))
+    for json_data, json_filename in zip([opts_list, plot_opts], ["curve_options.json", "plot_options.json"]):
+        with open(os.path.join(output_json_path, json_filename), 'w') as f:
+            f.write(json.dumps(json_data, indent=2, separators=(',', ':')))
 
 
 if __name__ == '__main__':
 
+    print("Starting DMRender...\n")
     parser = create_parser()
-
     args = parser.parse_args()
 
     # Verbosity option
@@ -298,7 +299,7 @@ if __name__ == '__main__':
         import matplotlib
         matplotlib.use('Agg')
 
-
+    v_print("Evaluating parameters...")
     DM_list, opts_list, plot_opts = evaluate_input(args)
 
     #*-* Label processing *-*
