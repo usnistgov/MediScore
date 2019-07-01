@@ -94,7 +94,9 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
 
     Args:
         logger_type (int): type of logging (1: console only, 2: file only, 3: both)
-        loglevel (str): one of the following string:'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        filename (str): filename or path of the log file
+        console_loglevel (str): loglevel string for the console -> 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        file_loglevel (str): loglevel string for the file -> :'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
 
     """
 
