@@ -69,21 +69,18 @@ def create_parser():
     parser.add_argument('--noNum', action="store_true",
                         help="Do not print the number of target trials and non-target trials on the legend of the plot")
 
-    parser.add_argument('-v', "--verbose", action="store_true",
-                        help="Increase output verbosity")
-
     parser.add_argument('--dumpPlotParams', action="store_true",
                         help="Dump the parameters used for the plot and the curves as Jsons in the output directory")
 
-    parser.add_argument("--logtype", type=int, default=0, const=0, nargs='?', 
-                        choices=[0, 1, 2, 3], 
+    parser.add_argument("--logtype", type=int, default=0, const=0, nargs='?',
+                        choices=[0, 1, 2, 3],
                         help="Set the logging type")
 
-    parser.add_argument("--console_log_level", dest="consoleLogLevel", default="INFO", const="INFO", nargs='?', 
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 
+    parser.add_argument("--console_log_level", dest="consoleLogLevel", default="INFO", const="INFO", nargs='?',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help="Set the console logging level")
 
-    parser.add_argument("--file_log_level", dest="fileLogLevel", default="DEBUG", const="DEBUG", nargs='?', 
+    parser.add_argument("--file_log_level", dest="fileLogLevel", default="DEBUG", const="DEBUG", nargs='?',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 
                         help="Set the file logging level")
 
@@ -392,15 +389,6 @@ if __name__ == '__main__':
                            file_loglevel=args.fileLogLevel)
 
     logger.info("Starting DMRender...")
-
-    # Verbosity option
-    if args.verbose:
-        def v_print(*args):
-            for arg in args:
-               print (arg),
-            print
-    else:
-        v_print = lambda *a: None  # do-nothing function
 
     # Backend option
     if not args.display: # If no plot displayed, we set the matplotlib backend
