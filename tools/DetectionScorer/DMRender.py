@@ -105,7 +105,7 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
         print("LoggingError: Invalid logLevel -> {}".format(e))
         sys.exit(1)
 
-    logger = logging.getLogger('rootLogger')
+    logger = logging.getLogger('DMlog')
     logger.setLevel(logging.DEBUG)
 
     # create console handler which logs to stdout 
@@ -113,9 +113,9 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
         consoleLogger = logging.StreamHandler(stream=sys.stdout)
         consoleLogger.setLevel(numeric_console_loglevel)
         if sys.version_info[0] >= 3:
-            consoleFormatter = logging.Formatter("{name:<10} - {levelname} - {message}", style='{')
+            consoleFormatter = logging.Formatter("{name:<5} - {levelname} - {message}", style='{')
         else:
-            consoleFormatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+            consoleFormatter = logging.Formatter("%(name)-5s - %(levelname)s - %(message)s")
         consoleLogger.setFormatter(consoleFormatter)
         logger.addHandler(consoleLogger)
 
@@ -124,9 +124,9 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
         fileLogger = logging.FileHandler(filename,mode='w')
         fileLogger.setLevel(numeric_file_loglevel)
         if sys.version_info[0] >= 3:
-            fileFormatter = logging.Formatter("{asctime}|{name:<10}|{levelname:^9} - {message}", datefmt='%H:%M:%S', style='{')
+            fileFormatter = logging.Formatter("{asctime}|{name:<5}|{levelname:^9} - {message}", datefmt='%H:%M:%S', style='{')
         else:
-            fileFormatter = logging.Formatter("%(asctime)s|%(name)-10s|%(levelname)-9s - %(message)s", datefmt='%H:%M:%S')
+            fileFormatter = logging.Formatter("%(asctime)s|%(name)-5s|%(levelname)-9s - %(message)s", datefmt='%H:%M:%S')
         fileLogger.setFormatter(fileFormatter)
         logger.addHandler(fileLogger)
     
@@ -140,6 +140,10 @@ def close_file_logger(logger):
     for handler in logger.handlers:
         if handler.__class__.__name__ == "FileHandler":
             handler.close()
+
+def DMRenderExit(logger):
+    close_file_logger(logger)
+    sys.exit(1)
 
 def validate_plot_options(plot_options):
     """Validation of the custom dictionnary of general options for matplotlib's plot.
@@ -167,7 +171,7 @@ def validate_plot_options(plot_options):
         def __init__(self,msg):
             self.msg = msg
 
-    logger = logging.getLogger("rootLogger")
+    logger = logging.getLogger("DMlog")
     logger.info("Validating global plot options...")
     try:
         #1 check plot type
@@ -177,13 +181,11 @@ def validate_plot_options(plot_options):
 
     except PlotOptionValidationError as e:
         logging.error("PlotOptionValidationError: {}".format(e.msg))
-        close_file_logger(logger)
-        sys.exit(1)
+        DMRenderExit(logger)
 
     except KeyError as e:
         logging.error("PlotOptionValidationError: no '{}' provided".format(e.args[0]))
-        close_file_logger(logger)
-        sys.exit(1)
+        DMRenderExit(logger)
 
 def evaluate_input(args):
     """This function parse and evaluate the argument from command line interface,
@@ -207,25 +209,42 @@ def evaluate_input(args):
             - plot_opts (dict): dictionnary of plot options  
     """
 
-    logger = logging.getLogger('rootLogger')
+    def call_DM_loader(path, logger):
+        try:
+            return dm.load_dm_file(path)
+        except FileNotFoundError as e:
+            logger.error("FileNotFoundError: No such file or directory: '{}'".format(path))
+            DMRenderExit(logger)
+
+        except IOError as e:
+            logger.error("IOError: {}".format(str(e)))
+            DMRenderExit(logger)
+
+        except UnicodeDecodeError as e:
+            logger.error("UnicodeDecodeError: {}\n".format(str(e)))
+            DMRenderExit(logger)
+
+    logger = logging.getLogger('DMlog')
     DM_list = list()
     opts_list = list()
     # Case 1: text file containing one path per line
     if args.input.endswith('.txt'):
         logger.debug("Input of type 1 detected")
         input_type = 1
-        with open(args.input) as f:
-            fp_list = f.read().splitlines()
+        try:
+            with open(args.input) as f:
+                fp_list = f.read().splitlines()
+        except FileNotFoundError as e:
+            logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.input))
+            DMRenderExit(logger)
 
         for dm_file_path in fp_list:
-            label = None
+            label = dm_file_path
             # We handle a potential label provided
             if ':' in dm_file_path:
                 dm_file_path, label = dm_file_path.rsplit(':', 1)
-            else:
-                label = dm_file_path
 
-            dm_obj = dm.load_dm_file(dm_file_path)
+            dm_obj = call_DM_loader(dm_file_path, logger)
             dm_obj.path = dm_file_path
             dm_obj.label = label
             dm_obj.show_label = True
@@ -235,7 +254,7 @@ def evaluate_input(args):
     elif args.input.endswith('.dm'):
         logger.debug("Input of type 2 detected")
         input_type = 2
-        dm_obj = dm.load_dm_file(args.input)
+        dm_obj = call_DM_loader(args.input, logger)
         dm_obj.path = args.input
         dm_obj.label = args.input
         dm_obj.show_label = None
@@ -249,7 +268,7 @@ def evaluate_input(args):
             input_list = literal_eval(args.input)
             for dm_data, dm_opts in input_list:
                 dm_file_path = dm_data['path']
-                dm_obj = dm.load_dm_file(dm_file_path)
+                dm_obj = call_DM_loader(dm_file_path, logger)
                 dm_obj.path = dm_file_path
                 dm_obj.label = dm_data['label']
                 dm_obj.show_label = dm_data['show_label']
@@ -261,17 +280,15 @@ def evaluate_input(args):
                 logger.error("ValueError: Invalid input format. All sub-lists must be a pair of two dictionnaries.\n-> {}".format(str(e)))
             else:
                 logger.error("ValueError: {}".format(str(e)))
-            close_file_logger(logger)
-            sys.exit(1)
+            DMRenderExit(logger)
 
         except SyntaxError as e:
             logger.error("SyntaxError: The input provided is invalid.\n-> {}".format(str(e)))
-            close_file_logger(logger)
-            sys.exit(1)
+            DMRenderExit(logger)
 
     else:
         logger.error("The input type does not match any of the following inputs:\n- .txt file containing one file path per line\n- .dm file\n- a list of pair [{'path':'path/to/dm_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n")
-        sys.exit(1)
+        DMRenderExit(logger)
 
     #*-* Options Processing *-*
 
@@ -287,8 +304,7 @@ def evaluate_input(args):
             validate_plot_options(plot_opts)
         except FileNotFoundError as e:
             logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.plotOptionJsonFile))
-            close_file_logger(logger)
-            sys.exit(1)
+            DMRenderExit(logger)
     
     # Curve options
     if not args.curveOptionJsonFile:
@@ -301,11 +317,10 @@ def evaluate_input(args):
             opts_list = p.load_plot_options(args.curveOptionJsonFile)
             if len(opts_list) < len(DM_list):
                 print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_list)))
-                sys.exit(1)
+                DMRenderExit(logger)
         except FileNotFoundError as e:
             logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.curveOptionJsonFile))
-            close_file_logger(logger)
-            sys.exit(1)
+            DMRenderExit(logger)
 
     return DM_list, opts_list, plot_opts
 
@@ -322,7 +337,7 @@ def outputFigure(figure, outputFolder, outputFileNameSuffix, plotType):
         plotType (str): the type of plot (ROC or DET)
 
     """
-    logger = logging.getLogger("rootLogger")
+    logger = logging.getLogger("DMlog")
     logger.info("Figure output generation...")
     if outputFolder != '.' and not os.path.exists(outputFolder):
         os.makedirs(outputFolder)

@@ -134,26 +134,12 @@ def load_dm_file(path):
     """ Load Dump (DM) files
         path: DM file name along with the path
     """
-    try:
-        with open(path, 'rb') as file:
-            if sys.version_info[0] >= 3:
-                myObject = pickle.load(file, encoding='latin1') 
-            else:
-                myObject = pickle.load(file)
-        return myObject
-
-    except FileNotFoundError as e:
-        print("FileNotFoundError: No such file or directory: '{}'".format(path))
-        sys.exit(1)
-
-    except IOError as e:
-        print("IOError: {}".format(str(e)))
-        sys.exit(1)
-
-    except UnicodeDecodeError as e:
-        print("UnicodeDecodeError: {}\n".format(str(err)))
-        sys.exit(1)
-
+    with open(path, 'rb') as file:
+        if sys.version_info[0] >= 3:
+            myObject = pickle.load(file, encoding='latin1') 
+        else:
+            myObject = pickle.load(file)
+    return myObject
 
 class Metrics:
 
