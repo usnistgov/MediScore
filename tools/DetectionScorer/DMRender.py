@@ -112,7 +112,10 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
     if logger_type in [1,3]:
         consoleLogger = logging.StreamHandler(stream=sys.stdout)
         consoleLogger.setLevel(numeric_console_loglevel)
-        consoleFormatter = logging.Formatter('{name:<10} - {levelname} - {message}', style='{')
+        if sys.version_info[0] >= 3:
+            consoleFormatter = logging.Formatter("{name:<10} - {levelname} - {message}", style='{')
+        else:
+            consoleFormatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
         consoleLogger.setFormatter(consoleFormatter)
         logger.addHandler(consoleLogger)
 
@@ -120,7 +123,10 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
     if logger_type in [2,3]:
         fileLogger = logging.FileHandler(filename,mode='w')
         fileLogger.setLevel(numeric_file_loglevel)
-        fileFormatter = logging.Formatter('{asctime}|{name:<10}|{levelname:^9} - {message}', datefmt='%H:%M:%S', style='{')
+        if sys.version_info[0] >= 3:
+            fileFormatter = logging.Formatter("{asctime}|{name:<10}|{levelname:^9} - {message}", datefmt='%H:%M:%S', style='{')
+        else:
+            fileFormatter = logging.Formatter("%(asctime)s|%(name)-10s|%(levelname)-9s - %(message)s", datefmt='%H:%M:%S')
         fileLogger.setFormatter(fileFormatter)
         logger.addHandler(fileLogger)
     
