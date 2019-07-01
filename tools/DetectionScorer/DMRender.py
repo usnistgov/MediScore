@@ -96,42 +96,47 @@ def create_logger(logger_type=1, filename="./DMRender.log", console_loglevel="IN
         file_loglevel (str): loglevel string for the file -> :'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
 
     """
+    if logger_type == 0:
+        logger = logging.getLogger('DMlog')
+        NullHandler = logging.NullHandler()
+        logger.addHandler(NullHandler)
 
-    try:
-        numeric_file_loglevel= getattr(logging, file_loglevel.upper())
-        numeric_console_loglevel = getattr(logging, console_loglevel.upper())
-    except AttributeError as e:
-        print("LoggingError: Invalid logLevel -> {}".format(e))
-        sys.exit(1)
+    else:
+        try:
+            numeric_file_loglevel= getattr(logging, file_loglevel.upper())
+            numeric_console_loglevel = getattr(logging, console_loglevel.upper())
+        except AttributeError as e:
+            print("LoggingError: Invalid logLevel -> {}".format(e))
+            sys.exit(1)
 
-    logger = logging.getLogger('DMlog')
-    logger.setLevel(logging.DEBUG)
+        logger = logging.getLogger('DMlog')
+        logger.setLevel(logging.DEBUG)
 
-    # create console handler which logs to stdout 
-    if logger_type in [1,3]:
-        consoleLogger = logging.StreamHandler(stream=sys.stdout)
-        consoleLogger.setLevel(numeric_console_loglevel)
-        if sys.version_info[0] >= 3:
-            consoleFormatter = logging.Formatter("{name:<5} - {levelname} - {message}", style='{')
-        else:
-            consoleFormatter = logging.Formatter("%(name)-5s - %(levelname)s - %(message)s")
-        consoleLogger.setFormatter(consoleFormatter)
-        logger.addHandler(consoleLogger)
+        # create console handler which logs to stdout
+        if logger_type in [1,3]:
+            consoleLogger = logging.StreamHandler(stream=sys.stdout)
+            consoleLogger.setLevel(numeric_console_loglevel)
+            if sys.version_info[0] >= 3:
+                consoleFormatter = logging.Formatter("{name:<5} - {levelname} - {message}", style='{')
+            else:
+                consoleFormatter = logging.Formatter("%(name)-5s - %(levelname)s - %(message)s")
+            consoleLogger.setFormatter(consoleFormatter)
+            logger.addHandler(consoleLogger)
 
-    # create file handler which logs to a file
-    if logger_type in [2,3]:
-        fileLogger = logging.FileHandler(filename,mode='w')
-        fileLogger.setLevel(numeric_file_loglevel)
-        if sys.version_info[0] >= 3:
-            fileFormatter = logging.Formatter("{asctime}|{name:<5}|{levelname:^9} - {message}", datefmt='%H:%M:%S', style='{')
-        else:
-            fileFormatter = logging.Formatter("%(asctime)s|%(name)-5s|%(levelname)-9s - %(message)s", datefmt='%H:%M:%S')
-        fileLogger.setFormatter(fileFormatter)
-        logger.addHandler(fileLogger)
-    
-    # Silence the matplotlib logger
-    mpl_logger = logging.getLogger("matplotlib") 
-    mpl_logger.setLevel(logging.WARNING)
+        # create file handler which logs to a file
+        if logger_type in [2,3]:
+            fileLogger = logging.FileHandler(filename,mode='w')
+            fileLogger.setLevel(numeric_file_loglevel)
+            if sys.version_info[0] >= 3:
+                fileFormatter = logging.Formatter("{asctime}|{name:<5}|{levelname:^9} - {message}", datefmt='%H:%M:%S', style='{')
+            else:
+                fileFormatter = logging.Formatter("%(asctime)s|%(name)-5s|%(levelname)-9s - %(message)s", datefmt='%H:%M:%S')
+            fileLogger.setFormatter(fileFormatter)
+            logger.addHandler(fileLogger)
+
+        # Silence the matplotlib logger
+        mpl_logger = logging.getLogger("matplotlib")
+        mpl_logger.setLevel(logging.WARNING)
 
     return logger
 
