@@ -211,11 +211,11 @@ def evaluate_input(args):
 
     def call_DM_loader(path, logger):
         try:
-            return dm.load_dm_file(path)
-        except FileNotFoundError as e:
-            logger.error("FileNotFoundError: No such file or directory: '{}'".format(path))
-            DMRenderExit(logger)
-
+            if os.path.isfile(path): # Use this instead of catching  FileNotFoundError for Python2 support
+                return dm.load_dm_file(path)
+            else:
+                logger.error("FileNotFoundError: No such file or directory: '{}'".format(path))
+                DMRenderExit(logger)
         except IOError as e:
             logger.error("IOError: {}".format(str(e)))
             DMRenderExit(logger)
@@ -231,10 +231,10 @@ def evaluate_input(args):
     if args.input.endswith('.txt'):
         logger.debug("Input of type 1 detected")
         input_type = 1
-        try:
+        if os.path.isfile(args.input):
             with open(args.input) as f:
                 fp_list = f.read().splitlines()
-        except FileNotFoundError as e:
+        else:
             logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.input))
             DMRenderExit(logger)
 
@@ -298,11 +298,11 @@ def evaluate_input(args):
         plot_opts = p.gen_default_plot_options(plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType)
         
     else:
-        try:
-            logger.info("Loading of the plot options from the json config file...")
+        logger.info("Loading of the plot options from the json config file...")
+        if os.path.isfile(args.plotOptionJsonFile):
             plot_opts = p.load_plot_options(args.plotOptionJsonFile)
             validate_plot_options(plot_opts)
-        except FileNotFoundError as e:
+        else:
             logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.plotOptionJsonFile))
             DMRenderExit(logger)
     
@@ -312,13 +312,13 @@ def evaluate_input(args):
         opts_list = p.gen_default_curve_options(len(DM_list))
         
     elif input_type != 3:
-        try:
-            logger.info("Loading of the curves options from the json config file...")
+        logger.info("Loading of the curves options from the json config file...")
+        if os.path.isfile(args.curveOptionJsonFile):
             opts_list = p.load_plot_options(args.curveOptionJsonFile)
             if len(opts_list) < len(DM_list):
                 print("ERROR: the number of the curve options is different with the number of the DM objects: ({} < {})".format(len(opts_list), len(DM_list)))
                 DMRenderExit(logger)
-        except FileNotFoundError as e:
+        else:
             logger.error("FileNotFoundError: No such file or directory: '{}'".format(args.curveOptionJsonFile))
             DMRenderExit(logger)
 
