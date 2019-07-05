@@ -126,7 +126,7 @@ def create_average_system(systems, resolution=500, label="average", line_options
     Returns:
         System: the average system object
     """
-    x = np.linspace(0, 1, 500)
+    x = np.linspace(0, 1, resolution)
     ys = [np.interp(x, sys.fpr, sys.tpr) for sys in systems]
     return System(x, np.vstack(ys).mean(0), label="average", line_options=line_options)
 
