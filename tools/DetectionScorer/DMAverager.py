@@ -181,13 +181,13 @@ if __name__ == '__main__':
 
     parser = create_parser()
     args = parser.parse_args()
-    if (args.paths is not None) and (args.input is not None):
+    if (args.paths is None) and (args.input is None):
+        print("Error: You need to provide at least one type of input. Use -h or --help to get information.")
+    else:
         systems = create_systems(args)
         fig = roc_plot_average(systems, average_line_options={"color":"blue"})
         if args.fig_path is not None:
             fig.savefig(args.fig_path, bbox_inches='tight')
-    else:
-        print("Error: You need to provide at least one type of input. Use -h or --help to get information.")
 
 
 
