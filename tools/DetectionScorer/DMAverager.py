@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
+from ast import literal_eval
 
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
@@ -14,8 +15,15 @@ def create_parser():
     Returns:
         argparse.ArgumentParser
     """
+    input_help = ("a list of pair [{'path':'path/to/dm_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n",
+                  "Example:\n  [[{'path':'path/to/file_1.dm','label':'sys_1','show_label':True}, {'color':'red','linestyle':'solid'}],\n",
+                  "   [{'path':'path/to/file_2.dm','label':'sys_2','show_label':False}, {}]\n",
+                  "Note: Use an empty dict for default curve options behavior.")
+
     parser = argparse.ArgumentParser(description='Average ROC Plotter.', formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("paths", nargs='+', help="Sequence of .dm file paths")
+    parser.add_argument("-p", "--paths", nargs='+', help="Sequence of .dm file paths")
+    parser.add_argument('-i', '--input', metavar = "str", help=''.join(input_help))
+    parser.add_argument('-f', '--fig_path', metavar = "str", help="Full path to the plot file if the figure needs to be dumped")
     return parser
 
 class System():
@@ -53,16 +61,16 @@ class System():
             return line_options
 
 
-def create_systems_from_dm(dm_filepaths):
+def create_systems(args):
     """Create the sequence of System object, initialised 
     with the loading of dm files
     Parameters:
-        dm_filepaths (list): list of path to dm files.
+        args (argparse.Namespace): the result of the call of parse_args() on the ArgumentParser object
     Returns:
         list: list of System objects
     """
-    systems = []
-    for i, path in enumerate(dm_filepaths):
+    def load_dm(path):
+        dm_object = None
         try:
             if os.path.isfile(path): # Use this instead of catching  FileNotFoundError for Python2 support
                 dm_object = dm.load_dm_file(path)
@@ -76,9 +84,32 @@ def create_systems_from_dm(dm_filepaths):
         except UnicodeDecodeError as e:
             print("UnicodeDecodeError: {}\n".format(str(e)))
             sys.exit(1)
-        
-        system = System(dm_object.fpr, dm_object.tpr, label="System_{}".format(i), line_options="default")
-        systems.append(system)
+
+        return dm_object
+
+    systems = []
+    if args.paths is not None:
+        if len(args.paths) > 1:
+            for i, path in enumerate(dm_filepaths):
+                dm_object = load_dm(path)
+                system = System(dm_object.fpr, dm_object.tpr, label=path, line_options="default")
+                systems.append(system)
+        else:
+            print("Error: At least two inputs must be provided to compute the average.")
+            sys.exit(1)
+
+    elif args.input is not None:
+        input_list = literal_eval(args.input)
+        if len(input_list) > 1:
+            for dm_data, dm_opts in input_list:
+                dm_object = load_dm(dm_data["path"])
+                dm_label = dm_data["label"] if dm_data["show_label"] else None
+                system = System(dm_object.fpr, dm_object.tpr, label=dm_label, line_options=dm_opts)
+                systems.append(system)
+        else:
+            print("Error: At least two inputs must be provided to compute the average.")
+            sys.exit(1)
+
     return systems
 
 
@@ -142,6 +173,7 @@ def roc_plot_average(systems, average_line_options="default", **kwargs):
         systems.append(avg_sys)
         fig = roc_plot(systems, **kwargs)
         plt.show()
+        return fig
     else:
         print("Error: the system argument must be a list.")
 
@@ -149,14 +181,14 @@ if __name__ == '__main__':
 
     parser = create_parser()
     args = parser.parse_args()
-
-    if len(args.paths) > 1:
-
-        systems = create_systems_from_dm(args.paths)
-        roc_plot_average(systems, average_line_options={"color":"red"})
-
+    if (args.paths is not None) and (args.input is not None):
+        systems = create_systems(args)
+        fig = roc_plot_average(systems, average_line_options={"color":"blue"})
+        if args.fig_path is not None:
+            fig.savefig(args.fig_path, bbox_inches='tight')
     else:
-        print("Error: At least two inputs must be provided to compute the average.")
+        print("Error: You need to provide at least one type of input. Use -h or --help to get information.")
+
 
 
 
