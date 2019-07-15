@@ -6,9 +6,9 @@ from collections import OrderedDict
 class DataContainer:
     data_container_version = "2.0"
 
-	def __init__(self, fa_array, fn_array, threshold, label=None, line_options=None, fa_label=None, fn_label=None):
-		self.fa = fa_array # False Alarm, equivalent for False Positive
-		self.fn = fn_array # False Negative, equivalent for Miss
+    def __init__(self, fa_array, fn_array, threshold, label=None, line_options=None, fa_label=None, fn_label=None):
+        self.fa = fa_array # False Alarm, equivalent for False Positive
+        self.fn = fn_array # False Negative, equivalent for Miss
         self.threshold = threshold
         self.label = label
         self.fa_label = fa_label
@@ -20,10 +20,10 @@ class DataContainer:
             self.line_options = DataContainer.get_default_line_options()
             self.line_options["label"] = label
 
-	def set_default_line_options(self):
-		self.line_options = DataContainer.get_default_line_options()
+    def set_default_line_options(self):
+        self.line_options = DataContainer.get_default_line_options()
 
-	def dump(self, file_name):
+    def dump(self, file_name):
         """Serialize the object (formatted in a binary)
         file_name: Dump file name
         """        
