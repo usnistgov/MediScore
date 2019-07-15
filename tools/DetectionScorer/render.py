@@ -15,7 +15,7 @@ class Render:
 
     def __init__(self, plot_type=None, plot_options=None):
         self.plot_type = plot_type
-        self.plot_opts = plot_options
+        self.plot_options = plot_options
 
     def get_plot_type(self, plot_type=None):
         if plot_type is not None:
