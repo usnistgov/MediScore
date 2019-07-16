@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 
 import sys
@@ -145,5 +146,4 @@ class Annotation:
     def __init__(self, text, parameters)
         self.text = text
         self.paremeters = parameters
-
 
