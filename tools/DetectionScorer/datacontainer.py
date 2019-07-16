@@ -16,6 +16,11 @@ class DataContainer:
 
         if line_options is not None:
             self.line_options = line_options
+            # Assuring consistency between the label attribute and the line label property
+            if ("label" not in self.line_options) and (self.label is not None)
+                self.line_options["label"] = self.label
+            elif ("label" in self.line_options) and (self.label is None)
+                self.label = self.line_options["label"]
         else:
             self.line_options = DataContainer.get_default_line_options()
             self.line_options["label"] = label
@@ -32,6 +37,18 @@ class DataContainer:
         file.close()
 
     @staticmethod
+    def load(path):
+    """ Load Dumped files
+        path: absolute path to the file
+    """
+    with open(path, 'rb') as file:
+        if sys.version_info[0] >= 3:
+            obj = pickle.load(file, encoding='latin1') 
+        else:
+            obj = pickle.load(file)
+    return obj
+
+    @staticmethod
     def get_default_line_options():
         """ Creation of defaults line options dictionnary
         """
@@ -43,17 +60,7 @@ class DataContainer:
                             ('label', None),
                             ('antialiased', 'False')])
 
-    @staticmethod
-    def load_file(path):
-    """ Load Dumped files
-        path: absolute path to the file
-    """
-    with open(path, 'rb') as file:
-        if sys.version_info[0] >= 3:
-            obj = pickle.load(file, encoding='latin1') 
-        else:
-            obj = pickle.load(file)
-    return obj
+    
 
     @staticmethod
     def aggregate(dc_list, output_label="Average", method="average", average_resolution=500, line_options=None):

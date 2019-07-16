@@ -32,7 +32,7 @@ class MediForDataContainer(DataContainer):
         self.b = None
         self.bpoint = None
         self.tpr_at_fpr = None
-        self.ci_level = ciLevel
+        self.ci_level = None
         self.auc_ci_lower = 0
         self.auc_ci_upper = 0
         self.auc_at_fpr_ci_lower = 0

@@ -15,7 +15,7 @@ class Render:
 
     def __init__(self, plot_type=None, plot_options=None):
         self.plot_type = plot_type
-        self.plot_opts = plot_options
+        self.plot_options = plot_options
 
     def get_plot_type(self, plot_type=None):
         if plot_type is not None:
@@ -35,7 +35,7 @@ class Render:
             print("No plot options provided, setting default paramaters")
             return self.gen_default_plot_options(plot_type)
 
-    def plot(self, data_list, annotations=None, plot_type=None, plot_options=None, display=True, multi_fig=False):
+    def plot(self, data_list, annotations=[], plot_type=None, plot_options=None, display=True, multi_fig=False):
         plot_type = self.get_plot_type(plot_type=plot_type)
         plot_options = self.get_plot_options(plot_type, plot_options=plot_options)
 
@@ -45,11 +45,11 @@ class Render:
         if multi_fig is True:
             fig_list = list()
             for i, data in enumerate(data_list):
-                fig = plotter([data], annotations, plot_type, plot_options, display)
+                fig = self.plotter([data], annotations, plot_type, plot_options, display)
                 fig_list.append(fig)
             return fig_list
         else:
-            fig = plotter(data_list, annotations, plot_type, plot_options, display)
+            fig = self.plotter(data_list, annotations, plot_type, plot_options, display)
             return fig
 
 
@@ -59,29 +59,30 @@ class Render:
         get_y = lambda fn, plot_type: fn if plot_type == "det" else 1 - fn
         
         for obj in data_list:
-            plt.plot(obj.fa, get_y(obj.y, plot_type), **obj.line_options)
+            plt.plot(obj.fa, get_y(obj.fn, plot_type), **obj.line_options)
 
-        if plot_type.lower() == "det":
-            plt.plot((1, 0), 'b--', lw=1)
-        elif plot_type.lower() == "roc":
-            plt.plot((0, 1), 'b--', lw=1)
+        # if plot_type.lower() == "det":
+        #     plt.plot((1, 0), 'b--', lw=1)
+        # elif plot_type.lower() == "roc":
+        #     plt.plot((0, 1), 'b--', lw=1)
 
         if len(data_list) == 1:
             for annotation in annotations:
-                plt.annotate(annotation.to_dict())
+                plt.annotate(annotation.text, **annotation.paramaters)
 
-        plt.xlim(plot.options["xlim"])
-        plt.ylim(plot.options["ylim"])
-        plt.xlabel(plot_opts['xlabel'], fontsize=plot_opts['xlabel_fontsize'])
-        plt.ylabel(plot_opts['ylabel'], fontsize=plot_opts['ylabel_fontsize'])
-        plt.xticks(ticks=plot_options["xticks"], labels=plot_options["xticks_labels"], fontsize=plot_opts['xticks_label_size'])
-        plt.yticks(ticks=plot_options["yticks"], labels=plot_options["yticks_labels"], fontsize=plot_opts['yticks_label_size'])
-        plt.title(plot_opts['title'], fontsize=plot_opts['title_fontsize'])
-        plt.suptitle(plot_opts['subtitle'], fontsize=plot_opts['subtitle_fontsize'])
+        plt.xlim(plot_options["xlim"])
+        plt.ylim(plot_options["ylim"])
+        plt.xlabel(plot_options['xlabel'], fontsize=plot_options['xlabel_fontsize'])
+        plt.ylabel(plot_options['ylabel'], fontsize=plot_options['ylabel_fontsize'])
+        plt.xscale(plot_options["xscale"])
+        plt.xticks(plot_options["xticks"], plot_options["xticks_labels"], fontsize=plot_options['xticks_label_size'])
+        plt.yticks(plot_options["yticks"], plot_options["yticks_labels"], fontsize=plot_options['yticks_label_size'])
+        plt.title(plot_options['title'], fontsize=plot_options['title_fontsize'])
+        plt.suptitle(plot_options['subtitle'], fontsize=plot_options['subtitle_fontsize'])
         plt.grid()
 
         # If any label has been provided
-        if any([obj.curve_option.get("label",None) for obj in data_list]):
+        if any([obj.line_options.get("label",None) for obj in data_list]):
             plt.legend(loc='upper left', bbox_to_anchor=(0.6, 0.4), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
             fig.tight_layout(pad=2.5)
 
@@ -98,63 +99,51 @@ class Render:
 
     @staticmethod
     def gen_default_plot_options(plot_type):
-    """ This function generates JSON file to customize the plot.
-        path: JSON file name along with the path
-        plot_type: either DET or ROC"""
-    
-    plot_opts = OrderedDict([
-        ('title', "Performance"),
-        ('subtitle', ''),
-        ('figsize', (7, 6.5))
-        ('title_fontsize', 13), 
-        ('subtitle_fontsize', 11), 
-        ('xlim', [0,1]),
-        ('ylim', [0,1]),
-        ('xticks_label_size', 'medium'),
-        ('yticks_label_size', 'medium'),
-        ('xlabel', "False Alarm Rate [%]"),
-        ('xlabel_fontsize', 11),
-        ('ylabel_fontsize', 11)])
+        """ This function generates JSON file to customize the plot.
+            path: JSON file name along with the path
+            plot_type: either DET or ROC"""
+        
+        plot_opts = OrderedDict([
+            ('title', "Performance"),
+            ('subtitle', ''),
+            ('figsize', (7, 6.5)),
+            ('title_fontsize', 13), 
+            ('subtitle_fontsize', 11), 
+            ('xlim', [0,1]),
+            ('ylim', [0,1]),
+            ('xticks_label_size', 'medium'),
+            ('yticks_label_size', 'medium'),
+            ('xlabel', "False Alarm Rate [%]"),
+            ('xlabel_fontsize', 11),
+            ('ylabel_fontsize', 11)])
 
-    if plot_type.lower() == "det":
-        plot_opts["xscale"] = "log"
-        plot_opts["ylabel"] = "Miss Detection Rate [%]"
-        # plot_opts["xticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
-        plot_opts["xticks"] = [0.01, 0.1, 1, 10]
-        plot_opts["yticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
-        # plot_opts["xticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
-        plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
-        plot_opts["yticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+        if plot_type.lower() == "det":
+            plot_opts["xscale"] = "log"
+            plot_opts["ylabel"] = "Miss Detection Rate [%]"
+            # plot_opts["xticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+            plot_opts["xticks"] = [0.01, 0.1, 1, 10]
+            plot_opts["yticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+            plot_opts["xlim"] = (plot_opts["xticks"][0], plot_opts["xticks"][-1])
+            plot_opts["ylim"] = (plot_opts["yticks"][0], plot_opts["yticks"][-1])
+            # plot_opts["xticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+            plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
+            plot_opts["yticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
 
-    elif plot_type.lower() == "roc":
-        plot_opts["xscale"] = "linear"
-        plot_opts["ylabel"] = "Correct Detection Rate [%]"
-        plot_opts["xticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        plot_opts["yticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        plot_opts["yticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
-        plot_opts["xticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+        elif plot_type.lower() == "roc":
+            plot_opts["xscale"] = "linear"
+            plot_opts["ylabel"] = "Correct Detection Rate [%]"
+            plot_opts["xticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+            plot_opts["yticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+            plot_opts["yticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+            plot_opts["xticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
 
-    return plot_opts
+        return plot_opts
 
     
 
 class Annotation:
-    def __init__(self, text, xy, xytext, 
-                 xycoords="data", 
-                 textcoords=None,
-                 arrowprops=None,
-                 text_args=None,
-                 bbox=None):
+    def __init__(self, text, parameters)
         self.text = text
-        self.xy = xy
-        self.xytext = xytext
-        self.xycoords = xycoords
-        self.textcoords = textcoords
-        self.arrowprops = arrowprops
-        self.text_args = text_args
-        self.bbox = bbox
-
-    def to_dict(self):
-        return {"text":self.text, "xy":self.xy, "xytext":self.xytext}
+        self.paremeters = parameters
 
 
