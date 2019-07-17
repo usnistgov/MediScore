@@ -57,9 +57,9 @@ class DataContainer:
                 sys.exit(1)
 
         # Checking size consistency
-        if not (self.fa.size == self.fn.size == self.threshold.size):
-            print("Error: 'fa_array', 'fn_array' and 'threshold' must have the same size ({},{},{})"\
-                .format(self.fa.size, self.fn.size, self.threshold.size))
+        if not (self.fa.size == self.fn.size):
+            print("Error: 'fa_array' and 'fn_array' must have the same size ({},{})"\
+                .format(self.fa.size, self.fn.size))
             sys.exit(1)
 
     def set_default_line_options(self):
@@ -107,7 +107,7 @@ class DataContainer:
     def aggregate(dc_list, output_label="Average", method="average", average_resolution=500, line_options=None):
         if dc_list:
             # Filtering data with missing value
-            is_valid = lambda dc: dc.fa.size != 0 and dc.fn.size != 0 and np.all(~np.isnan(dc.fa)) and np.all(~np.isnan(dc.fb))
+            is_valid = lambda dc: dc.fa.size != 0 and dc.fn.size != 0 and np.all(~np.isnan(dc.fa)) and np.all(~np.isnan(dc.fn))
             dc_list_filtered = [dc for dc in dc_list if is_valid(dc)]
             
             if dc_list_filtered:
