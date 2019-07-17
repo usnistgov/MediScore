@@ -98,6 +98,9 @@ class Render:
             opt_dict = json.load(f)
             self.plot_options = opt_dict
 
+    def close_fig(self, figure)
+        plt.close(figure)
+
     @staticmethod
     def gen_default_plot_options(plot_type):
         """ This function generates JSON file to customize the plot.
