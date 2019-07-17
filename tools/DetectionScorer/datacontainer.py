@@ -94,16 +94,22 @@ class DataContainer:
 
     @staticmethod
     def aggregate(dc_list, output_label="Average", method="average", average_resolution=500, line_options=None):
-        # Filtering data with missing value
-        is_valid = lambda dc: dc.fa.size != 0 and dc.fn.size != 0 and np.all(~np.isnan(dc.fa)) and np.all(~np.isnan(dc.fb))
-        dc_list_filtered = [dc for dc in dc_list if is_valid(dc)]
-        
-        if dc_list_filtered:
-            if line_options is None:
-                default_line_options = DataContainer.get_default_line_options()
-                default_line_options["color"] = "green"
+        if dc_list:
+            # Filtering data with missing value
+            is_valid = lambda dc: dc.fa.size != 0 and dc.fn.size != 0 and np.all(~np.isnan(dc.fa)) and np.all(~np.isnan(dc.fb))
+            dc_list_filtered = [dc for dc in dc_list if is_valid(dc)]
+            
+            if dc_list_filtered:
+                if line_options is None:
+                    default_line_options = DataContainer.get_default_line_options()
+                    default_line_options["color"] = "green"
 
-            if method == "average":
-                x = np.linspace(0, 1, average_resolution)
-                ys = [np.interp(x, data.fa, data.fn) for data in dc_list_filtered]
-                return DataContainer(x, np.vstack(ys).mean(0), label="output_label", line_options=line_options)
+                if method == "average":
+                    x = np.linspace(0, 1, average_resolution)
+                    ys = [np.interp(x, data.fa, data.fn) for data in dc_list_filtered]
+                    return DataContainer(x, np.vstack(ys).mean(0), np.array([]), label=output_label, line_options=line_options)
+            else:
+                print("Warning: No data container remained after filtering, returning an empty object")
+                return DataContainer(np.array([]), np.array([]), np.array([]), label=output_label, line_options=None)
+        else:
+            print("Error: Empty list provided")
