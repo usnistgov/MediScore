@@ -21,8 +21,8 @@ sys.path.append(lib_path)
 
 from render import Render, Annotation
 from detMetrics import detMetrics
-from data_container import DataContainer
-from medifor_data_container import MediForDataContainer
+from datacontainer import DataContainer
+from medifor_datacontainer import MediForDataContainer
 
 def create_parser():
     """Command line interface creation with arguments definitions.
@@ -59,14 +59,14 @@ def create_parser():
     parser.add_argument("--plotTitle",default="Performance",
                         help="Define the plot title (default: '%(default)s')", metavar='')
 
-    parser.add_argument("--plotSubtitle",default='',
-                        help="Define the plot subtitle (default: '%(default)s')", metavar='')
-
     parser.add_argument("--display", action="store_true",
                         help="Display plots")
 
     parser.add_argument("--multiFigs", action="store_true",
                         help="Generate plots (with only one curve) per a partition")
+
+    parser.add_argument('--showCI', action="store_true",
+                        help="Add the confidence interval values in the legend label")
 
     parser.add_argument('--noNum', action="store_true",
                         help="Do not print the number of target trials and non-target trials on the legend of the plot")
@@ -250,9 +250,8 @@ def evaluate_input(args):
                 mdc_file_path, label = mdc_file_path.rsplit(':', 1)
 
             mdc_obj = call_loader(mdc_file_path, logger)
-
             mdc_obj.path = mdc_file_path
-            mdc_obj.label = label
+            mdc_obj.label = label if mdc_obj.label is None else mdc_obj.label 
             mdc_obj.show_label = True
             MDC_list.append(mdc_obj)
 
@@ -262,8 +261,8 @@ def evaluate_input(args):
         input_type = 2
         mdc_obj = call_loader(args.input, logger)
         mdc_obj.path = args.input
-        mdc_obj.label = args.input
-        mdc_obj.show_label = None
+        mdc_obj.label = args.input if mdc_obj.label is None else mdc_obj.label
+        mdc_obj.show_label = True
         MDC_list = [mdc_obj]
 
     # Case 3: String containing a list of input with their metadata
@@ -276,7 +275,7 @@ def evaluate_input(args):
                 mdc_file_path = mdc_data['path']
                 mdc_obj = call_loader(mdc_file_path, logger)
                 mdc_obj.path = mdc_file_path
-                mdc_obj.label = mdc_data['label']
+                mdc_obj.label = mdc_data['label'] if mdc_data['label'] is not None else mdc_obj.label
                 mdc_obj.show_label = mdc_data['show_label']
                 mdc_obj.line_options = mdc_opts
                 MDC_list.append(mdc_obj)
@@ -301,7 +300,7 @@ def evaluate_input(args):
     # General plot options
     if not args.plotOptionJsonFile:
         logger.info("Generating the default plot options...")
-        plot_opts = render.gen_default_plot_options(plot_title = args.plotTitle, plot_subtitle = args.plotSubtitle, plot_type = args.plotType)
+        plot_opts = Render.gen_default_plot_options(args.plotType, plot_title = args.plotTitle)
         
     else:
         logger.info("Loading of the plot options from the json config file...")
@@ -401,8 +400,6 @@ if __name__ == '__main__':
 
     logger.info("Starting DMRender...")
 
-    isCI = False
-
     # Backend option
     if not args.display: # If no plot displayed, we set the matplotlib backend
         import matplotlib
@@ -414,54 +411,65 @@ if __name__ == '__main__':
     
     isOptOut = False
 
-    # Updating the mdc label with metadata
+    # Updating the mdc line option label with metadata
     for mdc in MDC_List:
-        mdc_label = mdc.label if mdc.label is not None else mdc.path
+        if mdc.show_label:
+            mdc_label = mdc.label if mdc.label is not None else mdc.path
 
-        metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
-        if plot_opts['plot_type'] == 'ROC':
-            metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
-        elif plot_opts['plot_type'] == 'DET':
-            metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
+            metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
+            if args.plotType == 'ROC':
+                metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
+            elif args.plotType == 'DET':
+                metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
 
-        tr_label, isOptOut = '', False
-        if mdc.sys_res == 'tr':
-            tr_label, isOptOut = "tr", True
-            metric_list.append("TRR: {}".format(mdc.trr))
-        metric_list[0].format(tr=tr_label)
-        
-        if not args.noNum:
-            metric_list.extend(["T#: {}".format(mdc.t_num)], ["NT#: {}".format(mdc.nt_num)])
+            tr_label, isOptOut = '', False
+            if mdc.sys_res == 'tr':
+                tr_label, isOptOut = "tr", True
+                metric_list.append("TRR: {}".format(mdc.trr))
+            metric_list[0].format(tr=tr_label)
+            
+            if not args.noNum:
+                metric_list.extend(["T#: {}".format(mdc.t_num)], ["NT#: {}".format(mdc.nt_num)])
 
-        mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
+            mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
 
+        else:
+            mdc.line_options["label"] = None
+
+    # Annotation Creation
     if len(MDC_list) == 1:
-        annotation_list = []
         mdc = MDC_list[0]
+        annotation_list = []
+        
         # DET Annotation
-        if args.plotType == "DET"
+        if args.plotType == "DET":
             det_annotation_parameters = {"xy":(norm.ppf(mdc.eer), norm.ppf(mdc.eer)), "xycoords":'data',
                                          "xytext":(norm.ppf(mdc.eer + 0.05) + 0.5, norm.ppf(mdc.eer + 0.05) + 0.5), "textcoords":'data',
                                          "arrowprops":{"arrowstyle":"-|>", "connectionstyle":"arc3, rad=+0.2", "fc":"w"},
                                          "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
+
+            # det_str = "{}ERR = {:.2f}%".format("tr" if isOptOut else "", mdc.err * 100)
+            # target_number_str = "T#: {}, NT#: {}".format(mdc.t_num, mdc.nt_num) if not args.noNum else ""
+            # trr_string = "TRR: {:.2f}".format(mdc.trr) if isOptOut else ""
+
             if args.noNum:
                 if isOptOut:
-                    annotation_text = "trEER = {:.2f} (TRR: {:.2f})".format(mdc.eer * 100, mdc.trr)
+                    annotation_text = "trEER = {:.2f}% (TRR: {:.2f})".format(mdc.eer * 100, mdc.trr)
                 else:
                     annotation_text = "EER = {.2f}%".format(mdc.eer * 100)
             else:
                 if isOptOut:
-                    annotation_text = "trEER = {:.2f} \n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.eer * 100, mdc.trr, mdc.t_num, mdc.nt_num)
+                    annotation_text = "trEER = {:.2f}%\n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.eer * 100, mdc.trr, mdc.t_num, mdc.nt_num)
                 else:
-                    annotation_text = "EER = {:.2f} \n(T#: {}, NT#: {})".format(mdc.eer * 100, mdc.t_num, mdc.nt_num)
+                    annotation_text = "EER = {:.2f}%\n(T#: {}, NT#: {})".format(mdc.eer * 100, mdc.t_num, mdc.nt_num)
             
             annotation_list.append(Annotation(annotation_text, det_annotation_parameters))
 
         # ROC Annotation
-        elif args.plotType == "ROC"
+        elif args.plotType == "ROC":
             roc_annotation_parameters = {"xy":(0.7, 0.2), "xycoords":'data', "xytext":(0.7, 0.2), "textcoords":'data',
                                          "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
-            if isCI:
+            if args.showCI:
                 if args.noNum:
                     if isOptOut:
                         annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, CI_L: {:.2f}, CI_U: {:.2f})".format(mdc.auc, mdc.trr, mdc.auc_ci_lower,mdc.auc_ci_upper)
@@ -487,27 +495,29 @@ if __name__ == '__main__':
             annotation_list.append(Annotation(annotation_text, roc_annotation_parameters))
 
             if mdc.d is not None:
+
                 x = mdc.dpoint[0]
                 y = mdc.dpoint[1]
+
                 if (y <= .5):
                     x += .1
                 elif (.5 < y and y < .9):
                     x -= .1
                 elif (y >= .9):
                     y -= .1
+
                 d_annotation_paramaters = {"xy":(mdc.dpoint[0], mdc.dpoint[1]), "xycoords":'data',
                                            "xytext":(x, y), "textcoords":'data',
                                            "arrowprops":{"arrowstyle":"->", "connectionstyle":"arc3,rad=0"},
                                            "size":8, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
 
                 annotation_list.append(Annotation("d' = {:.2f}".format(mdc.d), d_annotation_paramaters))
-        
+
     #*-* Plotting *-*
     logger.debug("Plotting...")
     # Creation of the Renderer
     myRender = Render(plot_type=args.plotType, plot_options=plot_opts)
     # Plotting
-    annotations=[], plot_type=None, plot_options=None, display=True, multi_fig=False
     myfigure = myRender.plot(MDC_list, annotations=annotation_list, display=args.display, multi_fig=args.multiFigs)
 
     # Output process
@@ -515,9 +525,5 @@ if __name__ == '__main__':
     
     # If we need to dump the used plotting options
     if args.dumpPlotParams:
-        dumpPlotOptions(args.outputFolder, opts_list, plot_opts)
-
-
-
-
+        dumpPlotOptions(args.outputFolder, mdc_list, plot_opts)
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 
 import sys
@@ -98,17 +97,17 @@ class Render:
             opt_dict = json.load(f)
             self.plot_options = opt_dict
 
-    def close_fig(self, figure)
+    def close_fig(self, figure):
         plt.close(figure)
 
     @staticmethod
-    def gen_default_plot_options(plot_type):
+    def gen_default_plot_options(plot_type,  plot_title=None):
         """ This function generates JSON file to customize the plot.
             path: JSON file name along with the path
             plot_type: either DET or ROC"""
         
         plot_opts = OrderedDict([
-            ('title', "Performance"),
+            ('title', "Performance" if plot_title is None else plot_title),
             ('subtitle', ''),
             ('figsize', (7, 6.5)),
             ('title_fontsize', 13), 
@@ -146,7 +145,7 @@ class Render:
     
 
 class Annotation:
-    def __init__(self, text, parameters)
+    def __init__(self, text, parameters):
         self.text = text
-        self.paremeters = parameters
+        self.parameters = parameters
 
