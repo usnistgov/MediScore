@@ -51,6 +51,12 @@ class DataContainer:
                 print("Error: '{}' must be numeric ({})".format(arg_name, array.dtype))
                 sys.exit(1)
 
+        # Checking size consistency
+        if not (self.fa.size == self.fn.size == self.threshold.size):
+            print("Error: 'fa_array', 'fn_array' and 'threshold' must have the same size ({},{},{})"\
+                .format(self.fa.size, self.fn.size, self.threshold.size))
+            sys.exit(1)
+
     def set_default_line_options(self):
         self.line_options = DataContainer.get_default_line_options()
 
