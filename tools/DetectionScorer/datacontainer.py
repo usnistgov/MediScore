@@ -57,9 +57,9 @@ class DataContainer:
                 sys.exit(1)
 
         # Checking size consistency
-        if not (self.fa.size == self.fn.size):
-            print("Error: 'fa_array' and 'fn_array' must have the same size ({},{})"\
-                .format(self.fa.size, self.fn.size))
+        if not (self.fa.size == self.fn.size == self.threshold.size):
+            print("Error: 'fa_array', 'fn_array' and 'threshold' must have the same size ({},{},{})"\
+                .format(self.fa.size, self.fn.size, self.threshold.size))
             sys.exit(1)
 
     def set_default_line_options(self):
@@ -118,7 +118,8 @@ class DataContainer:
                 if method == "average":
                     x = np.linspace(0, 1, average_resolution)
                     ys = [np.interp(x, data.fa, data.fn) for data in dc_list_filtered]
-                    return DataContainer(x, np.vstack(ys).mean(0), np.array([]), label=output_label, line_options=line_options)
+                    ts = [np.interp(x, data.fa, data.threshold) for data in dc_list_filtered]
+                    return DataContainer(x, np.vstack(ys).mean(0), np.vstack(ts).mean(0), label=output_label, line_options=line_options)
             else:
                 print("Warning: No data container remained after filtering, returning an empty object")
                 return DataContainer(np.array([]), np.array([]), np.array([]), label=output_label, line_options=None)
