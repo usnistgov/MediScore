@@ -32,8 +32,13 @@ class DataContainer:
         # Checking array type, dimensions and value types
         for array, (arg_name, attr_name) in zip([self.fa, self.fn, self.threshold], 
                                                 [["fa_array", "fa"], ["fn_array", "fn"], ["threshold", "threshold"]]):
+
+            if isinstance(array, list):
+                setattr(self, attr_name, np.array(array))
+                array = getattr(self, attr_name)
+
             if not isinstance(array, np.ndarray):
-                print("Error: '{}'' must be of type 'numpy.ndarray'".format(arg_name))
+                print("Error: '{}' must be of type 'numpy.ndarray'".format(arg_name))
                 sys.exit(1)
 
             if array.ndim != 1:
@@ -67,6 +72,12 @@ class DataContainer:
         file = open(file_name, 'wb')
         pickle.dump(self, file)
         file.close()
+
+    # def __repr__(self):
+    #     old_printoptions = np.get_printoptions()
+    #     np.set_printoptions(threshold=15, edgeitems=5)
+    #     np.set_printoptions(**old_printoptions)
+
 
     @staticmethod
     def load(path):
