@@ -20,9 +20,21 @@ lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 
 from render import Render, Annotation
+import detMetrics as dm
 from detMetrics import detMetrics
 from datacontainer import DataContainer
 from medifor_datacontainer import MediForDataContainer
+
+debug = True
+
+def convert_old_dm_to_new(dm):
+    "DEBUG Mode log: Converting old DetMetric file to the new format."
+    dc = MediForDataContainer(dm.fpr, dm.fnr, dm.thres, label=None, line_options=None, fa_label="PFA", fn_label="Pmiss")
+    used_attributes_names = set(["fpr", "fnr", "thres"])
+    attributes_list = set(dm.__dict__.keys()) - used_attributes_names
+    for attribute_name in attributes_list:
+        setattr(dc, attribute_name, getattr(dm, attribute_name))
+    return dc
 
 def create_parser():
     """Command line interface creation with arguments definitions.
@@ -218,7 +230,10 @@ def evaluate_input(args):
     def call_loader(path, logger):
         try:
             if os.path.isfile(path): # Use this instead of catching  FileNotFoundError for Python2 support
-                return DataContainer.load(path)
+                if debug:
+                    return convert_old_dm_to_new(dm.load_dm_file(path))
+                else:
+                    return DataContainer.load(path)
             else:
                 logger.error("FileNotFoundError: No such file or directory: '{}'".format(path))
                 DMRenderExit(logger)
@@ -256,7 +271,7 @@ def evaluate_input(args):
             MDC_list.append(mdc_obj)
 
     # Case 2: One mdc pickled file
-    elif args.input.endswith('.mdc'):
+    elif args.input.endswith('.dm'):
         logger.debug("Input of type 2 detected")
         input_type = 2
         mdc_obj = call_loader(args.input, logger)
@@ -292,7 +307,7 @@ def evaluate_input(args):
             DMRenderExit(logger)
 
     else:
-        logger.error("The input type does not match any of the following inputs:\n- .txt file containing one file path per line\n- .mdc file\n- a list of pair [{'path':'path/to/mdc_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n")
+        logger.error("The input type does not match any of the following inputs:\n- .txt file containing one file path per line\n- .dm file\n- a list of pair [{'path':'path/to/mdc_file','label':str,'show_label':bool}, **{any matplotlib.lines.Line2D properties}].\n")
         DMRenderExit(logger)
 
     #*-* Options Processing *-*
@@ -406,13 +421,13 @@ if __name__ == '__main__':
         matplotlib.use('Agg')
 
     logger.debug("Evaluating parameters...")
-    MDC_list, opts_list, plot_opts = evaluate_input(args)
+    MDC_list, plot_opts = evaluate_input(args)
     logger.debug("Processing {} files".format(len(MDC_list)))
     
     isOptOut = False
 
     # Updating the mdc line option label with metadata
-    for mdc in MDC_List:
+    for mdc in MDC_list:
         if mdc.show_label:
             mdc_label = mdc.label if mdc.label is not None else mdc.path
 
@@ -426,10 +441,10 @@ if __name__ == '__main__':
             if mdc.sys_res == 'tr':
                 tr_label, isOptOut = "tr", True
                 metric_list.append("TRR: {}".format(mdc.trr))
-            metric_list[0].format(tr=tr_label)
+            metric_list[0] = metric_list[0].format(tr=tr_label)
             
             if not args.noNum:
-                metric_list.extend(["T#: {}".format(mdc.t_num)], ["NT#: {}".format(mdc.nt_num)])
+                metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
 
             mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
 

@@ -68,7 +68,7 @@ class Render:
 
         if len(data_list) == 1:
             for annotation in annotations:
-                plt.annotate(annotation.text, **annotation.paramaters)
+                plt.annotate(annotation.text, **annotation.parameters)
 
         plt.xlim(plot_options["xlim"])
         plt.ylim(plot_options["ylim"])
