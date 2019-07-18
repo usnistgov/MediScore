@@ -348,34 +348,30 @@ def evaluate_input(args):
     return MDC_list, plot_opts
 
 
-def format_metric_labels(MDC_list, args):
+def add_metric_to_label(mdc, args):
     """
-    Note: Required attributes : ["show_label", label", "line_options", "auc" or "eer", "sys_res"]
+    Note: Required attributes : ["label", "line_options", "auc" or "eer", "sys_res"]
           Conditional/Optional attributes : ["trr", "t_num", "nt_num"]
     """
-    for mdc in MDC_list:
-        if mdc.show_label:
-            mdc_label = mdc.label if mdc.label is not None else mdc.path
+    mdc_label = mdc.label if mdc.label is not None else mdc.path
 
-            metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
-            if args.plotType == 'ROC':
-                metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
-            elif args.plotType == 'DET':
-                metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
+    metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
+    if args.plotType == 'ROC':
+        metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
+    elif args.plotType == 'DET':
+        metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
 
-            tr_label = ''
-            if mdc.sys_res == 'tr':
-                tr_label = "tr"
-                metric_list.append("TRR: {}".format(mdc.trr))
-            metric_list[0] = metric_list[0].format(tr=tr_label)
+    tr_label = ''
+    if mdc.sys_res == 'tr':
+        tr_label = "tr"
+        metric_list.append("TRR: {}".format(mdc.trr))
+    metric_list[0] = metric_list[0].format(tr=tr_label)
+    
+    if not args.noNum:
+        metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
+
+    return "{} ({})".format(mdc_label, ', '.join(metric_list))
             
-            if not args.noNum:
-                metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
-
-            mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
-
-        else:
-            mdc.line_options["label"] = None
 
 def create_annotations(mdc, args):
     """
@@ -513,7 +509,7 @@ def dumpPlotOptions(outputFolder, mdc_list, plot_opts):
     """
     logger = logging.getLogger("DMlog")
     logger.info("Dumping plot and line options used as json file to the following destination : {}".format(outputFolder))
-    
+
     output_json_path = os.path.normpath(os.path.join(outputFolder, "plotJsonFiles"))
     if not os.path.exists(output_json_path):
         os.makedirs(output_json_path)
@@ -545,7 +541,12 @@ if __name__ == '__main__':
     logger.debug("Processing {} files".format(len(MDC_list)))
     
     # Updating the mdc line option label with metadata
-    format_metric_labels(MDC_list)
+    for mdc in MDC_list:
+        if mdc.show_label:
+            mdc.line_options["label"] = add_metric_to_label(mdc)
+        else:
+            mdc.line_options["label"] = None
+    
 
     # Annotation Creation
     annotation_list = []
