@@ -347,6 +347,124 @@ def evaluate_input(args):
 
     return MDC_list, plot_opts
 
+
+def format_metric_labels(MDC_list, args):
+    """
+    Note: Required attributes : ["show_label", label", "line_options", "auc" or "eer", "sys_res"]
+          Conditional/Optional attributes : ["trr", "t_num", "nt_num"]
+    """
+    for mdc in MDC_list:
+        if mdc.show_label:
+            mdc_label = mdc.label if mdc.label is not None else mdc.path
+
+            metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
+            if args.plotType == 'ROC':
+                metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
+            elif args.plotType == 'DET':
+                metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
+
+            tr_label = ''
+            if mdc.sys_res == 'tr':
+                tr_label = "tr"
+                metric_list.append("TRR: {}".format(mdc.trr))
+            metric_list[0] = metric_list[0].format(tr=tr_label)
+            
+            if not args.noNum:
+                metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
+
+            mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
+
+        else:
+            mdc.line_options["label"] = None
+
+def create_annotations(mdc, args):
+    """
+    Note: Required attributes : ["auc" or "eer", "sys_res"]
+          Conditional/Optional attributes : ["trr", "t_num", "nt_num", "auc_ci_lower", "auc_ci_upper", "d", "dpoint"]
+    """
+    logger = logging.getLogger("DMlog")
+    annotation_list = []
+    isOptOut = True if mdc.sys_res == "tr" else False
+    # DET Annotation
+    if args.plotType == "DET":
+        det_annotation_parameters = {"xy":(norm.ppf(mdc.eer), norm.ppf(mdc.eer)), "xycoords":'data',
+                                     "xytext":(norm.ppf(mdc.eer + 0.05) + 0.5, norm.ppf(mdc.eer + 0.05) + 0.5), "textcoords":'data',
+                                     "arrowprops":{"arrowstyle":"-|>", "connectionstyle":"arc3, rad=+0.2", "fc":"w"},
+                                     "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
+
+        # det_str = "{}ERR = {:.2f}%".format("tr" if isOptOut else "", mdc.err * 100)
+        # target_number_str = "T#: {}, NT#: {}".format(mdc.t_num, mdc.nt_num) if not args.noNum else ""
+        # trr_string = "TRR: {:.2f}".format(mdc.trr) if isOptOut else ""
+
+        if args.noNum:
+            if isOptOut:
+                annotation_text = "trEER = {:.2f}% (TRR: {:.2f})".format(mdc.eer * 100, mdc.trr)
+            else:
+                annotation_text = "EER = {.2f}%".format(mdc.eer * 100)
+        else:
+            if isOptOut:
+                annotation_text = "trEER = {:.2f}%\n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.eer * 100, mdc.trr, mdc.t_num, mdc.nt_num)
+            else:
+                annotation_text = "EER = {:.2f}%\n(T#: {}, NT#: {})".format(mdc.eer * 100, mdc.t_num, mdc.nt_num)
+
+        det_annotation = Annotation(annotation_text, det_annotation_parameters)
+        annotation_list.append(det_annotation)
+        logger.debug("DET annotation created => {}".format(det_annotation)) 
+
+    # ROC Annotation
+    elif args.plotType == "ROC":
+        roc_annotation_parameters = {"xy":(0.7, 0.2), "xycoords":'data', "xytext":(0.7, 0.2), "textcoords":'data',
+                                     "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
+        if args.showCI:
+            if args.noNum:
+                if isOptOut:
+                    annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, CI_L: {:.2f}, CI_U: {:.2f})".format(mdc.auc, mdc.trr, mdc.auc_ci_lower,mdc.auc_ci_upper)
+                else:
+                    annotation_text = "AUC={:.2f} (CI_L: {:.2f}, CI_U: {:.2f})".format(mdc.auc, mdc.auc_ci_lower, mdc.auc_ci_upper)
+            else:
+                if isOptOut:
+                    annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, CI_L: {:.2f}, CI_U: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.trr, mdc.auc_ci_lower, mdc.auc_ci_upper, mdc.t_num, mdc.nt_num)
+                else:
+                    annotation_text = "AUC={:.2f}\n(CI_L: {:.2f}, CI_U: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.auc_ci_lower,mdc.auc_ci_upper, mdc.t_num, mdc.nt_num)
+        else:
+            if args.noNum:
+                if isOptOut:
+                    annotation_text = "trAUC={:.2f}\n(TRR: {:.2f})".format(mdc.auc, mdc.trr)
+                else:
+                    annotation_text = "AUC={:.2f}".format(mdc.auc)
+            else:
+                if isOptOut:
+                    annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.trr, mdc.t_num, mdc.nt_num)
+                else:
+                    annotation_text = "AUC={:.2f}\n(T#: {}, NT#: {})".format(mdc.auc, mdc.t_num, mdc.nt_num)
+
+        roc_annotation = Annotation(annotation_text, roc_annotation_parameters)
+        annotation_list.append(roc_annotation)
+        logger.debug("ROC annotation created => {}".format(roc_annotation)) 
+
+        if mdc.d is not None:
+            logger.debug("d point detected, adding corresponding annotation")
+            x = mdc.dpoint[0]
+            y = mdc.dpoint[1]
+
+            if (y <= .5):
+                x += .1
+            elif (.5 < y and y < .9):
+                x -= .1
+            elif (y >= .9):
+                y -= .1
+
+            d_annotation_paramaters = {"xy":(mdc.dpoint[0], mdc.dpoint[1]), "xycoords":'data',
+                                       "xytext":(x, y), "textcoords":'data',
+                                       "arrowprops":{"arrowstyle":"->", "connectionstyle":"arc3,rad=0"},
+                                       "size":8, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
+
+            annotation = Annotation("d' = {:.2f}".format(mdc.d), d_annotation_paramaters)
+            annotation_list.append(annotation)
+
+    return annotation_list
+
+
 def outputFigure(figure, outputFolder, outputFileNameSuffix, plotType):
     """Generate the plot file(s) as pdf at the provided destination
     The filename created as the following format:
@@ -393,7 +511,9 @@ def dumpPlotOptions(outputFolder, mdc_list, plot_opts):
         plot_opts (dict): dictionnary of plot options  
 
     """
-
+    logger = logging.getLogger("DMlog")
+    logger.info("Dumping plot and line options used as json file to the following destination : {}".format(outputFolder))
+    
     output_json_path = os.path.normpath(os.path.join(outputFolder, "plotJsonFiles"))
     if not os.path.exists(output_json_path):
         os.makedirs(output_json_path)
@@ -424,110 +544,15 @@ if __name__ == '__main__':
     MDC_list, plot_opts = evaluate_input(args)
     logger.debug("Processing {} files".format(len(MDC_list)))
     
-    isOptOut = False
-
     # Updating the mdc line option label with metadata
-    for mdc in MDC_list:
-        if mdc.show_label:
-            mdc_label = mdc.label if mdc.label is not None else mdc.path
-
-            metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
-            if args.plotType == 'ROC':
-                metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
-            elif args.plotType == 'DET':
-                metric_list.append(metric_tmplt.format(tr='{tr}', metric="EER", val=round(mdc.eer,2)))
-
-            tr_label, isOptOut = '', False
-            if mdc.sys_res == 'tr':
-                tr_label, isOptOut = "tr", True
-                metric_list.append("TRR: {}".format(mdc.trr))
-            metric_list[0] = metric_list[0].format(tr=tr_label)
-            
-            if not args.noNum:
-                metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
-
-            mdc.line_options["label"] = "{} ({})".format(mdc_label, ', '.join(metric_list))
-
-        else:
-            mdc.line_options["label"] = None
+    format_metric_labels(MDC_list)
 
     # Annotation Creation
+    annotation_list = []
     if len(MDC_list) == 1:
-        mdc = MDC_list[0]
-        annotation_list = []
+        logger.debug("Adding annotation for the only object provided")
+        annotation_list.extend(create_annotations(MDC_list[0], args))
         
-        # DET Annotation
-        if args.plotType == "DET":
-            det_annotation_parameters = {"xy":(norm.ppf(mdc.eer), norm.ppf(mdc.eer)), "xycoords":'data',
-                                         "xytext":(norm.ppf(mdc.eer + 0.05) + 0.5, norm.ppf(mdc.eer + 0.05) + 0.5), "textcoords":'data',
-                                         "arrowprops":{"arrowstyle":"-|>", "connectionstyle":"arc3, rad=+0.2", "fc":"w"},
-                                         "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
-
-            # det_str = "{}ERR = {:.2f}%".format("tr" if isOptOut else "", mdc.err * 100)
-            # target_number_str = "T#: {}, NT#: {}".format(mdc.t_num, mdc.nt_num) if not args.noNum else ""
-            # trr_string = "TRR: {:.2f}".format(mdc.trr) if isOptOut else ""
-
-            if args.noNum:
-                if isOptOut:
-                    annotation_text = "trEER = {:.2f}% (TRR: {:.2f})".format(mdc.eer * 100, mdc.trr)
-                else:
-                    annotation_text = "EER = {.2f}%".format(mdc.eer * 100)
-            else:
-                if isOptOut:
-                    annotation_text = "trEER = {:.2f}%\n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.eer * 100, mdc.trr, mdc.t_num, mdc.nt_num)
-                else:
-                    annotation_text = "EER = {:.2f}%\n(T#: {}, NT#: {})".format(mdc.eer * 100, mdc.t_num, mdc.nt_num)
-            
-            annotation_list.append(Annotation(annotation_text, det_annotation_parameters))
-
-        # ROC Annotation
-        elif args.plotType == "ROC":
-            roc_annotation_parameters = {"xy":(0.7, 0.2), "xycoords":'data', "xytext":(0.7, 0.2), "textcoords":'data',
-                                         "size":10, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
-            if args.showCI:
-                if args.noNum:
-                    if isOptOut:
-                        annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, CI_L: {:.2f}, CI_U: {:.2f})".format(mdc.auc, mdc.trr, mdc.auc_ci_lower,mdc.auc_ci_upper)
-                    else:
-                        annotation_text = "AUC={:.2f} (CI_L: {:.2f}, CI_U: {:.2f})".format(mdc.auc, mdc.auc_ci_lower, mdc.auc_ci_upper)
-                else:
-                    if isOptOut:
-                        annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, CI_L: {:.2f}, CI_U: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.trr, mdc.auc_ci_lower,mdc.auc_ci_upper,mdc.t_num, mdc.nt_num)
-                    else:
-                        annotation_text = "AUC={:.2f}\n(CI_L: {:.2f}, CI_U: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.auc_ci_lower,mdc.auc_ci_upper, mdc.t_num, mdc.nt_num)
-            else:
-                if args.noNum:
-                    if isOptOut:
-                        annotation_text = "trAUC={:.2f}\n(TRR: {:.2f})".format(mdc.auc, mdc.trr)
-                    else:
-                        annotation_text = "AUC={:.2f}".format(mdc.auc)
-                else:
-                    if isOptOut:
-                        annotation_text = "trAUC={:.2f}\n(TRR: {:.2f}, T#: {}, NT#: {})".format(mdc.auc, mdc.trr, mdc.t_num, mdc.nt_num)
-                    else:
-                        annotation_text = "AUC={:.2f}\n(T#: {}, NT#: {})".format(mdc.auc, mdc.t_num, mdc.nt_num)
-
-            annotation_list.append(Annotation(annotation_text, roc_annotation_parameters))
-
-            if mdc.d is not None:
-
-                x = mdc.dpoint[0]
-                y = mdc.dpoint[1]
-
-                if (y <= .5):
-                    x += .1
-                elif (.5 < y and y < .9):
-                    x -= .1
-                elif (y >= .9):
-                    y -= .1
-
-                d_annotation_paramaters = {"xy":(mdc.dpoint[0], mdc.dpoint[1]), "xycoords":'data',
-                                           "xytext":(x, y), "textcoords":'data',
-                                           "arrowprops":{"arrowstyle":"->", "connectionstyle":"arc3,rad=0"},
-                                           "size":8, "va":'center', "ha":'center', "bbox":{"boxstyle":"round4", "fc":"w"}}
-
-                annotation_list.append(Annotation("d' = {:.2f}".format(mdc.d), d_annotation_paramaters))
-
     #*-* Plotting *-*
     logger.debug("Plotting...")
     # Creation of the Renderer
