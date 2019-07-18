@@ -99,10 +99,6 @@ class MediForDataContainer(DataContainer):
         else:
             print("Error [set_ci]: Missing attributes.\nPlease set the scores array by calling the method set_scores() before.")
 
-    def __repr__(self):
-        """Print from interpretor"""
-        return "MediForDataContainer: eer({}), auc({}), ci_level({}), auc_ci_lower({}), auc_ci_upper({}), pauc_ci_lower({}), pauc_ci_upper({}),tpr_ci_lower({}), tpr_ci_upper({}),".format(self.eer, self.auc, self.ci_level, self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper)
-
     def render_table(self):
         """ Render CSV table using Pandas Data Frame
         """
@@ -129,23 +125,3 @@ class MediForDataContainer(DataContainer):
 
         return my_table.round(6)
         #my_table.to_csv(file_name, index = False)
-
-    def get_eer(self):
-        if self.eer == -1:
-            self.eer = Metrics.compute_eer(self)
-        return self.eer
-
-    def get_auc(self):
-        if self.auc == -1:
-            self.auc = Metrics.compute_auc(self)
-        return self.auc
-
-    def get_ci(self):
-        self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper = Metrics.compute_ci(self)
-        return self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower , self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper
-
-    def set_eer(self, eer):
-        self.eer = eer
-
-    def set_auc(self, auc):
-        self.aux = auc

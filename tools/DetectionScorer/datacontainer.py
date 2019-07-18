@@ -73,10 +73,18 @@ class DataContainer:
         pickle.dump(self, file)
         file.close()
 
-    # def __repr__(self):
-    #     old_printoptions = np.get_printoptions()
-    #     np.set_printoptions(threshold=15, edgeitems=5)
-    #     np.set_printoptions(**old_printoptions)
+    def __repr__(self, indent=2):
+        """Print from interpretor"""
+        old_print_options = np.get_printoptions()
+        np.set_printoptions(threshold=10, edgeitems=5)
+        object_title = self.__class__.__name__
+        attribute_names = self.__dict__.keys()
+        max_attrname_len = max(map(len, attribute_names))
+        attributes_str_list = ["{0:>{length}}: {{}}".format(name, length=indent + max_attrname_len) for name in attribute_names] 
+        display_string = "{}:\n{}".format(object_title, "\n".join(attributes_str_list))
+        display_string = display_string.format(*[str(getattr(self, attr_name)) for attr_name in attribute_names])
+        np.set_printoptions(**old_print_options)
+        return display_string
 
 
     @staticmethod
