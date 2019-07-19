@@ -76,7 +76,7 @@ class DataContainer:
     def __repr__(self, indent=2):
         """Print from interpretor"""
         old_print_options = np.get_printoptions()
-        np.set_printoptions(threshold=10, edgeitems=5)
+        np.set_printoptions(threshold=10, edgeitems=5,linewidth=125)
         object_title = self.__class__.__name__
         attribute_names = self.__dict__.keys()
         max_attrname_len = max(map(len, attribute_names))
