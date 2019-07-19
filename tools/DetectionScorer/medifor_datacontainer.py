@@ -44,7 +44,7 @@ class MediForDataContainer(DataContainer):
         self.fpr_stop = None
         self.sys_res = None
 
-    def _attributes_set_print(self, attributes, verbose=True):
+    def _print_attributes_set(self, attributes, verbose=True):
         if verbose:
             display_list = ["Attributes set:"]
             for attr in attributes:
@@ -59,17 +59,17 @@ class MediForDataContainer(DataContainer):
         self.target_label = target_label
         self.non_target_label = non_target_label
         self.gt = groundtruth
-        self._attributes_set_print(['gt', ("target_label", repr(self.target_label)), ("non_target_label", repr(self.non_target_label))], verbose=verbose)
+        self._print_attributes_set(['gt', ("target_label", repr(self.target_label)), ("non_target_label", repr(self.non_target_label))], verbose=verbose)
 
     def set_scores(self, scores, verbose=True):
         self.scores = scores
-        self._attributes_set_print(['scores'], verbose=verbose)
+        self._print_attributes_set(['scores'], verbose=verbose)
 
     def set_target_stats(self, verbose=True):
         if (self.gt is not None) and (self.target_label is not None) and (self.non_target_label is not None):
             self.t_num = np.count_nonzero(self.gt == self.target_label)
             self.nt_num = np.count_nonzero(self.gt == self.non_target_label)
-            self._attributes_set_print([('t_num', self.t_num), ('nt_num', self.nt_num)], verbose=verbose)
+            self._print_attributes_set([('t_num', self.t_num), ('nt_num', self.nt_num)], verbose=verbose)
         else:
             print("Error [set_target_stats]: Missing attributes.\nPlease set the ground truth array by calling set_groundtruth() before calling this method.")
     
@@ -79,42 +79,42 @@ class MediForDataContainer(DataContainer):
         else:
             if total_trial != 0:
                 self.trr = round((self.t_num + self.nt_num) / total_trial, 2)
-                self._attributes_set_print([('trr', self.trr)], verbose=verbose)
+                self._print_attributes_set([('trr', self.trr)], verbose=verbose)
             else:
                 print("Error: the total number of trial without optout must be different from 0")
 
     def set_eer(self, verbose=True):
         self.eer = Metrics.compute_eer(self.fa, self.fn)
-        self._attributes_set_print([('eer', self.eer)], verbose=verbose)
+        self._print_attributes_set([('eer', self.eer)], verbose=verbose)
 
     def set_auc(self, verbose=True):
         self.auc = Metrics.compute_auc(self.fa, 1 - self.fn, fpr_stop=1)
-        self._attributes_set_print([('auc', self.auc)], verbose=verbose)
+        self._print_attributes_set([('auc', self.auc)], verbose=verbose)
 
     def set_auc_at_fpr(self, fpr_stop=1, verbose=True):
         self.fpr_stop = fpr_stop
         self.auc_at_fpr = Metrics.compute_auc(self.fa, 1 - self.fn, fpr_stop=fpr_stop)
-        self._attributes_set_print([('auc_at_fpr', self.auc_at_fpr), ('fpr_stop', self.fpr_stop)], verbose=verbose)
+        self._print_attributes_set([('auc_at_fpr', self.auc_at_fpr), ('fpr_stop', self.fpr_stop)], verbose=verbose)
 
     def set_dprime(self, dLevel=0.0, verbose=True):
         self.d, self.dpoint, self.b, self.bpoint = Metrics.compute_dprime(self.fa, 1 - self.fn, d_level=dLevel)
-        self._attributes_set_print([('d', self.d), ('dpoint', self.dpoint), ('b', self.b), ('bpoint', self.bpoint)], verbose=verbose)
+        self._print_attributes_set([('d', self.d), ('dpoint', self.dpoint), ('b', self.b), ('bpoint', self.bpoint)], verbose=verbose)
 
     def set_sys_res(self, sys_res="all", verbose=True):
         self.sys_res = sys_res
-        self._attributes_set_print([('sys_res', self.sys_res)], verbose=verbose)
+        self._print_attributes_set([('sys_res', self.sys_res)], verbose=verbose)
 
     def set_tpr_at_fpr(self, fpr_stop=1, verbose=True):
         inter_point = Metrics.linear_interpolated_point(self.fa, 1 - self.fn, fpr_stop)
         self.tpr_at_fpr = inter_point[0][1]
-        self._attributes_set_print([('tpr_at_fpr', self.tpr_at_fpr)], verbose=verbose)
+        self._print_attributes_set([('tpr_at_fpr', self.tpr_at_fpr)], verbose=verbose)
 
     def set_ci(self, ciLevel=0.9, fpr_stop=1, verbose=True):
         if self.scores is not None:
             self.ci_level = ciLevel
             self.fpr_stop = fpr_stop
             self.auc_ci_lower, self.auc_ci_upper, self.auc_at_fpr_ci_lower, self.auc_at_fpr_ci_upper, self.tpr_at_fpr_ci_lower, self.tpr_at_fpr_ci_upper = Metrics.compute_ci(self.scores, self.gt, self.ci_level, self.fpr_stop, target_label=self.target_label)
-            self._attributes_set_print([('ci_level', self.ci_level), ('fpr_stop', self.fpr_stop), 
+            self._print_attributes_set([('ci_level', self.ci_level), ('fpr_stop', self.fpr_stop), 
                                         ('auc_ci_lower', self.auc_ci_lower), ('auc_ci_upper', self.auc_ci_upper), 
                                         ('auc_at_fpr_ci_lower', self.auc_at_fpr_ci_lower), ('auc_at_fpr_ci_upper', self.auc_at_fpr_ci_upper), 
                                         ('tpr_at_fpr_ci_lower', self.tpr_at_fpr_ci_lower), ('tpr_at_fpr_ci_upper', self.tpr_at_fpr_ci_upper)],
@@ -161,8 +161,6 @@ class MediForDataContainer(DataContainer):
             return table.round(6)
         else:
             print("Error: Unknown orientation '{}', please choose from 'vertical', 'horizontal'".format(orientation))
-
-        
 
     @staticmethod
     def set_from_old_dm(dm):
