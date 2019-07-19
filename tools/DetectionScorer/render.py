@@ -36,21 +36,24 @@ class Render:
             return self.gen_default_plot_options(plot_type)
 
     def plot(self, data_list, annotations=[], plot_type=None, plot_options=None, display=True, multi_fig=False):
-        plot_type = self.get_plot_type(plot_type=plot_type)
-        plot_options = self.get_plot_options(plot_type, plot_options=plot_options)
+        if isinstance(data_list, list):
+            plot_type = self.get_plot_type(plot_type=plot_type)
+            plot_options = self.get_plot_options(plot_type, plot_options=plot_options)
 
-        if not display:
-            matplotlib.use('Agg')
-      
-        if multi_fig is True:
-            fig_list = list()
-            for i, data in enumerate(data_list):
-                fig = self.plotter([data], annotations, plot_type, plot_options, display)
-                fig_list.append(fig)
-            return fig_list
+            if not display:
+                matplotlib.use('Agg')
+          
+            if multi_fig is True:
+                fig_list = list()
+                for i, data in enumerate(data_list):
+                    fig = self.plotter([data], annotations, plot_type, plot_options, display)
+                    fig_list.append(fig)
+                return fig_list
+            else:
+                fig = self.plotter(data_list, annotations, plot_type, plot_options, display)
+                return fig
         else:
-            fig = self.plotter(data_list, annotations, plot_type, plot_options, display)
-            return fig
+            print("Error: the plot input has to be a list instead of a {}".format(type(data_list)))
 
 
     def plotter(self, data_list, annotations, plot_type, plot_options, display, infinity=999999):
