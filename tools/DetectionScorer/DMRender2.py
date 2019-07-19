@@ -159,15 +159,17 @@ def validate_plot_options(plot_options):
 
     Args:
         plot_options (dict): The dictionnary containing the general plot options
-    # TODO: Update the following fields (add the new ones)
     Note: The dictionnary should contain at most the following keys
-            'title', 'subtitle', 'plot_type', 
-            'title_fontsize', 'subtitle_fontsize', 
+            'title', 'suptitle',  
+            'title_fontsize', 'suptitle_fontsize', 
+            'xlim', 'ylim',
+            'xticks', 'yticks',
             'xticks_size', 'yticks_size', 
+            'xticks_label_size', 'yticks_label_size',
             'xlabel', 'xlabel_fontsize', 
-            'ylabel', 'ylabel_fontsize'
-        See the matplotlib documentation for a description of those parameters 
-        (except for the plot_type (choose from 'ROC', 'DET'))
+            'ylabel', 'ylabel_fontsize',
+            'xscale'
+        See the matplotlib documentation for a description of those parameters.
     """
 
     class PlotOptionValidationError(Exception):
@@ -181,10 +183,11 @@ def validate_plot_options(plot_options):
     logger = logging.getLogger("DMlog")
     logger.info("Validating global plot options...")
     try:
-        #1 check plot type
-        plot_type = plot_options["plot_type"]
-        if plot_type not in ["ROC", "DET"]:
-            raise PlotOptionValidationError("invalid plot type '{}' (choose from 'ROC', 'DET')".format(plot_type))
+        # Handle plot options validation here
+        if True:
+            pass
+        else:
+            raise PlotOptionValidationError("Invalid stuff detected".format(plot_type))
 
     except PlotOptionValidationError as e:
         logging.error("PlotOptionValidationError: {}".format(e.msg))
