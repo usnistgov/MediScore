@@ -25,17 +25,6 @@ from detMetrics import detMetrics
 from datacontainer import DataContainer
 from medifor_datacontainer import MediForDataContainer
 
-debug = True
-
-def convert_old_dm_to_new(dm):
-    "DEBUG Mode log: Converting old DetMetric file to the new format."
-    dc = MediForDataContainer(dm.fpr, dm.fnr, dm.thres, label=None, line_options=None, fa_label="PFA", fn_label="Pmiss")
-    used_attributes_names = set(["fpr", "fnr", "thres"])
-    attributes_list = set(dm.__dict__.keys()) - used_attributes_names
-    for attribute_name in attributes_list:
-        setattr(dc, attribute_name, getattr(dm, attribute_name))
-    return dc
-
 def create_parser():
     """Command line interface creation with arguments definitions.
 
@@ -230,10 +219,13 @@ def evaluate_input(args):
     def call_loader(path, logger):
         try:
             if os.path.isfile(path): # Use this instead of catching  FileNotFoundError for Python2 support
-                if debug:
-                    return convert_old_dm_to_new(dm.load_dm_file(path))
+                dc = DataContainer.load(path)
+                if hasattr(dc, "data_container_version") and dc.data_container_version == "2.0":
+                    return dc
                 else:
-                    return DataContainer.load(path)
+                    # print("Warning: Deprecated DetMetric object detected. The object will being converted but it may lead to unexpected behaviors.")
+                    logger.warning("Warning: Deprecated DetMetric object detected. The object will being converted but it may lead to unexpected behaviors.")
+                    return MediForDataContainer.set_from_old_dm(dc)
             else:
                 logger.error("FileNotFoundError: No such file or directory: '{}'".format(path))
                 DMRenderExit(logger)
@@ -353,8 +345,10 @@ def add_metric_to_label(mdc, args):
     Note: Required attributes : ["label", "line_options", "auc" or "eer", "sys_res"]
           Conditional/Optional attributes : ["trr", "t_num", "nt_num"]
     """
-    mdc_label = mdc.label if mdc.label is not None else mdc.path
+    logger = logging.getLogger("DMlog")
 
+    mdc_label = mdc.label if mdc.label is not None else mdc.path
+    logger.debug("Adding metrics to the label of {}".format(mdc_label))
     metric_list, metric_tmplt = [], "{tr}{metric}: {val}"
     if args.plotType == 'ROC':
         metric_list.append(metric_tmplt.format(tr='{tr}', metric="AUC", val=round(mdc.auc,2)))
@@ -370,7 +364,9 @@ def add_metric_to_label(mdc, args):
     if not args.noNum:
         metric_list.extend(["T#: {}".format(mdc.t_num), "NT#: {}".format(mdc.nt_num)])
 
-    return "{} ({})".format(mdc_label, ', '.join(metric_list))
+    label = "{} ({})".format(mdc_label, ', '.join(metric_list))
+    logger.debug("=> {}".format(label))
+    return 
             
 
 def create_annotations(mdc, args):
@@ -543,7 +539,7 @@ if __name__ == '__main__':
     # Updating the mdc line option label with metadata
     for mdc in MDC_list:
         if mdc.show_label:
-            mdc.line_options["label"] = add_metric_to_label(mdc)
+            mdc.line_options["label"] = add_metric_to_label(mdc, args)
         else:
             mdc.line_options["label"] = None
     
