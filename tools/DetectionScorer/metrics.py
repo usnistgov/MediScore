@@ -3,7 +3,7 @@ import numpy as np
 class Metrics:
 
     @staticmethod
-    def compute_points_sk(score, gt):
+    def old_compute_points_sk(score, gt):
         """ computes false positive rate (FPR) and false negative rate (FNR)
         given trial scores and their ground-truth using the sklearn package.
         score: system output scores
@@ -25,6 +25,12 @@ class Metrics:
         fpr, tpr, thres = roc_curve(label, score)
         fnr = 1 - tpr
         return fpr, tpr, fnr, thres, target_num, nontarget_num
+
+    def compute_rates(scores, gt, target_label="Y", non_target_label="N"):
+        from sklearn.metrics import roc_curve
+        fpr, tpr, thres = roc_curve(gt, scores, pos_label=target_label)
+        fnr = 1 - tpr
+        return fpr, tpr, fnr, thres
 
     @staticmethod
     def compute_auc(fpr, tpr, fpr_stop=1):
@@ -50,7 +56,7 @@ class Metrics:
 
     # TODO: need to validate this and make command-line inputs
     @staticmethod
-    def compute_ci(score, gt, ci_level, fpr_stop):
+    def compute_ci(score, gt, ci_level, fpr_stop, target_label="Y"):
         """ compute the confidence interval for AUC
         score: system output scores
         gt: ground-truth for given trials
@@ -72,13 +78,14 @@ class Metrics:
         bootstrapped_tpr = []
 
         rng = np.random.RandomState(rng_seed)
-        indices = np.copy(score.index.values)
+        # indices = np.copy(score.index.values) # Change: score is a numpy.ndarray and not a Pandas.Series
+        indices = np.arange(score.size)
         #print("Original indices {}".format(indices))
         for i in range(n_bootstraps):
             # bootstrap by sampling with replacement on the prediction indices
             new_indices = rng.choice(indices, len(indices))
-            fpr, tpr, fnr, thres, t_num, nt_num = Metrics.compute_points_sk(
-                score[new_indices].values, gt[new_indices])
+            # fpr, tpr, fnr, thres, t_num, nt_num = Metrics.compute_points_sk(score[new_indices].values, gt[new_indices]) # Change: score is a numpy.ndarray and not a Pandas.Series
+            fpr, tpr, fnr, thres = Metrics.compute_rates(score[new_indices], gt[new_indices], target_label=target_label)
 
             auc = Metrics.compute_auc(fpr, tpr, 1)
             pauc = Metrics.compute_auc(fpr, tpr, fpr_stop)
