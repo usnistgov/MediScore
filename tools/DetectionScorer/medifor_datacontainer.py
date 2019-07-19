@@ -66,7 +66,7 @@ class MediForDataContainer(DataContainer):
         self._attributes_set_print(['scores'], verbose=verbose)
 
     def set_target_stats(self, verbose=True):
-        if self.gt is not None:
+        if (self.gt is not None) and (self.target_label is not None) and (self.non_target_label is not None):
             self.t_num = np.count_nonzero(self.gt == self.target_label)
             self.nt_num = np.count_nonzero(self.gt == self.non_target_label)
             self._attributes_set_print([('t_num', self.t_num), ('nt_num', self.nt_num)], verbose=verbose)
