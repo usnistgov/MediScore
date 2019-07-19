@@ -545,7 +545,6 @@ if __name__ == '__main__':
             mdc.line_options["label"] = add_metric_to_label(mdc, args)
         else:
             mdc.line_options["label"] = None
-    
 
     # Annotation Creation
     annotation_list = []
@@ -565,5 +564,5 @@ if __name__ == '__main__':
     
     # If we need to dump the used plotting options
     if args.dumpPlotParams:
-        dumpPlotOptions(args.outputFolder, mdc_list, plot_opts)
+        dumpPlotOptions(args.outputFolder, MDC_list, plot_opts)
 
