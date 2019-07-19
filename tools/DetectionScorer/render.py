@@ -78,7 +78,7 @@ class Render:
         plt.xticks(plot_options["xticks"], plot_options["xticks_labels"], fontsize=plot_options['xticks_label_size'])
         plt.yticks(plot_options["yticks"], plot_options["yticks_labels"], fontsize=plot_options['yticks_label_size'])
         plt.title(plot_options['title'], fontsize=plot_options['title_fontsize'])
-        plt.suptitle(plot_options['subtitle'], fontsize=plot_options['subtitle_fontsize'])
+        plt.suptitle(plot_options['suptitle'], fontsize=plot_options['suptitle_fontsize'])
         plt.grid()
 
         # If any label has been provided
@@ -108,10 +108,10 @@ class Render:
         
         plot_opts = OrderedDict([
             ('title', "Performance" if plot_title is None else plot_title),
-            ('subtitle', ''),
+            ('suptitle', ''),
             ('figsize', (7, 6.5)),
             ('title_fontsize', 13), 
-            ('subtitle_fontsize', 11), 
+            ('suptitle_fontsize', 11), 
             ('xlim', [0,1]),
             ('ylim', [0,1]),
             ('xticks_label_size', 'medium'),
