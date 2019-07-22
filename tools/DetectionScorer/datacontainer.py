@@ -19,14 +19,14 @@ class DataContainer:
 
         if line_options is not None:
             self.line_options = line_options
-            # Assuring consistency between the label attribute and the line label property
-            if ("label" not in self.line_options) and (self.label is not None):
-                self.line_options["label"] = self.label
-            elif ("label" in self.line_options) and (self.label is None):
-                self.label = self.line_options["label"]
         else:
             self.line_options = DataContainer.get_default_line_options()
-            self.line_options["label"] = label
+
+        # Assuring consistency between the label attribute and the line label property
+        if (("label" not in self.line_options) or ("label" in self.line_options and self.line_options["label"] is None)) and (self.label is not None):
+            self.line_options["label"] = self.label
+        elif ("label" in self.line_options and self.line_options["label"] is not None) and (self.label is None):
+            self.label = self.line_options["label"]
 
     def validate_array_input(self):
         # Checking array type, dimensions and value types
@@ -100,14 +100,14 @@ class DataContainer:
         return obj
 
     @staticmethod
-    def get_default_line_options():
+    def get_default_line_options(default_color='red'):
         """ Creation of defaults line options dictionnary
         """
-        return OrderedDict([('color', 'red'),
+        return OrderedDict([('color', default_color),
                             ('linestyle', 'solid'),
                             ('marker', '.'),
-                            ('markersize', 5),
-                            ('markerfacecolor', 'red'),
+                            ('markersize', 2),
+                            ('markerfacecolor', None),
                             ('label', None),
                             ('antialiased', 'False')])
 
