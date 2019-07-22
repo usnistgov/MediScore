@@ -1,4 +1,6 @@
 import numpy as np
+# from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn_metrics import roc_curve, roc_auc_score
 
 class Metrics:
 
@@ -9,7 +11,7 @@ class Metrics:
         score: system output scores
         gt: ground-truth for given trials
         """
-        from sklearn.metrics import roc_curve
+
 #        label = np.zeros(len(gt))
 #        #label =  np.where(gt=='Y', 1, 0)
 #        yes_mask = np.array(gt == 'Y')#TODO: error here
@@ -27,7 +29,6 @@ class Metrics:
         return fpr, tpr, fnr, thres, target_num, nontarget_num
 
     def compute_rates(scores, gt, target_label="Y", non_target_label="N"):
-        from sklearn.metrics import roc_curve
         fpr, tpr, thres = roc_curve(gt, scores, pos_label=target_label)
         fnr = 1 - tpr
         return fpr, tpr, fnr, thres
@@ -62,8 +63,7 @@ class Metrics:
         gt: ground-truth for given trials
         lower_bound: lower bound percentile
         upper_bound: upper bound percentile"""
-        from sklearn.metrics import roc_auc_score
-#        from sklearn.metrics import roc_curve
+
 #        score = score.astype(np.float64)
 #        mean = np.mean(score)
 #        size = len(score) - 1
