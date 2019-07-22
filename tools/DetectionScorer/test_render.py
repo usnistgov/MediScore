@@ -1,4 +1,7 @@
+import random
+import string
 import argparse
+
 import numpy as np
 import pandas as pd
 
@@ -30,10 +33,16 @@ def create_system(n, target_ratio, means, stdevs, random_seed=7):
     labels = np.r_[np.ones(nb_target), np.zeros(nb_non_target)]
     return target_scores, non_target_scores, scores, labels
 
+def random_string(stringLength=10):
+    """Generate a random string of fixed length """
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
+
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Render tester utility')
 	parser.add_argument('-n', '--sys_number', type=int, help='number of system to generate and plot', default=10)
+	parser.add_argument('-s', '--label_length', type=int, help='length of the random string added to the generated label', default=10)
 	args = parser.parse_args()
 
 	dm_number = args.sys_number
@@ -50,7 +59,7 @@ if __name__ == "__main__":
 	    fpr, tpr, thresholds = metrics.roc_curve(labels, scores)
 	    line_opts = MediForDataContainer.get_default_line_options()
 	    line_opts["color"] = None
-	    dm = MediForDataContainer(fpr, 1-tpr, thresholds, label="random_sys_{}".format(i), line_options=line_opts)
+	    dm = MediForDataContainer(fpr, 1-tpr, thresholds, label="random_sys_{}_{}".format(i, random_string(args.label_length)), line_options=line_opts)
 	#     dm.setter_standard(labels, scores, 1000, target_label=1, non_target_label=0, verbose=False)
 	    dm_list.append(dm)
 	    sys_list.append([target_scores, non_target_scores, scores, labels])

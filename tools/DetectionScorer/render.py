@@ -91,7 +91,7 @@ class Render:
         if any([obj.line_options.get("label",None) for obj in data_list]):
             plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
             fig.tight_layout(pad=2)
-            
+
         if display is True:
             plt.show()
 
@@ -115,7 +115,7 @@ class Render:
         plot_opts = OrderedDict([
             ('title', "Performance" if plot_title is None else plot_title),
             ('suptitle', ''),
-            ('figsize', (7, 6.5)),
+            ('figsize', (8, 6)),
             ('title_fontsize', 13), 
             ('suptitle_fontsize', 11), 
             ('xlim', [0,1]),
