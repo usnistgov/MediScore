@@ -78,7 +78,6 @@ class Render:
 
         plt.xlim(plot_options["xlim"])
         plt.ylim(plot_options["ylim"])
-        print("ylim = {}".format(plot_options["ylim"]))
         plt.xlabel(plot_options['xlabel'], fontsize=plot_options['xlabel_fontsize'])
         plt.ylabel(plot_options['ylabel'], fontsize=plot_options['ylabel_fontsize'])
         plt.xscale(plot_options["xscale"])
@@ -90,9 +89,9 @@ class Render:
 
         # If any label has been provided
         if any([obj.line_options.get("label",None) for obj in data_list]):
-            plt.legend(loc='upper left', bbox_to_anchor=(0.6, 0.4), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
-            fig.tight_layout(pad=2.5)
-
+            plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
+            fig.tight_layout(pad=2)
+            
         if display is True:
             plt.show()
 
