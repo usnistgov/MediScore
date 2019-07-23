@@ -2,8 +2,9 @@
 
 import sys
 import json
-import numpy as np
+import warnings
 
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.stats import norm
@@ -16,6 +17,8 @@ class Render:
     def __init__(self, plot_type=None, plot_options=None):
         self.plot_type = plot_type
         self.plot_options = plot_options
+        self.figure = None
+        self.legend = None
 
     def get_plot_type(self, plot_type=None):
         if plot_type is not None:
@@ -55,9 +58,26 @@ class Render:
         else:
             print("Error: the plot input has to be a list instead of a {}".format(type(data_list)))
 
+    def print_figure_size_info(self):
+        figsize = self.fig.get_size_inches()
+
+        p_0 = self.fig.axes[0]._position._points * figsize
+        w_0, h_0 = p_0[1,:] - p_0[0,:]
+        ratio_0 = w_0/h_0
+        print("Graph info: W = {}, H = {}, ratio = {}, figsize = {}".format(w_0, h_0, ratio_0, figsize))
+
+    def auto_resize_figsize_to_legend(self, label_list):
+        fig = plt.gcf()
+        max_label_length = max(len(label) for label in label_list if label is not None)
+        adjusted_width = 0.0677 * max_label_length + 6.5904
+        w_0, h_0 = self.fig.get_size_inches()
+        print("Adjusting the figure witdh to the maximum legend label length ({}):\nFrom ({},{}) -> ({},{})".format(max_label_length, w_0, h_0, adjusted_width, h_0))
+        fig.set_size_inches(adjusted_width, h_0, forward = True)
+        fig.tight_layout(pad=2)
+        self.fig = fig
 
     def plotter(self, data_list, annotations, plot_type, plot_options, display, infinity=999999):
-        fig = plt.figure(figsize=plot_options["figsize"], dpi=120, facecolor='w', edgecolor='k')
+        self.fig = plt.figure(figsize=plot_options["figsize"], dpi=120, facecolor='w', edgecolor='k')
 
         get_y = lambda fn, plot_type: norm.ppf(fn) if plot_type == "det" else 1 - fn
 
@@ -87,15 +107,24 @@ class Render:
         plt.suptitle(plot_options['suptitle'], fontsize=plot_options['suptitle_fontsize'])
         plt.grid()
 
+        self.print_figure_size_info()
         # If any label has been provided
-        if any([obj.line_options.get("label",None) for obj in data_list]):
-            plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
-            fig.tight_layout(pad=2)
+        label_list = [obj.line_options.get("label",None) for obj in data_list]
+        if any(label_list):
+            self.legend = plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
+            self.auto_resize_figsize_to_legend(label_list)
+            self.print_figure_size_info()
+
+            # with warnings.catch_warnings(record=True) as w:
+            #     fig.tight_layout(pad=2)
+            #     if w and issubclass(w[0].category, UserWarning):
+            #         print("Warning: Matplotlib was not able to tight the layout and raised a warning.\nTry to change the figsize in the plot options to provide more space for the legend")
+                    
 
         if display is True:
             plt.show()
 
-        return fig
+        return self.fig
 
     def set_plot_options_from_file(path):
         """ Load JSON file for plot options"""
