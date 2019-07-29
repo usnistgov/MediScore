@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from sklearn import metrics
+from sklearn_metrics import roc_curve
 import matplotlib.pyplot as plt
 
 from datacontainer import DataContainer
@@ -38,31 +38,49 @@ def random_string(stringLength=10):
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(stringLength))
 
+def gen_data_containers(n, set_metrics=False, labels=None, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42):
+    np.random.seed(random_seed)
+    dm_list = []
+    random_seeds = np.random.choice(2*n, size=n, replace=False)
+    target_mean_bd, non_target_mean_bd = means_boudaries
+    target_stdev_bd, non_target_stdev_bd = stdevs_boundaries
+
+    if labels is None:
+        labels = ["random_sys_{}".format(i) for i in range(1, n+1)]
+
+    for i, (label, seed) in enumerate(zip(labels, random_seeds)):
+        
+        target_scores, non_target_scores, scores, labels = create_system(1000, 0.1, [np.random.randint(*target_mean_bd), np.random.randint(*non_target_mean_bd)], 
+                                                                                    [np.random.randint(*target_stdev_bd), np.random.randint(*non_target_stdev_bd)], 
+                                                                                    random_seed=seed)
+        fpr, tpr, thresholds = roc_curve(labels, scores)
+
+        line_opts = MediForDataContainer.get_default_line_options()
+        line_opts["color"] = None
+
+        dm = MediForDataContainer(fpr, 1-tpr, thresholds, label=label, line_options=line_opts)
+
+        if set_metrics:
+            dm.setter_standard(labels, scores, 1000, target_label=1, non_target_label=0, verbose=False)
+
+        dm_list.append(dm)
+
+    return dm_list
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Render tester utility')
     parser.add_argument('-n', '--sys_number', type=int, help='number of system to generate and plot', default=10)
-    parser.add_argument('-s', '--label_length', type=int, help='length of the random string added to the generated label', default=10)
     args = parser.parse_args()
 
     dm_number = args.sys_number
-    np.random.seed(42)
 
-    dm_list = []
-    sys_list = []
+    label_extra_length = 60
+    long_labels = ["random_sys_{}_{}".format(i, random_string(label_extra_length)) for i in range(1, dm_number+1)]
 
     # Data generation
-
-    random_seeds = np.random.choice(2*dm_number, size=dm_number, replace=False)
-    for i, seed in enumerate(random_seeds):
-        target_scores, non_target_scores, scores, labels = create_system(1000, 0.1, [np.random.randint(-2,3),np.random.randint(-5,1)], [np.random.randint(1,3),np.random.randint(1,3)], random_seed=seed)
-        fpr, tpr, thresholds = metrics.roc_curve(labels, scores)
-        line_opts = MediForDataContainer.get_default_line_options()
-        line_opts["color"] = None
-        dm = MediForDataContainer(fpr, 1-tpr, thresholds, label="random_sys_{}_{}".format(i, random_string(args.label_length)), line_options=line_opts)
-    #     dm.setter_standard(labels, scores, 1000, target_label=1, non_target_label=0, verbose=False)
-        dm_list.append(dm)
-        sys_list.append([target_scores, non_target_scores, scores, labels])
+    dm_list = gen_data_containers(dm_number, set_metrics=False, labels=long_labels, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42)
 
     # Plotting
     myRender = Render(plot_type="ROC", plot_options=None)
