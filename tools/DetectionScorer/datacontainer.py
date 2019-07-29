@@ -2,7 +2,6 @@
 import sys
 import pickle
 import numpy as np
-from collections import OrderedDict
 
 class DataContainer:
     data_container_version = "2.0"
@@ -103,13 +102,18 @@ class DataContainer:
     def get_default_line_options(default_color='red'):
         """ Creation of defaults line options dictionnary
         """
-        return OrderedDict([('color', default_color),
-                            ('linestyle', 'solid'),
-                            ('marker', '.'),
-                            ('markersize', 2),
-                            ('markerfacecolor', None),
-                            ('label', None),
-                            ('antialiased', 'False')])
+        return {"color":default_color,
+                "linewidth":2,
+                "linestyle":"solid",
+                "marker":'.',
+                "markersize": 2,
+                "markeredgewidth":None,
+                "markerfacecolor":None,
+                "markeredgecolor":None,
+                "markeredgewidth":None,
+                "antialiased":True,
+                "drawstyle":"default"}
+                            
 
     @staticmethod
     def aggregate(dc_list, output_label="Average", method="average", average_resolution=500, line_options=None):
