@@ -38,7 +38,7 @@ class Render:
             print("No plot options provided, setting default paramaters")
             return self.gen_default_plot_options(plot_type)
 
-    def plot(self, data_list, annotations=[], plot_type=None, plot_options=None, display=True, multi_fig=False):
+    def plot(self, data_list, annotations=[], plot_type=None, plot_options=None, display=True, multi_fig=False, auto_width=True):
         if isinstance(data_list, list):
             plot_type = self.get_plot_type(plot_type=plot_type)
             plot_options = self.get_plot_options(plot_type, plot_options=plot_options)
@@ -49,11 +49,11 @@ class Render:
             if multi_fig is True:
                 fig_list = list()
                 for i, data in enumerate(data_list):
-                    fig = self.plotter([data], annotations, plot_type, plot_options, display)
+                    fig = self.plotter([data], annotations, plot_type, plot_options, display, auto_width=auto_width)
                     fig_list.append(fig)
                 return fig_list
             else:
-                fig = self.plotter(data_list, annotations, plot_type, plot_options, display)
+                fig = self.plotter(data_list, annotations, plot_type, plot_options, display, auto_width=auto_width)
                 return fig
         else:
             print("Error: the plot input has to be a list instead of a {}".format(type(data_list)))
@@ -66,18 +66,21 @@ class Render:
         ratio_0 = w_0/h_0
         print("Graph info: W = {}, H = {}, ratio = {}, figsize = {}".format(w_0, h_0, ratio_0, figsize))
 
-    def auto_resize_figsize_to_legend(self, label_list):
-        fig = plt.gcf()
+    def auto_compute_figure_size(self, label_list, plot_options):
+        width, height = plot_options["figsize"]
         max_label_length = max(len(label) for label in label_list if label is not None)
         adjusted_width = 0.0677 * max_label_length + 6.5904
-        w_0, h_0 = self.fig.get_size_inches()
-        print("Adjusting the figure witdh to the maximum legend label length ({}):\nFrom ({},{}) -> ({},{})".format(max_label_length, w_0, h_0, adjusted_width, h_0))
-        fig.set_size_inches(adjusted_width, h_0, forward = True)
-        fig.tight_layout(pad=2)
-        self.fig = fig
+        return (adjusted_width, height)
 
-    def plotter(self, data_list, annotations, plot_type, plot_options, display, infinity=999999):
-        self.fig = plt.figure(figsize=plot_options["figsize"], dpi=120, facecolor='w', edgecolor='k')
+    def plotter(self, data_list, annotations, plot_type, plot_options, display, infinity=999999, auto_width=True):
+        label_list = [obj.line_options.get("label",None) for obj in data_list]
+
+        if auto_width and any(label_list):
+            figure_size = self.auto_compute_figure_size(label_list, plot_options)
+        else:
+            figure_size = plot_options["figsize"]
+
+        self.figure = plt.figure(figsize=figure_size, dpi=120, facecolor='w', edgecolor='k')
 
         get_y = lambda fn, plot_type: norm.ppf(fn) if plot_type == "det" else 1 - fn
 
@@ -107,24 +110,15 @@ class Render:
         plt.suptitle(plot_options['suptitle'], fontsize=plot_options['suptitle_fontsize'])
         plt.grid()
 
-        self.print_figure_size_info()
-        # If any label has been provided
-        label_list = [obj.line_options.get("label",None) for obj in data_list]
         if any(label_list):
             self.legend = plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), borderaxespad=0, prop={'size': 8}, shadow=True, fontsize='small')
-            self.auto_resize_figsize_to_legend(label_list)
-            self.print_figure_size_info()
 
-            # with warnings.catch_warnings(record=True) as w:
-            #     fig.tight_layout(pad=2)
-            #     if w and issubclass(w[0].category, UserWarning):
-            #         print("Warning: Matplotlib was not able to tight the layout and raised a warning.\nTry to change the figsize in the plot options to provide more space for the legend")
-                    
+        self.figure.tight_layout(pad=2)
 
         if display is True:
             plt.show()
 
-        return self.fig
+        return self.figure
 
     def set_plot_options_from_file(path):
         """ Load JSON file for plot options"""
