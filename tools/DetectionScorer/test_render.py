@@ -76,11 +76,11 @@ if __name__ == "__main__":
 
     dm_number = args.sys_number
 
-    label_extra_length = 60
-    long_labels = ["random_sys_{}_{}".format(i, random_string(label_extra_length)) for i in range(1, dm_number+1)]
+    # label_extra_length = 60
+    # long_labels = ["random_sys_{}_{}".format(i, random_string(label_extra_length)) for i in range(1, dm_number+1)]
 
     # Data generation
-    dm_list = gen_data_containers(dm_number, set_metrics=False, labels=long_labels, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42)
+    dm_list = gen_data_containers(dm_number, set_metrics=False, labels=None, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42)
 
     # Plotting
     myRender = Render(plot_type="ROC", plot_options=None)
@@ -89,6 +89,6 @@ if __name__ == "__main__":
     plot_opts["title"] = "ROC Title"
     plot_opts["figsize"] = (7, 6)
 
-    myfigure = myRender.plot(dm_list, plot_options=plot_opts, display=True)
+    myfigure = myRender.plot(dm_list, plot_options=plot_opts, display=True, auto_width=True)
 
     myfigure.savefig('test_figure.pdf')
