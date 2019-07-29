@@ -74,13 +74,11 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--sys_number', type=int, help='number of system to generate and plot', default=10)
     args = parser.parse_args()
 
-    dm_number = args.sys_number
-
     # label_extra_length = 60
-    # long_labels = ["random_sys_{}_{}".format(i, random_string(label_extra_length)) for i in range(1, dm_number+1)]
+    # long_labels = ["random_sys_{}_{}".format(i, random_string(label_extra_length)) for i in range(1, n+1)]
 
     # Data generation
-    dm_list = gen_data_containers(dm_number, set_metrics=False, labels=None, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42)
+    dm_list = gen_data_containers(args.sys_number, set_metrics=False, labels=None, means_boudaries=[[-2,3],[-5,1]], stdevs_boundaries=[[1,3],[1,3]], random_seed=42)
 
     # Plotting
     myRender = Render(plot_type="ROC", plot_options=None)
