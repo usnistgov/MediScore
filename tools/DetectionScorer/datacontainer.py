@@ -128,7 +128,7 @@ class DataContainer:
                     default_line_options["color"] = "green"
 
                 if method == "average":
-                    x = np.linspace(0, dm.fa.max(), average_resolution)
+                    x = np.linspace(0, data.fa.max(), average_resolution)
                     ys = [np.interp(x, data.fa, data.fn) for data in dc_list_filtered]
                     ts = [np.interp(x, data.fa, data.threshold) for data in dc_list_filtered]
                     return DataContainer(x, np.vstack(ys).mean(0), np.vstack(ts).mean(0), label=output_label, line_options=line_options)
