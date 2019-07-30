@@ -32,6 +32,10 @@ import Render as p
 import detMetrics as dm
 import Partition as f
 
+def v_print(*args):
+    for arg in args:
+        print(arg)
+    print()
 
 def load_csv(fname, mysep='|', mydtype=None):
     try:
@@ -180,31 +184,65 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
 
 def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut):
     # Generating a default plot_options json config file
-    p_json_path = "./plotJsonFiles"
-    if not os.path.exists(p_json_path):
-        os.makedirs(p_json_path)
-    dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
+    # p_json_path = "./plotJsonFiles"
+    # if not os.path.exists(p_json_path):
+    #     os.makedirs(p_json_path)
+    
 
-    # opening of the plot_options json config file from command-line
-    if configPlot:
-        p.open_plot_options(dict_plot_options_path_name)
+    # # opening of the plot_options json config file from command-line
+    # if configPlot:
+    #     p.open_plot_options(dict_plot_options_path_name)
 
-    # if plotType is indicated, then should be generated.
-    if plotType == '' and os.path.isfile(dict_plot_options_path_name):
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        plotType = plot_opts['plot_type']
-        plot_opts['title'] = plotTitle
-        plot_opts['subtitle'] = plotSubtitle
-        plot_opts['subtitle_fontsize'] = 11
-        #print("test plot title1 {}".format(plot_opts['title']))
-    else:
-        if plotType == '':
-            plotType = 'roc'
-        p.gen_default_plot_options(dict_plot_options_path_name, plot_title=plotTitle,
-                                   plot_subtitle=plotSubtitle, plot_type=plotType.upper())
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        #print("test plot title2 {}".format(plot_opts['title']))
+    # # if plotType is indicated, then should be generated.
+    # if plotType == '' and os.path.isfile(dict_plot_options_path_name):
+    #     # Loading of the plot_options json config file
+    #     plot_opts = p.load_plot_options(dict_plot_options_path_name)
+    #     plotType = plot_opts['plot_type']
+    #     plot_opts['title'] = plotTitle
+    #     plot_opts['subtitle'] = plotSubtitle
+    #     plot_opts['subtitle_fontsize'] = 11
+    #     #print("test plot title1 {}".format(plot_opts['title']))
+    # else:
+    #     if plotType == '':
+    #         plotType = 'roc'
+    #     p.gen_default_plot_options(plot_title=plotTitle, plot_subtitle=plotSubtitle, plot_type=plotType.upper())
+    #     plot_opts = p.load_plot_options(dict_plot_options_path_name)
+    #     #print("test plot title2 {}".format(plot_opts['title']))
+    print("Function plot_options -> plotType argument = {}".format(plotType))
+    plot_opts = OrderedDict([
+            ('title', "Performance" if plotTitle is None else plotTitle),
+            ('plot_type', plotType.upper()),
+            ('subtitle', ''),
+            ('figsize', (8, 6)),
+            ('title_fontsize', 13), 
+            ('subtitle_fontsize', 11), 
+            ('xlim', [0,1]),
+            ('ylim', [0,1]),
+            ('xticks_size', 'medium'),
+            ('yticks_size', 'medium'),
+            ('xlabel', "False Alarm Rate [%]"),
+            ('xlabel_fontsize', 11),
+            ('ylabel_fontsize', 11)])
+
+    if plotType.lower() == "det":
+        plot_opts["xscale"] = "log"
+        plot_opts["ylabel"] = "Miss Detection Rate [%]"
+        # plot_opts["xticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+        plot_opts["xticks"] = [0.01, 0.1, 1, 10]
+        plot_opts["yticks"] = norm.ppf([0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995, 0.999])
+        plot_opts["xlim"] = (plot_opts["xticks"][0], plot_opts["xticks"][-1])
+        plot_opts["ylim"] = (plot_opts["yticks"][0], plot_opts["yticks"][-1])
+        # plot_opts["xticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+        plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
+        plot_opts["yticks_labels"] = ['5.0', '10.0', '20.0', '40.0', '60.0', '80.0', '90.0', '95.0', '98.0', '99.0', '99.5', '99.9']
+
+    elif plotType.lower() == "roc":
+        plot_opts["xscale"] = "linear"
+        plot_opts["ylabel"] = "Correct Detection Rate [%]"
+        plot_opts["xticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        plot_opts["yticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        plot_opts["yticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+        plot_opts["xticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
 
     # Creation of defaults plot curve options dictionnary (line style opts)
     Curve_opt = OrderedDict([('color', 'red'),
@@ -222,11 +260,11 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markerstyles = ['.', '+', 'x', 'd', '*', 's', 'p']
     # Give a random rainbow color to each curve
-    # color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
+    # color = iter(cm.rainbow(np.linspace(0,1,len(DM_list)))) #YYL: error here
     color = cycle(colors)
     lty = cycle(linestyles)
     mkr = cycle(markerstyles)
-    for i in range(len(DM_List)):
+    for i in range(len(DM_list)):
         new_curve_option = OrderedDict(Curve_opt)
         col = next(color)
         new_curve_option['color'] = col
@@ -236,12 +274,13 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
         opts_list.append(new_curve_option)
 
     if optOut:
-        plot_opts['title'] = "tr" + plotTitle
+        plot_opts['title'] = "tr" + plot_opts['title']
 
     return opts_list, plot_opts
 
 
 def query_plot_options(DM_List, opts_list, plot_opts, selection, optOut, noNum):
+    print("Function query_plot_options -> plot_opts['plot_type'] = {}".format(plot_opts['plot_type']))
     # Renaming the curves for the legend
     for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
         trr_str = ""
@@ -340,7 +379,7 @@ def command_interface():
                         help="Define a plot title (default: %(default)s)", metavar='character')
     parser.add_argument('--plotSubtitle', default='',
                         help="Define a plot subtitle (default: %(default)s)", metavar='character')
-    parser.add_argument('--plotType', default='', choices=['roc', 'det'],
+    parser.add_argument('--plotType', default='roc', choices=['roc', 'det'],
                         help="Define a plot type:[roc] and [det] (default: %(default)s)", metavar='character')
     parser.add_argument('--display', action='store_true',
                         help="Display a window with the plot(s) on the command-line if this option is specified.")
@@ -434,7 +473,6 @@ if __name__ == '__main__':
         else:
             _v_print = lambda *a: None      # do-nothing function
 
-        global v_print
         v_print = _v_print
 
     else:
@@ -500,8 +538,7 @@ if __name__ == '__main__':
         # Render plots with the options
         q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
                                                 args.plotTitle, args.plotSubtitle, args.optOut)
-        opts_list, plot_opts = query_plot_options(
-            DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
+        opts_list, plot_opts = query_plot_options(DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
 
     # No Query mode
     else:
