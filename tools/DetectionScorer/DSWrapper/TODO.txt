@@ -1,0 +1,7 @@
+- Download dataset. Done
+- Download system input. Done.
+- Get detection scorer command line. Done.
+- run locally the detectection scorer. Done
+- adapt the DS to the new data container
+- add wrapper with hard coded arguments
+- create summary
