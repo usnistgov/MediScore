@@ -134,6 +134,6 @@ class DataContainer:
                     return DataContainer(x, np.vstack(ys).mean(0), np.vstack(ts).mean(0), label=output_label, line_options=line_options)
             else:
                 print("Warning: No data container remained after filtering, returning an empty object")
-                return DataContainer(np.array([]), np.array([]), np.array([]), label=output_label, line_options=None)
         else:
-            print("Error: Empty list provided")
+            print("Error: Empty list provided, returning an empty object")
+        return DataContainer(np.array([]), np.array([]), np.array([]), label=output_label, line_options=None)
