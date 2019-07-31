@@ -1,4 +1,5 @@
 import numpy as np
+from pandas import Series
 # from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn_metrics import roc_curve, roc_auc_score
 
@@ -78,14 +79,19 @@ class Metrics:
         bootstrapped_tpr = []
 
         rng = np.random.RandomState(rng_seed)
-        # indices = np.copy(score.index.values) # Change: score is a numpy.ndarray and not a Pandas.Series
-        indices = np.arange(score.size)
+        if isinstance(score, Series):
+            indices = np.copy(score.index.values) 
+        elif isinstance(score, np.ndarray):
+            indices = np.arange(score.size)
         #print("Original indices {}".format(indices))
         for i in range(n_bootstraps):
             # bootstrap by sampling with replacement on the prediction indices
             new_indices = rng.choice(indices, len(indices))
             # fpr, tpr, fnr, thres, t_num, nt_num = Metrics.compute_points_sk(score[new_indices].values, gt[new_indices]) # Change: score is a numpy.ndarray and not a Pandas.Series
-            fpr, tpr, fnr, thres = Metrics.compute_rates(score[new_indices], gt[new_indices], target_label=target_label)
+            if isinstance(score, Series):
+                fpr, tpr, fnr, thres = Metrics.compute_rates(score[new_indices].values, gt[new_indices].values, target_label=target_label)
+            elif isinstance(score, np.ndarray):
+                fpr, tpr, fnr, thres = Metrics.compute_rates(score[new_indices], gt[new_indices], target_label=target_label)
 
             auc = Metrics.compute_auc(fpr, tpr, 1)
             pauc = Metrics.compute_auc(fpr, tpr, fpr_stop)

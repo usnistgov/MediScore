@@ -205,7 +205,7 @@ else:
 if args.dump:
     v_print("Dumping metric objects ...\n")
     for i, DM in enumerate(DM_List):
-        DM.write(root_path + '/' + file_suffix + '_query_' + str(i) + '.dm')
+        DM.dump(root_path + '/' + file_suffix + '_query_' + str(i) + '.dm')
 
 v_print("Rendering/saving plots...\n")
 # Creation of the object setRender (~DetMetricSet)

@@ -135,6 +135,19 @@ class MediForDataContainer(DataContainer):
         self.set_tpr_at_fpr(verbose=verbose)
         self.set_ci(verbose=verbose)
 
+    def setter_full(self, gt, scores, total_trial, fpr_stop, ciLevel, dLevel, sys_res, target_label="Y", non_target_label="N", verbose=True):
+        self.set_groundtruth(gt, target_label=target_label, non_target_label=non_target_label, verbose=verbose)
+        self.set_scores(scores, verbose=verbose)
+        self.set_target_stats(verbose=verbose)
+        self.set_trial_reponse_rate(total_trial, verbose=verbose)
+        self.set_eer(verbose=verbose)
+        self.set_auc(verbose=verbose)
+        self.set_auc_at_fpr(fpr_stop=fpr_stop, verbose=verbose)
+        self.set_dprime(dLevel=dLevel, verbose=verbose)
+        self.set_sys_res(sys_res=sys_res, verbose=verbose)
+        self.set_tpr_at_fpr(fpr_stop=fpr_stop, verbose=verbose)
+        self.set_ci(ciLevel=ciLevel, fpr_stop=fpr_stop, verbose=verbose)
+
     def arrays_to_dataframe(self, fa_label=None, fn_label=None):
         fa_col_name = fa_label if fa_label is not None else (self.fa_label if self.fa_label is not None else "FPR")
         fn_col_name = fn_label if fn_label is not None else (self.fn_label if self.fn_label is not None else "FNR")

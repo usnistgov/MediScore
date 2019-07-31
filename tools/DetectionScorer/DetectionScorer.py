@@ -32,6 +32,9 @@ import Render as p
 import detMetrics as dm
 import Partition as f
 
+from medifor_datacontainer import MediForDataContainer
+from metrics import Metrics
+
 def v_print(*args):
     for arg in args:
         print(arg)
@@ -174,10 +177,16 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
         m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
-    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
-                       isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
+    # DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
+    #                    isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
+    target_label, non_target_label = "Y", "N"
+    fpr, tpr, fnr, thres = Metrics.compute_rates(m_df['ConfidenceScore'], m_df['IsTarget'], target_label=target_label, non_target_label=non_target_label)
+    DM = MediForDataContainer(fpr, fnr, thres, label=None, line_options=None)
+    DM.setter_full(m_df['IsTarget'], m_df['ConfidenceScore'], total_num, farStop, ciLevel, dLevel, sys_response,                    
+                   target_label=target_label, non_target_label=non_target_label, verbose=False)
     DM_List = [DM]
-    table_df = DM.render_table()
+    # table_df = DM.render_table()
+    table_df = DM.metrics_to_dataframe(orientation="vertical")
 
     return DM_List, table_df
 
@@ -208,7 +217,6 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
     #     p.gen_default_plot_options(plot_title=plotTitle, plot_subtitle=plotSubtitle, plot_type=plotType.upper())
     #     plot_opts = p.load_plot_options(dict_plot_options_path_name)
     #     #print("test plot title2 {}".format(plot_opts['title']))
-    print("Function plot_options -> plotType argument = {}".format(plotType))
     plot_opts = OrderedDict([
             ('title', "Performance" if plotTitle is None else plotTitle),
             ('plot_type', plotType.upper()),
@@ -280,7 +288,6 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
 
 
 def query_plot_options(DM_List, opts_list, plot_opts, selection, optOut, noNum):
-    print("Function query_plot_options -> plot_opts['plot_type'] = {}".format(plot_opts['plot_type']))
     # Renaming the curves for the legend
     for curve_opts, query, dm_list in zip(opts_list, selection.part_query_list, DM_List):
         trr_str = ""
