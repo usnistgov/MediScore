@@ -16,7 +16,7 @@ ref = "reference/manipulation-image/MFC19_EvalPart1-manipulation-image-ref.csv"
 
 ss_dicts = [{"name":"x",
             "description":"y",
-            "options":"""--outMeta --outSubMeta --dump --outRoot /Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/output --farStop 0.05 --ciLevel 0.90 --ci -qm "Operation==['TransformCrop', 'TransformCropResize'] or PlugInName==['CropByPercentage','FaceCrop']" -t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000"""}]
+            "options":"""--outMeta --outSubMeta --dump --farStop 0.05 --ciLevel 0.90 --ci -qm "Operation==['TransformCrop', 'TransformCropResize'] or PlugInName==['CropByPercentage','FaceCrop']" -t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000"""}]
 
 for ss in ss_dicts:
     cmd = command_template.format(script_path=script_path, sysDir=sysDir, refDir=refDir, system=system, index=index, ref=ref, output=output, verbose='-v', options=ss["options"])
