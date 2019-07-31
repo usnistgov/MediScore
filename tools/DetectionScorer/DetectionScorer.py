@@ -32,13 +32,6 @@ import Render as p
 import detMetrics as dm
 import Partition as f
 
-from medifor_datacontainer import MediForDataContainer
-from metrics import Metrics
-
-def v_print(*args):
-    for arg in args:
-        print(arg)
-    print()
 
 def load_csv(fname, mysep='|', mydtype=None):
     try:
@@ -177,46 +170,15 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
         m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
-    # DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
-    #                    isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
-    target_label, non_target_label = "Y", "N"
-    fpr, tpr, fnr, thres = Metrics.compute_rates(m_df['ConfidenceScore'], m_df['IsTarget'], target_label=target_label, non_target_label=non_target_label)
-    DM = MediForDataContainer(fpr, fnr, thres, label=None, line_options=None)
-    DM.setter_full(m_df['IsTarget'], m_df['ConfidenceScore'], total_num, farStop, ciLevel, dLevel, sys_response,                    
-                   target_label=target_label, non_target_label=non_target_label, verbose=False)
+    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
+                       isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
     DM_List = [DM]
-    # table_df = DM.render_table()
-    table_df = DM.metrics_to_dataframe(orientation="vertical")
+    table_df = DM.render_table()
 
     return DM_List, table_df
 
 
 def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut):
-    # Generating a default plot_options json config file
-    # p_json_path = "./plotJsonFiles"
-    # if not os.path.exists(p_json_path):
-    #     os.makedirs(p_json_path)
-    
-
-    # # opening of the plot_options json config file from command-line
-    # if configPlot:
-    #     p.open_plot_options(dict_plot_options_path_name)
-
-    # # if plotType is indicated, then should be generated.
-    # if plotType == '' and os.path.isfile(dict_plot_options_path_name):
-    #     # Loading of the plot_options json config file
-    #     plot_opts = p.load_plot_options(dict_plot_options_path_name)
-    #     plotType = plot_opts['plot_type']
-    #     plot_opts['title'] = plotTitle
-    #     plot_opts['subtitle'] = plotSubtitle
-    #     plot_opts['subtitle_fontsize'] = 11
-    #     #print("test plot title1 {}".format(plot_opts['title']))
-    # else:
-    #     if plotType == '':
-    #         plotType = 'roc'
-    #     p.gen_default_plot_options(plot_title=plotTitle, plot_subtitle=plotSubtitle, plot_type=plotType.upper())
-    #     plot_opts = p.load_plot_options(dict_plot_options_path_name)
-    #     #print("test plot title2 {}".format(plot_opts['title']))
     plot_opts = OrderedDict([
             ('title', "Performance" if plotTitle is None else plotTitle),
             ('plot_type', plotType.upper()),
@@ -250,7 +212,9 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
         plot_opts["xticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         plot_opts["yticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         plot_opts["yticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+
         plot_opts["xticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+
 
     # Creation of defaults plot curve options dictionnary (line style opts)
     Curve_opt = OrderedDict([('color', 'red'),
@@ -268,11 +232,11 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markerstyles = ['.', '+', 'x', 'd', '*', 's', 'p']
     # Give a random rainbow color to each curve
-    # color = iter(cm.rainbow(np.linspace(0,1,len(DM_list)))) #YYL: error here
+    # color = iter(cm.rainbow(np.linspace(0,1,len(DM_List)))) #YYL: error here
     color = cycle(colors)
     lty = cycle(linestyles)
     mkr = cycle(markerstyles)
-    for i in range(len(DM_list)):
+    for i in range(len(DM_List)):
         new_curve_option = OrderedDict(Curve_opt)
         col = next(color)
         new_curve_option['color'] = col
@@ -282,7 +246,7 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
         opts_list.append(new_curve_option)
 
     if optOut:
-        plot_opts['title'] = "tr" + plot_opts['title']
+        plot_opts['title'] = "tr" + plotTitle
 
     return opts_list, plot_opts
 
@@ -480,6 +444,7 @@ if __name__ == '__main__':
         else:
             _v_print = lambda *a: None      # do-nothing function
 
+        global v_print
         v_print = _v_print
 
     else:
@@ -543,9 +508,9 @@ if __name__ == '__main__':
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
                                                       args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap)
         # Render plots with the options
-        q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
-                                                args.plotTitle, args.plotSubtitle, args.optOut)
-        opts_list, plot_opts = query_plot_options(DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
+        q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType, args.plotTitle, args.plotSubtitle, args.optOut)
+        opts_list, plot_opts = query_plot_options(
+            DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
 
     # No Query mode
     else:

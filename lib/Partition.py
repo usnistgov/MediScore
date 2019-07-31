@@ -5,9 +5,6 @@ from itertools import product
 from collections import OrderedDict
 import pandas as pd
 
-from medifor_datacontainer import MediForDataContainer
-from metrics import Metrics
-
 
 class Partition:
     """This class represents a set of partitions for a single panda's dataframe,
@@ -177,12 +174,8 @@ class Partition:
         for df, query in zip(self.part_df_list, self.part_query_list):
             if not df.empty:
                 print("Current query: {}".format(query))
-                # dm_list.append(dm.detMetrics(df['ConfidenceScore'], df['IsTarget'], fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res))
-                fpr, tpr, fnr, thres = Metrics.compute_rates(df['ConfidenceScore'], df['IsTarget'], target_label="Y", non_target_label="N")
-                dm = MediForDataContainer(fpr, fnr, thres, label=None, line_options=None)
-                dm.setter_full(df['IsTarget'], df['ConfidenceScore'], total_num, fpr_stop, ciLevel, dLevel, sys_res,                    
-                               target_label="Y", non_target_label="N", verbose=False)
-                dm_list.append(dm)
+                dm_list.append(dm.detMetrics(
+                    df['ConfidenceScore'], df['IsTarget'], fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res))
             else:
                 print(
                     '#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
