@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import time
 import shlex
 import argparse
@@ -9,9 +10,10 @@ from pathlib import Path
 def args_parser(command_line=True):
     if command_line:
         parser = argparse.ArgumentParser(description=None)
-        parser.add_argument()
+        parser.add_argument("-i", "--scoring-dict", help="path to the json file describing each sub scoring parameters", type=Path)
+        parser.add_argument("-g", "--plotgroup-dict", help="path to the json file describing each plot group", type=Path)
         parser.add_argument("-d", "--datasetDir", help="path to the dataset directory", type=Path)
-        parser.add_argument("-d", "--sysDir", help="path to the dataset directory", type=Path)
+        parser.add_argument("-S", "--sysDir", help="path to the dataset directory", type=Path)
         parser.add_argument("-s", "--system", help="path to the system output", type=Path)      
         parser.add_argument("-i", "--index", help="path to the index file", type=Path)
         parser.add_argument("-r", "--ref", help="path to the ref folder", type=Path)
@@ -20,6 +22,8 @@ def args_parser(command_line=True):
     else:
         class ArgsNameSpace():
             def __init__(self):
+                self.scoring_dict = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/subscorings.json")
+                self.plotgroup_dict = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/plot_groups.json")
                 self.datasetDir = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/")
                 self.sysDir = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/system/")
                 self.system = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/system/kitware-holistic-image-v18_20190327-120000.csv")
@@ -60,45 +64,24 @@ file_abspaths = [args.system.resolve(),
                  args.datasetDir.resolve() / args.index]
 process_args_paths(directory_abspaths, file_abspaths, [output_folder])
 
+with open(args.scoring_dict, 'r') as f:
+    ss_dicts = json.load(f)
+
+with open(args.plotgroup_dict, 'r') as f:
+    group_plots = json.load(f)
+
 # *-------- Hard coded variables --------*
-
-ss_dicts = {"s1":{"name":"Full_False_NA_Crop",
-                  "sub_output_folder":"sub_output_1",
-                  "description":"",
-                  "options":("""--outMeta --outSubMeta --dump --farStop 0.05 --ciLevel 0.90 --ci """
-                             """-qm "Operation==['TransformCrop', 'TransformCropResize'] or PlugInName==['CropByPercentage','FaceCrop']" """
-                              """-t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000""")},
-            "s2":{"name":"Full_False_NA_None",
-                  "sub_output_folder":"sub_output_2",
-                  "description":"",
-                  "options":("""--outMeta --outSubMeta --dump --farStop 0.05 --ciLevel 0.90 --ci """
-                            """-qm "TaskID==['manipulation']" """
-                            """-t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000""")},
-            "s3":{"name":"Full_True_NA_Crop",
-                  "sub_output_folder":"sub_output_3",
-                  "description":"",
-                  "options":("""--outMeta --outSubMeta --dump --farStop 0.05 --ciLevel 0.90 --ci """
-                            """-qm "Operation==['TransformCrop', 'TransformCropResize'] or PlugInName==['CropByPercentage','FaceCrop']" """
-                            """-t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000""")},
-            "s4":{"name":"Full_True_NA_None",
-                  "sub_output_folder":"sub_output_4",
-                  "description":"",
-                  "options":("""--outMeta --outSubMeta --dump --farStop 0.05 --ciLevel 0.90 --ci """
-                            """-qm "TaskID==['manipulation']"  """
-                            """-t manipulation --plotTitle kitware-holistic-image-v18_20190327-120000""")}}
-
-group_plots = {"gplot_1":["s1", "s2"],
-              "gplot_2":["s2", "s3", "s4"]}
 
 detection_scorer_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DetectionScorer.py"
 dm_render_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DMRender.py"
 
 output_file_suffix = args.output.name
+display = '' # --display
 
 # *---------------------------------------*
 
 detection_scorer_command_template = "python {script_path} --sysDir {sysDir} --refDir {refDir} -s {system} -x {index} -r {ref} -o {output} {verbose} {options} 1> {stdout} 2> {stderr}"
-dm_render_command_template = "python {script_path} -i {input} --plotType ROC {display} --outputFolder {output} --outputFileNameSuffix {output_fsuffix} --console_log_level {console_log_level} 1> {stdout} 2> {stderr}"
+dm_render_command_template = "python {script_path} -i {input} --plotType ROC {display} --outputFolder {output} --outputFileNameSuffix {output_fsuffix} --logtype {logtype} --console_log_level {console_log_level} 1> {stdout} 2> {stderr}"
 
 # *======================== Scoring runs ========================*
 
@@ -135,7 +118,7 @@ for ss_key, ss in ss_dicts.items():
 for gplot_name, ss_list in group_plots.items():
     start = time.time()
     print("Plotting '{}'... ".format(gplot_name), end='', flush=True)
-    
+
     sub_output_plot_path = output_folder / gplot_name
     sub_output_plot_path.mkdir(parents=True, exist_ok=True)
 
@@ -154,7 +137,7 @@ for gplot_name, ss_list in group_plots.items():
     # Command creation
     cmd_name = "dm_render.command.sh"
     cmd = dm_render_command_template.format(script_path=dm_render_path, input='"{}"'.format(input_list), output=sub_output_plot_path, 
-                                            output_fsuffix="plot", display="--display", console_log_level="INFO", 
+                                            output_fsuffix="plot", display=display, logtype=1, console_log_level="INFO", 
                                             stdout=dmr_stdout_filepath, stderr=dmr_stderr_filepath)
     cmd = remove_multiple_spaces(cmd)
 
