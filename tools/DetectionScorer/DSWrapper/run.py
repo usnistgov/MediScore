@@ -110,7 +110,7 @@ for ss_key, ss in ss_dicts.items():
         f.write(cmd)
 
     # Command call
-    # os.system(cmd)
+    os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
 
 # *==================== Plot output handling ====================*
@@ -126,12 +126,12 @@ for gplot_name, ss_list in group_plots.items():
     dmr_stderr_filepath = sub_output_plot_path / "dm_render.stderr"
 
     input_list = []
-    for ss_key in ss_list:
-        sub_output_path = output_folder / ss_dicts[ss_key]["sub_output_folder"]
+    for ss_dict in ss_list:
+        sub_output_path = output_folder / ss_dicts[ss_dict["s_name"]]["sub_output_folder"]
         data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_suffix)),
-                     "label": ss_dicts[ss_key]["name"],
+                     "label": ss_dicts[ss_dict["s_name"]]["name"],
                      "show_label": True}
-        line_options = {}
+        line_options = ss_dict["s_line_options"]
         input_list.append([data_dict, line_options])
 
     # Command creation

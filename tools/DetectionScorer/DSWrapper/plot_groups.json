@@ -1,2 +1,10 @@
-{"gplot_1":["s1", "s2"],
- "gplot_2":["s2", "s3", "s4"]}
+{"gplot_1":[{"s_name":"s1",
+	         "s_line_options":{}}, 
+		    {"s_name":"s2",
+		     "s_line_options":{}}],
+ "gplot_2":[{"s_name":"s2",
+ 	         "s_line_options":{}}, 
+ 	        {"s_name":"s3",
+ 	         "s_line_options":{}}, 
+ 	        {"s_name":"s4",
+ 	         "s_line_options":{}}]}
