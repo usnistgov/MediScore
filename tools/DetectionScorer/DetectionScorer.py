@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 * Date: 5/25/2018
 * Authors: Yooyoung Lee and Timothee Kheyrkhah
