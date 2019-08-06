@@ -629,11 +629,11 @@ class SSD_Validator(validator):
                     min_frame_number=1
                 elif mode=='Time':
                     min_frame_number=0
-                if (interval[0] < min_frame_number) or ((interval[1] > max_frame_number) and not self.ignore_eof):
+                if ((interval[0] < min_frame_number) or (interval[1] > max_frame_number)) and not self.ignore_eof:
                     errmsg = "ERROR: Interval {} is out of bounds. The max interval for this video is {}.".format(interval,[min_frame_number,max_frame_number])
                     msg.append(errmsg)
                     intervalflag = 1
-                elif (interval[1] > max_frame_number) and self.ignore_eof:
+                elif ((interval[0] < min_frame_number) or (interval[1] > max_frame_number)) and self.ignore_eof:
                     errmsg = "Warning: Interval {} is out of bounds. The max interval for this video is {}.".format(interval,[min_frame_number,max_frame_number])
                     msg.append(errmsg)
         
