@@ -38,7 +38,7 @@ INSTALLATION
   - pandas        (tested in version 0.21.1) - make sure to use the latest version.
   - matplotlib    (tested in version 1.5.1)
   - scipy         (tested in version 0.18.0)
-  - scikit-learn  (tested in version 0.17.1)
+  - scikit-learn  (tested in version 0.20.3)
   - rawpy         (tested in version 0.9.0)
   - numpngw       (tested in version 0.0.6)
   - Glymur        (tested in version 0.8.12)
@@ -85,7 +85,7 @@ Usage text for each script can be seen by executing the script with
 the option '--help'.  For example:
 
   $ cd MediScore/tools/DetectionScorer
-  $ python2 DetectionScorer.py --help
+  $ python DetectionScorer.py --help
 
 Both DetectionScorer and MaskScorer scripts have additional
 HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more detailed information on their usage.
@@ -93,7 +93,7 @@ HTML files (DetectionScorerReadMe.html and MaskScorerReadMe.html) with more deta
 To try some command lines with data files, go to the testing
 directories in 'MediScore/tools/DetectionScorer', and run the command
 lines below.
-  $ python2 DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample \
+  $ python DetectionScorer.py -t manipulation --refDir ../../data/test_suite/detectionScorerTests/sample \
   -r NC2016-manipulation-ref.csv -x NC2016-manipulation-index.csv --sysDir ../../data/test_suite/detectionScorerTests/sample \
   -s D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv --outRoot ./testcases/NC16_01 --display
 
@@ -464,6 +464,11 @@ HISTORY
  July 11, 2018 - MediScore Version *.*.*
     * Validator:
       - Now supports event verification and camera validation tasks.
+ August 6, 2019 - MediScore Version *.*.*
+    * DetectionScorer:
+      - Updated scikit-learn version because the old version of scikit-learn has a bug in roc_curve.
+      - Updated a unit test and test cases based on the new version of scikit-learn
+      - Fixed a bug of DM List in DetectionScorer.py
 
 
 CONTACT
