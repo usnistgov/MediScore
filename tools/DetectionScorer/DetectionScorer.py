@@ -26,6 +26,7 @@ import sys
 
 from collections import OrderedDict
 from itertools import cycle
+from scipy.stats import norm
 
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
@@ -184,8 +185,8 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
             ('plot_type', plotType.upper()),
             ('subtitle', ''),
             ('figsize', (8, 6)),
-            ('title_fontsize', 13), 
-            ('subtitle_fontsize', 11), 
+            ('title_fontsize', 13),
+            ('subtitle_fontsize', 11),
             ('xlim', [0,1]),
             ('ylim', [0,1]),
             ('xticks_size', 'medium'),
@@ -195,16 +196,20 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
             ('ylabel_fontsize', 11)])
 
     if plotType.lower() == "det":
-        plot_opts["xscale"] = "log"
+        plot_opts["xscale"] = "deviate"
         plot_opts["ylabel"] = "Miss Detection Rate [%]"
+        plot_opts["xticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+        plot_opts["yticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
         # plot_opts["xticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
-        plot_opts["xticks"] = [0.01, 0.1, 1, 10]
-        plot_opts["yticks"] = norm.ppf([0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995, 0.999])
+        # plot_opts["xticks"] = [0.01, 0.1, 1, 10]
+        # plot_opts["yticks"] = norm.ppf([0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995, 0.999])
         plot_opts["xlim"] = (plot_opts["xticks"][0], plot_opts["xticks"][-1])
         plot_opts["ylim"] = (plot_opts["yticks"][0], plot_opts["yticks"][-1])
         # plot_opts["xticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
-        plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
-        plot_opts["yticks_labels"] = ['5.0', '10.0', '20.0', '40.0', '60.0', '80.0', '90.0', '95.0', '98.0', '99.0', '99.5', '99.9']
+        # plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
+        # plot_opts["yticks_labels"] = ['5.0', '10.0', '20.0', '40.0', '60.0', '80.0', '90.0', '95.0', '98.0', '99.0', '99.5', '99.9']
+        plot_opts["xticks_labels"] = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+        plot_opts["yticks_labels"] = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
 
     elif plotType.lower() == "roc":
         plot_opts["xscale"] = "linear"
