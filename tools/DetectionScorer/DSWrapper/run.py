@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import json
@@ -6,6 +8,7 @@ import shlex
 import argparse
 # import subprocess
 from pathlib import Path
+from jinja2 import Environment, FileSystemLoader
 
 def args_parser(command_line=True):
     if command_line:
@@ -54,10 +57,31 @@ def process_args_paths(directory_abspaths, file_abspaths, path_make_dir):
 def remove_multiple_spaces(string):
     return ' '.join(string.split())
 
+def create_html(output_path, group_plots, ss_dicts, template_path, base_template="base.html"):
+    group_plot_name = "plot_ROC_all.pdf"
+    sub_plot_name = "nist_001_qm_query_ROC.pdf"
+    plot_paths = [os.path.join(group, group_plot_name) for group in group_plots]
+    file_loader = FileSystemLoader(str(template_path))
+    env = Environment(loader=file_loader)
+    template = env.get_template(base_template)
+    template_variables = {"page_title": "Scoring Summary",
+                          "container_id": "#container",
+                          "group_plots":group_plots,
+                          "output_path":str(output_path),
+                          'gplot_filename':group_plot_name,
+                          "pdf_reader_width":"1000px",
+                          "pdf_reader_height":"800px",
+                          "ss_dicts":ss_dicts,
+                          "splot_filename":sub_plot_name
+                         }    
+    html = template.render(template_variables)
+    return html
+
 args = args_parser(command_line=False)
 
 # *---------- Paths processing ----------*
 output_folder = args.output.parent
+templates_path = Path(os.getcwd()) / "templates" 
 directory_abspaths = [args.datasetDir.resolve(), args.sysDir.resolve()]
 file_abspaths = [args.system.resolve(), 
                  args.datasetDir.resolve() / args.ref, 
@@ -110,7 +134,7 @@ for ss_key, ss in ss_dicts.items():
         f.write(cmd)
 
     # Command call
-    os.system(cmd)
+    # os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
 
 # *==================== Plot output handling ====================*
@@ -148,3 +172,9 @@ for gplot_name, ss_list in group_plots.items():
     # Command call
     os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
+
+html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path, base_template="base.html")
+with open(output_folder / "generated_summary.html","w") as f:
+    f.write(html_summary)
+    f.write("\n")
+

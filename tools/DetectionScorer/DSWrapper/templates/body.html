@@ -1,0 +1,12 @@
+<div id="container">
+  {% for group_plot_name, group_plot_data in group_plots.items() %}
+    <h1>Group plot {{group_plot_name}}</h1>
+    <p>Description</p>
+    <embed src={{output_path}}/{{group_plot_name}}/{{gplot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
+  {% endfor %}
+  {% for ss, ss_data in ss_dicts.items() %}
+    <h1>Plot {{ss_data["name"]}}</h1>
+    <p>Description</p>
+    <embed src={{output_path}}/{{ss_data["sub_output_folder"]}}/{{splot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
+  {% endfor %}
+</div>
