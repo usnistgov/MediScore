@@ -67,7 +67,7 @@ def overlap_cols(mySys, myRef):
 # Loading the specified file
 def define_file_name(path, ref_fname, tag_name):
     my_fname = os.path.join(path, str(ref_fname.split('.')[:-1]).strip("['']") + tag_name)
-    v_print("Specified JT file: {}".format(my_fname))
+    v_print("Specified file: {}".format(my_fname))
     return my_fname
 
 def JT_merge(ref_dir, ref_fname, mainDF):
@@ -89,7 +89,6 @@ def JT_merge(ref_dir, ref_fname, mainDF):
     else:
         v_print("JT meta files do not exist, therefore, merging process will be skipped")
         return mainDF
-
 
 def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
     # Loading the reference file
