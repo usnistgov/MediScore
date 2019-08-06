@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+import os
+import sys
+import pickle
 import numpy as np
 #import scipy.stats as st
-#import sys
 #import time
 
 
@@ -133,12 +134,12 @@ def load_dm_file(path):
     """ Load Dump (DM) files
         path: DM file name along with the path
     """
-    import pickle
-    file = open(path, 'rb')
-    myObject = pickle.load(file)
-    file.close()
+    with open(path, 'rb') as file:
+        if sys.version_info[0] >= 3:
+            myObject = pickle.load(file, encoding='latin1') 
+        else:
+            myObject = pickle.load(file)
     return myObject
-
 
 class Metrics:
 
