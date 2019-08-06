@@ -7,7 +7,10 @@ import pickle
 import numpy as np
 #import scipy.stats as st
 #import time
-from sklearn_metrics import roc_curve, roc_auc_score
+if sys.version_info[0] < 3:
+    from sklearn.metrics import roc_curve, roc_auc_score
+else:
+    from sklearn_metrics import roc_curve, roc_auc_score
 
 
 class detMetrics:
