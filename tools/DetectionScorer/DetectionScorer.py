@@ -92,11 +92,34 @@ def JT_merge(ref_dir, ref_fname, mainDF):
         v_print("JT meta files do not exist, therefore, merging process will be skipped")
         return mainDF
 
-def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
+def exp_merge(refDF, expDF):
+    exp_no_overlap, exp_overlap = overlap_cols(refDF, expDF)
+    v_print("EXP overlap columns: {}".format(exp_overlap))
+    v_print("Merging (left join) the Exp Meta csv file with the reference file ...\n")
+    new_df = pd.merge(refDF, expDF, how='left', on=exp_overlap)
+    v_print("Ref cols num: {}\n Exp Meta cols num: {}\n, Merged cols num: {}".format(
+        refDF.shape, expDF.shape, new_df.shape))
+    return new_df
+
+
+def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
     # Loading the reference file
     v_print("Ref file name: {}".format(os.path.join(refDir, inRef)))
     myRefDir = os.path.dirname(os.path.join(refDir, inRef))
     myRef = load_csv(os.path.join(refDir, inRef))
+    # Joining Ref and Exp meta file if exp meta exists
+    v_print("Ref shape before merging: {}".format(myRef.shape))
+    for exp_list in inExp:
+        exp_fname = os.path.join(refDir, exp_list)
+        if os.path.isfile(exp_fname):
+            v_print ("{} file does exist".format(exp_fname))
+            myExp = load_csv(exp_fname)
+            myRef = exp_merge(myRef, myExp)
+            v_print("Ref shape after merging: {}".format(myRef.shape))
+            #print(myRef)
+        else:
+            print ("{} file does not exist".format(exp_fname))
+
     # Loading the index file
     v_print("Index file name: {}".format(os.path.join(refDir, inIndex)))
     myIndex = load_csv(os.path.join(refDir, inIndex))
@@ -196,7 +219,7 @@ def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut)
             ('ylabel_fontsize', 11)])
 
     if plotType.lower() == "det":
-        plot_opts["xscale"] = "deviate"
+        plot_opts["xscale"] = "normppf"
         plot_opts["ylabel"] = "Miss Detection Rate [%]"
         plot_opts["xticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
         plot_opts["yticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
@@ -329,6 +352,8 @@ def command_interface():
                         help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)', metavar='character')  # Optional
     parser.add_argument('-s', '--inSys', default='', type=is_file_specified,
                         help='Specify a CSV file of the system output formatted according to the specification: [e.g., expid/system_output.csv] (default: %(default)s)', metavar='character')
+    parser.add_argument('-e', '--inExp', default=[], nargs='*',
+                        help='Specify a expermental reference file if any [e.g., references/exp.csv] (default: %(default)s)', metavar='character')
     # Metric Options
     parser.add_argument('--farStop', type=restricted_float, default=0.1,
                         help='Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) FAR 10%)', metavar='float')
@@ -409,6 +434,7 @@ if __name__ == '__main__':
                 self.inIndex = "NC2017-manipulation-index.csv"
                 self.sysDir = "../../data/test_suite/detectionScorerTests/baseline"
                 self.inSys = "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+                self.inExp = ["NC2017-manipulation-ref-global-blur.csv","NC2017-manipulation-ref-local-blur.csv"]
                 # TSV
                 #self.tsv = "tsv_example/q-query-example.tsv"
                 self.tsv = ""
@@ -476,7 +502,7 @@ if __name__ == '__main__':
         index_m_df = load_csv(os.path.join(args.refDir, args.inRef),
                               mysep='\t', mydtype=sys_dtype)
     else:
-        index_m_df, sys_ref_overlap = input_ref_idx_sys(args.refDir, args.inRef, args.inIndex, args.sysDir,
+        index_m_df, sys_ref_overlap = input_ref_idx_sys(args.refDir, args.inRef, args.inExp, args.inIndex, args.sysDir,
                                                         args.inSys, args.outRoot, args.outSubMeta, sys_dtype)
 
     total_num = index_m_df.shape[0]

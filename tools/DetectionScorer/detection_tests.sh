@@ -329,7 +329,18 @@ test_c4_4() {
                        --ci --ciLevel .95
 }
 
-
+test_c4_5() {
+    echo "  * Testing a number of experiment meta merging with reference  *  "
+    echo_and_run python DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                -t manipulation \
+                --refDir "$testsuite_directory/reference" \
+                -r "NC2017-manipulation-ref.csv" \
+                -x "NC2017-manipulation-index.csv" \
+                --sysDir "$testsuite_directory/baseline" \
+                -s "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv" \
+                -e "NC2017-manipulation-ref-global-blur.csv" "NC2017-manipulation-ref-local-blur.csv" \
+                --outMeta
+}
 
 test_c5_1() {
     echo "  * Testing all the examples from the DetectionScorer ReadMe document *  "
@@ -495,4 +506,5 @@ test_c5_1() {
                 --sysDir $testsuite_directory/baseline \
                 -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
                 -qm "Purpose==['remove'] and Operation ==['FillContentAwareFill']"
+
 }
