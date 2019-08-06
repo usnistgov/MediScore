@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Metrics to assess performance on classification task given scores
 """
 # License: BSD 3 clause
