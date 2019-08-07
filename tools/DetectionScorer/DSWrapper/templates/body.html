@@ -6,7 +6,7 @@
   {% endfor %}
   {% for ss, ss_data in ss_dicts.items() %}
     <h1>Plot {{ss_data["name"]}}</h1>
-    <p>Description</p>
+    <p>{{ss_data["description"]}}</p>
     <embed src={{output_path}}/{{ss_data["sub_output_folder"]}}/{{splot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
   {% endfor %}
 </div>
