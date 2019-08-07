@@ -5,8 +5,8 @@ import json
 import warnings
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+
+
 from scipy.stats import norm
 from collections import OrderedDict
 
@@ -44,6 +44,7 @@ class Render:
             plot_options = self.get_plot_options(plot_type, plot_options=plot_options)
 
             if not display:
+                import matplotlib
                 matplotlib.use('Agg')
           
             if multi_fig is True:
@@ -73,6 +74,7 @@ class Render:
         return (adjusted_width, height)
 
     def plotter(self, data_list, annotations, plot_type, plot_options, display, infinity=999999, auto_width=True):
+        import matplotlib.pyplot as plt
         label_list = [obj.line_options.get("label",None) for obj in data_list]
 
         if auto_width and any(label_list):
@@ -127,6 +129,7 @@ class Render:
             self.plot_options = opt_dict
 
     def close_fig(self, figure):
+        from matplotlib import plt
         plt.close(figure)
 
     @staticmethod

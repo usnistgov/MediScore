@@ -15,11 +15,11 @@ import json
 import logging
 import argparse
 from ast import literal_eval
-
+from render import Render, Annotation
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
 
-from render import Render, Annotation
+
 import detMetrics as dm
 from detMetrics import detMetrics
 from datacontainer import DataContainer
@@ -266,7 +266,7 @@ def evaluate_input(args):
             MDC_list.append(mdc_obj)
 
     # Case 2: One mdc pickled file
-    elif args.input.endswith('.dm'):
+    elif args.input.endswith('.dm') or args.input.endswith('.dc'):
         logger.debug("Input of type 2 detected")
         input_type = 2
         mdc_obj = call_loader(args.input, logger)
@@ -554,6 +554,7 @@ if __name__ == '__main__':
         
     #*-* Plotting *-*
     logger.debug("Plotting...")
+    
     # Creation of the Renderer
     myRender = Render(plot_type=args.plotType, plot_options=plot_opts)
     # Plotting

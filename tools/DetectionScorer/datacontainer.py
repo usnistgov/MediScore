@@ -3,7 +3,7 @@ import sys
 import pickle
 import numpy as np
 
-class DataContainer:
+class DataContainer(object):
     data_container_version = "2.0"
 
     def __init__(self, fa_array, fn_array, threshold, label=None, line_options=None, fa_label=None, fn_label=None):
@@ -69,7 +69,7 @@ class DataContainer:
         file_name: Dump file name
         """        
         file = open(file_name, 'wb')
-        pickle.dump(self, file)
+        pickle.dump(self, file, protocol=2)
         file.close()
 
     def __repr__(self, indent=2):

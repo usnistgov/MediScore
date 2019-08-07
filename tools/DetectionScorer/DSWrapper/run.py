@@ -159,6 +159,7 @@ for gplot_key, gplot_data in group_plots.items():
         sub_output_path = output_folder / ss_dicts[gplot_ss_dict["s_name"]]["sub_output_folder"]
         data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_prefix)),
                      "label": ss_dicts[gplot_ss_dict["s_name"]]["name"],
+                     "show_label":True,
                      "gplot_ss_dict": True}
         line_options = gplot_ss_dict["s_line_options"]
         input_list.append([data_dict, line_options])
