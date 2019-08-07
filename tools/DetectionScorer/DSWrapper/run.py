@@ -67,7 +67,7 @@ def create_html(output_path, group_plots, ss_dicts, template_path,
                           "group_plots":group_plots,
                           "ss_dicts":ss_dicts,
                           "gplot_filename":group_plot_name,
-                          "splot_filename":sub_plot_name
+                          "splot_filename":sub_plot_name,
                           "output_path":str(output_path),
                           "pdf_reader_width":"1000px",
                           "pdf_reader_height":"800px"
@@ -132,14 +132,14 @@ for ss_key, ss in ss_dicts.items():
         f.write(cmd)
 
     # Command call
-    # os.system(cmd)
+    os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
 
 # *==================== Plot output handling ====================*
 
 for gplot_key, gplot_data in group_plots.items():
     start = time.time()
-    print("Plotting '{}'... ".format(gplot_name), end='', flush=True)
+    print("Plotting '{}'... ".format(gplot_data["name"]), end='', flush=True)
 
     sub_output_plot_path = output_folder / gplot_key
     sub_output_plot_path.mkdir(parents=True, exist_ok=True)
@@ -154,7 +154,7 @@ for gplot_key, gplot_data in group_plots.items():
         data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_suffix)),
                      "label": ss_dicts[gplot_ss_dict["s_name"]]["name"],
                      "gplot_ss_dict": True}
-        line_options = ss_dict["s_line_options"]
+        line_options = gplot_ss_dict["s_line_options"]
         input_list.append([data_dict, line_options])
 
     # Command creation
@@ -172,7 +172,7 @@ for gplot_key, gplot_data in group_plots.items():
     os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
 
-html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path, base_template="base.html")
+html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path)
 with open(output_folder / "generated_summary.html","w") as f:
     f.write(html_summary)
     f.write("\n")
