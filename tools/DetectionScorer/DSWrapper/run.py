@@ -13,7 +13,7 @@ from jinja2 import Environment, FileSystemLoader
 def args_parser(command_line=True):
     if command_line:
         parser = argparse.ArgumentParser(description=None)
-        parser.add_argument("-i", "--scoring-dict", help="path to the json file describing each sub scoring parameters", type=Path)
+        parser.add_argument("-I", "--scoring-dict", help="path to the json file describing each sub scoring parameters", type=Path)
         parser.add_argument("-g", "--plotgroup-dict", help="path to the json file describing each plot group", type=Path)
         parser.add_argument("-d", "--datasetDir", help="path to the dataset directory", type=Path)
         parser.add_argument("-S", "--sysDir", help="path to the dataset directory", type=Path)
@@ -87,10 +87,14 @@ args = args_parser(command_line=False)
 # *---------- Paths processing ----------*
 output_folder = args.output.parent
 templates_path = Path(os.getcwd()) / "templates" 
-directory_abspaths = [args.datasetDir.resolve(), args.sysDir.resolve()]
+
+directory_abspaths = [args.datasetDir.resolve(), 
+                      args.sysDir.resolve()]
+
 file_abspaths = [args.system.resolve(), 
                  args.datasetDir.resolve() / args.ref, 
                  args.datasetDir.resolve() / args.index]
+
 process_args_paths(directory_abspaths, file_abspaths, [output_folder])
 
 with open(args.scoring_dict, 'r') as f:
@@ -123,7 +127,7 @@ for ss_key, ss in ss_dicts.items():
     ds_stderr_filepath = sub_output_path / "detection_scorer.stderr"
 
     # Command creation
-    cmd_name = "{}.command.sh".format(ss["name"])
+    cmd_name = "{}.command.sh".format(ss_key)
     cmd = detection_scorer_command_template.format(script_path=args.detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
                                   system=args.system, index=args.index, ref=args.ref, output=sub_output_path / output_file_prefix, 
                                   verbose='-v', stdout=ds_stdout_filepath, stderr=ds_stderr_filepath, options=ss["options"])
@@ -134,8 +138,8 @@ for ss_key, ss in ss_dicts.items():
         f.write(cmd)
 
     # Command call
-    os.system(cmd)
-    print("Done. ({:.2f}s)".format(time.time() - start))
+    exit_code = os.system(cmd)
+    print("Done. ({:.2f}s), exit code = {}".format(time.time() - start, exit_code))
 
 # *==================== Plot output handling ====================*
 
@@ -171,8 +175,8 @@ for gplot_key, gplot_data in group_plots.items():
         f.write(cmd)
 
     # Command call
-    os.system(cmd)
-    print("Done. ({:.2f}s)".format(time.time() - start))
+    exit_code = os.system(cmd)
+    print("Done. ({:.2f}s), exit code = {}".format(time.time() - start, exit_code))
 
 # *=================== Html summary generation ===================*
 
