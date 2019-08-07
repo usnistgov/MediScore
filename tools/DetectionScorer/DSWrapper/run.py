@@ -21,6 +21,8 @@ def args_parser(command_line=True):
         parser.add_argument("-i", "--index", help="path to the index file", type=Path)
         parser.add_argument("-r", "--ref", help="path to the ref folder", type=Path)
         parser.add_argument("-o", "--output", help="path to the output folder", type=Path)
+        parser.add_argument("--detection-scorer-path", default="./DetectionScorer.py",help="path to the detection scorer script",type=Path)
+        parser.add_argument("--dm-render-path", default="./DMRender.py",help="path to the DMRender script",type=Path)
         args = parser.parse_args()
     else:
         class ArgsNameSpace():
@@ -33,6 +35,8 @@ def args_parser(command_line=True):
                 self.output = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/output/nist_001")
                 self.index = Path("indexes/MFC19_EvalPart1-manipulation-image-index.csv")
                 self.ref = Path("reference/manipulation-image/MFC19_EvalPart1-manipulation-image-ref.csv")
+                self.detection_scorer_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DetectionScorer.py"
+                self.dm_render_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DMRender.py"
             def __repr__(self):
                 return "Args list:\n - {}".format("\n - ".join(["{:>6}: {}".format(a,v) for a,v in self.__dict__.items()]))
         args = ArgsNameSpace()
@@ -75,6 +79,9 @@ def create_html(output_path, group_plots, ss_dicts, template_path,
     html = template.render(template_variables)
     return html
 
+
+# *---------------------------------- Main ----------------------------------*
+
 args = args_parser(command_line=False)
 
 # *---------- Paths processing ----------*
@@ -94,20 +101,16 @@ with open(args.plotgroup_dict, 'r') as f:
 
 # *-------- Hard coded variables --------*
 
-detection_scorer_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DetectionScorer.py"
-dm_render_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DMRender.py"
-
-output_file_suffix = args.output.name
+output_file_prefix = args.output.name
 display = '' # --display
 
-# *---------------------------------------*
+# *--------------------------------------*
 
 detection_scorer_command_template = "python {script_path} --sysDir {sysDir} --refDir {refDir} -s {system} -x {index} -r {ref} -o {output} {verbose} {options} 1> {stdout} 2> {stderr}"
 dm_render_command_template = "python {script_path} -i {input} --plotType ROC {display} --outputFolder {output} --outputFileNameSuffix {output_fsuffix} --logtype {logtype} --console_log_level {console_log_level} 1> {stdout} 2> {stderr}"
 
 # *======================== Scoring runs ========================*
 
-sub_output_folder_paths = []
 for ss_key, ss in ss_dicts.items():
     start = time.time()
     print("Processing query '{}'... ".format(ss["name"]), end='', flush=True)
@@ -115,15 +118,14 @@ for ss_key, ss in ss_dicts.items():
     # Output folder organisation
     sub_output_path = output_folder / ss["sub_output_folder"]
     sub_output_path.mkdir(parents=True, exist_ok=True)
-    sub_output_folder_paths.append(sub_output_path)
 
     ds_stdout_filepath = sub_output_path / "detection_scorer.stdout"
     ds_stderr_filepath = sub_output_path / "detection_scorer.stderr"
 
     # Command creation
     cmd_name = "{}.command.sh".format(ss["name"])
-    cmd = detection_scorer_command_template.format(script_path=detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
-                                  system=args.system, index=args.index, ref=args.ref, output=sub_output_path / output_file_suffix, 
+    cmd = detection_scorer_command_template.format(script_path=args.detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
+                                  system=args.system, index=args.index, ref=args.ref, output=sub_output_path / output_file_prefix, 
                                   verbose='-v', stdout=ds_stdout_filepath, stderr=ds_stderr_filepath, options=ss["options"])
     cmd = remove_multiple_spaces(cmd)
 
@@ -151,7 +153,7 @@ for gplot_key, gplot_data in group_plots.items():
     gplot_ss_dicts = gplot_data["ss_list"]
     for gplot_ss_dict in gplot_ss_dicts:
         sub_output_path = output_folder / ss_dicts[gplot_ss_dict["s_name"]]["sub_output_folder"]
-        data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_suffix)),
+        data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_prefix)),
                      "label": ss_dicts[gplot_ss_dict["s_name"]]["name"],
                      "gplot_ss_dict": True}
         line_options = gplot_ss_dict["s_line_options"]
@@ -159,7 +161,7 @@ for gplot_key, gplot_data in group_plots.items():
 
     # Command creation
     cmd_name = "dm_render.command.sh"
-    cmd = dm_render_command_template.format(script_path=dm_render_path, input='"{}"'.format(input_list), output=sub_output_plot_path, 
+    cmd = dm_render_command_template.format(script_path=args.dm_render_path, input='"{}"'.format(input_list), output=sub_output_plot_path, 
                                             output_fsuffix="plot", display=display, logtype=1, console_log_level="INFO", 
                                             stdout=dmr_stdout_filepath, stderr=dmr_stderr_filepath)
     cmd = remove_multiple_spaces(cmd)
@@ -171,6 +173,8 @@ for gplot_key, gplot_data in group_plots.items():
     # Command call
     os.system(cmd)
     print("Done. ({:.2f}s)".format(time.time() - start))
+
+# *=================== Html summary generation ===================*
 
 html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path)
 with open(output_folder / "generated_summary.html","w") as f:
