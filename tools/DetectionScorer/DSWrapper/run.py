@@ -57,22 +57,20 @@ def process_args_paths(directory_abspaths, file_abspaths, path_make_dir):
 def remove_multiple_spaces(string):
     return ' '.join(string.split())
 
-def create_html(output_path, group_plots, ss_dicts, template_path, base_template="base.html"):
-    group_plot_name = "plot_ROC_all.pdf"
-    sub_plot_name = "nist_001_qm_query_ROC.pdf"
-    plot_paths = [os.path.join(group, group_plot_name) for group in group_plots]
+def create_html(output_path, group_plots, ss_dicts, template_path, 
+                group_plot_name="plot_ROC_all.pdf",sub_plot_name = "nist_001_qm_query_ROC.pdf"):
     file_loader = FileSystemLoader(str(template_path))
     env = Environment(loader=file_loader)
-    template = env.get_template(base_template)
+    template = env.get_template("base.html")
     template_variables = {"page_title": "Scoring Summary",
                           "container_id": "#container",
                           "group_plots":group_plots,
-                          "output_path":str(output_path),
-                          'gplot_filename':group_plot_name,
-                          "pdf_reader_width":"1000px",
-                          "pdf_reader_height":"800px",
                           "ss_dicts":ss_dicts,
+                          "gplot_filename":group_plot_name,
                           "splot_filename":sub_plot_name
+                          "output_path":str(output_path),
+                          "pdf_reader_width":"1000px",
+                          "pdf_reader_height":"800px"
                          }    
     html = template.render(template_variables)
     return html
@@ -139,22 +137,23 @@ for ss_key, ss in ss_dicts.items():
 
 # *==================== Plot output handling ====================*
 
-for gplot_name, ss_list in group_plots.items():
+for gplot_key, gplot_data in group_plots.items():
     start = time.time()
     print("Plotting '{}'... ".format(gplot_name), end='', flush=True)
 
-    sub_output_plot_path = output_folder / gplot_name
+    sub_output_plot_path = output_folder / gplot_key
     sub_output_plot_path.mkdir(parents=True, exist_ok=True)
 
     dmr_stdout_filepath = sub_output_plot_path / "dm_render.stdout"
     dmr_stderr_filepath = sub_output_plot_path / "dm_render.stderr"
 
     input_list = []
-    for ss_dict in ss_list:
-        sub_output_path = output_folder / ss_dicts[ss_dict["s_name"]]["sub_output_folder"]
+    gplot_ss_dicts = gplot_data["ss_list"]
+    for gplot_ss_dict in gplot_ss_dicts:
+        sub_output_path = output_folder / ss_dicts[gplot_ss_dict["s_name"]]["sub_output_folder"]
         data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_suffix)),
-                     "label": ss_dicts[ss_dict["s_name"]]["name"],
-                     "show_label": True}
+                     "label": ss_dicts[gplot_ss_dict["s_name"]]["name"],
+                     "gplot_ss_dict": True}
         line_options = ss_dict["s_line_options"]
         input_list.append([data_dict, line_options])
 
