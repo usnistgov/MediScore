@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import print_function
 import os
 import sys
 import json
 import time
 import shlex
 import argparse
-# import subprocess
+
+if sys.version_info[:2] < (3, 4):
+    from platform import python_version
+    print("The lowest supported python version for this script is python 3.4.\nYour current python version is {}".format(python_version()))
+    sys.exit()
+
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
+
+
 
 def args_parser(command_line=True):
     if command_line:
@@ -21,8 +28,7 @@ def args_parser(command_line=True):
         parser.add_argument("-i", "--index", help="path to the index file", type=Path)
         parser.add_argument("-r", "--ref", help="path to the ref folder", type=Path)
         parser.add_argument("-o", "--output", help="path to the output folder", type=Path)
-        parser.add_argument("--detection-scorer-path", default="./DetectionScorer.py",help="path to the detection scorer script",type=Path)
-        parser.add_argument("--dm-render-path", default="./DMRender.py",help="path to the DMRender script",type=Path)
+        parser.add_argument("-m", "--mediscore-path", help="path to the root of mediscore folder",type=Path)
         args = parser.parse_args()
     else:
         class ArgsNameSpace():
@@ -35,8 +41,7 @@ def args_parser(command_line=True):
                 self.output = Path("/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/output/nist_001")
                 self.index = Path("indexes/MFC19_EvalPart1-manipulation-image-index.csv")
                 self.ref = Path("reference/manipulation-image/MFC19_EvalPart1-manipulation-image-ref.csv")
-                self.detection_scorer_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DetectionScorer.py"
-                self.dm_render_path = "/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DMRender.py"
+                self.mediscore_path = Path("/Users/tnk12/Documents/MediScoreV2")
             def __repr__(self):
                 return "Args list:\n - {}".format("\n - ".join(["{:>6}: {}".format(a,v) for a,v in self.__dict__.items()]))
         args = ArgsNameSpace()
@@ -86,14 +91,22 @@ args = args_parser(command_line=False)
 
 # *---------- Paths processing ----------*
 output_folder = args.output.parent
-templates_path = Path(os.getcwd()) / "templates" 
 
-directory_abspaths = [args.datasetDir.resolve(), 
-                      args.sysDir.resolve()]
+
+detection_scorer_path = args.mediscore_path / "tools/DetectionScorer/DetectionScorer.py"
+dm_render_path = args.mediscore_path / "tools/DetectionScorer/DMRender.py"
+templates_path = args.mediscore_path / "tools/DetectionScorer/DSWrapper/templates"
+
+directory_abspaths = [args.mediscore_path.resolve(), 
+                      args.datasetDir.resolve(), 
+                      args.sysDir.resolve(),
+                      templates_path.resolve()]
 
 file_abspaths = [args.system.resolve(), 
                  args.datasetDir.resolve() / args.ref, 
-                 args.datasetDir.resolve() / args.index]
+                 args.datasetDir.resolve() / args.index, 
+                 detection_scorer_path.resolve(),
+                 dm_render_path.resolve()]
 
 process_args_paths(directory_abspaths, file_abspaths, [output_folder])
 
@@ -128,7 +141,7 @@ for ss_key, ss in ss_dicts.items():
 
     # Command creation
     cmd_name = "{}.command.sh".format(ss_key)
-    cmd = detection_scorer_command_template.format(script_path=args.detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
+    cmd = detection_scorer_command_template.format(script_path=detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
                                   system=args.system, index=args.index, ref=args.ref, output=sub_output_path / output_file_prefix, 
                                   verbose='-v', stdout=ds_stdout_filepath, stderr=ds_stderr_filepath, options=ss["options"])
     cmd = remove_multiple_spaces(cmd)
@@ -139,7 +152,10 @@ for ss_key, ss in ss_dicts.items():
 
     # Command call
     exit_code = os.system(cmd)
-    print("Done. ({:.2f}s), exit code = {}".format(time.time() - start, exit_code))
+    print("Done. ({:.2f}s)".format(time.time() - start))
+    if exit_code != 0:
+        print("Error: Something went wrong during the execution of the Detection Scorer.\nPlease check the error ouptut at {}".format(ds_stderr_filepath))
+        sys.exit(1)
 
 # *==================== Plot output handling ====================*
 
@@ -166,7 +182,7 @@ for gplot_key, gplot_data in group_plots.items():
 
     # Command creation
     cmd_name = "dm_render.command.sh"
-    cmd = dm_render_command_template.format(script_path=args.dm_render_path, input='"{}"'.format(input_list), output=sub_output_plot_path, 
+    cmd = dm_render_command_template.format(script_path=dm_render_path, input='"{}"'.format(input_list), output=sub_output_plot_path, 
                                             output_fsuffix="plot", display=display, logtype=1, console_log_level="INFO", 
                                             stdout=dmr_stdout_filepath, stderr=dmr_stderr_filepath)
     cmd = remove_multiple_spaces(cmd)
@@ -177,7 +193,10 @@ for gplot_key, gplot_data in group_plots.items():
 
     # Command call
     exit_code = os.system(cmd)
-    print("Done. ({:.2f}s), exit code = {}".format(time.time() - start, exit_code))
+    print("Done. ({:.2f}s)".format(time.time() - start))
+    if exit_code != 0:
+        print("Error: Something went wrong during the execution of DMRender.\nPlease check the error ouptut at {}".format(dmr_stderr_filepath))
+        sys.exit(1)
 
 # *=================== Html summary generation ===================*
 
