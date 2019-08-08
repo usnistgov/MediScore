@@ -102,7 +102,7 @@ def exp_merge(refDF, expDF):
     return new_df
 
 
-def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
+def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype, gt):
     # Loading the reference file
     v_print("Ref file name: {}".format(os.path.join(refDir, inRef)))
     myRefDir = os.path.dirname(os.path.join(refDir, inRef))
@@ -149,14 +149,14 @@ def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, out
     if outSubMeta:
         v_print("Saving the sub_meta csv file...")
         sub_pm_df = index_m_df[index_ref_overlap +
-                               index_ref_no_overlap + ["IsTarget"] + sys_ref_no_overlap]
+                               index_ref_no_overlap + [gt] + sys_ref_no_overlap]
         v_print("sub_pm_df columns: {}".format(sub_pm_df.columns))
         sub_pm_df.to_csv(outRoot + '_subset_meta.csv', index=False, sep='|')
 
     return index_m_df, sys_ref_overlap
 
 
-def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap):
+def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt, gt_value):
 
     m_df = df.copy()
     # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
@@ -166,7 +166,7 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
 
     v_print("Creating partitions for queries ...\n")
     selection = f.Partition(m_df, query_str, query_mode, fpr_stop=farStop, isCI=ci,
-                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap)
+                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap, gt=gt, gt_value=gt_value)
     DM_List = selection.part_dm_list
     v_print("Number of partitions generated = {}\n".format(len(DM_List)))
 
@@ -183,7 +183,7 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
     return DM_List, table_df, selection
 
 
-def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response):
+def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, gt):
 
     m_df = df.copy()
 
@@ -194,7 +194,7 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
         m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
-    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
+    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df[gt], fpr_stop=farStop,
                        isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
     DM_List = [DM]
     table_df = DM.render_table()
@@ -402,6 +402,10 @@ def command_interface():
                               help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
     parser.add_argument('--optOut', action='store_true',
                         help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation','OptOutTemporal','OptOutSpatial']")
+    parser.add_argument('-gt', '--groundTruth',default='IsTarget',
+                        help="Define a target ground truth (default: %(default)s)", metavar='character')
+    parser.add_argument('-gv', '--gtValue', default='Y',
+                        help="Define a ground truth value to be (default: %(default)s)", metavar='character')
 
     args = parser.parse_args()
 
@@ -464,6 +468,8 @@ if __name__ == '__main__':
                 #self.queryManipulation = ""
                 self.optOut = False
                 self.verbose = True
+                self.groundTruth = "IsTarget"
+                self.gtValue = "Y"
 
         args = ArgsList()
         # Verbosity option
@@ -503,7 +509,7 @@ if __name__ == '__main__':
                               mysep='\t', mydtype=sys_dtype)
     else:
         index_m_df, sys_ref_overlap = input_ref_idx_sys(args.refDir, args.inRef, args.inExp, args.inIndex, args.sysDir,
-                                                        args.inSys, args.outRoot, args.outSubMeta, sys_dtype)
+                                                        args.inSys, args.outRoot, args.outSubMeta, sys_dtype, args.groundTruth)
 
     total_num = index_m_df.shape[0]
     v_print("Total data number: {}".format(total_num))
@@ -537,7 +543,8 @@ if __name__ == '__main__':
 
         v_print("Query_mode: {}, Query_str: {}".format(query_mode,query_str))
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
-                                                      args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap)
+                                                      args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel,
+                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth, args.gtValue)
         # Render plots with the options
         q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType, args.plotTitle, args.plotSubtitle, args.optOut)
         opts_list, plot_opts = query_plot_options(
@@ -547,7 +554,7 @@ if __name__ == '__main__':
     else:
         #print(index_m_df.columns)
         DM_List, table_df = no_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
-                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response)
+                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, args.groundTruth)
         # Render plots with the options
         opts_list, plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
                                             args.plotTitle, args.plotSubtitle, args.optOut)

@@ -13,7 +13,7 @@ class Partition:
        DetMetric objects.
     """
 
-    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1, sys_res='all', overlap_cols=['ProbeFileID']):
+    def __init__(self, dataframe, query, factor_mode, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1, sys_res='all', overlap_cols=['ProbeFileID'], gt='IsTarget', gt_value='Y'):
         """Constructor
         Attributes:
         - factor_mode : 'q' = single query
@@ -52,9 +52,9 @@ class Partition:
             self.part_query_list = self.gen_part_query_list()
             self.n_partitions = len(self.part_values_list)
 
-        self.part_df_list = self.gen_part_df_list(dataframe)
+        self.part_df_list = self.gen_part_df_list(dataframe, gt)
         self.part_dm_list = self.gen_part_dm_list(
-            fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res)
+            fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res, gt, gt_value)
 
     def gen_index_factor(self, list_factors):
         """ Function used only in the constructor,
@@ -132,7 +132,7 @@ class Partition:
             List_part_query.append(''.join([x + ' & ' for x in part_list])[:-3])
         return List_part_query
 
-    def gen_part_df_list(self, df):
+    def gen_part_df_list(self, df, gt):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -145,7 +145,7 @@ class Partition:
             #            df_list.append(df.query(query))
             if self.factor_mode == 'qm':
                 # testing as the manipulation task
-                query = "(" + query + " and IsTarget == ['Y']) or IsTarget == ['N']"
+                query = "(" + query + " and " + gt + " == ['Y']) or " + gt +" == ['N']"
                 print("Query for target trials: {}".format(query))
 
 #                #TBD:while testing by each task (remove, add, clone), may need to drop_duplicates by the chosen column in the tf mode
@@ -163,7 +163,7 @@ class Partition:
 
         return df_list
 
-    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res):
+    def gen_part_dm_list(self, fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res, gt, gt_value):
         """ Function used only in the constructor,
             should'nt be called outside of the class.
 
@@ -173,9 +173,10 @@ class Partition:
         dm_list = list()
         for df, query in zip(self.part_df_list, self.part_query_list):
             if not df.empty:
+                print("Current target groundTruth: {}  , GT value {}".format(gt, gt_value))
                 print("Current query: {}".format(query))
                 dm_list.append(dm.detMetrics(
-                    df['ConfidenceScore'], df['IsTarget'], fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res))
+                    df['ConfidenceScore'], df[gt], fpr_stop, isCI, ciLevel, dLevel, total_num, sys_res, gt_value))
             else:
                 print(
                     '#### Error: Empty DataFrame for this query "{}"\n#### Please verify factors conditions.'.format(query))
