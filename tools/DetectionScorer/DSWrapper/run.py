@@ -91,8 +91,6 @@ args = args_parser(command_line=False)
 
 # *---------- Paths processing ----------*
 output_folder = args.output.parent
-
-
 detection_scorer_path = args.mediscore_path / "tools/DetectionScorer/DetectionScorer.py"
 dm_render_path = args.mediscore_path / "tools/DetectionScorer/DMRender.py"
 templates_path = args.mediscore_path / "tools/DetectionScorer/DSWrapper/templates"
@@ -106,7 +104,8 @@ file_abspaths = [args.system.resolve(),
                  args.datasetDir.resolve() / args.ref, 
                  args.datasetDir.resolve() / args.index, 
                  detection_scorer_path.resolve(),
-                 dm_render_path.resolve()]
+                 dm_render_path.resolve(),
+                 templates_path.resolve()]
 
 process_args_paths(directory_abspaths, file_abspaths, [output_folder])
 
