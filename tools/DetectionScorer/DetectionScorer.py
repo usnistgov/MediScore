@@ -156,7 +156,7 @@ def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, out
     return index_m_df, sys_ref_overlap
 
 
-def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt, gt_value):
+def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt):
 
     m_df = df.copy()
     # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
@@ -166,7 +166,7 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
 
     v_print("Creating partitions for queries ...\n")
     selection = f.Partition(m_df, query_str, query_mode, fpr_stop=farStop, isCI=ci,
-                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap, gt=gt, gt_value=gt_value)
+                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap, gt=gt)
     DM_List = selection.part_dm_list
     v_print("Number of partitions generated = {}\n".format(len(DM_List)))
 
@@ -404,8 +404,6 @@ def command_interface():
                         help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation','OptOutTemporal','OptOutSpatial']")
     parser.add_argument('-gt', '--groundTruth',default='IsTarget',
                         help="Define a target ground truth (default: %(default)s)", metavar='character')
-    parser.add_argument('-gv', '--gtValue', default='Y',
-                        help="Define a ground truth value to be (default: %(default)s)", metavar='character')
 
     args = parser.parse_args()
 
@@ -433,12 +431,19 @@ if __name__ == '__main__':
                 print("Debugging mode: initiating ...")
                 # Inputs
                 self.task = "manipulation"
-                self.refDir = "../../data/test_suite/detectionScorerTests/reference"
-                self.inRef = "NC2017-manipulation-ref.csv"
-                self.inIndex = "NC2017-manipulation-index.csv"
-                self.sysDir = "../../data/test_suite/detectionScorerTests/baseline"
-                self.inSys = "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
-                self.inExp = ["NC2017-manipulation-ref-global-blur.csv","NC2017-manipulation-ref-local-blur.csv"]
+                # self.refDir = "../../data/test_suite/detectionScorerTests/reference"
+                # self.inRef = "NC2017-manipulation-ref.csv"
+                # self.inIndex = "NC2017-manipulation-index.csv"
+                # self.sysDir = "../../data/test_suite/detectionScorerTests/baseline"
+                # self.inSys = "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+                # self.inExp = ["NC2017-manipulation-ref-global-blur.csv","NC2017-manipulation-ref-local-blur.csv"]
+
+                self.refDir = "../../data/test_suite/detectionScorerTests/sample/reference"
+                self.inRef = "NC2016-manipulation-ref-2.csv"
+                self.inIndex = "NC2016-manipulation-index.csv"
+                self.sysDir = "../../data/test_suite/detectionScorerTests/sample/"
+                self.inSys = "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv"
+                self.inExp = []
                 # TSV
                 #self.tsv = "tsv_example/q-query-example.tsv"
                 self.tsv = ""
@@ -464,12 +469,11 @@ if __name__ == '__main__':
                 # Query options
                 self.query = ""
                 self.queryPartition = ""
-                self.queryManipulation = ["TaskID==['manipulation']"]
+                self.queryManipulation = ["TaskID==['Manipulation']"]
                 #self.queryManipulation = ""
                 self.optOut = False
                 self.verbose = True
-                self.groundTruth = "IsTarget"
-                self.gtValue = "Y"
+                self.groundTruth = "ProbePostProcessed"
 
         args = ArgsList()
         # Verbosity option
@@ -544,7 +548,7 @@ if __name__ == '__main__':
         v_print("Query_mode: {}, Query_str: {}".format(query_mode,query_str))
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
                                                       args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel,
-                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth, args.gtValue)
+                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth)
         # Render plots with the options
         q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType, args.plotTitle, args.plotSubtitle, args.optOut)
         opts_list, plot_opts = query_plot_options(

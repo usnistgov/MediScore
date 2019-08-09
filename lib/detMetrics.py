@@ -23,13 +23,13 @@ class detMetrics:
        - Confidence Interval for AUC
     """
 
-    def __init__(self, score, gt, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1, sys_res='all', gt_value='Y'):
+    def __init__(self, score, gt, fpr_stop=1, isCI=False, ciLevel=0.9, dLevel=0.0, total_num=1, sys_res='all'):
         """Constructor"""
 #        s = time.time()
 #        print("sklearn: Computing points...")
 #        sys.stdout.flush()
         self.fpr, self.tpr, self.fnr, self.thres, self.t_num, self.nt_num = Metrics.compute_points_sk(
-            score, gt, gt_value)
+            score, gt)
         #print("count {}".format(score.shape))
         # print("Total# ({}),  Target# ({}),  NonTarget# ({}) \n".format(
         #     total_num, self.t_num, self.nt_num)) #total_num is the original total number
@@ -148,7 +148,7 @@ def load_dm_file(path):
 class Metrics:
 
     @staticmethod
-    def compute_points_sk(score, gt, gt_value='Y'):
+    def compute_points_sk(score, gt):
         """ computes false positive rate (FPR) and false negative rate (FNR)
         given trial scores and their ground-truth using the sklearn package.
         score: system output scores
@@ -161,7 +161,7 @@ class Metrics:
 #        label[yes_mask] = 1
         # TODO:  Print the number of trials (target and non-target) here
 
-        label = np.where(gt == gt_value, 1, 0)
+        label = np.where(gt == 'Y', 1, 0)
         target_num = label[label == 1].size
         nontarget_num = label[label == 0].size
         # print("Total# ({}),  Target# ({}),  NonTarget# ({}) \n".format(

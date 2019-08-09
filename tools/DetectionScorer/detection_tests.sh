@@ -342,6 +342,19 @@ test_c4_5() {
                 --outMeta
 }
 
+test_c4_6() {
+    echo "  * Testing a target ground truth and its value  * "
+    echo_and_run python DetectionScorer.py -o "$compcheckfile_outdir/$checkfile_outdir_basename" \
+                       -t manipulation \
+                       --refDir "$testsuite_directory/sample/reference/" \
+				       -x "NC2016-manipulation-index.csv" \
+				       -r "NC2016-manipulation-ref-2.csv" \
+                       --sysDir "$testsuite_directory/sample/" \
+				       -s "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv" \
+                       -gt "ProbePostProcessed"
+
+}
+
 test_c5_1() {
     echo "  * Testing all the examples from the DetectionScorer ReadMe document *  "
 

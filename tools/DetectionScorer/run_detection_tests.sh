@@ -64,8 +64,12 @@ run_test test_c4_4 "$testsuite_directory/checkfiles/test_c4_4"
 echo
 echo "VALIDATING EXPERIMENT META JOIN WITH REF"
 echo
-
 run_test test_c4_5 "$testsuite_directory/checkfiles/test_c4_5"
+
+echo
+echo "VALIDATING a different ground truth and its value"
+echo
+run_test test_c4_6 "$testsuite_directory/checkfiles/test_c4_6"
 
 echo
 echo "CASE 5: VALIDATING ALL THE EXAMPLES FROM THE DETECTIONSCORER README DOCUMENT"
