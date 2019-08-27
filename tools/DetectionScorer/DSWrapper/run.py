@@ -15,8 +15,6 @@ if sys.version_info[:2] < (3, 4):
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
-
-
 def args_parser(command_line=True):
     if command_line:
         parser = argparse.ArgumentParser(description=None)
@@ -67,7 +65,7 @@ def remove_multiple_spaces(string):
     return ' '.join(string.split())
 
 def create_html(output_path, group_plots, ss_dicts, template_path, 
-                group_plot_name="plot_ROC_all.pdf",sub_plot_name = "nist_001_qm_query_ROC.pdf"):
+                group_plot_name="plot_ROC_all.pdf", sub_plot_name = "nist_001_qm_query_ROC.pdf"):
     file_loader = FileSystemLoader(str(template_path))
     env = Environment(loader=file_loader)
     template = env.get_template("base.html")
@@ -87,7 +85,7 @@ def create_html(output_path, group_plots, ss_dicts, template_path,
 
 # *---------------------------------- Main ----------------------------------*
 
-args = args_parser(command_line=False)
+args = args_parser(command_line=True)
 
 # *---------- Paths processing ----------*
 output_folder = args.output.parent
@@ -104,8 +102,7 @@ file_abspaths = [args.system.resolve(),
                  args.datasetDir.resolve() / args.ref, 
                  args.datasetDir.resolve() / args.index, 
                  detection_scorer_path.resolve(),
-                 dm_render_path.resolve(),
-                 templates_path.resolve()]
+                 dm_render_path.resolve()]
 
 process_args_paths(directory_abspaths, file_abspaths, [output_folder])
 
@@ -199,7 +196,7 @@ for gplot_key, gplot_data in group_plots.items():
 
 # *=================== Html summary generation ===================*
 
-html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path)
+html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path, sub_plot_name="foo_qm_query_ROC.pdf")
 with open(output_folder / "generated_summary.html","w") as f:
     f.write(html_summary)
     f.write("\n")

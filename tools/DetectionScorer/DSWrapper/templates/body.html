@@ -2,11 +2,11 @@
   {% for group_plot_key, group_plot_data in group_plots.items() %}
     <h1>Group plot {{group_plot_data["name"]}}</h1>
     <p>{{group_plot_data["description"]}}</p>
-    <embed src={{output_path}}/{{group_plot_key}}/{{gplot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
+    <embed src={{group_plot_key}}/{{gplot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
   {% endfor %}
   {% for ss, ss_data in ss_dicts.items() %}
     <h1>Plot {{ss_data["name"]}}</h1>
     <p>{{ss_data["description"]}}</p>
-    <embed src={{output_path}}/{{ss_data["sub_output_folder"]}}/{{splot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
+    <embed src={{ss_data["sub_output_folder"]}}/{{splot_filename}} type="application/pdf" width={{pdf_reader_width}} height={{pdf_reader_height}} />
   {% endfor %}
 </div>
