@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href=/Users/tnk12/Documents/MediScoreV2/tools/DetectionScorer/DSWrapper/markdown/github-markdown.css>
+<style>
+    .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+        .markdown-body {
+            padding: 15px;
+        }
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+    <h1>DSWrapper</h1>
+<p>DSWrapper is a Python module that helps creating pipeline based on the Detection Scorer and the DMRender.  </p>
+<h2>Requirements</h2>
+<p>DSWrapper needs Python 3.4 or later (pathlib) and has the following dependencies:<br />
+- Jinja2</p>
+<h2>Input description</h2>
+<p>The DSWrapper use two json files to generated the html summary</p>
+<ul>
+<li>
+<p>Scoring json file:</p>
+<ul>
+<li>Defines the metadata of each scoring, its name, location and scoring options</li>
+</ul>
+</li>
+<li>
+<p>Plot json file:</p>
+<ul>
+<li>Defines the way to group multiple scoring plot into ones, with description and line options</li>
+</ul>
+</li>
+</ul>
+<h4>Scoring json file format</h4>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;scoring_key&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># Name of the scoring (not used in the summary)</span>
+        <span class="s2">&quot;sub_output_folder&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># Name of the folder created for this scoring under the main output folder</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># Scoring description (not used in the summary)</span>
+        <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="o">...</span> <span class="c1"># Any options for the detection scorer not already provided to the DSWrapper, </span>
+                       <span class="c1"># like --outMeta, --outSubMeta, --dump, --farStop, --ciLev, --ci, -e, -qm, -t, --plotTitle</span>
+    <span class="p">},</span> 
+    <span class="p">{</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h4>Plot json file format</h4>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;group_plot_key&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;group_plot_name&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># Paragraphe name for the plot</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># Text display under the group plot name</span>
+        <span class="s2">&quot;ss_list&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;s_name&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="c1"># scoring_key defined in the scoring json file</span>
+                <span class="s2">&quot;s_line_options&quot;</span><span class="p">:</span> <span class="p">{}</span> <span class="c1"># Matplotlib line options for this scoring curves</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;s_name&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
+                <span class="s2">&quot;s_line_options&quot;</span><span class="p">:</span> <span class="p">{}</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>Usage</h2>
+<div class="highlight"><pre><span></span>python dswrapper.py <span class="se">\</span>
+--scoring-dict ./scoring_dicts/my.scorings.json <span class="se">\</span>
+--plotgroup-dict ./plot_group_dicts/my.plots.json <span class="se">\</span>
+--datasetDir ./datasets/ <span class="se">\</span>
+--system  ./system/my_system.csv <span class="se">\</span>
+--output ./output/my_prefix_output <span class="se">\</span>
+--index indexes/index.csv <span class="se">\</span>
+--ref reference/manipulation-image/ref.csv <span class="se">\</span>
+--only-group-plots <span class="se">\</span>
+--mediscore-path ../../..
+</pre></div>
+</article>
+</body>
+</html>
