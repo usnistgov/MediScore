@@ -1,9 +1,0 @@
-{"gplot_1":{"name":"gplot_1_name", 
-	        "description":"gplot_1_description",
-	        "ss_list":[{"s_name":"s1","s_line_options":{}}, 
-		    		   {"s_name":"s2","s_line_options":{}}]},
- "gplot_2":{"name":"gplot_2_name", 
-	        "description":"gplot_2_description",
-	        "ss_list":[{"s_name":"s2","s_line_options":{}}, 
- 	        		   {"s_name":"s3","s_line_options":{}}, 
- 	        		   {"s_name":"s4","s_line_options":{}}]}}
