@@ -34,7 +34,7 @@ parser.add_argument("-m", "--markdown-path", help="path to the markdown file", t
 parser.add_argument("-o", "--html-output", help="path to html output", type=Path, required=True)
 args = parser.parse_args()
 
-readme_name = "ReadMe.mk"
+readme_name = "ReadMe.md"
 html_output_name = "ReadMe.html"
 readme_path = args.markdown_path
 html_path = args.html_output

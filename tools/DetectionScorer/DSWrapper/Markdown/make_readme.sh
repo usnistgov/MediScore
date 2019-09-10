@@ -1,1 +1,1 @@
-python MKtoHTML.py -m ../ReadMe.mk -o ../ReadMe.html
+python MKtoHTML.py -m ../ReadMe.md -o ../ReadMe.html
