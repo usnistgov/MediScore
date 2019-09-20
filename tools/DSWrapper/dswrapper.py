@@ -160,7 +160,7 @@ args = args_parser(len(sys.argv) > 1, test_name="test_2", test_config_file=Path(
 # *---------- Paths and files processing ----------*
 detection_scorer_path = args.mediscore_path / "tools/DetectionScorer/DetectionScorer.py"
 dm_render_path = args.mediscore_path / "tools/DetectionScorer/DMRender.py"
-templates_path = args.mediscore_path / "tools/DetectionScorer/DSWrapper/templates"
+templates_path = args.mediscore_path / "tools/DSWrapper/templates"
 
 directory_abspaths = [args.mediscore_path.resolve(), 
                       args.datasetDir.resolve(), 
