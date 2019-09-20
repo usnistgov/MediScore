@@ -40,7 +40,9 @@ def args_parser(command_line, test_name=None, test_config_file=Path("./test/test
         parser.add_argument("-s", "--system", help="path to the system output", type=Path)      
         parser.add_argument("-i", "--index", help="path to the index file", type=Path)
         parser.add_argument("-r", "--ref", help="path to the ref folder", type=Path)
-        parser.add_argument("-o", "--output", help="path to the output folder", type=Path)
+        parser.add_argument("-o", "--output-dir", help="path to the output folder", type=Path)
+        parser.add_argument("-O", "--output-prefix", help="prefix to the filenames", default="")
+        parser.add_argument("-n", "--summary-filename", help="name of the html generated summary ", default="generated_summary.html")
         parser.add_argument("-p", "--only-group-plots", help="Flag to display only the groups plots. The individuals sub-scorings plots are still computed.", action="store_true")
         parser.add_argument("-m", "--mediscore-path", help="path to the root of mediscore folder",type=Path)
         args = parser.parse_args()
@@ -62,10 +64,12 @@ def args_parser(command_line, test_name=None, test_config_file=Path("./test/test
                             self.datasetDir = Path(config["datasetDir"])
                             self.sysDir = Path(config["sysDir"])
                             self.system = Path(config["system"])
-                            self.output = Path(config["output"])
+                            self.output_dir = Path(config["output_dir"])
+                            self.output_prefix = config["output_prefix"]
                             self.index = Path(config["index"])
                             self.ref = Path(config["ref"])
                             self.only_group_plots = config.getboolean("only-group-plots")
+                            self.summary_filename = config["summary_filename"]
                             self.mediscore_path = Path(config["mediscore_path"])
                         
                         def __repr__(self):
@@ -154,8 +158,6 @@ def create_html(output_path, group_plots, ss_dicts, template_path, only_group_pl
 args = args_parser(len(sys.argv) > 1, test_name="test_2", test_config_file=Path("./test/tests.ini"))
 
 # *---------- Paths and files processing ----------*
-output_folder = args.output.parent
-output_file_prefix = args.output.name
 detection_scorer_path = args.mediscore_path / "tools/DetectionScorer/DetectionScorer.py"
 dm_render_path = args.mediscore_path / "tools/DetectionScorer/DMRender.py"
 templates_path = args.mediscore_path / "tools/DetectionScorer/DSWrapper/templates"
@@ -171,7 +173,7 @@ file_abspaths = [args.system.resolve(),
                  detection_scorer_path.resolve(),
                  dm_render_path.resolve()]
 
-process_args_paths(directory_abspaths, file_abspaths, [output_folder])
+process_args_paths(directory_abspaths, file_abspaths, [args.output_dir])
 
 with open(args.scoring_dict, 'r') as f:
     ss_dicts = json.load(f)
@@ -194,7 +196,7 @@ for ss_key, ss in ss_dicts.items():
     print("Processing query '{}'... ".format(ss["name"]), end='', flush=True)
 
     # Output folder organisation
-    sub_output_path = output_folder / ss["sub_output_folder"]
+    sub_output_path = args.output_dir / ss["sub_output_folder"]
     sub_output_path.mkdir(parents=True, exist_ok=True)
 
     ds_stdout_filepath = sub_output_path / "detection_scorer.stdout"
@@ -203,7 +205,7 @@ for ss_key, ss in ss_dicts.items():
     # Command creation
     cmd_name = "{}.command.sh".format(ss_key)
     cmd = detection_scorer_command_template.format(script_path=detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
-                                  system=args.system, index=args.index, ref=args.ref, output=sub_output_path / output_file_prefix, 
+                                  system=args.system, index=args.index, ref=args.ref, output=sub_output_path / args.output_prefix, 
                                   verbose='-v', options=ss["options"])
     cmd = remove_multiple_spaces(cmd)
 
@@ -225,7 +227,7 @@ for gplot_key, gplot_data in group_plots.items():
     start = time.time()
     print("Plotting '{}'... ".format(gplot_data["name"]), end='', flush=True)
 
-    sub_output_plot_path = output_folder / gplot_key
+    sub_output_plot_path = args.output_dir / gplot_key
     sub_output_plot_path.mkdir(parents=True, exist_ok=True)
 
     dmr_stdout_filepath = sub_output_plot_path / "dm_render.stdout"
@@ -234,8 +236,8 @@ for gplot_key, gplot_data in group_plots.items():
     input_list = []
     gplot_ss_dicts = gplot_data["ss_list"]
     for gplot_ss_dict in gplot_ss_dicts:
-        sub_output_path = output_folder / ss_dicts[gplot_ss_dict["s_name"]]["sub_output_folder"]
-        data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(output_file_prefix)),
+        sub_output_path = args.output_dir / ss_dicts[gplot_ss_dict["s_name"]]["sub_output_folder"]
+        data_dict = {"path": str(sub_output_path / "{}_query_0.dm".format(args.output_prefix)),
                      "label": ss_dicts[gplot_ss_dict["s_name"]]["name"],
                      "show_label":True,
                      "gplot_ss_dict": True}
@@ -263,8 +265,8 @@ for gplot_key, gplot_data in group_plots.items():
         sys.exit(1)
 
 # *=================== Html summary generation ===================*
-html_file_output = output_folder / "generated_summary.html"
-html_summary = create_html(output_folder, group_plots, ss_dicts, templates_path, args.only_group_plots, sub_plot_name= output_file_prefix+"_qm_query_ROC.pdf")
+html_file_output = args.output_dir / args.summary_filename
+html_summary = create_html(args.output_dir, group_plots, ss_dicts, templates_path, args.only_group_plots, sub_plot_name= args.output_prefix+"_qm_query_ROC.pdf")
 with open(html_file_output,"w") as f:
     f.write(html_summary)
     f.write("\n")
