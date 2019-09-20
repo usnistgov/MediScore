@@ -175,10 +175,10 @@ file_abspaths = [args.system.resolve(),
 
 process_args_paths(directory_abspaths, file_abspaths, [args.output_dir])
 
-with open(args.scoring_dict, 'r') as f:
+with args.scoring_dict.open(mode='r') as f:
     ss_dicts = json.load(f)
 
-with open(args.plotgroup_dict, 'r') as f:
+with args.plotgroup_dict.open(mode='r') as f:
     group_plots = json.load(f)
 
 # *--------------------------------------*
