@@ -46,6 +46,7 @@ def args_parser(command_line, test_name=None, test_config_file=Path("./test/test
         parser.add_argument("-n", "--summary-filename", help="name of the html generated summary ", default="generated_summary.html")
         parser.add_argument("-p", "--only-group-plots", help="Flag to display only the groups plots. The individuals sub-scorings plots are still computed.", action="store_true")
         parser.add_argument("-m", "--mediscore-path", help="path to the root of mediscore folder",type=Path)
+        parser.add_argument(      "--extra-det-scorer-opts", help="string of extra options provided to the detection scorer", default="")
         args = parser.parse_args()
         return args
 
@@ -185,7 +186,7 @@ with args.plotgroup_dict.open(mode='r') as f:
 
 # *--------------------------------------*
 
-detection_scorer_command_template = "python {script_path} --sysDir {sysDir} --refDir {refDir} -s {system} -x {index} -r {ref} -o {output} {verbose} {options}"
+detection_scorer_command_template = "python {script_path} --sysDir {sysDir} --refDir {refDir} -s {system} -x {index} -r {ref} -o {output} {verbose} {options} {extra_opts}"
 dm_render_command_template = "python {script_path} -i {input} --plotType ROC {display} --outputFolder {output} --outputFileNameSuffix {output_fprefix} --logtype {logtype} --console_log_level {console_log_level}"
 cmd_output_string = " 1> {stdout} 2> {stderr}"
 
@@ -208,7 +209,7 @@ for ss_key, ss in ss_dicts.items():
     cmd_name = "{}.command.sh".format(ss_key)
     cmd = detection_scorer_command_template.format(script_path=detection_scorer_path, sysDir=args.sysDir, refDir=args.datasetDir, 
                                   system=args.system, index=args.index, ref=args.ref, output=sub_output_path / args.output_prefix, 
-                                  verbose='-v', options=ss["options"])
+                                  extra_opts=args.extra_det_scorer_opts, verbose='-v', options=ss["options"])
     cmd = remove_multiple_spaces(cmd)
 
     # Command storage
