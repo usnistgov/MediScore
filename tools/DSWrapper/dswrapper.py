@@ -15,6 +15,7 @@ if sys.version_info[:2] < (3, 4):
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
+
 def args_parser(command_line, test_name=None, test_config_file=Path("./test/tests.ini")):
     """This function returns and object with command lines arguments as attributes.
     Either stored in an argparse.Namespace object or a custom ArgsNameSpace class for testing.
@@ -158,9 +159,10 @@ def create_html(output_path, group_plots, ss_dicts, template_path, only_group_pl
 args = args_parser(len(sys.argv) > 1, test_name="test_2", test_config_file=Path("./test/tests.ini"))
 
 # *---------- Paths and files processing ----------*
+dswrapper_dir = Path(__file__).resolve().parent
 detection_scorer_path = args.mediscore_path / "tools/DetectionScorer/DetectionScorer.py"
 dm_render_path = args.mediscore_path / "tools/DetectionScorer/DMRender.py"
-templates_path = args.mediscore_path / "tools/DSWrapper/templates"
+templates_path = dswrapper_dir / "templates"
 
 directory_abspaths = [args.mediscore_path.resolve(), 
                       args.datasetDir.resolve(), 
