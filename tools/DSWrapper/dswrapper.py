@@ -5,6 +5,7 @@ import json
 import time
 import shlex
 import argparse
+import traceback
 import configparser
 
 if sys.version_info[:2] < (3, 4):
@@ -178,11 +179,21 @@ file_abspaths = [args.system.resolve(),
 
 process_args_paths(directory_abspaths, file_abspaths, [args.output_dir])
 
-with args.scoring_dict.open(mode='r') as f:
-    ss_dicts = json.load(f)
+try:
+    with args.scoring_dict.open(mode='r') as f:
+        ss_dicts = json.load(f)
+except Exception as e:
+    print("Error: Something went wrong during the reading of the following json file:\n{}".format(args.scoring_dict))
+    print("{}".format(traceback.format_exc()))
+    sys.exit(1)
 
-with args.plotgroup_dict.open(mode='r') as f:
-    group_plots = json.load(f)
+try:
+    with args.plotgroup_dict.open(mode='r') as f:
+        group_plots = json.load(f)
+except Exception as e:
+    print("Error: Something went wrong during the reading of the following json file:\n{}".format(args.plotgroup_dict))
+    print("{}".format(traceback.format_exc()))
+    sys.exit(1)
 
 # *--------------------------------------*
 
