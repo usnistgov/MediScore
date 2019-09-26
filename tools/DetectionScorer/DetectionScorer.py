@@ -109,16 +109,19 @@ def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, out
     myRef = load_csv(os.path.join(refDir, inRef))
     # Joining Ref and Exp meta file if exp meta exists
     v_print("Ref shape before merging: {}".format(myRef.shape))
-    for exp_list in inExp:
-        exp_fname = os.path.join(refDir, exp_list)
-        if os.path.isfile(exp_fname):
-            v_print ("{} file does exist".format(exp_fname))
-            myExp = load_csv(exp_fname)
-            myRef = exp_merge(myRef, myExp)
-            v_print("Ref shape after merging: {}".format(myRef.shape))
-            #print(myRef)
-        else:
-            print ("{} file does not exist".format(exp_fname))
+
+    if len(inExp) > 0:
+        for exp_list in inExp:
+            exp_fname = os.path.join(refDir, exp_list)
+            if os.path.isfile(exp_fname):
+                v_print ("{} file does exist".format(exp_fname))
+                myExp = load_csv(exp_fname)
+                myRef = exp_merge(myRef, myExp)
+                v_print("Ref shape after merging: {}".format(myRef.shape))
+                #print(myRef)
+            else:
+                print ("ERROR: {} file does not exist".format(exp_fname))
+                sys.exit(1)
 
     # Loading the index file
     v_print("Index file name: {}".format(os.path.join(refDir, inIndex)))

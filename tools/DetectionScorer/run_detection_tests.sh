@@ -67,7 +67,7 @@ echo
 run_test test_c4_5 "$testsuite_directory/checkfiles/test_c4_5"
 
 echo
-echo "VALIDATING a different ground truth and its value"
+echo "VALIDATING A DIFFERENT GROUND TRUTH AND ITS VALUE"
 echo
 run_test test_c4_6 "$testsuite_directory/checkfiles/test_c4_6"
 
