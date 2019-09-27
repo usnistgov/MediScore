@@ -224,7 +224,7 @@ for ss_key, ss in ss_dicts.items():
     cmd = remove_multiple_spaces(cmd)
 
     # Command storage
-    with open(sub_output_path / cmd_name,'w') as f:
+    with (sub_output_path / cmd_name).open(mode='w') as f:
         f.write(cmd)
 
     cmd += cmd_output_string.format(stdout=ds_stdout_filepath, stderr=ds_stderr_filepath)
@@ -266,7 +266,7 @@ for gplot_key, gplot_data in group_plots.items():
     cmd = remove_multiple_spaces(cmd)
 
     # Command storage
-    with open(sub_output_plot_path / cmd_name,'w') as f:
+    with (sub_output_plot_path / cmd_name).open(mode='w') as f:
         f.write(cmd)
 
     cmd += cmd_output_string.format(stdout=dmr_stdout_filepath, stderr=dmr_stderr_filepath)
@@ -281,7 +281,7 @@ for gplot_key, gplot_data in group_plots.items():
 # *=================== Html summary generation ===================*
 html_file_output = args.output_dir / args.summary_filename
 html_summary = create_html(args.output_dir, group_plots, ss_dicts, templates_path, args.only_group_plots, sub_plot_name= args.output_prefix+"_qm_query_ROC.pdf")
-with open(html_file_output,"w") as f:
+with html_file_output.open(mode="w") as f:
     f.write(html_summary)
     f.write("\n")
 print("Html summary created and located at:\n{}".format(html_file_output))
