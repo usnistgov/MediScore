@@ -13,7 +13,7 @@ example data for the following tools:
                                     (Localization) Scorer
   ProvenanceFilteringScorer       - Scorer for Provenance Filtering
   ProvenanceGraphBuildingScorer   - Scorer for Provenance Graph Building
-  VideoTemporalLocalisationScoer  - Scorer for Video Temporal Localization
+  VideoTemporalLocalisationScorer  - Scorer for Video Temporal Localization
 
 
 This distribution consists of a set of Python2.7 scripts intended to be run
