@@ -21,8 +21,10 @@ reliability, or any other characteristic."
 import argparse
 import numpy as np
 import pandas as pd
+from pandas.io.json import json_normalize
 import os  # os.system("pause") for windows command line
 import sys
+import json
 
 from collections import OrderedDict
 from itertools import cycle
@@ -72,12 +74,13 @@ def define_file_name(path, ref_fname, tag_name):
     v_print("Specified file: {}".format(my_fname))
     return my_fname
 
-def JT_merge(ref_dir, ref_fname, mainDF):
+def JT_merge(ref_dir, ref_fname, mainDF, parseJsonRefColumn):
     join_fname = define_file_name(ref_dir, ref_fname, '-probejournaljoin.csv')
     mask_fname = define_file_name(ref_dir, ref_fname, '-journalmask.csv')
     if os.path.isfile(join_fname) and os.path.isfile(mask_fname):
         joinDF = pd.read_csv(join_fname, sep='|', low_memory=False)
         maskDF = pd.read_csv(mask_fname, sep='|', low_memory=False)
+
         jt_no_overlap, jt_overlap = overlap_cols(joinDF, maskDF)
         v_print("JT overlap columns: {}".format(jt_overlap))
         v_print("Merging (left join) the JournalJoin and JournalMask csv files with the reference file ...\n")
@@ -87,6 +90,29 @@ def JT_merge(ref_dir, ref_fname, mainDF):
         new_df = pd.merge(mainDF, jt_meta, how='left', on=meta_overlap)
         v_print("Main cols num: {}\n Meta cols num: {}\n, Merged cols num: {}".format(
             mainDF.shape, jt_meta.shape, new_df.shape))
+
+        if (len(parseJsonRefColumn) > 0):
+            v_print("Expanding JSON strings to columns.")
+            for col in parseJsonRefColumn:
+                if (col in new_df.columns):
+                    def safe_parse(s):
+                        if (not isinstance(s,str)):
+                        #if (not isinstance(s,basestring)):
+                            return({})
+                        try:
+                            json_object = json.loads(s)
+                            ### Remove spaces from keys
+                            json_object = {k.replace(' ', '_'): v for k, v in json_object.items()}
+                        except ValueError as e:
+                            return({})
+                        return json_object
+                    _x = [ safe_parse(s) for s in new_df[col].str.replace("'", "\"").str.replace("True", "true").str.replace("False", "false") ]
+                    _df = json_normalize(_x)
+                    new_df = new_df.join(_df.add_prefix(col + "_"))
+                else:
+                    v_print("   Warning: Columns " + col + " not found in reference file.  Ignoring")
+            v_print("JSON Expanded Cols: {} {}".format(new_df.shape, new_df.columns.values))
+                    
         return new_df
     else:
         v_print("JT meta files do not exist, therefore, merging process will be skipped")
@@ -159,13 +185,13 @@ def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, out
     return index_m_df, sys_ref_overlap
 
 
-def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt):
+def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt, parseJsonRefColumn):
 
     m_df = df.copy()
     # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
     if task in ['manipulation', 'splice', 'camera', 'eventverification']:
         v_print("Merging the JournalJoin and JournalMask for the {} task\n".format(task))
-        m_df = JT_merge(refDir, inRef, df)
+        m_df = JT_merge(refDir, inRef, df, parseJsonRefColumn)
 
     v_print("Creating partitions for queries ...\n")
     selection = f.Partition(m_df, query_str, query_mode, fpr_stop=farStop, isCI=ci,
@@ -186,14 +212,14 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
     return DM_List, table_df, selection
 
 
-def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, gt):
+def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, gt, parseJsonRefColumn):
 
     m_df = df.copy()
 
     if outMeta:  # save all metadata for analysis purpose
         v_print("Saving all the meta info csv file ...")
         v_print("Merging the JournalJoin and JournalMask for the {} task\n, But do not score with this data".format(task))
-        meta_df = JT_merge(refDir, inRef, m_df)
+        meta_df = JT_merge(refDir, inRef, m_df, parseJsonRefColumn)
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
         m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
@@ -357,6 +383,8 @@ def command_interface():
                         help='Specify a CSV file of the system output formatted according to the specification: [e.g., expid/system_output.csv] (default: %(default)s)', metavar='character')
     parser.add_argument('-e', '--inExp', default=[], nargs='*',
                         help='Specify a expermental reference file if any [e.g., references/exp.csv] (default: %(default)s)', metavar='character')
+    parser.add_argument('--parseJsonRefColumn', default=[], nargs='*',
+                        help='Parse the JSON string within the identified reference metadata columns. Columns are namespaced as <REFCOL>_<JSONKEY>. (default: %(default)s)', metavar='character')
     # Metric Options
     parser.add_argument('--farStop', type=restricted_float, default=0.1,
                         help='Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) FAR 10%)', metavar='float')
@@ -551,7 +579,7 @@ if __name__ == '__main__':
         v_print("Query_mode: {}, Query_str: {}".format(query_mode,query_str))
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
                                                       args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel,
-                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth)
+                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth, args.parseJsonRefColumn)
         # Render plots with the options
         q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType, args.plotTitle, args.plotSubtitle, args.optOut)
         opts_list, plot_opts = query_plot_options(
@@ -561,7 +589,8 @@ if __name__ == '__main__':
     else:
         #print(index_m_df.columns)
         DM_List, table_df = no_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
-                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, args.groundTruth)
+                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, args.groundTruth,
+                                          args.parseJsonRefColumn)
         # Render plots with the options
         opts_list, plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
                                             args.plotTitle, args.plotSubtitle, args.optOut)
