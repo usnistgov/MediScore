@@ -355,6 +355,19 @@ test_c4_6() {
 
 }
 
+test_c4_7() {
+    echo "  * Testing JSON Expansion for use in queries - Manipulation *  "
+    echo_and_run python DetectionScorer.py -o $compcheckfile_outdir/$checkfile_outdir_basename-14 \
+                -t manipulation \
+                --refDir $testsuite_directory/ \
+                -r reference/NC2017-manipulation-ref.csv \
+                -x reference/NC2017-manipulation-index.csv \
+                --sysDir $testsuite_directory/baseline \
+                -s Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv \
+                -qm "Purpose==['remove'] and json_field_tag1 == ['CC 2019']" "Purpose==['clone'] and json_field_tag_2 == ['yes']" \
+                --parseJsonRefColumn json_field
+}
+
 test_c5_1() {
     echo "  * Testing all the examples from the DetectionScorer ReadMe document *  "
 
