@@ -2,10 +2,6 @@
 
 source detection_tests.sh
 
-run_test test_c4_7 "$testsuite_directory/checkfiles/test_c4_7"
-
-exit
-
 echo
 echo "CASE 1: VALIDATING FULL SCORING WITH BASELINEs"
 echo
