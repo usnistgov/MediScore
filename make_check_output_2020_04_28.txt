@@ -1,0 +1,564 @@
+(cd tools/Validator; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/Validator'
+(python2 -m unittest validatorUnitTest)
+BASIC FUNCTIONALITY validation of SSD-event validator beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning system output content validation for camera.
+
+CASE C0: Validating incorrect TrainCamID.
+CASE C0 validated.
+
+CASE C1: Validating incorrect mask dimensions.
+CASE C1 validated.
+
+CASE C2: Validating incorrect mask dimensions for a Failed Validation.
+CASE C2 validated.
+Validating syntactic content of system output.
+CASE D4: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...
+CASE D4a: Validating behavior for incorrect headers, duplicate rows, and different number of rows than in index file...
+CASE D4b: Validating behavior for duplicate rows and different number of rows than in index file...
+CASE D4c: Validating behavior for improper confidence scores...
+CASE D4d: Validating behavior for inappropriate ProbeStatus and DonorStatus values...
+CASE D4 validated.
+
+CASE D6: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...
+CASE D6 validated.
+
+CASE D6.1: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...
+CASE D6.1 validated.
+
+CASE D6.2: Validating behavior for mask semantic deviations. NC2016-1893.jpg and NC2016_6847-mask.jpg are (marked as) jpg's. NC2016_1993-mask.png is not single-channel. NC2016_4281-mask.png doesn't have the same dimensions...
+CASE D6.2 validated.
+
+CASE D7: Validating behavior when at least one mask file is not empty and not present...
+CASE D7 validated.
+BASIC FUNCTIONALITY validation of DSD validator beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning experiment ID naming error validations.
+
+CASE D0: Validating behavior when files don't exist.
+CASE D0 validated.
+
+CASE D1: Validating behavior when detecting consecutive underscores ('_') in name...
+CASE D1 validated.
+
+CASE D2: Validating behavior when detecting excessive underscores elsewhere...
+CASE D2 validated.
+BASIC FUNCTIONALITY validation of SSD-event validator beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning system output content validation for event verification.
+
+CASE EV0: Validating incorrect event for probe.
+CASE EV0 validated.
+
+CASE EV1: Validating incorrect ProbeStatus....
+CASE EV1 validated.
+Validating syntactic content of system output.
+CASE S4: Validating behavior for incorrect headers and different number of rows than in index file...
+CASE S4a: Validating behavior for incorrect headers
+CASE S4b: Validating behavior for duplicate rows and different number of rows than in index file...
+CASE S4c: Validating behavior for improper confidence scores...
+CASE S4d: Validating behavior for improper OptOut...
+CASE S4 validated.
+
+CASE S5: Validating behavior when mask is not a png...
+CASE S5 validated.
+
+CASE S6: Validating behavior when mask is not single channel and when mask does not have the same dimensions.
+CASE S6 validated.
+
+CASE S6.1: Validating behavior when mask is not single channel and when mask does not have the same dimensions.
+CASE S6.1 validated.
+
+CASE S6.2: Validating behavior when mask is not single channel and when mask does not have the same dimensions.
+CASE S6.2 validated.
+
+CASE S7: Validating behavior when system output column number is less than 3.
+CASE S7 validated.
+
+CASE S8: Validating behavior when mask file is not present.
+CASE S8 validated.
+BASIC FUNCTIONALITY validation of SSD validator beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning experiment ID naming error validations.
+CASE S0: Validating behavior when files don't exist.
+CASE S0 validated.
+
+CASE S1: Validating behavior when detecting consecutive underscores ('_') in name...
+CASE S1 validated.
+
+CASE S2: Validating behavior when detecting excessive underscores elsewhere...
+CASE S2 validated.
+BASIC FUNCTIONALITY validation of SSD video validator beginning...
+BASIC FUNCTIONALITY validated.
+
+Beginning system output content validation for video.
+
+CASE V0: Validating improper intervals for video.
+CASE V0 validated.
+
+CASE V1: Validating intervals that are out of bounds.
+CASE V1 validated.
+
+CASE V2: Validating collections of intervals that intersect.
+
+CASE V2.1: Validating the above with option to ignore intersecting intervals.
+CASE V2 validated.
+
+CASE V3: Validating collections of intervals that intersect. Checking behavior for a FailValidation column.
+CASE V3 validated.
+
+CASE V4: Validating intervals that are out of bounds, but can be excused by ignoring EOF.
+CASE V4 validated.
+(./finalcheck.sh)
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/Validator'
+(cd tools/DetectionScorer; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/DetectionScorer'
+** Running UnitTests **
+
+# Ignoring warnings here
+(python -W ignore DetectionScorerUnitTest.py)
+Total# (4),  Target# (2),  NonTarget# (2) 
+
+Total# (7),  Target# (3),  NonTarget# (4) 
+
+Total# (4),  Target# (2),  NonTarget# (2) 
+
+All detection scorer unit test successfully complete.
+
+** Running detection tests **
+
+
+CASE 1: VALIDATING FULL SCORING WITH BASELINEs
+
+** Running detection test case: 'test_c1_1' **
+*** OK ***
+** Running detection test case: 'test_c1_2' **
+*** OK ***
+** Running detection test case: 'test_c1_3' **
+*** OK ***
+
+CASE 2.1: VALIDATING SYSTEM OUTPUT TESTCASEs
+
+** Running detection test case: 'test_c2_1' **
+*** OK ***
+** Running detection test case: 'test_c2_2' **
+*** OK ***
+** Running detection test case: 'test_c2_3' **
+*** OK ***
+** Running detection test case: 'test_c2_4' **
+*** OK ***
+** Running detection test case: 'test_c2_5' **
+*** OK ***
+
+CASE 2.2: VALIDATING SYSTEM OUTPUT TESTCASEs with the OptOut option
+
+** Running detection test case: 'test_c2_6' **
+*** OK ***
+** Running detection test case: 'test_c2_7' **
+*** OK ***
+** Running detection test case: 'test_c2_8' **
+*** OK ***
+** Running detection test case: 'test_c2_9' **
+*** OK ***
+
+CASE 2.3: VALIDATING SYSTEM OUTPUT TESTCASEs for Event Verification
+
+** Running detection test case: 'test_c2_10' **
+*** OK ***
+
+CASE 2.4: VALIDATING SYSTEM OUTPUT TESTCASEs with the outMeta options
+
+** Running detection test case: 'test_c2_11' **
+*** OK ***
+** Running detection test case: 'test_c2_12' **
+*** OK ***
+** Running detection test case: 'test_c2_13' **
+*** OK ***
+
+CASE 2.5: VALIDATING SYSTEM OUTPUT TESTCASEs for Camera Detection
+
+** Running detection test case: 'test_c2_14' **
+*** OK ***
+
+CASE 3: VALIDATING FULL INDEX and SUBSET INDEX FILEs
+
+** Running detection test case: 'test_c3_1' **
+*** OK ***
+** Running detection test case: 'test_c3_2' **
+*** OK ***
+** Running detection test case: 'test_c3_3' **
+*** OK ***
+** Running detection test case: 'test_c3_4' **
+*** OK ***
+
+CASE 4: VALIDATING QUERIES WITH JOURNALING MASK JOIN
+
+** Running detection test case: 'test_c4_1' **
+*** OK ***
+** Running detection test case: 'test_c4_2' **
+*** OK ***
+** Running detection test case: 'test_c4_3' **
+*** OK ***
+** Running detection test case: 'test_c4_4' **
+*** OK ***
+
+VALIDATING EXPERIMENT META JOIN WITH REF
+
+** Running detection test case: 'test_c4_5' **
+*** OK ***
+
+VALIDATING A DIFFERENT GROUND TRUTH AND ITS VALUE
+
+** Running detection test case: 'test_c4_6' **
+*** OK ***
+
+VALIDATING JSON EXPANSION OF REF COLUMN
+
+** Running detection test case: 'test_c4_7' **
+*** OK ***
+
+CASE 5: VALIDATING ALL THE EXAMPLES FROM THE DETECTIONSCORER README DOCUMENT
+
+** Running detection test case: 'test_c5_1' **
+*** OK ***
+DETECTION SCORER TESTS SUCCESSFULLY PASSED
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/DetectionScorer'
+(cd tools/ProvenanceScorer; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/ProvenanceScorer'
+** Running UnitTests **
+
+(python2 ../../lib/ProvenanceGraphBuildingUnitTest.py)
+# Ignoring warnings here as we divide by zero for some tests,
+# which produce warnings
+(python2 -W ignore ../../lib/ProvenanceMetricsUnitTest.py)
+** Running integration tests **
+
+** Running integration test 'test_1_0' **
+*** OK ***
+** Running integration test 'test_1_0_undirect' **
+*** OK ***
+** Running integration test 'test_1_0_direct' **
+*** OK ***
+** Running integration test 'test_1_0and1_direct' **
+*** OK ***
+** Running integration test 'test_1_1_direct' **
+*** OK ***
+** Running integration test 'test_2_0' **
+*** OK ***
+** Running integration test 'test_2_1' **
+*** OK ***
+** Running integration test 'test_2_1_undirect' **
+*** OK ***
+** Running integration test 'test_3_1' **
+*** OK ***
+** Running integration test 'filtering_test_0' **
+*** OK ***
+** Running integration test 'filtering_test_1' **
+*** OK ***
+** Running integration test 'filtering_test_2' **
+*** OK ***
+** Running integration test 'filtering_test_0_b' **
+*** OK ***
+** Running integration test 'filtering_test_1_b' **
+*** OK ***
+** Running integration test 'filtering_test_2_b' **
+*** OK ***
+** Running integration test 'IsOptOut_test_0' **
+*** OK ***
+** Running integration tests for validator **
+
+** Running integration test 'name_test_csv' **
+ERROR: Your system output does not appear to be a csv.
+*** OK ***
+** Running integration test 'name_test_fileNeqDir' **
+ERROR: Please follow the naming convention. The system output should follow the naming <EXPID>/<EXPID>.csv.
+*** OK ***
+** Running integration test 'name_test_underscores' **
+ERROR: The team name must not include underscores '_'.
+ERROR: test unrecognized. Only provenance or provenancefiltering are recognized. Make sure your team name does not include underscores '_'.
+The name of the file is not valid. Please review the requirements in the eval plan.
+*** OK ***
+** Running integration test 'name_test_badtask' **
+ERROR: manipulation unrecognized. Only provenance or provenancefiltering are recognized. Make sure your team name does not include underscores '_'.
+The name of the file is not valid. Please review the requirements in the eval plan.
+*** OK ***
+** Running integration test 'valid_test_optout' **
+*** OK ***
+** Running integration test 'valid_test_all' **
+*** OK ***
+** Running integration test 'invalid_test_comma' **
+ERROR: The number of columns of the system output file must be at least 4. Make sure you are using '|' to separate your columns.
+*** OK ***
+** Running integration test 'invalid_test_diffidx' **
+../../data/test_suite/provenanceValidatorTests/InvalidCheck_NC17_FuncTest_3/InvalidCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-diffidx_3/jsons/prov2.json did not pass the provenancefiltering schema check!
+The contents of your file are not valid!
+*** OK ***
+** Running integration test 'invalid_test_moreidx' **
+ERROR: The number of rows in your system output (2) does not match the number of rows in the index file (1).
+The contents of your file are not valid!
+*** OK ***
+** Running integration test 'invalid_test_badfilter' **
+../../data/test_suite/provenanceValidatorTests/InvalidCheck_NC17_FuncTest_3/InvalidCheck_NC17_FuncTest_ProvenanceFiltering_ImgOnly_p-badfilter_3/jsons/prov1.json did not pass the provenancefiltering schema check!
+The contents of your file are not valid!
+*** OK ***
+** Running integration test 'invalid_test_filtergraph' **
+../../data/test_suite/provenanceValidatorTests/InvalidCheck_NC17_FuncTest_3/InvalidCheck_NC17_FuncTest_Provenance_ImgOnly_p-filtergraph_3/jsons/prov1.json did not pass the provenance schema check! Make sure to include links!
+The contents of your file are not valid!
+*** OK ***
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/ProvenanceScorer'
+(cd tools/LocalizationVisualizer; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer'
+(./run_integration_tests.sh)
+basic manip test
+** Running integration test 'python2 get_dims_from_probes.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -r reference/manipulation-image/MFC18-manipulation-image-ref.csv -x indexes/MFC18-manipulation-image-subindex.csv -oR sample_manip_viz_db --filter' **
+*** OK ***
+Test manip_viz passed.
+** Running integration test 'python2 get_html_from_probefiles.py -t manipulation --refDir ../../data/test_suite/maskScorerTests -rx sample_manip_viz_db_refdims.csv -oR sample_manip/sample_manip_viz_db -rr --filter -ow' **
+Proceeding to generate per-image HTML output for /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/14cffdc6394f9503661d40c9ac7328ca/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/14cffdc6394f9503661d40c9ac7328ca/probefile.jpg...
+Writing overlay...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/14cffdc6394f9503661d40c9ac7328ca/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/14cffdc6394f9503661d40c9ac7328ca/probefile.jpg...
+Writing overlay...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/c3b7512b719df5670aa70fd0b152b86a/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_manip/c3b7512b719df5670aa70fd0b152b86a/probefile.jpg...
+Writing overlay...
+HTML output generated. Proceeding to generate home page...
+Homepage generated.
+*** OK ***
+basic splice test
+** Running integration test 'python2 get_dims_from_probes.py -t splice --refDir ../../data/test_suite/maskScorerTests -r reference/splice/NC2017-splice-ref.csv -x indexes/NC2017-splice-index.csv -oR sample_splice_viz_db --filter' **
+*** OK ***
+Test splice_viz passed.
+** Running integration test 'python2 get_html_from_probefiles.py -t splice --refDir ../../data/test_suite/maskScorerTests -rx sample_splice_viz_db_refdims.csv -oR sample_splice/sample_splice_viz_db -rr --filter -ow' **
+Proceeding to generate per-image HTML output for /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/probe/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/probe/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/donor/donormask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/donor/probefile.jpg...
+Writing overlay...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/probe/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/probe/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/donor/donormask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/3c3a485663bf37ed1e26678908be81fb_866d1f4f68e89f9c3060ba3c5eb329ee/donor/probefile.jpg...
+Writing overlay...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/b4e3f4cb9d3e7b6dedde67b07f642172_8daee7c562ec7a7e80d73ec6c1dfb9ee/probe/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/b4e3f4cb9d3e7b6dedde67b07f642172_8daee7c562ec7a7e80d73ec6c1dfb9ee/probe/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/b4e3f4cb9d3e7b6dedde67b07f642172_8daee7c562ec7a7e80d73ec6c1dfb9ee/donor/donormask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/b4e3f4cb9d3e7b6dedde67b07f642172_8daee7c562ec7a7e80d73ec6c1dfb9ee/donor/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/boatfill_boatfill/probe/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/boatfill_boatfill/probe/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/boatfill_boatfill/donor/donormask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/boatfill_boatfill/donor/probefile.jpg...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/smallmanip_less_smallmanip/probe/probemask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/smallmanip_less_smallmanip/probe/probefile.png...
+Writing overlay...
+Reassigning color...
+Beginning overlay of /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/smallmanip_less_smallmanip/donor/donormask.png on /home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer/sample_splice/smallmanip_less_smallmanip/donor/probefile.png...
+Writing overlay...
+HTML output generated. Proceeding to generate home page...
+Homepage generated.
+*** OK ***
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/LocalizationVisualizer'
+(cd tools/MaskScorer; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/MaskScorer'
+(cd ../../lib; python2 -m unittest maskTests)
+CASE 1b: Testing behavior of JPEG2000 scoring and masks...
+The number 18446744073709551616 put into count_bits cannot be unsigned.
+The number 18446744073709551616 put into count_bits cannot be unsigned.
+The number 18446744073709551616 put into count_bits cannot be unsigned.
+The number 18446744073709551616 put into count_bits cannot be unsigned.
+CASE 1: Testing metrics under the same mask shape...
+CASE 1c: Testing for equality under rotation and reflection...
+CASE 1 testing complete.
+
+CASE 2: Testing for resulting mask having been only eroded and behavior of other library functions.
+CASE 2 testing complete.
+
+CASE 3: Testing for resulting mask having been only dilated.
+CASE 3 testing complete.
+
+CASE 4: Testing for resulting mask having been eroded and then dilated...
+CASE 4 testing complete.
+
+CASE 5: Testing for resulting mask having been moved...
+
+CASE 5 testing complete.
+(rm ../../lib/testImg*.png)
+(./test_init.sh)
+(./maskcompcheckfiles_0.sh)
+PROCEEDING TO THOROUGHLY CHECK ALL CASES
+
+CASE 0: VALIDATING FULL SCORING
+
+Warning: too many processors for rows in the data. Defaulting to rows in data (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (4).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (4).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+
+CASE 0 SUCCESSFULLY PASSED
+
+(./maskcompcheckfiles_1.sh)
+
+CASE 1: VALIDATING SCORING OF TARGET REGIONS
+
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+The query 'Purpose==['removal']' yielded no journal data over which computation may take place.
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+None of the masks that we attempted to score for query Purpose==['heal'] had regions to be scored. Further factor analysis is futile.
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+/tmp/selective_loc/q4 exists. Content in the directory can be used for efficient scoring.
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+None of the masks that we attempted to score for query Purpose==['heal'] had regions to be scored. Further factor analysis is futile.
+/tmp/selective_loc/q3 exists. Content in the directory can be used for efficient scoring.
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+
+CASE 1 SUCCESSFULLY PASSED
+
+(./maskcompcheckfiles_2.sh)
+
+CASE 2: VALIDATING FACTOR-BASED SCORING
+
+/tmp/manip_queries exists. Content in the directory can be used for efficient scoring.
+/tmp/manip_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "ConfidenceScore==0.5"
+#### Please verify factors conditions.
+/tmp/manip_queries exists. Content in the directory can be used for efficient scoring.
+/tmp/manip_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "Clone=='no' & ConfidenceScore>0.3"
+#### Please verify factors conditions.
+/tmp/manip_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "ConfidenceScore=='foo'"
+#### Please verify factors conditions.
+/tmp/splice_queries exists. Content in the directory can be used for efficient scoring.
+/tmp/splice_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "ConfidenceScore==['foo']"
+#### Please verify factors conditions.
+/tmp/splice_queries exists. Content in the directory can be used for efficient scoring.
+/tmp/splice_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "Collection=='Nimble-SCI' & ConfidenceScore>0.3"
+#### Please verify factors conditions.
+/tmp/splice_queries exists. Content in the directory can be used for efficient scoring.
+#### Warning: Empty DataFrame for query "ConfidenceScore=='foo'"
+#### Please verify factors conditions.
+comp_maskreport_spliceconf_0.txt
+2c2
+< splice|0.5 < ConfidenceScore|8||0.575807824163||0.82182762636||0.0349600027414||0.0364889660757||0.981042234465||0.0191391835221||10||0.189013864409||0.658094391495||0.170284949945||0.176114831301||0.89077776544||0.108007011425||||||||||||||||||||||||||0.981042234465|0.694782121927|0.981042234465|0.694782121927|||||1.0|2|2|2|2|0|N
+---
+> splice|0.5 < ConfidenceScore|7||0.576741471954||0.822139595167||0.0348722310072||0.0365022493206||0.98096726858||0.0200806046029||4||0.195364599422||0.659703307898||0.168647778131||0.176099637383||0.893299573267||0.107338739133||||||||||||||||||||||||||0.98096726858|0.695412573884|0.98096726858|0.695412573884|||||1.0|2|2|2|2|0|N
+comp_maskreport_spliceconf-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+comp_maskreport_spliceconfcoll_0.txt
+2c2
+< splice|0.3 <= ConfidenceScore|8|0.0|0.575807824163|0.0|0.82182762636|0.0|0.0349600027414|0.0|0.0364889660757|0.0|0.981042234465|0.0|0.0191391835221|0.0|4|7.77817459305|-0.405493067796|0.840759766448|0.329047195747|0.465343006887|0.190152354293|0.0280967526782|0.193067294971|0.0239744040376|0.69538888272|0.27632160788|0.304003505712|0.277180900399|||||||||||||||||||||||||0.981042234465|0.694782121927|0.981042234465|0.694782121927|||||1.0|2|2|2|2|0|N
+---
+> splice|0.3 <= ConfidenceScore|7|0.0|0.576741471954|0.0|0.822139595167|0.0|0.0348722310072|0.0|0.0365022493206|0.0|0.98096726858|0.0|0.0200806046029|0.0|1|3.53553390593|-0.402317700289|0.845250414242|0.329851653949|0.466480682586|0.189333768386|0.02925440797|0.193059698012|0.0239851477602|0.696649786634|0.278104795295|0.303669369566|0.277653440269|||||||||||||||||||||||||0.98096726858|0.695412573884|0.98096726858|0.695412573884|||||1.0|2|2|2|2|0|N
+comp_maskreport_spliceconfcoll_1.txt
+2c2
+< splice|Collection==['Nimble-WEB']|8||0.575807824163||0.82182762636||0.0349600027414||0.0364889660757||0.981042234465||0.0191391835221||10||0.189013864409||0.658094391495||0.170284949945||0.176114831301||0.89077776544||0.108007011425||||||||||||||||||||||||||0.981042234465|0.694782121927|0.981042234465|0.694782121927|||||1.0|2|2|2|2|0|N
+---
+> splice|Collection==['Nimble-WEB']|7||0.576741471954||0.822139595167||0.0348722310072||0.0365022493206||0.98096726858||0.0200806046029||4||0.195364599422||0.659703307898||0.168647778131||0.176099637383||0.893299573267||0.107338739133||||||||||||||||||||||||||0.98096726858|0.695412573884|0.98096726858|0.695412573884|||||1.0|2|2|2|2|0|N
+comp_maskreport_spliceconfcoll-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+comp_maskreport_splicefooconf-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+comp_maskreport_spliceconfpart.txt
+2c2
+< splice|ConfidenceScore>0.5|8||0.575807824163||0.82182762636||0.0349600027414||0.0364889660757||0.981042234465||0.0191391835221||10||0.189013864409||0.658094391495||0.170284949945||0.176114831301||0.89077776544||0.108007011425||||||||||||||||||||||||||0.981042234465|0.694782121927|0.981042234465|0.694782121927|||||1.0|2|2|2|2|0|N
+---
+> splice|ConfidenceScore>0.5|7||0.576741471954||0.822139595167||0.0348722310072||0.0365022493206||0.98096726858||0.0200806046029||4||0.195364599422||0.659703307898||0.168647778131||0.176099637383||0.893299573267||0.107338739133||||||||||||||||||||||||||0.98096726858|0.695412573884|0.98096726858|0.695412573884|||||1.0|2|2|2|2|0|N
+comp_maskreport_spliceconfpart-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+comp_maskreport_spliceconfcollpart.txt
+2c2
+< splice|ConfidenceScore>0.3|'Nimble-WEB'|8||0.575807824163||0.82182762636||0.0349600027414||0.0364889660757||0.981042234465||0.0191391835221||10||0.189013864409||0.658094391495||0.170284949945||0.176114831301||0.89077776544||0.108007011425||||||||||||||||||||||||||0.981042234465|0.694782121927|0.981042234465|0.694782121927|||||1.0|2|2|2|2|0|N
+---
+> splice|ConfidenceScore>0.3|'Nimble-WEB'|7||0.576741471954||0.822139595167||0.0348722310072||0.0365022493206||0.98096726858||0.0200806046029||4||0.195364599422||0.659703307898||0.168647778131||0.176099637383||0.893299573267||0.107338739133||||||||||||||||||||||||||0.98096726858|0.695412573884|0.98096726858|0.695412573884|||||1.0|2|2|2|2|0|N
+comp_maskreport_spliceconfcollpart-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+comp_maskreport_splicefooconfpart-perimage.txt
+2,3c2,3
+< splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|10|0.189013864409|0.658094391495|0.170284949945|0.176114831301|0.89077776544|0.108007011425|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|220092|649573|178444|40|1048149|43691|0|0||
+< splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|8|0.575807824163|0.82182762636|0.0349600027414|0.0364889660757|0.981042234465|0.0191391835221|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411282|4404477|174450|8|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+---
+> splice|gullflower|probe/gullflower.jpg|reference/splice/mask/gull-mask-red.png|flower|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask1.png|mask/flower-splice-mask1.png|1.0|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|4|0.195364599422|0.659703307898|0.168647778131|0.176099637383|0.893299573267|0.107338739133|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|219774|651607|176410|358|1048149|43691|0|0||
+> splice|gullflower2|probe/gullflower.jpg|reference/splice/mask/gull-mask-blue.png|flower2|probe/flower.jpg|reference/splice/mask/flower-splice-mask.png|Y|mask/gull-mask2.png||0.5|7|0.576741471954|0.822139595167|0.0348722310072|0.0365022493206|0.98096726858|0.0200806046029|-1|-1.0|0.0|0.210019758641|0.210019758641|0.5|0.5|||||||||||||||||||||||||||||reference/splice/mask/gull-mask.png|none|none||False|True|False|Nimble-WEB-2|bar.jpg|same|False|baz.jpg||N|Y|411228|4404969|173958|62|4990217|48631|0|0|||Y|0|828017|0|220132|1048149|43691|0|0||
+
+    !!!!! MASK SCORER TEST FAILED AT CASE 2 !!!!!    
+
+(./maskcompcheckfiles_3.sh)
+
+CASE 3: VALIDATING BIT-MASK SCORING
+
+Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+/tmp/bittest_dir exists. Content in the directory can be used for efficient scoring.
+Warning: too many processors for rows in the data. Defaulting to rows in data (2).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (1).
+Warning: too many processors for rows in the data. Defaulting to rows in data (1).
+/tmp/bittest_dir exists. Content in the directory can be used for efficient scoring.
+Warning: too many processors for rows in the data. Defaulting to rows in data (3).
+Warning: the machine does not have that many processors available. Defaulting to max (1).
+
+CASE 3 SUCCESSFULLY PASSED
+
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/MaskScorer'
+(cd tools/VideoTemporalLocalizationScorer; make check)
+make[1]: Entering directory '/home/ubuntu/git_repositories/MediScoreV2/tools/VideoTemporalLocalizationScorer'
+** Running UnitTests **
+
+(python Unittest_IntervalConfusion.py)
+** Running Intergration Test Case **
+
+** Running integration test 'test_1_0' **
+Done.
+*** OK ***
+make[1]: Leaving directory '/home/ubuntu/git_repositories/MediScoreV2/tools/VideoTemporalLocalizationScorer'
