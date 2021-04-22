@@ -84,11 +84,12 @@ def checkProbe(args):
 class validator:
     __metaclass__ = ABCMeta
 
-    def __init__(self,sysfname,idxfname,verbose):
+    def __init__(self,sysfname,idxfname,verbose,neglectpixel=False):
         self.sysname=sysfname
         self.idxname=idxfname
         self.condition=''
         self.verbose=verbose
+        self.neglect_pixel = neglectpixel
     @abstractmethod
     def nameCheck(self,NCID): pass
     @abstractmethod
@@ -160,7 +161,8 @@ class validator:
                     msg = self.printbuffer.get()
                     print("="*30)
                     print(msg)
-#            self.printbuffer.atomprint(print_lock)
+#           self.printbuffer.atomprint(print_lock)
+            
             return 1
         if self.verbose:
             while not self.printbuffer.empty():
@@ -268,26 +270,28 @@ class SSD_Validator(validator):
         #either IsOptOut or ProbeStatus must be in the file header
         optOut = 0
 
-        allClear = True
-        if not (("IsOptOut" in sysHeads) or ("ProbeStatus" in sysHeads)):
-            print("ERROR: Either 'IsOptOut' or 'ProbeStatus' must be in the column headers.")
-            allClear = False
-        else:
-            if ("IsOptOut" in sysHeads) and ("ProbeStatus" in sysHeads):
-                print("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
-            if "IsOptOut" in sysHeads:
-                optOut = 1
-            elif "ProbeStatus" in sysHeads:
-                if not (("ProbeOptOutPixelValue" in sysHeads) or (self.task in ['manipulation-video','eventverification'])):
-                    print("ERROR: The required column ProbeOptOutPixelValue is absent.")
-                    return 1
-                optOut = 2
+        allClear = False
+        if self.neglect_pixel is False:
+            if not (("IsOptOut" in sysHeads) or ("ProbeStatus" in sysHeads)):
+                print("ERROR: Either 'IsOptOut' or 'ProbeStatus' must be in the column headers.")
+                allClear = False
+            else:
+                if ("IsOptOut" in sysHeads) and ("ProbeStatus" in sysHeads):
+                    print("The system output has both 'IsOptOut' and 'ProbeStatus' in the column headers. It is advised for the performer not to confuse him or herself.")
+                if "IsOptOut" in sysHeads:
+                    optOut = 1
+                elif "ProbeStatus" in sysHeads:
+                    if not (("ProbeOptOutPixelValue" in sysHeads) or (self.task in ['manipulation-video','eventverification'])):
+                        print("ERROR: The required column ProbeOptOutPixelValue is absent.")
+                        return 1
+                    optOut = 2
+            self.optOutNum = optOut
+
+            self.testMask = self.task != 'manipulation-video'
+            if not (self.checkHeads(sysHeads,optOut) and allClear):
+                return 1
         self.optOutNum = optOut
-
         self.testMask = self.task != 'manipulation-video'
-        if not (self.checkHeads(sysHeads,optOut) and allClear):
-            return 1
-
         #define primatives here according to task, in particular, camera and eventverification.
         if self.task == 'camera':
             targetquery = "(IsTarget=='Y') & (IsManipulation=='Y')"
@@ -336,8 +340,9 @@ class SSD_Validator(validator):
             print("ERROR: The Confidence Scores for {} {} are not numeric.".format(identifier,confprobes))
             scoreFlag = 1
 
-        if self.testMask and (self.task not in ['manipulation-video','eventverification']):
-            sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
+        if not self.neglect_pixel:
+            if self.testMask and (self.task not in ['manipulation-video','eventverification']):
+                sysfile['OutputProbeMaskFileName'] = sysfile['OutputProbeMaskFileName'].astype(str) 
         #NOTE: typesetting ends here
 
         #setting variables based on primary ID.
@@ -388,7 +393,11 @@ class SSD_Validator(validator):
 
     def checkHeads(self,sysHeads,optOutMode):
 #        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName","IsOptOut"]
-        truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        # print(self.task)
+        if self.neglect_pixel is False:
+            truelist = ["ProbeFileID","ConfidenceScore","OutputProbeMaskFileName"]
+        else:
+            truelist = ["ProbeFileID","ConfidenceScore","ProbeStatus"]
         if self.task == 'manipulation-video':
             if optOutMode == 1:
                 truelist = ['ProbeFileID','ConfidenceScore','IsOptOut']
@@ -474,15 +483,16 @@ class SSD_Validator(validator):
 #                printq("The contents of your file are not valid!",True)
 #                return 1
 
-        if self.pixOptOut and (self.task != 'manipulation-video'):
-            oopixval = str(sysrow['ProbeOptOutPixelValue'])
-            #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
-            isProbeOOdigit = True
-            if oopixval != '':
-                isProbeOOdigit = is_integer(oopixval)
-            if not ((oopixval == '') or isProbeOOdigit):
-                sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval)
-                sysrow['matchFlag'] = 1
+        if self.neglect_pixel is False:
+            if self.pixOptOut and (self.task != 'manipulation-video'):
+                oopixval = str(sysrow['ProbeOptOutPixelValue'])
+                #check if ProbeOptOutPixelValue is blank or an integer if it exists in the header.
+                isProbeOOdigit = True
+                if oopixval != '':
+                    isProbeOOdigit = is_integer(oopixval)
+                if not ((oopixval == '') or isProbeOOdigit):
+                    sysrow['Message']="ERROR: ProbeOptOutPixelValue for probe {} is {}. Please check if it is blank ('') or an integer.".format(probeFileID,oopixval)
+                    sysrow['matchFlag'] = 1
 
         #check mask validation
         if self.testMask or (self.task == 'manipulation-video'):
@@ -1205,6 +1215,8 @@ if __name__ == '__main__':
         help="neglect mask dimensionality validation.")
     parser.add_argument('--ncid',type=str,default="NC17",\
         help="the NCID to validate against.")
+    parser.add_argument('-np', '--neglectPixel', action="store_true",\
+        help="neglect ProbeOptOutPixelValue.")
     parser.add_argument('--ignore_eof',action='store_true',
         help="Ignore EOF of video if performer's frames go out of bounds. Has no effect on image validation.")
     parser.add_argument('--ignore_overlap',action='store_true',
@@ -1249,14 +1261,13 @@ if __name__ == '__main__':
     except:
         print("ERROR: Expected one of {} for validation type. Got {}.".format(valtype_to_task.keys(),args.valtype))
         exit(1)
-
-    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof,ignore_overlap=args.ignore_overlap)
+    myval_params = validation_params(ncid=args.ncid,task=task,outputRewrite=args.output_revised_system,doNameCheck=args.nameCheck,optOut=args.optOut,identify=args.identify,neglectMask=args.neglectMask,indexFilter=args.indexFilter,ref=args.inRef,processors=args.processors,ignore_eof=args.ignore_eof,ignore_overlap=args.ignore_overlap, neglect_pixel = args.neglectPixel)
     if args.valtype in ['SSD','SSD-video','SSD-event','SSD-camera']:
-        ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose)
+        ssd_validation = SSD_Validator(args.inSys,args.inIndex,verbose, args.neglectPixel)
         exit(ssd_validation.fullCheck(myval_params))
 #         exit(ssd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     elif args.valtype == 'DSD':
-        dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose)
+        dsd_validation = DSD_Validator(args.inSys,args.inIndex,verbose, args.neglectPixel)
         exit(dsd_validation.fullCheck(myval_params))
 #         exit(dsd_validation.fullCheck(args.nameCheck,args.identify,args.ncid,args.neglectMask,args.inRef,args.processors))
     else:
