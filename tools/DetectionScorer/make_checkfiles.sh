@@ -29,5 +29,8 @@ test_c4_1 "$testsuite_directory/checkfiles/test_c4_1"
 test_c4_2 "$testsuite_directory/checkfiles/test_c4_2"
 test_c4_3 "$testsuite_directory/checkfiles/test_c4_3"
 test_c4_4 "$testsuite_directory/checkfiles/test_c4_4"
+test_c4_5 "$testsuite_directory/checkfiles/test_c4_5"
+test_c4_6 "$testsuite_directory/checkfiles/test_c4_6"
+test_c4_7 "$testsuite_directory/checkfiles/test_c4_7"
 
 test_c5_1 "$testsuite_directory/checkfiles/test_c5_1"

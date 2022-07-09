@@ -19,8 +19,8 @@ def unittestMetrics():
           'gt': ["Y", "N", "Y", "N"]}
     df1 = pd.DataFrame(d1)
 
-    df1fpr = np.array([0, 0.5, 0.5, 1])
-    df1tpr = np.array([0.5, 0.5, 1, 1])
+    df1fpr = np.array([0, 0, 0.5, 0.5, 1])
+    df1tpr = np.array([0, 0.5, 0.5, 1, 1])
 
     # check points and AUC
     DM1 = dm.detMetrics(df1['score'], df1['gt'], fpr_stop=1, isCI=False, ciLevel=0.9)
@@ -54,8 +54,8 @@ def unittestMetrics():
           'gt': ["Y", "N", "N", "Y", "N", "Y", "N"]}
     df2 = pd.DataFrame(d2)
 
-    df2fpr = [0, 0.5, 0.75, 1]
-    df2tpr = [1. / 3, 1. / 3, 1, 1]
+    df2fpr = [0, 0, 0.5, 0.75, 1]
+    df2tpr = [0, 1. / 3, 1. / 3, 1, 1]
 
     DM2 = dm.detMetrics(df2['score'], df2['gt'], fpr_stop=1)
     # scikit-learn Metrics

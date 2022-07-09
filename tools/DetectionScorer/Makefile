@@ -6,7 +6,7 @@ MAKE=make
 check:
 	@(echo "** Running UnitTests **\n")
 	# Ignoring warnings here
-	(python2 -W ignore DetectionScorerUnitTest.py)
+	(python -W ignore DetectionScorerUnitTest.py)
 	@(echo "** Running detection tests **\n")
 	@(./run_detection_tests.sh)
 	@(echo "DETECTION SCORER TESTS SUCCESSFULLY PASSED")

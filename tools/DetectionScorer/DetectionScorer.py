@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 * Date: 5/25/2018
 * Authors: Yooyoung Lee and Timothee Kheyrkhah
@@ -20,11 +21,14 @@ reliability, or any other characteristic."
 import argparse
 import numpy as np
 import pandas as pd
+from pandas.io.json import json_normalize
 import os  # os.system("pause") for windows command line
 import sys
+import json
 
 from collections import OrderedDict
 from itertools import cycle
+from scipy.stats import norm
 
 lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../lib")
 sys.path.append(lib_path)
@@ -67,15 +71,16 @@ def overlap_cols(mySys, myRef):
 # Loading the specified file
 def define_file_name(path, ref_fname, tag_name):
     my_fname = os.path.join(path, str(ref_fname.split('.')[:-1]).strip("['']") + tag_name)
-    v_print("Specified JT file: {}".format(my_fname))
+    v_print("Specified file: {}".format(my_fname))
     return my_fname
 
-def JT_merge(ref_dir, ref_fname, mainDF):
+def JT_merge(ref_dir, ref_fname, mainDF, parseJsonRefColumn):
     join_fname = define_file_name(ref_dir, ref_fname, '-probejournaljoin.csv')
     mask_fname = define_file_name(ref_dir, ref_fname, '-journalmask.csv')
     if os.path.isfile(join_fname) and os.path.isfile(mask_fname):
         joinDF = pd.read_csv(join_fname, sep='|', low_memory=False)
         maskDF = pd.read_csv(mask_fname, sep='|', low_memory=False)
+
         jt_no_overlap, jt_overlap = overlap_cols(joinDF, maskDF)
         v_print("JT overlap columns: {}".format(jt_overlap))
         v_print("Merging (left join) the JournalJoin and JournalMask csv files with the reference file ...\n")
@@ -85,17 +90,65 @@ def JT_merge(ref_dir, ref_fname, mainDF):
         new_df = pd.merge(mainDF, jt_meta, how='left', on=meta_overlap)
         v_print("Main cols num: {}\n Meta cols num: {}\n, Merged cols num: {}".format(
             mainDF.shape, jt_meta.shape, new_df.shape))
+
+        if (len(parseJsonRefColumn) > 0):
+            v_print("Expanding JSON strings to columns.")
+            for col in parseJsonRefColumn:
+                if (col in new_df.columns):
+                    def safe_parse(s):
+                        if (not isinstance(s,str)):
+                        #if (not isinstance(s,basestring)):
+                            return({})
+                        try:
+                            json_object = json.loads(s)
+                            ### Remove spaces from keys
+                            json_object = {k.replace(' ', '_'): v for k, v in json_object.items()}
+                        except ValueError as e:
+                            return({})
+                        return json_object
+                    _x = [ safe_parse(s) for s in new_df[col].str.replace("'", "\"").str.replace("True", "true").str.replace("False", "false") ]
+                    _df = json_normalize(_x)
+                    new_df = new_df.join(_df.add_prefix(col + "_"))
+                else:
+                    v_print("   Warning: Columns " + col + " not found in reference file.  Ignoring")
+            v_print("JSON Expanded Cols: {} {}".format(new_df.shape, new_df.columns.values))
+                    
         return new_df
     else:
         v_print("JT meta files do not exist, therefore, merging process will be skipped")
         return mainDF
 
+def exp_merge(refDF, expDF):
+    exp_no_overlap, exp_overlap = overlap_cols(refDF, expDF)
+    v_print("EXP overlap columns: {}".format(exp_overlap))
+    v_print("Merging (left join) the Exp Meta csv file with the reference file ...\n")
+    new_df = pd.merge(refDF, expDF, how='left', on=exp_overlap)
+    v_print("Ref cols num: {}\n Exp Meta cols num: {}\n, Merged cols num: {}".format(
+        refDF.shape, expDF.shape, new_df.shape))
+    return new_df
 
-def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype):
+
+def input_ref_idx_sys(refDir, inRef, inExp, inIndex, sysDir, inSys, outRoot, outSubMeta, sys_dtype, gt):
     # Loading the reference file
     v_print("Ref file name: {}".format(os.path.join(refDir, inRef)))
     myRefDir = os.path.dirname(os.path.join(refDir, inRef))
     myRef = load_csv(os.path.join(refDir, inRef))
+    # Joining Ref and Exp meta file if exp meta exists
+    v_print("Ref shape before merging: {}".format(myRef.shape))
+
+    if len(inExp) > 0:
+        for exp_list in inExp:
+            exp_fname = os.path.join(refDir, exp_list)
+            if os.path.isfile(exp_fname):
+                v_print ("{} file does exist".format(exp_fname))
+                myExp = load_csv(exp_fname)
+                myRef = exp_merge(myRef, myExp)
+                v_print("Ref shape after merging: {}".format(myRef.shape))
+                #print(myRef)
+            else:
+                print ("ERROR: {} file does not exist".format(exp_fname))
+                sys.exit(1)
+
     # Loading the index file
     v_print("Index file name: {}".format(os.path.join(refDir, inIndex)))
     myIndex = load_csv(os.path.join(refDir, inIndex))
@@ -125,24 +178,24 @@ def input_ref_idx_sys(refDir, inRef, inIndex, sysDir, inSys, outRoot, outSubMeta
     if outSubMeta:
         v_print("Saving the sub_meta csv file...")
         sub_pm_df = index_m_df[index_ref_overlap +
-                               index_ref_no_overlap + ["IsTarget"] + sys_ref_no_overlap]
+                               index_ref_no_overlap + [gt] + sys_ref_no_overlap]
         v_print("sub_pm_df columns: {}".format(sub_pm_df.columns))
         sub_pm_df.to_csv(outRoot + '_subset_meta.csv', index=False, sep='|')
 
     return index_m_df, sys_ref_overlap
 
 
-def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap):
+def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap, gt, parseJsonRefColumn):
 
     m_df = df.copy()
     # if the files exist, merge the JTJoin and JTMask csv files with the reference and index file
     if task in ['manipulation', 'splice', 'camera', 'eventverification']:
         v_print("Merging the JournalJoin and JournalMask for the {} task\n".format(task))
-        m_df = JT_merge(refDir, inRef, df)
+        m_df = JT_merge(refDir, inRef, df, parseJsonRefColumn)
 
     v_print("Creating partitions for queries ...\n")
     selection = f.Partition(m_df, query_str, query_mode, fpr_stop=farStop, isCI=ci,
-                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap)
+                            ciLevel=ciLevel, total_num=total_num, sys_res=sys_response, overlap_cols=sys_ref_overlap, gt=gt)
     DM_List = selection.part_dm_list
     v_print("Number of partitions generated = {}\n".format(len(DM_List)))
 
@@ -159,18 +212,18 @@ def yes_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, c
     return DM_List, table_df, selection
 
 
-def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response):
+def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci, ciLevel, dLevel, total_num, sys_response, gt, parseJsonRefColumn):
 
     m_df = df.copy()
 
     if outMeta:  # save all metadata for analysis purpose
         v_print("Saving all the meta info csv file ...")
         v_print("Merging the JournalJoin and JournalMask for the {} task\n, But do not score with this data".format(task))
-        meta_df = JT_merge(refDir, inRef, m_df)
+        meta_df = JT_merge(refDir, inRef, m_df, parseJsonRefColumn)
         meta_df.to_csv(outRoot + '_allmeta.csv', index=False, sep='|')
         m_df.to_csv(outRoot + '_meta_scored.csv', index=False, sep='|')
 
-    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df['IsTarget'], fpr_stop=farStop,
+    DM = dm.detMetrics(m_df['ConfidenceScore'], m_df[gt], fpr_stop=farStop,
                        isCI=ci, ciLevel=ciLevel, dLevel=dLevel, total_num=total_num, sys_res=sys_response)
     DM_List = [DM]
     table_df = DM.render_table()
@@ -179,32 +232,46 @@ def no_query_mode(df, task, refDir, inRef, outRoot, optOut, outMeta, farStop, ci
 
 
 def plot_options(DM_list, configPlot, plotType, plotTitle, plotSubtitle, optOut):
-    # Generating a default plot_options json config file
-    p_json_path = "./plotJsonFiles"
-    if not os.path.exists(p_json_path):
-        os.makedirs(p_json_path)
-    dict_plot_options_path_name = "./plotJsonFiles/plot_options.json"
+    plot_opts = OrderedDict([
+            ('title', "Performance" if plotTitle is None else plotTitle),
+            ('plot_type', plotType.upper()),
+            ('subtitle', ''),
+            ('figsize', (8, 6)),
+            ('title_fontsize', 13),
+            ('subtitle_fontsize', 11),
+            ('xlim', [0,1]),
+            ('ylim', [0,1]),
+            ('xticks_size', 'medium'),
+            ('yticks_size', 'medium'),
+            ('xlabel', "False Alarm Rate [%]"),
+            ('xlabel_fontsize', 11),
+            ('ylabel_fontsize', 11)])
 
-    # opening of the plot_options json config file from command-line
-    if configPlot:
-        p.open_plot_options(dict_plot_options_path_name)
+    if plotType.lower() == "det":
+        plot_opts["xscale"] = "normppf"
+        plot_opts["ylabel"] = "Miss Detection Rate [%]"
+        plot_opts["xticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+        plot_opts["yticks"] = norm.ppf([0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+        # plot_opts["xticks"] = norm.ppf([.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .05, .10, .20, .40, .60, .80, .90, .95, .98, .99, .995, .999])
+        # plot_opts["xticks"] = [0.01, 0.1, 1, 10]
+        # plot_opts["yticks"] = norm.ppf([0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995, 0.999])
+        plot_opts["xlim"] = (plot_opts["xticks"][0], plot_opts["xticks"][-1])
+        plot_opts["ylim"] = (plot_opts["yticks"][0], plot_opts["yticks"][-1])
+        # plot_opts["xticks_labels"] = ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+        # plot_opts["xticks_labels"] = ["0.01", "0.1", "1", "10"]
+        # plot_opts["yticks_labels"] = ['5.0', '10.0', '20.0', '40.0', '60.0', '80.0', '90.0', '95.0', '98.0', '99.0', '99.5', '99.9']
+        plot_opts["xticks_labels"] = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
+        plot_opts["yticks_labels"] = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '40', '60', '80', '90', '95', '98', '99', '99.5', '99.9']
 
-    # if plotType is indicated, then should be generated.
-    if plotType == '' and os.path.isfile(dict_plot_options_path_name):
-        # Loading of the plot_options json config file
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        plotType = plot_opts['plot_type']
-        plot_opts['title'] = plotTitle
-        plot_opts['subtitle'] = plotSubtitle
-        plot_opts['subtitle_fontsize'] = 11
-        #print("test plot title1 {}".format(plot_opts['title']))
-    else:
-        if plotType == '':
-            plotType = 'roc'
-        p.gen_default_plot_options(dict_plot_options_path_name, plot_title=plotTitle,
-                                   plot_subtitle=plotSubtitle, plot_type=plotType.upper())
-        plot_opts = p.load_plot_options(dict_plot_options_path_name)
-        #print("test plot title2 {}".format(plot_opts['title']))
+    elif plotType.lower() == "roc":
+        plot_opts["xscale"] = "linear"
+        plot_opts["ylabel"] = "Correct Detection Rate [%]"
+        plot_opts["xticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        plot_opts["yticks"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        plot_opts["yticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+
+        plot_opts["xticks_labels"] = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+
 
     # Creation of defaults plot curve options dictionnary (line style opts)
     Curve_opt = OrderedDict([('color', 'red'),
@@ -314,6 +381,10 @@ def command_interface():
                         help='Specify the system output data path: [e.g., /mySysOutputs] (default: %(default)s)', metavar='character')  # Optional
     parser.add_argument('-s', '--inSys', default='', type=is_file_specified,
                         help='Specify a CSV file of the system output formatted according to the specification: [e.g., expid/system_output.csv] (default: %(default)s)', metavar='character')
+    parser.add_argument('-e', '--inExp', default=[], nargs='*',
+                        help='Specify a expermental reference file if any [e.g., references/exp.csv] (default: %(default)s)', metavar='character')
+    parser.add_argument('--parseJsonRefColumn', default=[], nargs='*',
+                        help='Parse the JSON string within the identified reference metadata columns. Columns are namespaced as <REFCOL>_<JSONKEY>. (default: %(default)s)', metavar='character')
     # Metric Options
     parser.add_argument('--farStop', type=restricted_float, default=0.1,
                         help='Specify the stop point of FAR for calculating partial AUC, range [0,1] (default: %(default) FAR 10%)', metavar='float')
@@ -340,7 +411,7 @@ def command_interface():
                         help="Define a plot title (default: %(default)s)", metavar='character')
     parser.add_argument('--plotSubtitle', default='',
                         help="Define a plot subtitle (default: %(default)s)", metavar='character')
-    parser.add_argument('--plotType', default='', choices=['roc', 'det'],
+    parser.add_argument('--plotType', default='roc', choices=['roc', 'det'],
                         help="Define a plot type:[roc] and [det] (default: %(default)s)", metavar='character')
     parser.add_argument('--display', action='store_true',
                         help="Display a window with the plot(s) on the command-line if this option is specified.")
@@ -362,6 +433,8 @@ def command_interface():
                               help="This option is similar to the '-q' option; however, the queries are only applied to the target trials (IsTarget == 'Y') and use all of non-target trials. Depending on the number (N) of queries, the option generates N report tables (CSV) and one plot (PDF) that contains N curves.", metavar='character')
     parser.add_argument('--optOut', action='store_true',
                         help="Evaluate system performance on trials where the IsOptOut value is 'N' only or the ProbeStatus values are ['Processed', 'NonProcessed', 'OptOutLocalization', 'FailedValidation','OptOutTemporal','OptOutSpatial']")
+    parser.add_argument('-gt', '--groundTruth',default='IsTarget',
+                        help="Define a target ground truth (default: %(default)s)", metavar='character')
 
     args = parser.parse_args()
 
@@ -389,11 +462,19 @@ if __name__ == '__main__':
                 print("Debugging mode: initiating ...")
                 # Inputs
                 self.task = "manipulation"
-                self.refDir = "../../data/test_suite/detectionScorerTests/reference"
-                self.inRef = "NC2017-manipulation-ref.csv"
-                self.inIndex = "NC2017-manipulation-index.csv"
-                self.sysDir = "../../data/test_suite/detectionScorerTests/baseline"
-                self.inSys = "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+                # self.refDir = "../../data/test_suite/detectionScorerTests/reference"
+                # self.inRef = "NC2017-manipulation-ref.csv"
+                # self.inIndex = "NC2017-manipulation-index.csv"
+                # self.sysDir = "../../data/test_suite/detectionScorerTests/baseline"
+                # self.inSys = "Base_NC2017_Manipulation_ImgOnly_p-copymove_01.csv"
+                # self.inExp = ["NC2017-manipulation-ref-global-blur.csv","NC2017-manipulation-ref-local-blur.csv"]
+
+                self.refDir = "../../data/test_suite/detectionScorerTests/sample/reference"
+                self.inRef = "NC2016-manipulation-ref-2.csv"
+                self.inIndex = "NC2016-manipulation-index.csv"
+                self.sysDir = "../../data/test_suite/detectionScorerTests/sample/"
+                self.inSys = "D_NC2016_Manipulation_ImgOnly_p-me_1/D_NC2016_Manipulation_ImgOnly_p-me_1.csv"
+                self.inExp = []
                 # TSV
                 #self.tsv = "tsv_example/q-query-example.tsv"
                 self.tsv = ""
@@ -419,10 +500,11 @@ if __name__ == '__main__':
                 # Query options
                 self.query = ""
                 self.queryPartition = ""
-                self.queryManipulation = ["TaskID==['manipulation']"]
+                self.queryManipulation = ["TaskID==['Manipulation']"]
                 #self.queryManipulation = ""
                 self.optOut = False
                 self.verbose = True
+                self.groundTruth = "ProbePostProcessed"
 
         args = ArgsList()
         # Verbosity option
@@ -461,8 +543,8 @@ if __name__ == '__main__':
         index_m_df = load_csv(os.path.join(args.refDir, args.inRef),
                               mysep='\t', mydtype=sys_dtype)
     else:
-        index_m_df, sys_ref_overlap = input_ref_idx_sys(args.refDir, args.inRef, args.inIndex, args.sysDir,
-                                                        args.inSys, args.outRoot, args.outSubMeta, sys_dtype)
+        index_m_df, sys_ref_overlap = input_ref_idx_sys(args.refDir, args.inRef, args.inExp, args.inIndex, args.sysDir,
+                                                        args.inSys, args.outRoot, args.outSubMeta, sys_dtype, args.groundTruth)
 
     total_num = index_m_df.shape[0]
     v_print("Total data number: {}".format(total_num))
@@ -496,10 +578,10 @@ if __name__ == '__main__':
 
         v_print("Query_mode: {}, Query_str: {}".format(query_mode,query_str))
         DM_List, table_df, selection = yes_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
-                                                      args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, query_str, query_mode, sys_ref_overlap)
+                                                      args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel,
+                                                      total_num, sys_response, query_str, query_mode, sys_ref_overlap, args.groundTruth, args.parseJsonRefColumn)
         # Render plots with the options
-        q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
-                                                args.plotTitle, args.plotSubtitle, args.optOut)
+        q_opts_list, q_plot_opts = plot_options(DM_List, args.configPlot, args.plotType, args.plotTitle, args.plotSubtitle, args.optOut)
         opts_list, plot_opts = query_plot_options(
             DM_List, q_opts_list, q_plot_opts, selection, args.optOut, args.noNum)
 
@@ -507,7 +589,8 @@ if __name__ == '__main__':
     else:
         #print(index_m_df.columns)
         DM_List, table_df = no_query_mode(index_m_df, args.task, args.refDir, args.inRef, args.outRoot,
-                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response)
+                                          args.optOut, args.outMeta, args.farStop, args.ci, args.ciLevel, args.dLevel, total_num, sys_response, args.groundTruth,
+                                          args.parseJsonRefColumn)
         # Render plots with the options
         opts_list, plot_opts = plot_options(DM_List, args.configPlot, args.plotType,
                                             args.plotTitle, args.plotSubtitle, args.optOut)

@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+import os
+import sys
+import pickle
 import numpy as np
 #import scipy.stats as st
-#import sys
 #import time
+if sys.version_info[0] < 3:
+    from sklearn.metrics import roc_curve, roc_auc_score
+else:
+    from sklearn_metrics import roc_curve, roc_auc_score
 
 
 class detMetrics:
@@ -133,12 +138,12 @@ def load_dm_file(path):
     """ Load Dump (DM) files
         path: DM file name along with the path
     """
-    import pickle
-    file = open(path, 'rb')
-    myObject = pickle.load(file)
-    file.close()
+    with open(path, 'rb') as file:
+        if sys.version_info[0] >= 3:
+            myObject = pickle.load(file, encoding='latin1')
+        else:
+            myObject = pickle.load(file)
     return myObject
-
 
 class Metrics:
 
@@ -149,7 +154,7 @@ class Metrics:
         score: system output scores
         gt: ground-truth for given trials
         """
-        from sklearn.metrics import roc_curve
+        # from sklearn.metrics import roc_curve
 #        label = np.zeros(len(gt))
 #        #label =  np.where(gt=='Y', 1, 0)
 #        yes_mask = np.array(gt == 'Y')#TODO: error here
@@ -196,7 +201,7 @@ class Metrics:
         gt: ground-truth for given trials
         lower_bound: lower bound percentile
         upper_bound: upper bound percentile"""
-        from sklearn.metrics import roc_auc_score
+        # from sklearn.metrics import roc_auc_score
 #        from sklearn.metrics import roc_curve
 #        score = score.astype(np.float64)
 #        mean = np.mean(score)

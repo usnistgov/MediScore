@@ -62,6 +62,21 @@ run_test test_c4_3 "$testsuite_directory/checkfiles/test_c4_3"
 run_test test_c4_4 "$testsuite_directory/checkfiles/test_c4_4"
 
 echo
+echo "VALIDATING EXPERIMENT META JOIN WITH REF"
+echo
+run_test test_c4_5 "$testsuite_directory/checkfiles/test_c4_5"
+
+echo
+echo "VALIDATING A DIFFERENT GROUND TRUTH AND ITS VALUE"
+echo
+run_test test_c4_6 "$testsuite_directory/checkfiles/test_c4_6"
+
+echo
+echo "VALIDATING JSON EXPANSION OF REF COLUMN"
+echo
+run_test test_c4_7 "$testsuite_directory/checkfiles/test_c4_7"
+
+echo
 echo "CASE 5: VALIDATING ALL THE EXAMPLES FROM THE DETECTIONSCORER README DOCUMENT"
 echo
 run_test test_c5_1 "$testsuite_directory/checkfiles/test_c5_1"
